@@ -24,6 +24,12 @@ Generate the choreography example:
 npm run generate:example -- pizza-delivery-choreography
 ```
 
+Export choreography data from `BPMNChoreography.sol` through `web3`:
+
+```bash
+npm run export:contract -- ./example/contract/pizza-delivery-contract-manifest.json
+```
+
 Use the library in code:
 
 ```js
@@ -72,6 +78,7 @@ bpmn-builder-js/
   package.json
   scripts/
     generate-example.js
+    web3.js
   src/
     index.js
     validation.js
@@ -80,6 +87,8 @@ bpmn-builder-js/
     generators/
       moddle-generator.js
   example/
+    contract/
+      pizza-delivery-contract-manifest.json
     input/
       simple-process.json
       pizza-delivery-choreography.json
@@ -150,9 +159,35 @@ await fs.writeFile(outputPath, xml, "utf8");
 npm install
 npm run generate:example
 npm run generate:example -- pizza-delivery-choreography
+npm run export:contract -- ./example/contract/pizza-delivery-contract-manifest.json
 ```
 
 `example/output/` is reserved for reference BPMN files plus temporary generated outputs created during local runs.
+
+## Export From Smart Contract
+
+The script [scripts/web3.js](/Users/francesco/workspace/git/research/ChorNMT/bpmn-builder-js/scripts/web3.js) reads `BPMNChoreography.sol` through `web3` and produces a JSON file shaped like the choreography input examples.
+
+Why a manifest is required:
+
+- the contract exposes `getNode(id)` and `getRole(role)`;
+- it does not expose a way to enumerate all node ids or all role names;
+- because of that, the export script needs a manifest that lists `nodeIds` and `roleNames` to query.
+
+Manifest example:
+
+```json
+{
+  "rpcUrl": "http://127.0.0.1:8545",
+  "contractAddress": "0x0000000000000000000000000000000000000000",
+  "choreographyId": "PizzaDelivery",
+  "nodeIds": ["StartEvent_00yy9i8", "ChoreographyTask_0hy9n0g"],
+  "roleNames": ["Customer", "Pizza Place"],
+  "outputPath": "../input/pizza-delivery-from-contract.generated.json"
+}
+```
+
+The exported JSON keeps the same core structure used by the library and adds a top-level `contractExport` metadata block.
 
 ## Current Rules
 
