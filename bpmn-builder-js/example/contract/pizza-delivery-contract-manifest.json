@@ -7,10 +7,5 @@
     "id": "PizzaDelivery_definitions",
     "targetNamespace": "http://example.com/pizza-delivery"
   },
-  "participantIds": {
-    "Customer": "Participant_06qakjv",
-    "Pizza Place": "Participant_0mgz9si",
-    "Delivery Boy": "Participant_0537iz2"
-  },
   "outputPath": "../input/pizza-delivery-from-contract.generated.json"
 }

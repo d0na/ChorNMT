@@ -174,7 +174,7 @@ How the contract export works:
 
 - the contract exposes `getNode(name)`, `getNodeNames()`, `getRole(role)`, and `getRoleNames()`;
 - node names and role names are stored on-chain, so the export script can discover them automatically;
-- the manifest is only used for RPC/configuration and optional custom BPMN id overrides.
+- the manifest is only used for RPC/configuration and output metadata.
 
 Manifest example:
 
