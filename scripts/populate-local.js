@@ -70,12 +70,16 @@ export async function populateContract(contractAddress) {
   const signer = new Wallet(DEPLOYER_PRIVATE_KEY, provider);
   const contract = new Contract(contractAddress, BPMN_CHOREOGRAPHY_ABI, signer);
   const accounts = await provider.send("eth_accounts", []);
+  let nonce = await provider.getTransactionCount(signer.address, "latest");
 
   const roleAddresses = buildRoleAddresses(accounts, PIZZA_DELIVERY_CHOREOGRAPHY.roles);
   const nodePayload = buildNodePayload(PIZZA_DELIVERY_CHOREOGRAPHY.nodes);
 
-  const setRolesTx = await contract.setRoles(PIZZA_DELIVERY_CHOREOGRAPHY.roles, roleAddresses);
+  const setRolesTx = await contract.setRoles(PIZZA_DELIVERY_CHOREOGRAPHY.roles, roleAddresses, {
+    nonce
+  });
   await setRolesTx.wait();
+  nonce += 1;
 
   const setNodesTx = await contract.setNodes(
     nodePayload.names,
@@ -86,7 +90,10 @@ export async function populateContract(contractAddress) {
     nodePayload.initiatorRoles,
     nodePayload.participantRoles,
     nodePayload.initiatingMessages,
-    nodePayload.returnMessages
+    nodePayload.returnMessages,
+    {
+      nonce
+    }
   );
   await setNodesTx.wait();
 
