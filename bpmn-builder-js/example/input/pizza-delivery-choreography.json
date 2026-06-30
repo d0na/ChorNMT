@@ -1,0 +1,165 @@
+{
+  "definitions": {
+    "id": "_tTv5YOycEeiHGOQ2NkJZNQ",
+    "targetNamespace": "http://bpmn.io/schema/bpmn"
+  },
+  "messages": [
+    {
+      "id": "Message_0apoe9s"
+    },
+    {
+      "id": "Message_1rnq4x3",
+      "name": "pizza"
+    },
+    {
+      "id": "Message_1mi4idx"
+    },
+    {
+      "id": "Message_1pam53q",
+      "name": "pizza order"
+    }
+  ],
+  "choreography": {
+    "id": "PizzaDelivery",
+    "participants": [
+      {
+        "id": "Participant_06qakjv",
+        "name": "Customer"
+      },
+      {
+        "id": "Participant_0mgz9si",
+        "name": "Pizza Place"
+      },
+      {
+        "id": "Participant_0537iz2",
+        "name": "Delivery Boy"
+      }
+    ],
+    "messageFlows": [
+      {
+        "id": "MessageFlow_1yk9l5x",
+        "sourceRef": "Participant_0537iz2",
+        "targetRef": "Participant_0mgz9si",
+        "messageRef": "Message_0apoe9s"
+      },
+      {
+        "id": "MessageFlow_03drbju",
+        "sourceRef": "Participant_0537iz2",
+        "targetRef": "Participant_06qakjv",
+        "messageRef": "Message_1rnq4x3"
+      },
+      {
+        "id": "MessageFlow_0dnembp",
+        "sourceRef": "Participant_0mgz9si",
+        "targetRef": "Participant_0537iz2",
+        "messageRef": "Message_1mi4idx"
+      },
+      {
+        "id": "MessageFlow_0nzo41l",
+        "sourceRef": "Participant_06qakjv",
+        "targetRef": "Participant_0mgz9si",
+        "messageRef": "Message_1pam53q"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "StartEvent_00yy9i8",
+        "type": "startEvent",
+        "outgoing": ["SequenceFlow_0dy5er9"]
+      },
+      {
+        "id": "ChoreographyTask_0hy9n0g",
+        "type": "choreographyTask",
+        "name": "order pizza",
+        "initiatingParticipantRef": "Participant_06qakjv",
+        "incoming": ["SequenceFlow_0dy5er9"],
+        "outgoing": ["SequenceFlow_036yo13"],
+        "participantRef": ["Participant_06qakjv", "Participant_0mgz9si"],
+        "messageFlowRef": ["MessageFlow_0nzo41l"]
+      },
+      {
+        "id": "ChoreographyTask_1m3qduh",
+        "type": "choreographyTask",
+        "name": "hand over pizza",
+        "initiatingParticipantRef": "Participant_0mgz9si",
+        "incoming": ["SequenceFlow_036yo13"],
+        "outgoing": ["SequenceFlow_0esuuaj", "Flow_1ayx4uc"],
+        "participantRef": ["Participant_0mgz9si", "Participant_0537iz2"],
+        "messageFlowRef": ["MessageFlow_0dnembp"]
+      },
+      {
+        "id": "ChoreographyTask_175oxwe",
+        "type": "choreographyTask",
+        "name": "deliver pizza",
+        "initiatingParticipantRef": "Participant_0537iz2",
+        "incoming": ["SequenceFlow_0esuuaj"],
+        "outgoing": ["SequenceFlow_0xamnn2"],
+        "participantRef": ["Participant_0537iz2", "Participant_06qakjv"],
+        "messageFlowRef": ["MessageFlow_03drbju"]
+      },
+      {
+        "id": "EndEvent_1lv264w",
+        "type": "endEvent",
+        "incoming": ["SequenceFlow_0xamnn2"]
+      },
+      {
+        "id": "Gateway_0uylbds",
+        "type": "parallelGateway",
+        "incoming": ["Flow_1ayx4uc"],
+        "outgoing": ["Flow_0ellq4t"]
+      },
+      {
+        "id": "ChoreographyTask_0nsu805",
+        "type": "choreographyTask",
+        "name": "New Activity",
+        "initiatingParticipantRef": "Participant_0537iz2",
+        "incoming": ["Flow_0ellq4t"],
+        "outgoing": ["Flow_1cj8k0v"],
+        "participantRef": ["Participant_0537iz2", "Participant_0mgz9si"],
+        "messageFlowRef": ["MessageFlow_1yk9l5x"]
+      },
+      {
+        "id": "Event_0uvb68p",
+        "type": "endEvent",
+        "incoming": ["Flow_1cj8k0v"]
+      }
+    ],
+    "sequenceFlows": [
+      {
+        "id": "SequenceFlow_0dy5er9",
+        "sourceRef": "StartEvent_00yy9i8",
+        "targetRef": "ChoreographyTask_0hy9n0g"
+      },
+      {
+        "id": "SequenceFlow_036yo13",
+        "sourceRef": "ChoreographyTask_0hy9n0g",
+        "targetRef": "ChoreographyTask_1m3qduh"
+      },
+      {
+        "id": "SequenceFlow_0esuuaj",
+        "sourceRef": "ChoreographyTask_1m3qduh",
+        "targetRef": "ChoreographyTask_175oxwe"
+      },
+      {
+        "id": "SequenceFlow_0xamnn2",
+        "sourceRef": "ChoreographyTask_175oxwe",
+        "targetRef": "EndEvent_1lv264w"
+      },
+      {
+        "id": "Flow_1ayx4uc",
+        "sourceRef": "ChoreographyTask_1m3qduh",
+        "targetRef": "Gateway_0uylbds"
+      },
+      {
+        "id": "Flow_0ellq4t",
+        "sourceRef": "Gateway_0uylbds",
+        "targetRef": "ChoreographyTask_0nsu805"
+      },
+      {
+        "id": "Flow_1cj8k0v",
+        "sourceRef": "ChoreographyTask_0nsu805",
+        "targetRef": "Event_0uvb68p"
+      }
+    ]
+  }
+}

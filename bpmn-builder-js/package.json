@@ -1,0 +1,19 @@
+{
+  "name": "bpmn-builder-js",
+  "version": "0.1.0",
+  "description": "Generate BPMN XML from structured JSON input.",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "generate:example": "node ./scripts/generate-example.js"
+  },
+  "dependencies": {
+    "bpmn-moddle": "^10.0.0"
+  }
+}
