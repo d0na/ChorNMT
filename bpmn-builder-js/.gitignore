@@ -1,0 +1,22 @@
+.DS_Store
+
+# Dependencies
+node_modules/
+
+# Package manager logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build and test artifacts
+coverage/
+dist/
+
+# Environment files
+.env
+.env.*
+
+# Generated BPMN outputs
+example/output/*.generated.bpmn
+example/output/*.generated.bpmn.xml
