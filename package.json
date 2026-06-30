@@ -5,7 +5,10 @@
   "scripts": {
     "compile": "hardhat compile",
     "node": "hardhat node",
-    "deploy:local": "node scripts/deploy-local.js"
+    "deploy:local": "node scripts/deploy-local.js",
+    "populate:local": "node scripts/populate-local.js",
+    "flow:local": "node scripts/run-local-flow.js",
+    "clean": "node scripts/clean.js"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^4.0.13",

@@ -11,6 +11,9 @@ ChorNMT/
   scripts/
     deploy-local.js
     deploy.js
+    populate-local.js
+    run-local-flow.js
+    clean.js
   bpmn-builder-js/
     ...
   hardhat.config.js
@@ -71,6 +74,31 @@ The current local deployment address obtained during setup was:
 
 This address is valid for the current local Hardhat chain state. If you restart the node from a clean state and redeploy, you may get the same address again with the default deployer account.
 
+## Populate The Contract
+
+Once the contract is deployed, populate it with the built-in pizza delivery example:
+
+```bash
+npm run populate:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3
+```
+
+## Run The Full Local Flow
+
+Assuming the local chain is already running and the contract is already deployed, this command:
+
+- populates the contract
+- exports choreography data to BPMN-like JSON
+- generates BPMN XML from that JSON
+
+```bash
+npm run flow:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3
+```
+
+Generated files:
+
+- `bpmn-builder-js/example/input/pizza-delivery-from-contract.generated.json`
+- `bpmn-builder-js/example/input/pizza-delivery-from-contract.generated.bpmn.xml`
+
 ## Contract Files
 
 There are two copies of the contract source:
@@ -109,4 +137,7 @@ See:
 npm run compile
 npm run node
 npm run deploy:local
+npm run populate:local -- <contract-address>
+npm run flow:local -- <contract-address>
+npm run clean
 ```

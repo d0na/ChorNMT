@@ -359,14 +359,14 @@ function mapNodesToChoreographyNodes(
   });
 }
 
-async function loadManifest(manifestPath) {
+export async function loadManifest(manifestPath) {
   const content = await fs.readFile(manifestPath, "utf8");
   const manifest = JSON.parse(content);
   assertManifest(manifest);
   return manifest;
 }
 
-async function readRoles(contract) {
+export async function readRoles(contract) {
   const roleNames = await contract.methods.getRoleNames().call();
 
   return Promise.all(
@@ -377,7 +377,7 @@ async function readRoles(contract) {
   );
 }
 
-async function readNodes(contract) {
+export async function readNodes(contract) {
   const nodeNames = await contract.methods.getNodeNames().call();
   const nodes = await Promise.all(
     nodeNames.map(async (name) => normalizeNode(await contract.methods.getNode(name).call()))
@@ -392,7 +392,7 @@ async function readNodes(contract) {
   return nodes;
 }
 
-function buildOutput(manifest, roles, nodes) {
+export function buildOutput(manifest, roles, nodes) {
   const { participants, participantByRole } = createParticipants(roles, manifest);
   const nodeIdByName = createNodeIdMap(nodes, manifest);
   const { sequenceFlows, incomingByNodeId, outgoingByNodeId } = createSequenceFlows(
@@ -441,14 +441,7 @@ function buildOutput(manifest, roles, nodes) {
   };
 }
 
-async function main() {
-  const manifestArg = process.argv[2];
-  const outputArg = process.argv[3];
-
-  if (!manifestArg) {
-    throw new Error("Usage: node ./scripts/web3.js <manifest-path> [output-path]");
-  }
-
+export async function exportContractToJson(manifestArg, outputArg) {
   const manifestPath = path.resolve(process.cwd(), manifestArg);
   const manifest = await loadManifest(manifestPath);
   const web3 = new Web3(manifest.rpcUrl);
@@ -462,9 +455,24 @@ async function main() {
   await fs.writeFile(outputPath, `${JSON.stringify(output, null, 2)}\n`, "utf8");
 
   process.stdout.write(`Exported choreography JSON to ${outputPath}\n`);
+
+  return { output, outputPath, manifest };
 }
 
-main().catch((error) => {
-  process.stderr.write(`${error.message}\n`);
-  process.exitCode = 1;
-});
+async function main() {
+  const manifestArg = process.argv[2];
+  const outputArg = process.argv[3];
+
+  if (!manifestArg) {
+    throw new Error("Usage: node ./scripts/web3.js <manifest-path> [output-path]");
+  }
+
+  await exportContractToJson(manifestArg, outputArg);
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  main().catch((error) => {
+    process.stderr.write(`${error.message}\n`);
+    process.exitCode = 1;
+  });
+}
