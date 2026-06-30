@@ -1,0 +1,36 @@
+{
+  "process": {
+    "id": "Process_OrderFlow",
+    "name": "Order Flow",
+    "isExecutable": false,
+    "nodes": [
+      {
+        "id": "StartEvent_OrderReceived",
+        "type": "startEvent",
+        "name": "Order received"
+      },
+      {
+        "id": "Task_ValidateOrder",
+        "type": "task",
+        "name": "Validate order"
+      },
+      {
+        "id": "EndEvent_OrderProcessed",
+        "type": "endEvent",
+        "name": "Order processed"
+      }
+    ],
+    "sequenceFlows": [
+      {
+        "id": "Flow_Start_To_Validate",
+        "sourceRef": "StartEvent_OrderReceived",
+        "targetRef": "Task_ValidateOrder"
+      },
+      {
+        "id": "Flow_Validate_To_End",
+        "sourceRef": "Task_ValidateOrder",
+        "targetRef": "EndEvent_OrderProcessed"
+      }
+    ]
+  }
+}
