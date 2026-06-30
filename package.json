@@ -1,0 +1,15 @@
+{
+  "name": "chornmt",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "compile": "hardhat compile",
+    "node": "hardhat node",
+    "deploy:local": "node scripts/deploy-local.js"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^4.0.13",
+    "ethers": "^6.17.0",
+    "hardhat": "^3.9.0"
+  }
+}
