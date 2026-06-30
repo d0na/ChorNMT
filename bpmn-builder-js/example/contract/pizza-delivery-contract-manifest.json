@@ -7,21 +7,6 @@
     "id": "PizzaDelivery_definitions",
     "targetNamespace": "http://example.com/pizza-delivery"
   },
-  "nodeIds": [
-    "StartEvent_00yy9i8",
-    "ChoreographyTask_0hy9n0g",
-    "ChoreographyTask_1m3qduh",
-    "ChoreographyTask_175oxwe",
-    "Gateway_0uylbds",
-    "ChoreographyTask_0nsu805",
-    "EndEvent_1lv264w",
-    "Event_0uvb68p"
-  ],
-  "roleNames": [
-    "Customer",
-    "Pizza Place",
-    "Delivery Boy"
-  ],
   "participantIds": {
     "Customer": "Participant_06qakjv",
     "Pizza Place": "Participant_0mgz9si",

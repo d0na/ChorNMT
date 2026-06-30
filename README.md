@@ -93,9 +93,10 @@ npm run export:contract -- ./example/contract/pizza-delivery-contract-manifest.j
 
 Important constraint:
 
-- `BPMNChoreography.sol` exposes `getNode(id)` and `getRole(role)`
-- it does not expose full node or role enumeration
-- because of that, the export script requires a manifest listing `nodeIds` and `roleNames`
+- `BPMNChoreography.sol` is name-based, not id-based
+- it exposes `getNode(name)`, `getNodeNames()`, `getRole(role)`, and `getRoleNames()`
+- the contract stores the full list of node names and role names internally, so the export script can read everything automatically
+- BPMN ids are generated later by the export mapper in `bpmn-builder-js`
 
 See:
 

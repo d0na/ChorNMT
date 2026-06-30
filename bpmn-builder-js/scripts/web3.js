@@ -8,12 +8,11 @@ const __dirname = path.dirname(__filename);
 
 const CONTRACT_ABI = [
   {
-    inputs: [{ internalType: "string", name: "id", type: "string" }],
+    inputs: [{ internalType: "string", name: "name", type: "string" }],
     name: "getNode",
     outputs: [
       { internalType: "string", name: "", type: "string" },
       { internalType: "enum BPMNChoreography.NodeType", name: "", type: "uint8" },
-      { internalType: "string", name: "", type: "string" },
       { internalType: "string[]", name: "", type: "string[]" },
       { internalType: "string[]", name: "", type: "string[]" },
       { internalType: "string[]", name: "", type: "string[]" },
@@ -26,23 +25,57 @@ const CONTRACT_ABI = [
     type: "function"
   },
   {
+    inputs: [],
+    name: "getNodeNames",
+    outputs: [{ internalType: "string[]", name: "", type: "string[]" }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
     inputs: [{ internalType: "string", name: "role", type: "string" }],
     name: "getRole",
     outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "getRoleNames",
+    outputs: [{ internalType: "string[]", name: "", type: "string[]" }],
     stateMutability: "view",
     type: "function"
   }
 ];
 
 const NODE_TYPE_MAP = {
-  0: { type: "startEvent", contractNodeType: "START_EVENT" },
-  1: { type: "endEvent", contractNodeType: "END_EVENT" },
-  2: { type: "choreographyTask", contractNodeType: "TASK" },
-  3: { type: "exclusiveGateway", contractNodeType: "EXCLUSIVE_SPLIT", gatewayKind: "split" },
-  4: { type: "exclusiveGateway", contractNodeType: "EXCLUSIVE_JOIN", gatewayKind: "join" },
-  5: { type: "parallelGateway", contractNodeType: "PARALLEL_SPLIT", gatewayKind: "split" },
-  6: { type: "parallelGateway", contractNodeType: "PARALLEL_JOIN", gatewayKind: "join" },
-  7: { type: "eventBasedGateway", contractNodeType: "EVENT_BASED_GATEWAY" }
+  0: { type: "startEvent", contractNodeType: "START_EVENT", idPrefix: "StartEvent" },
+  1: { type: "endEvent", contractNodeType: "END_EVENT", idPrefix: "EndEvent" },
+  2: { type: "choreographyTask", contractNodeType: "TASK", idPrefix: "ChoreographyTask" },
+  3: {
+    type: "exclusiveGateway",
+    contractNodeType: "EXCLUSIVE_SPLIT",
+    gatewayKind: "split",
+    idPrefix: "ExclusiveGateway"
+  },
+  4: {
+    type: "exclusiveGateway",
+    contractNodeType: "EXCLUSIVE_JOIN",
+    gatewayKind: "join",
+    idPrefix: "ExclusiveGateway"
+  },
+  5: {
+    type: "parallelGateway",
+    contractNodeType: "PARALLEL_SPLIT",
+    gatewayKind: "split",
+    idPrefix: "ParallelGateway"
+  },
+  6: {
+    type: "parallelGateway",
+    contractNodeType: "PARALLEL_JOIN",
+    gatewayKind: "join",
+    idPrefix: "ParallelGateway"
+  },
+  7: { type: "eventBasedGateway", contractNodeType: "EVENT_BASED_GATEWAY", idPrefix: "EventBasedGateway" }
 };
 
 function toArray(value) {
@@ -75,16 +108,15 @@ function createIdFactory(prefix, configuredMap = {}) {
 
 function normalizeNode(rawNode) {
   return {
-    id: rawNode[0],
+    name: rawNode[0],
     nodeType: Number(rawNode[1]),
-    name: rawNode[2],
-    incoming: toArray(rawNode[3]),
-    outgoing: toArray(rawNode[4]),
-    conditions: toArray(rawNode[5]),
-    initiatorRole: rawNode[6],
-    participantRole: rawNode[7],
-    initiatingMessage: rawNode[8],
-    returnMessage: rawNode[9]
+    incoming: toArray(rawNode[2]),
+    outgoing: toArray(rawNode[3]),
+    conditions: toArray(rawNode[4]),
+    initiatorRole: rawNode[5],
+    participantRole: rawNode[6],
+    initiatingMessage: rawNode[7],
+    returnMessage: rawNode[8]
   };
 }
 
@@ -100,14 +132,6 @@ function assertManifest(manifest) {
   if (!manifest.contractAddress) {
     throw new Error('Manifest must contain "contractAddress".');
   }
-
-  if (!Array.isArray(manifest.nodeIds) || manifest.nodeIds.length === 0) {
-    throw new Error('Manifest must contain a non-empty "nodeIds" array.');
-  }
-
-  if (!Array.isArray(manifest.roleNames) || manifest.roleNames.length === 0) {
-    throw new Error('Manifest must contain a non-empty "roleNames" array.');
-  }
 }
 
 function resolveOutputPath(manifestPath, manifest, cliOutputPath) {
@@ -122,45 +146,6 @@ function resolveOutputPath(manifestPath, manifest, cliOutputPath) {
   return path.resolve(path.dirname(manifestPath), "..", "input", "contract-export.generated.json");
 }
 
-function createSequenceFlows(nodes, manifest) {
-  const configuredIds = manifest.sequenceFlowIds || {};
-  const makeSequenceFlowId = createIdFactory("Flow", configuredIds);
-  const sequenceFlows = [];
-  const incomingByNode = new Map();
-  const outgoingByNode = new Map();
-
-  for (const node of nodes) {
-    for (let index = 0; index < node.outgoing.length; index += 1) {
-      const targetRef = node.outgoing[index];
-      const edgeKey = `${node.id}->${targetRef}`;
-      const flowId = makeSequenceFlowId(edgeKey, `${node.id}_to_${targetRef}`);
-      const condition = node.conditions[index] || "";
-      const flow = {
-        id: flowId,
-        sourceRef: node.id,
-        targetRef
-      };
-
-      if (condition) {
-        flow.name = condition;
-        flow.condition = condition;
-      }
-
-      sequenceFlows.push(flow);
-
-      const outgoing = outgoingByNode.get(node.id) || [];
-      outgoing.push(flowId);
-      outgoingByNode.set(node.id, outgoing);
-
-      const incoming = incomingByNode.get(targetRef) || [];
-      incoming.push(flowId);
-      incomingByNode.set(targetRef, incoming);
-    }
-  }
-
-  return { sequenceFlows, incomingByNode, outgoingByNode };
-}
-
 function createParticipants(roles, manifest) {
   const configuredIds = manifest.participantIds || {};
   const makeParticipantId = createIdFactory("Participant", configuredIds);
@@ -171,11 +156,83 @@ function createParticipants(roles, manifest) {
     address: role.address
   }));
 
-  const byRole = new Map(participants.map((participant) => [participant.role, participant]));
-  return { participants, participantByRole: byRole };
+  return {
+    participants,
+    participantByRole: new Map(participants.map((participant) => [participant.role, participant]))
+  };
 }
 
-function createMessagesAndFlows(nodes, participantByRole, manifest) {
+function createNodeIdMap(nodes, manifest) {
+  const configuredIds = manifest.nodeIds || {};
+  const factoriesByPrefix = new Map();
+  const nodeIdByName = new Map();
+
+  for (const node of nodes) {
+    const typeInfo = NODE_TYPE_MAP[node.nodeType];
+
+    if (!typeInfo) {
+      throw new Error(`Unsupported node type "${node.nodeType}" for node "${node.name}".`);
+    }
+
+    if (!factoriesByPrefix.has(typeInfo.idPrefix)) {
+      factoriesByPrefix.set(typeInfo.idPrefix, createIdFactory(typeInfo.idPrefix, configuredIds));
+    }
+
+    const makeNodeId = factoriesByPrefix.get(typeInfo.idPrefix);
+    nodeIdByName.set(node.name, makeNodeId(node.name, node.name));
+  }
+
+  return nodeIdByName;
+}
+
+function createSequenceFlows(nodes, nodeIdByName, manifest) {
+  const configuredIds = manifest.sequenceFlowIds || {};
+  const makeSequenceFlowId = createIdFactory("Flow", configuredIds);
+  const sequenceFlows = [];
+  const incomingByNodeId = new Map();
+  const outgoingByNodeId = new Map();
+
+  for (const node of nodes) {
+    const sourceId = nodeIdByName.get(node.name);
+
+    for (let index = 0; index < node.outgoing.length; index += 1) {
+      const targetName = node.outgoing[index];
+      const targetId = nodeIdByName.get(targetName);
+
+      if (!targetId) {
+        throw new Error(`Node "${node.name}" references unknown outgoing node "${targetName}".`);
+      }
+
+      const edgeKey = `${node.name}->${targetName}`;
+      const flowId = makeSequenceFlowId(edgeKey, `${node.name}_to_${targetName}`);
+      const condition = node.conditions[index] || "";
+      const flow = {
+        id: flowId,
+        sourceRef: sourceId,
+        targetRef: targetId
+      };
+
+      if (condition) {
+        flow.name = condition;
+        flow.condition = condition;
+      }
+
+      sequenceFlows.push(flow);
+
+      const outgoing = outgoingByNodeId.get(sourceId) || [];
+      outgoing.push(flowId);
+      outgoingByNodeId.set(sourceId, outgoing);
+
+      const incoming = incomingByNodeId.get(targetId) || [];
+      incoming.push(flowId);
+      incomingByNodeId.set(targetId, incoming);
+    }
+  }
+
+  return { sequenceFlows, incomingByNodeId, outgoingByNodeId };
+}
+
+function createMessagesAndFlows(nodes, nodeIdByName, participantByRole, manifest) {
   const configuredMessageIds = manifest.messageIds || {};
   const configuredMessageFlowIds = manifest.messageFlowIds || {};
   const makeMessageId = createIdFactory("Message", configuredMessageIds);
@@ -183,24 +240,22 @@ function createMessagesAndFlows(nodes, participantByRole, manifest) {
 
   const messages = [];
   const messageFlows = [];
-  const messageFlowRefsByNode = new Map();
+  const messageFlowRefsByNodeId = new Map();
 
   for (const node of nodes) {
-    const nodeMessageFlowRefs = [];
+    const nodeId = nodeIdByName.get(node.name);
     const initiator = participantByRole.get(node.initiatorRole);
     const participant = participantByRole.get(node.participantRole);
+    const nodeMessageFlowRefs = [];
 
     if (node.initiatingMessage && initiator && participant) {
-      const messageId = makeMessageId(`${node.id}:initiating`, `${node.id}_initiating_message`);
+      const messageId = makeMessageId(`${node.name}:initiating`, `${node.name}_initiating_message`);
       const messageFlowId = makeMessageFlowId(
-        `${node.id}:initiating`,
-        `${node.id}_initiating_flow`
+        `${node.name}:initiating`,
+        `${node.name}_initiating_flow`
       );
 
-      messages.push({
-        id: messageId,
-        name: node.initiatingMessage
-      });
+      messages.push({ id: messageId, name: node.initiatingMessage });
       messageFlows.push({
         id: messageFlowId,
         sourceRef: initiator.id,
@@ -211,13 +266,10 @@ function createMessagesAndFlows(nodes, participantByRole, manifest) {
     }
 
     if (node.returnMessage && initiator && participant) {
-      const messageId = makeMessageId(`${node.id}:return`, `${node.id}_return_message`);
-      const messageFlowId = makeMessageFlowId(`${node.id}:return`, `${node.id}_return_flow`);
+      const messageId = makeMessageId(`${node.name}:return`, `${node.name}_return_message`);
+      const messageFlowId = makeMessageFlowId(`${node.name}:return`, `${node.name}_return_flow`);
 
-      messages.push({
-        id: messageId,
-        name: node.returnMessage
-      });
+      messages.push({ id: messageId, name: node.returnMessage });
       messageFlows.push({
         id: messageFlowId,
         sourceRef: participant.id,
@@ -228,43 +280,39 @@ function createMessagesAndFlows(nodes, participantByRole, manifest) {
     }
 
     if (nodeMessageFlowRefs.length > 0) {
-      messageFlowRefsByNode.set(node.id, nodeMessageFlowRefs);
+      messageFlowRefsByNodeId.set(nodeId, nodeMessageFlowRefs);
     }
   }
 
-  return { messages, messageFlows, messageFlowRefsByNode };
+  return { messages, messageFlows, messageFlowRefsByNodeId };
 }
 
 function mapNodesToChoreographyNodes(
   nodes,
+  nodeIdByName,
   participantByRole,
-  incomingByNode,
-  outgoingByNode,
-  messageFlowRefsByNode
+  incomingByNodeId,
+  outgoingByNodeId,
+  messageFlowRefsByNodeId
 ) {
   return nodes.map((node) => {
     const typeInfo = NODE_TYPE_MAP[node.nodeType];
-
-    if (!typeInfo) {
-      throw new Error(`Unsupported node type "${node.nodeType}" for node "${node.id}".`);
-    }
+    const nodeId = nodeIdByName.get(node.name);
 
     const result = {
-      id: node.id,
+      id: nodeId,
+      name: node.name,
       type: typeInfo.type,
-      contractNodeType: typeInfo.contractNodeType
+      contractNodeType: typeInfo.contractNodeType,
+      contractName: node.name
     };
 
-    if (node.name) {
-      result.name = node.name;
-    }
-
-    const incoming = incomingByNode.get(node.id) || [];
+    const incoming = incomingByNodeId.get(nodeId) || [];
     if (incoming.length > 0) {
       result.incoming = incoming;
     }
 
-    const outgoing = outgoingByNode.get(node.id) || [];
+    const outgoing = outgoingByNodeId.get(nodeId) || [];
     if (outgoing.length > 0) {
       result.outgoing = outgoing;
     }
@@ -292,7 +340,7 @@ function mapNodesToChoreographyNodes(
       result.participantRef = participantRefs;
     }
 
-    const messageFlowRefs = messageFlowRefsByNode.get(node.id) || [];
+    const messageFlowRefs = messageFlowRefsByNodeId.get(nodeId) || [];
     if (messageFlowRefs.length > 0) {
       result.messageFlowRef = messageFlowRefs;
     }
@@ -300,11 +348,9 @@ function mapNodesToChoreographyNodes(
     if (node.conditions.length > 0) {
       result.contractConditions = node.conditions;
     }
-
     if (node.initiatorRole) {
       result.contractInitiatorRole = node.initiatorRole;
     }
-
     if (node.participantRole) {
       result.contractParticipantRole = node.participantRole;
     }
@@ -320,7 +366,9 @@ async function loadManifest(manifestPath) {
   return manifest;
 }
 
-async function readRoles(contract, roleNames) {
+async function readRoles(contract) {
+  const roleNames = await contract.methods.getRoleNames().call();
+
   return Promise.all(
     roleNames.map(async (name) => ({
       name,
@@ -329,14 +377,15 @@ async function readRoles(contract, roleNames) {
   );
 }
 
-async function readNodes(contract, nodeIds) {
+async function readNodes(contract) {
+  const nodeNames = await contract.methods.getNodeNames().call();
   const nodes = await Promise.all(
-    nodeIds.map(async (id) => normalizeNode(await contract.methods.getNode(id).call()))
+    nodeNames.map(async (name) => normalizeNode(await contract.methods.getNode(name).call()))
   );
 
   nodes.forEach((node, index) => {
-    if (!node.id) {
-      throw new Error(`Contract returned an empty node for requested id "${nodeIds[index]}".`);
+    if (!node.name) {
+      throw new Error(`Contract returned an empty node for requested name "${nodeNames[index]}".`);
     }
   });
 
@@ -344,10 +393,16 @@ async function readNodes(contract, nodeIds) {
 }
 
 function buildOutput(manifest, roles, nodes) {
-  const { sequenceFlows, incomingByNode, outgoingByNode } = createSequenceFlows(nodes, manifest);
   const { participants, participantByRole } = createParticipants(roles, manifest);
-  const { messages, messageFlows, messageFlowRefsByNode } = createMessagesAndFlows(
+  const nodeIdByName = createNodeIdMap(nodes, manifest);
+  const { sequenceFlows, incomingByNodeId, outgoingByNodeId } = createSequenceFlows(
     nodes,
+    nodeIdByName,
+    manifest
+  );
+  const { messages, messageFlows, messageFlowRefsByNodeId } = createMessagesAndFlows(
+    nodes,
+    nodeIdByName,
     participantByRole,
     manifest
   );
@@ -358,8 +413,9 @@ function buildOutput(manifest, roles, nodes) {
       contractAddress: manifest.contractAddress,
       exportedAt: new Date().toISOString(),
       rpcUrl: manifest.rpcUrl,
-      nodeIds: manifest.nodeIds,
-      roleNames: manifest.roleNames
+      roleNames: roles.map((role) => role.name),
+      nodeNames: nodes.map((node) => node.name),
+      idsGeneratedBy: "bpmn-builder-js/scripts/web3.js"
     },
     definitions: {
       id: manifest.definitions?.id || `${manifest.choreographyId || "ContractChoreography"}_definitions`,
@@ -374,10 +430,11 @@ function buildOutput(manifest, roles, nodes) {
       messageFlows,
       nodes: mapNodesToChoreographyNodes(
         nodes,
+        nodeIdByName,
         participantByRole,
-        incomingByNode,
-        outgoingByNode,
-        messageFlowRefsByNode
+        incomingByNodeId,
+        outgoingByNodeId,
+        messageFlowRefsByNodeId
       ),
       sequenceFlows
     }
@@ -389,9 +446,7 @@ async function main() {
   const outputArg = process.argv[3];
 
   if (!manifestArg) {
-    throw new Error(
-      "Usage: node ./scripts/web3.js <manifest-path> [output-path]"
-    );
+    throw new Error("Usage: node ./scripts/web3.js <manifest-path> [output-path]");
   }
 
   const manifestPath = path.resolve(process.cwd(), manifestArg);
@@ -399,11 +454,7 @@ async function main() {
   const web3 = new Web3(manifest.rpcUrl);
   const contract = new web3.eth.Contract(CONTRACT_ABI, manifest.contractAddress);
 
-  const [roles, nodes] = await Promise.all([
-    readRoles(contract, manifest.roleNames),
-    readNodes(contract, manifest.nodeIds)
-  ]);
-
+  const [roles, nodes] = await Promise.all([readRoles(contract), readNodes(contract)]);
   const output = buildOutput(manifest, roles, nodes);
   const outputPath = resolveOutputPath(manifestPath, manifest, outputArg);
 
