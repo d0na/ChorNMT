@@ -96,8 +96,9 @@ npm run flow:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3
 
 Generated files:
 
-- `bpmn-builder-js/example/input/pizza-delivery-from-contract.generated.json`
-- `bpmn-builder-js/example/input/pizza-delivery-from-contract.generated.bpmn.xml`
+- `bpmn-builder-js/example/input/pizza-delivery-from-contract.raw.generated.json`
+- `bpmn-builder-js/example/input/pizza-delivery-from-contract.normalized.generated.json`
+- `bpmn-builder-js/example/output/pizza-delivery-from-contract.generated.bpmn.xml`
 
 ## Contract Files
 

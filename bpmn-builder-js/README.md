@@ -183,11 +183,11 @@ Manifest example:
   "rpcUrl": "http://127.0.0.1:8545",
   "contractAddress": "0x0000000000000000000000000000000000000000",
   "choreographyId": "PizzaDelivery",
-  "outputPath": "../input/pizza-delivery-from-contract.generated.json"
+  "outputPath": "../input/pizza-delivery-from-contract.raw.generated.json"
 }
 ```
 
-The exported JSON keeps the same core structure used by the library, adds a top-level `contractExport` metadata block, and generates BPMN ids from contract names.
+The export script produces a raw semantic JSON. BPMN ids are generated later by the library normalization step before XML generation.
 
 ## Current Rules
 

@@ -1,4 +1,5 @@
 import { validateInput } from "../validation.js";
+import { normalizeInput } from "../normalize.js";
 
 function buildDefinitionsId(processId) {
   return `${processId}_definitions`;
@@ -21,13 +22,14 @@ function toBpmnElementType(type) {
 }
 
 export function mapInputToDefinitionsDescriptor(input) {
-  validateInput(input);
+  const normalizedInput = normalizeInput(input);
+  validateInput(normalizedInput);
 
-  if (input.process) {
-    return mapProcessInput(input);
+  if (normalizedInput.process) {
+    return mapProcessInput(normalizedInput);
   }
 
-  return mapChoreographyInput(input);
+  return mapChoreographyInput(normalizedInput);
 }
 
 function mapProcessInput(input) {

@@ -7,5 +7,5 @@
     "id": "PizzaDelivery_definitions",
     "targetNamespace": "http://example.com/pizza-delivery"
   },
-  "outputPath": "../input/pizza-delivery-from-contract.generated.json"
+  "outputPath": "../input/pizza-delivery-from-contract.raw.generated.json"
 }
