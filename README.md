@@ -96,7 +96,7 @@ Available datasets:
 - `pizza-delivery` default
 - `paper-example`
 
-To populate the contract from the reference [paper-example.bpmn](/Users/francesco/workspace/git/resarch/ChorNMT/references/paper-example.bpmn):
+To populate the contract from the reference [paper-example.bpmn](references/paper-example.bpmn):
 
 ```bash
 npm run populate:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3 paper-example
@@ -171,14 +171,14 @@ The flow also writes a generated manifest under `bpmn-builder-js/example/contrac
 
 The project keeps one active contract source plus one historical reference:
 
-- [contracts/BPMNChoreography.sol](/Users/francesco/workspace/git/resarch/ChorNMT/contracts/BPMNChoreography.sol)
-- [references/BPMNChoreography.sol](/Users/francesco/workspace/git/resarch/ChorNMT/references/BPMNChoreography.sol)
+- [contracts/BPMNChoreography.sol](contracts/BPMNChoreography.sol)
+- [references/BPMNChoreography.sol](references/BPMNChoreography.sol)
 
 The `contracts/` version is the one used by Hardhat for compilation and deployment. The file under `references/` is preserved as starting material only.
 
 ## Export Contract Data To BPMN JSON
 
-The BPMN export flow lives in [bpmn-builder-js](/Users/francesco/workspace/git/resarch/ChorNMT/bpmn-builder-js).
+The BPMN export flow lives in [bpmn-builder-js](bpmn-builder-js).
 
 From that folder you can export choreography data from the deployed contract:
 
@@ -201,10 +201,10 @@ Important constraint:
 
 See:
 
-- [bpmn-builder-js/README.md](/Users/francesco/workspace/git/resarch/ChorNMT/bpmn-builder-js/README.md)
-- [docs/contract-hierarchy.md](/Users/francesco/workspace/git/resarch/ChorNMT/docs/contract-hierarchy.md)
-- [docs/delta-update-and-solidity-calls.md](/Users/francesco/workspace/git/resarch/ChorNMT/docs/delta-update-and-solidity-calls.md)
-- [references/paper-example.bpmn](/Users/francesco/workspace/git/resarch/ChorNMT/references/paper-example.bpmn)
+- [bpmn-builder-js/README.md](bpmn-builder-js/README.md)
+- [docs/contract-hierarchy.md](docs/contract-hierarchy.md)
+- [docs/delta-update-and-solidity-calls.md](docs/delta-update-and-solidity-calls.md)
+- [references/paper-example.bpmn](references/paper-example.bpmn)
 
 ## Useful Commands
 

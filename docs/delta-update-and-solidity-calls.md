@@ -8,7 +8,7 @@ This document describes:
 
 ## Script Purpose
 
-The script [scripts/augment-paper-example-local.js](/Users/francesco/workspace/git/resarch/ChorNMT/scripts/augment-paper-example-local.js) is a local example of an external update applied to an already populated choreography asset.
+The script [scripts/augment-paper-example-local.js](../scripts/augment-paper-example-local.js) is a local example of an external update applied to an already populated choreography asset.
 
 It performs these steps:
 
@@ -80,7 +80,7 @@ The script builds this logical payload before calling `setNodes(...)`:
 
 ## Contract Methods
 
-Reference: [contracts/choreography/ChoreographyMutableAsset.sol](/Users/francesco/workspace/git/resarch/ChorNMT/contracts/choreography/ChoreographyMutableAsset.sol:56)
+Reference: [contracts/choreography/ChoreographyMutableAsset.sol](../contracts/choreography/ChoreographyMutableAsset.sol)
 
 The relevant write methods are:
 
@@ -261,7 +261,7 @@ That means:
 
 ## Related Files
 
-- [scripts/augment-paper-example-local.js](/Users/francesco/workspace/git/resarch/ChorNMT/scripts/augment-paper-example-local.js)
-- [scripts/populate-local.js](/Users/francesco/workspace/git/resarch/ChorNMT/scripts/populate-local.js)
-- [scripts/run-local-flow.js](/Users/francesco/workspace/git/resarch/ChorNMT/scripts/run-local-flow.js)
-- [docs/contract-hierarchy.md](/Users/francesco/workspace/git/resarch/ChorNMT/docs/contract-hierarchy.md)
+- [scripts/augment-paper-example-local.js](../scripts/augment-paper-example-local.js)
+- [scripts/populate-local.js](../scripts/populate-local.js)
+- [scripts/run-local-flow.js](../scripts/run-local-flow.js)
+- [docs/contract-hierarchy.md](contract-hierarchy.md)
