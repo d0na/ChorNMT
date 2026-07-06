@@ -130,6 +130,21 @@ For the paper example:
 npm run flow:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3 paper-example
 ```
 
+To demonstrate an external update on the smart contract and render the difference, use:
+
+```bash
+npm run augment:paper-example -- <asset-address>
+```
+
+This command:
+
+- populates the asset with the baseline `paper-example`
+- renders the baseline BPMN
+- applies an external delta `setNodes(...)` update
+- updates only `Parallel Join`, the new `Activity4`, and `End`
+- adds two new messages, `msg5` and `msg6`
+- renders the updated BPMN to a second file so the difference is visible
+
 Generated files:
 
 - `bpmn-builder-js/example/input/pizza-delivery-from-contract.raw.generated.json`
@@ -156,14 +171,14 @@ The flow also writes a generated manifest under `bpmn-builder-js/example/contrac
 
 The project keeps one active contract source plus one historical reference:
 
-- [contracts/BPMNChoreography.sol](/Users/francesco/workspace/git/research/ChorNMT/contracts/BPMNChoreography.sol)
+- [contracts/BPMNChoreography.sol](/Users/francesco/workspace/git/resarch/ChorNMT/contracts/BPMNChoreography.sol)
 - [references/BPMNChoreography.sol](/Users/francesco/workspace/git/resarch/ChorNMT/references/BPMNChoreography.sol)
 
 The `contracts/` version is the one used by Hardhat for compilation and deployment. The file under `references/` is preserved as starting material only.
 
 ## Export Contract Data To BPMN JSON
 
-The BPMN export flow lives in [bpmn-builder-js](/Users/francesco/workspace/git/research/ChorNMT/bpmn-builder-js).
+The BPMN export flow lives in [bpmn-builder-js](/Users/francesco/workspace/git/resarch/ChorNMT/bpmn-builder-js).
 
 From that folder you can export choreography data from the deployed contract:
 
@@ -186,8 +201,9 @@ Important constraint:
 
 See:
 
-- [bpmn-builder-js/README.md](/Users/francesco/workspace/git/research/ChorNMT/bpmn-builder-js/README.md)
+- [bpmn-builder-js/README.md](/Users/francesco/workspace/git/resarch/ChorNMT/bpmn-builder-js/README.md)
 - [docs/contract-hierarchy.md](/Users/francesco/workspace/git/resarch/ChorNMT/docs/contract-hierarchy.md)
+- [docs/delta-update-and-solidity-calls.md](/Users/francesco/workspace/git/resarch/ChorNMT/docs/delta-update-and-solidity-calls.md)
 - [references/paper-example.bpmn](/Users/francesco/workspace/git/resarch/ChorNMT/references/paper-example.bpmn)
 
 ## Useful Commands
@@ -198,6 +214,7 @@ npm run node
 npm run deploy:local
 npm run populate:local -- <contract-address>
 npm run populate:local -- <contract-address> paper-example
+npm run augment:paper-example -- <asset-address>
 npm run flow:local -- <contract-address>
 npm run flow:local -- <contract-address> paper-example
 npm run clean
