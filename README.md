@@ -187,6 +187,7 @@ Important constraint:
 See:
 
 - [bpmn-builder-js/README.md](/Users/francesco/workspace/git/research/ChorNMT/bpmn-builder-js/README.md)
+- [docs/contract-hierarchy.md](/Users/francesco/workspace/git/resarch/ChorNMT/docs/contract-hierarchy.md)
 - [references/paper-example.bpmn](/Users/francesco/workspace/git/resarch/ChorNMT/references/paper-example.bpmn)
 
 ## Useful Commands
