@@ -8,6 +8,9 @@ Local Hardhat environment for the `BPMNChoreography` smart contract, plus the su
 ChorNMT/
   contracts/
     BPMNChoreography.sol
+  references/
+    BPMNChoreography.sol
+    paper-example.bpmn
   scripts/
     deploy-local.js
     deploy.js
@@ -93,7 +96,7 @@ Available datasets:
 - `pizza-delivery` default
 - `paper-example`
 
-To populate the contract from `paper-example.bpmn`:
+To populate the contract from the reference [paper-example.bpmn](/Users/francesco/workspace/git/resarch/ChorNMT/references/paper-example.bpmn):
 
 ```bash
 npm run populate:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3 paper-example
@@ -127,6 +130,21 @@ For the paper example:
 npm run flow:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3 paper-example
 ```
 
+To demonstrate an external update on the smart contract and render the difference, use:
+
+```bash
+npm run augment:paper-example -- <asset-address>
+```
+
+This command:
+
+- populates the asset with the baseline `paper-example`
+- renders the baseline BPMN
+- applies an external delta `setNodes(...)` update
+- updates only `Parallel Join`, the new `Activity4`, and `End`
+- adds two new messages, `msg5` and `msg6`
+- renders the updated BPMN to a second file so the difference is visible
+
 Generated files:
 
 - `bpmn-builder-js/example/input/pizza-delivery-from-contract.raw.generated.json`
@@ -151,25 +169,28 @@ The flow also writes a generated manifest under `bpmn-builder-js/example/contrac
 
 ## Contract Files
 
-There are two copies of the contract source:
+The project keeps one active contract source plus one historical reference:
 
-- [BPMNChoreography.sol](/Users/francesco/workspace/git/research/ChorNMT/BPMNChoreography.sol)
-- [contracts/BPMNChoreography.sol](/Users/francesco/workspace/git/research/ChorNMT/contracts/BPMNChoreography.sol)
+- [contracts/BPMNChoreography.sol](/Users/francesco/workspace/git/resarch/ChorNMT/contracts/BPMNChoreography.sol)
+- [references/BPMNChoreography.sol](/Users/francesco/workspace/git/resarch/ChorNMT/references/BPMNChoreography.sol)
 
-The root file is preserved as the original working copy. The `contracts/` version is the one used by Hardhat for compilation and deployment.
+The `contracts/` version is the one used by Hardhat for compilation and deployment. The file under `references/` is preserved as starting material only.
 
 ## Export Contract Data To BPMN JSON
 
-The BPMN export flow lives in [bpmn-builder-js](/Users/francesco/workspace/git/research/ChorNMT/bpmn-builder-js).
+The BPMN export flow lives in [bpmn-builder-js](/Users/francesco/workspace/git/resarch/ChorNMT/bpmn-builder-js).
 
 From that folder you can export choreography data from the deployed contract:
 
 ```bash
 cd bpmn-builder-js
-npm run export:contract -- ./example/contract/pizza-delivery-contract-manifest.json
+npm run export:contract -- ./example/contract/pizza-delivery-contract.generated.json
 ```
 
-`pizza-delivery-contract-manifest.json` is a checked-in example for manual export. The manifests created automatically by `flow:local` use the `*.generated.json` suffix and are not meant to be committed.
+The manifest path must point to either:
+
+- a generated `*.generated.json` file created by `flow:local`
+- or a local ad hoc manifest you create for manual export
 
 Important constraint:
 
@@ -180,8 +201,10 @@ Important constraint:
 
 See:
 
-- [bpmn-builder-js/README.md](/Users/francesco/workspace/git/research/ChorNMT/bpmn-builder-js/README.md)
-- [bpmn-builder-js/example/contract/pizza-delivery-contract-manifest.json](/Users/francesco/workspace/git/research/ChorNMT/bpmn-builder-js/example/contract/pizza-delivery-contract-manifest.json)
+- [bpmn-builder-js/README.md](/Users/francesco/workspace/git/resarch/ChorNMT/bpmn-builder-js/README.md)
+- [docs/contract-hierarchy.md](/Users/francesco/workspace/git/resarch/ChorNMT/docs/contract-hierarchy.md)
+- [docs/delta-update-and-solidity-calls.md](/Users/francesco/workspace/git/resarch/ChorNMT/docs/delta-update-and-solidity-calls.md)
+- [references/paper-example.bpmn](/Users/francesco/workspace/git/resarch/ChorNMT/references/paper-example.bpmn)
 
 ## Useful Commands
 
@@ -191,6 +214,7 @@ npm run node
 npm run deploy:local
 npm run populate:local -- <contract-address>
 npm run populate:local -- <contract-address> paper-example
+npm run augment:paper-example -- <asset-address>
 npm run flow:local -- <contract-address>
 npm run flow:local -- <contract-address> paper-example
 npm run clean

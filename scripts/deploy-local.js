@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { ContractFactory, JsonRpcProvider, Wallet } from "ethers";
+import { ContractFactory, JsonRpcProvider, NonceManager, Wallet } from "ethers";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,24 +12,94 @@ const DEPLOYER_PRIVATE_KEY =
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 
 async function main() {
-  const artifactPath = path.join(
-    __dirname,
-    "..",
-    "artifacts",
-    "contracts",
-    "BPMNChoreography.sol",
-    "BPMNChoreography.json"
+  const choreographyNmtArtifact = JSON.parse(
+    await fs.readFile(
+      path.join(
+        __dirname,
+        "..",
+        "artifacts",
+        "contracts",
+        "choreography",
+        "ChoreographyNMT.sol",
+        "ChoreographyNMT.json"
+      ),
+      "utf8"
+    )
   );
-  const artifact = JSON.parse(await fs.readFile(artifactPath, "utf8"));
+  const creatorPolicyArtifact = JSON.parse(
+    await fs.readFile(
+      path.join(
+        __dirname,
+        "..",
+        "artifacts",
+        "contracts",
+        "choreography",
+        "CreatorSmartPolicy.sol",
+        "CreatorSmartPolicy.json"
+      ),
+      "utf8"
+    )
+  );
+  const holderPolicyArtifact = JSON.parse(
+    await fs.readFile(
+      path.join(
+        __dirname,
+        "..",
+        "artifacts",
+        "contracts",
+        "choreography",
+        "HolderSmartPolicy.sol",
+        "HolderSmartPolicy.json"
+      ),
+      "utf8"
+    )
+  );
 
   const provider = new JsonRpcProvider(RPC_URL);
-  const signer = new Wallet(DEPLOYER_PRIVATE_KEY, provider);
-  const factory = new ContractFactory(artifact.abi, artifact.bytecode, signer);
-  const contract = await factory.deploy();
+  const signer = new NonceManager(new Wallet(DEPLOYER_PRIVATE_KEY, provider));
+  const deployerAddress = await signer.getAddress();
+  const creatorPolicyFactory = new ContractFactory(
+    creatorPolicyArtifact.abi,
+    creatorPolicyArtifact.bytecode,
+    signer
+  );
+  const holderPolicyFactory = new ContractFactory(
+    holderPolicyArtifact.abi,
+    holderPolicyArtifact.bytecode,
+    signer
+  );
+  const choreographyNmtFactory = new ContractFactory(
+    choreographyNmtArtifact.abi,
+    choreographyNmtArtifact.bytecode,
+    signer
+  );
 
-  await contract.waitForDeployment();
+  const creatorPolicy = await creatorPolicyFactory.deploy();
+  await creatorPolicy.waitForDeployment();
 
-  console.log(`BPMNChoreography deployed to: ${contract.target}`);
+  const holderPolicy = await holderPolicyFactory.deploy();
+  await holderPolicy.waitForDeployment();
+
+  const choreographyNmt = await choreographyNmtFactory.deploy();
+  await choreographyNmt.waitForDeployment();
+
+  const [assetAddress, tokenId] = await choreographyNmt.mint.staticCall(
+    deployerAddress,
+    creatorPolicy.target,
+    holderPolicy.target
+  );
+  const mintTx = await choreographyNmt.mint(
+    deployerAddress,
+    creatorPolicy.target,
+    holderPolicy.target
+  );
+  await mintTx.wait();
+
+  console.log(`ChoreographyNMT deployed to: ${choreographyNmt.target}`);
+  console.log(`CreatorSmartPolicy deployed to: ${creatorPolicy.target}`);
+  console.log(`HolderSmartPolicy deployed to: ${holderPolicy.target}`);
+  console.log(`ChoreographyMutableAsset minted at: ${assetAddress}`);
+  console.log(`Token ID: ${tokenId}`);
 }
 
 main().catch((error) => {

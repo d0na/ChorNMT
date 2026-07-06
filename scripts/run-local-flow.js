@@ -1,12 +1,8 @@
-import fs from "node:fs/promises";
-import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { generateBpmnXml, normalizeInput } from "../bpmn-builder-js/src/index.js";
-import { exportContractToJson } from "../bpmn-builder-js/scripts/web3.js";
 import { populateContract, resolveDataset } from "./populate-local.js";
+import { renderAssetToBpmn } from "./render-local-support.js";
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const DEFAULT_CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || "";
 const DEFAULT_DATASET = process.env.CHOREOGRAPHY_DATASET || "pizza-delivery";
@@ -27,10 +23,6 @@ const DATASET_MANIFESTS = {
   }
 };
 
-function projectPath(...segments) {
-  return path.join(__dirname, "..", ...segments);
-}
-
 function resolveDatasetManifest(datasetName) {
   const manifest = DATASET_MANIFESTS[datasetName];
 
@@ -41,44 +33,8 @@ function resolveDatasetManifest(datasetName) {
   return manifest;
 }
 
-async function writeManifest(contractAddress, datasetName) {
-  const datasetManifest = resolveDatasetManifest(datasetName);
-  const manifestPath = projectPath(
-    "bpmn-builder-js",
-    "example",
-    "contract",
-    `${datasetName}-contract-manifest.generated.json`
-  );
-  const manifest = {
-    rpcUrl: process.env.RPC_URL || "http://127.0.0.1:8545",
-    contractAddress,
-    choreographyId: datasetManifest.choreographyId,
-    choreographyName: datasetManifest.choreographyName,
-    definitions: {
-      id: datasetManifest.definitionsId,
-      targetNamespace: datasetManifest.targetNamespace
-    },
-    outputPath: `../input/${datasetManifest.outputBaseName}.raw.generated.json`
-  };
-
-  await fs.writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
-  return manifestPath;
-}
-
-function normalizedJsonPath(rawJsonPath) {
-  return rawJsonPath.replace(/\.raw\.generated\.json$/, ".normalized.generated.json");
-}
-
-async function writeNormalizedJson(rawJsonPath) {
-  const input = JSON.parse(await fs.readFile(rawJsonPath, "utf8"));
-  const normalized = normalizeInput(input);
-  const outputPath = normalizedJsonPath(rawJsonPath);
-
-  await fs.writeFile(outputPath, `${JSON.stringify(normalized, null, 2)}\n`, "utf8");
-  return outputPath;
-}
-
 async function assertContractExportMatchesDataset(rawJsonPath, datasetName) {
+  const fs = await import("node:fs/promises");
   const input = JSON.parse(await fs.readFile(rawJsonPath, "utf8"));
   const { dataset } = resolveDataset(datasetName);
   const expectedRoles = dataset.roles;
@@ -111,40 +67,31 @@ async function assertContractExportMatchesDataset(rawJsonPath, datasetName) {
   }
 }
 
-async function generateXmlFromJson(normalizedJsonPathValue) {
-  const input = JSON.parse(await fs.readFile(normalizedJsonPathValue, "utf8"));
-  const xml = await generateBpmnXml(input);
-  const outputPath = projectPath(
-    "bpmn-builder-js",
-    "example",
-    "output",
-    path.basename(normalizedJsonPathValue).replace(/\.normalized\.generated\.json$/, ".generated.bpmn.xml")
-  );
-
-  await fs.writeFile(outputPath, xml, "utf8");
-  return outputPath;
-}
-
 async function main() {
   const contractAddress = process.argv[2] || DEFAULT_CONTRACT_ADDRESS;
   const datasetName = process.argv[3] || DEFAULT_DATASET;
 
   if (!contractAddress) {
     throw new Error(
-      "A contract address is required. Usage: npm run flow:local -- <contract-address> [dataset]"
+      "An asset address is required. Usage: npm run flow:local -- <asset-address> [dataset]"
     );
   }
 
   resolveDatasetManifest(datasetName);
+  const datasetManifest = resolveDatasetManifest(datasetName);
 
   await populateContract(contractAddress, datasetName);
-  const manifestPath = await writeManifest(contractAddress, datasetName);
-  const { outputPath: rawJsonPath } = await exportContractToJson(manifestPath);
+  const { rawJsonPath, normalizedPath, xmlPath } = await renderAssetToBpmn({
+    assetAddress: contractAddress,
+    choreographyId: datasetManifest.choreographyId,
+    choreographyName: datasetManifest.choreographyName,
+    definitionsId: datasetManifest.definitionsId,
+    targetNamespace: datasetManifest.targetNamespace,
+    outputBaseName: datasetManifest.outputBaseName
+  });
   await assertContractExportMatchesDataset(rawJsonPath, datasetName);
-  const normalizedPath = await writeNormalizedJson(rawJsonPath);
-  const xmlPath = await generateXmlFromJson(normalizedPath);
 
-  console.log(`Flow completed for contract: ${contractAddress}`);
+  console.log(`Flow completed for asset: ${contractAddress}`);
   console.log(`Dataset: ${datasetName}`);
   console.log(`Generated raw JSON: ${rawJsonPath}`);
   console.log(`Generated normalized JSON: ${normalizedPath}`);
