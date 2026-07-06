@@ -44,10 +44,10 @@ function resolveDatasetManifest(datasetName) {
 async function writeManifest(contractAddress, datasetName) {
   const datasetManifest = resolveDatasetManifest(datasetName);
   const manifestPath = projectPath(
-    "bpmn-builder-js",
-    "example",
-    "contract",
-    `${datasetName}-contract-manifest.generated.json`
+      "bpmn-builder-js",
+      "example",
+      "contract",
+      `${datasetName}-contract-manifest.generated.json`
   );
   const manifest = {
     rpcUrl: process.env.RPC_URL || "http://127.0.0.1:8545",
@@ -131,7 +131,7 @@ async function main() {
 
   if (!contractAddress) {
     throw new Error(
-      "A contract address is required. Usage: npm run flow:local -- <contract-address> [dataset]"
+      "An asset address is required. Usage: npm run flow:local -- <asset-address> [dataset]"
     );
   }
 
@@ -144,7 +144,7 @@ async function main() {
   const normalizedPath = await writeNormalizedJson(rawJsonPath);
   const xmlPath = await generateXmlFromJson(normalizedPath);
 
-  console.log(`Flow completed for contract: ${contractAddress}`);
+  console.log(`Flow completed for asset: ${contractAddress}`);
   console.log(`Dataset: ${datasetName}`);
   console.log(`Generated raw JSON: ${rawJsonPath}`);
   console.log(`Generated normalized JSON: ${normalizedPath}`);

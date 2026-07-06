@@ -14,7 +14,7 @@ const DATASETS = {
   "pizza-delivery": PIZZA_DELIVERY_CHOREOGRAPHY
 };
 
-const BPMN_CHOREOGRAPHY_ABI = [
+const CHOREOGRAPHY_MUTABLE_ASSET_ABI = [
   {
     inputs: [
       { internalType: "string[]", name: "roleNames", type: "string[]" },
@@ -28,7 +28,7 @@ const BPMN_CHOREOGRAPHY_ABI = [
   {
     inputs: [
       { internalType: "string[]", name: "names", type: "string[]" },
-      { internalType: "enum BPMNChoreography.NodeType[]", name: "nodeTypes", type: "uint8[]" },
+      { internalType: "enum ChoreographyMutableAsset.NodeType[]", name: "nodeTypes", type: "uint8[]" },
       { internalType: "string[][]", name: "incoming", type: "string[][]" },
       { internalType: "string[][]", name: "outgoing", type: "string[][]" },
       { internalType: "string[][]", name: "conditions", type: "string[][]" },
@@ -76,15 +76,15 @@ export function resolveDataset(datasetName = process.env.CHOREOGRAPHY_DATASET ||
   return { datasetName, dataset };
 }
 
-export async function populateContract(contractAddress, datasetName) {
-  if (!contractAddress) {
-    throw new Error("A contract address is required. Usage: npm run populate:local -- <contract-address> [dataset]");
+export async function populateContract(assetAddress, datasetName) {
+  if (!assetAddress) {
+    throw new Error("An asset address is required. Usage: npm run populate:local -- <asset-address> [dataset]");
   }
 
   const { dataset, datasetName: resolvedDatasetName } = resolveDataset(datasetName);
   const provider = new JsonRpcProvider(RPC_URL);
   const signer = new Wallet(DEPLOYER_PRIVATE_KEY, provider);
-  const contract = new Contract(contractAddress, BPMN_CHOREOGRAPHY_ABI, signer);
+  const contract = new Contract(assetAddress, CHOREOGRAPHY_MUTABLE_ASSET_ABI, signer);
   const accounts = await provider.send("eth_accounts", []);
   let nonce = await provider.getTransactionCount(signer.address, "latest");
 
@@ -113,10 +113,10 @@ export async function populateContract(contractAddress, datasetName) {
   );
   await setNodesTx.wait();
 
-  console.log(`Populated BPMNChoreography at: ${contractAddress}`);
+  console.log(`Populated ChoreographyMutableAsset at: ${assetAddress}`);
   console.log(`Dataset: ${resolvedDatasetName}`);
 
-  return { contractAddress, datasetName: resolvedDatasetName, roles: dataset.roles };
+  return { contractAddress: assetAddress, datasetName: resolvedDatasetName, roles: dataset.roles };
 }
 
 async function main() {

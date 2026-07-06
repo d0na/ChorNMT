@@ -11,7 +11,7 @@ const CONTRACT_ABI = [
     name: "getNode",
     outputs: [
       { internalType: "string", name: "", type: "string" },
-      { internalType: "enum BPMNChoreography.NodeType", name: "", type: "uint8" },
+      { internalType: "enum ChoreographyMutableAsset.NodeType", name: "", type: "uint8" },
       { internalType: "string[]", name: "", type: "string[]" },
       { internalType: "string[]", name: "", type: "string[]" },
       { internalType: "string[]", name: "", type: "string[]" },
@@ -131,7 +131,8 @@ function buildRawOutput(manifest, roles, nodes) {
 
   return {
     contractExport: {
-      sourceContract: "BPMNChoreography.sol",
+      sourceContract: "ChoreographyMutableAsset.sol",
+      sourceContractType: "ChoreographyMutableAsset",
       contractAddress: manifest.contractAddress,
       exportedAt: new Date().toISOString(),
       rpcUrl: manifest.rpcUrl,
