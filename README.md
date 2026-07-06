@@ -82,6 +82,25 @@ Once the contract is deployed, populate it with the built-in pizza delivery exam
 npm run populate:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3
 ```
 
+The populate script also accepts a dataset name as second argument:
+
+```bash
+npm run populate:local -- <contract-address> <dataset>
+```
+
+Available datasets:
+
+- `pizza-delivery` default
+- `paper-example`
+
+To populate the contract from `paper-example.bpmn`:
+
+```bash
+npm run populate:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3 paper-example
+```
+
+If the same contract was already populated with another dataset, deploy a fresh contract before populating it again. The contract updates existing nodes but does not clear the stored node-name list.
+
 ## Run The Full Local Flow
 
 Assuming the local chain is already running and the contract is already deployed, this command:
@@ -90,8 +109,22 @@ Assuming the local chain is already running and the contract is already deployed
 - exports choreography data to BPMN-like JSON
 - generates BPMN XML from that JSON
 
+`flow:local` already includes the populate step. If you use `flow:local`, you do not need to run `populate:local` separately first.
+
 ```bash
 npm run flow:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3
+```
+
+Like `populate:local`, the full flow accepts an optional dataset name:
+
+```bash
+npm run flow:local -- <contract-address> <dataset>
+```
+
+For the paper example:
+
+```bash
+npm run flow:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3 paper-example
 ```
 
 Generated files:
@@ -99,6 +132,22 @@ Generated files:
 - `bpmn-builder-js/example/input/pizza-delivery-from-contract.raw.generated.json`
 - `bpmn-builder-js/example/input/pizza-delivery-from-contract.normalized.generated.json`
 - `bpmn-builder-js/example/output/pizza-delivery-from-contract.generated.bpmn.xml`
+
+With `paper-example`, the generated files use the `paper-example-from-contract` prefix.
+
+If the flow reports unexpected nodes or roles, the contract was already populated with another dataset. Run `npm run deploy:local` again and use the new address before rerunning the flow.
+
+If you change dataset, use this sequence:
+
+1. Keep the local Hardhat node running with `npm run node`.
+2. Deploy a fresh contract with `npm run deploy:local`.
+3. Run the full flow with the new address and the target dataset, for example `npm run flow:local -- <new-contract-address> paper-example`.
+
+Do not reuse the old contract address when switching dataset. The contract updates node data but does not clear the stored node-name and role-name lists.
+
+The generated BPMN XML includes a dynamic `bpmndi:BPMNDiagram` graphical layout block. The layout is derived from the exported nodes and sequence flows, so viewers can render the diagram without hardcoded coordinates.
+
+The flow also writes a generated manifest under `bpmn-builder-js/example/contract/*.generated.json`. These generated manifests are temporary artifacts, are ignored by git, and are removed by `npm run clean`.
 
 ## Contract Files
 
@@ -120,6 +169,8 @@ cd bpmn-builder-js
 npm run export:contract -- ./example/contract/pizza-delivery-contract-manifest.json
 ```
 
+`pizza-delivery-contract-manifest.json` is a checked-in example for manual export. The manifests created automatically by `flow:local` use the `*.generated.json` suffix and are not meant to be committed.
+
 Important constraint:
 
 - `BPMNChoreography.sol` is name-based, not id-based
@@ -139,6 +190,8 @@ npm run compile
 npm run node
 npm run deploy:local
 npm run populate:local -- <contract-address>
+npm run populate:local -- <contract-address> paper-example
 npm run flow:local -- <contract-address>
+npm run flow:local -- <contract-address> paper-example
 npm run clean
 ```

@@ -1,6 +1,7 @@
 import { Contract, JsonRpcProvider, Wallet } from "ethers";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { PAPER_EXAMPLE_CHOREOGRAPHY } from "./data/paper-example.js";
 import { PIZZA_DELIVERY_CHOREOGRAPHY } from "./data/pizza-delivery.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -8,6 +9,10 @@ const RPC_URL = process.env.RPC_URL || "http://127.0.0.1:8545";
 const DEPLOYER_PRIVATE_KEY =
   process.env.DEPLOYER_PRIVATE_KEY ||
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+const DATASETS = {
+  "paper-example": PAPER_EXAMPLE_CHOREOGRAPHY,
+  "pizza-delivery": PIZZA_DELIVERY_CHOREOGRAPHY
+};
 
 const BPMN_CHOREOGRAPHY_ABI = [
   {
@@ -61,21 +66,32 @@ function buildNodePayload(nodes) {
   };
 }
 
-export async function populateContract(contractAddress) {
-  if (!contractAddress) {
-    throw new Error("A contract address is required. Usage: npm run populate:local -- <contract-address>");
+export function resolveDataset(datasetName = process.env.CHOREOGRAPHY_DATASET || "pizza-delivery") {
+  const dataset = DATASETS[datasetName];
+
+  if (!dataset) {
+    throw new Error(`Unknown choreography dataset "${datasetName}". Available datasets: ${Object.keys(DATASETS).join(", ")}`);
   }
 
+  return { datasetName, dataset };
+}
+
+export async function populateContract(contractAddress, datasetName) {
+  if (!contractAddress) {
+    throw new Error("A contract address is required. Usage: npm run populate:local -- <contract-address> [dataset]");
+  }
+
+  const { dataset, datasetName: resolvedDatasetName } = resolveDataset(datasetName);
   const provider = new JsonRpcProvider(RPC_URL);
   const signer = new Wallet(DEPLOYER_PRIVATE_KEY, provider);
   const contract = new Contract(contractAddress, BPMN_CHOREOGRAPHY_ABI, signer);
   const accounts = await provider.send("eth_accounts", []);
   let nonce = await provider.getTransactionCount(signer.address, "latest");
 
-  const roleAddresses = buildRoleAddresses(accounts, PIZZA_DELIVERY_CHOREOGRAPHY.roles);
-  const nodePayload = buildNodePayload(PIZZA_DELIVERY_CHOREOGRAPHY.nodes);
+  const roleAddresses = buildRoleAddresses(accounts, dataset.roles);
+  const nodePayload = buildNodePayload(dataset.nodes);
 
-  const setRolesTx = await contract.setRoles(PIZZA_DELIVERY_CHOREOGRAPHY.roles, roleAddresses, {
+  const setRolesTx = await contract.setRoles(dataset.roles, roleAddresses, {
     nonce
   });
   await setRolesTx.wait();
@@ -98,13 +114,15 @@ export async function populateContract(contractAddress) {
   await setNodesTx.wait();
 
   console.log(`Populated BPMNChoreography at: ${contractAddress}`);
+  console.log(`Dataset: ${resolvedDatasetName}`);
 
-  return { contractAddress, roles: PIZZA_DELIVERY_CHOREOGRAPHY.roles };
+  return { contractAddress, datasetName: resolvedDatasetName, roles: dataset.roles };
 }
 
 async function main() {
   const contractAddress = process.argv[2];
-  await populateContract(contractAddress);
+  const datasetName = process.argv[3];
+  await populateContract(contractAddress, datasetName);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {

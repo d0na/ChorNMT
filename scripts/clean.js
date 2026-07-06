@@ -29,6 +29,7 @@ async function main() {
 
   await removeIfExists(path.join(projectRoot, "artifacts"));
   await removeIfExists(path.join(projectRoot, "cache"));
+  await removeGeneratedFiles(path.join(bpmnRoot, "example", "contract"));
   await removeGeneratedFiles(path.join(bpmnRoot, "example", "input"));
   await removeGeneratedFiles(path.join(bpmnRoot, "example", "output"));
 

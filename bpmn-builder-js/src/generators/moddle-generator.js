@@ -7,7 +7,11 @@ function isReferenceAttribute(key) {
     key === "targetRef" ||
     key === "processRef" ||
     key === "messageRef" ||
-    key === "initiatingParticipantRef"
+    key === "initiatingParticipantRef" ||
+    key === "bpmnElement" ||
+    key === "choreographyActivityShape" ||
+    key === "sourceElement" ||
+    key === "targetElement"
   );
 }
 
@@ -20,9 +24,10 @@ function isReferenceCollectionAttribute(key) {
   );
 }
 
-function createSkeleton(moddle, descriptor, references) {
+function createSkeleton(moddle, descriptor, references, descriptorElements) {
   const { $type, id } = descriptor;
   const element = moddle.create($type, id ? { id } : {});
+  descriptorElements.set(descriptor, element);
 
   if (id) {
     references.set(id, element);
@@ -32,21 +37,21 @@ function createSkeleton(moddle, descriptor, references) {
     if (Array.isArray(value)) {
       value.forEach((entry) => {
         if (entry && typeof entry === "object" && entry.$type) {
-          createSkeleton(moddle, entry, references);
+          createSkeleton(moddle, entry, references, descriptorElements);
         }
       });
       continue;
     }
 
     if (value && typeof value === "object" && value.$type) {
-      createSkeleton(moddle, value, references);
+      createSkeleton(moddle, value, references, descriptorElements);
     }
   }
 
   return element;
 }
 
-function hydrateElement(element, descriptor, references) {
+function hydrateElement(element, descriptor, references, descriptorElements) {
   const { $type, ...attributes } = descriptor;
 
   for (const [key, value] of Object.entries(attributes)) {
@@ -59,7 +64,7 @@ function hydrateElement(element, descriptor, references) {
         key,
         value.map((entry) => {
           if (entry && typeof entry === "object" && entry.$type) {
-            return hydrateElement(references.get(entry.id), entry, references);
+            return hydrateElement(descriptorElements.get(entry), entry, references, descriptorElements);
           }
 
           return isReferenceCollectionAttribute(key) ? references.get(entry) || entry : entry;
@@ -69,7 +74,7 @@ function hydrateElement(element, descriptor, references) {
     }
 
     if (value && typeof value === "object" && value.$type) {
-      element.set(key, hydrateElement(references.get(value.id), value, references));
+      element.set(key, hydrateElement(descriptorElements.get(value), value, references, descriptorElements));
       continue;
     }
 
@@ -83,9 +88,10 @@ export async function generateBpmnXml(input) {
   const moddle = new BpmnModdle();
   const { definitions: descriptor } = mapInputToDefinitionsDescriptor(input);
   const references = new Map();
-  const definitions = createSkeleton(moddle, descriptor, references);
+  const descriptorElements = new WeakMap();
+  const definitions = createSkeleton(moddle, descriptor, references, descriptorElements);
 
-  hydrateElement(definitions, descriptor, references);
+  hydrateElement(definitions, descriptor, references, descriptorElements);
 
   const { xml } = await moddle.toXML(definitions, { format: true });
 

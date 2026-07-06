@@ -189,18 +189,20 @@ Manifest example:
 
 The export script produces a raw semantic JSON. BPMN ids are generated later by the library normalization step before XML generation.
 
+When the root `flow:local` script creates manifests automatically, it writes them as `example/contract/*.generated.json`. Those files are generated artifacts and are not intended to be committed.
+
 ## Current Rules
 
 - generation is based on `bpmn-moddle`, not manual XML string concatenation;
-- basic support for `startEvent`, `task`, `endEvent`, and in general any BPMN tag passed through `type`;
+- basic support for `startEvent`, `task`, `endEvent`, gateways, choreography tasks, messages, and message flows;
 - minimal validation for `process.id`, `nodes`, and `sequenceFlows`;
-- generation of `definitions`, `process`, `sequenceFlow`, `collaboration`, and `participant`.
+- generation of `definitions`, `process`, `sequenceFlow`, `collaboration`, `participant`, choreography models, and dynamic `bpmndi:BPMNDiagram` layout.
 
 ## Current Limits
 
-- it does not generate the `bpmndi:BPMNDiagram` graphical block;
 - it does not validate whether `type` is a semantically correct BPMN element;
-- it does not yet handle gateways, lanes, messages, conditions, properties, or custom extensions;
+- it does not yet handle lanes, properties, or custom extensions;
+- generated DI layout is deterministic and graph-derived, but it is not a full BPMN auto-layout engine;
 - the library currently targets Node.js `>=20.12`, matching the `bpmn-moddle` engine requirement;
 - the reference BPMN output is stored in `example/output/reference-output.bpmn.xml` and will be used to converge on the final format.
 

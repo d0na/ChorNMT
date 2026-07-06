@@ -20,5 +20,6 @@ dist/
 
 # Generated BPMN outputs
 example/input/*.generated.json
+example/contract/*.generated.json
 example/output/*.generated.bpmn
 example/output/*.generated.bpmn.xml
