@@ -1,31 +1,31 @@
-# Altri esempi
+# Other examples
 
-Questa pagina raccoglie gli esempi tecnici che non costituiscono il percorso principale del progetto. Per il flusso BPMN completo, con importazione e modifica on-chain, usa [paper-example](../README.md).
+This page collects technical examples that are not the project's main workflow. For the complete BPMN flow, including on-chain import and modification, use [paper-example](../README.md).
 
-Ogni comando in questa pagina deve usare un asset appena creato con `npm run deploy:local`. Non riutilizzare un asset usato per un dataset diverso: il contratto conserva i nomi di nodi e ruoli già salvati.
+Every command on this page must use an asset newly created with `npm run deploy:local`. Do not reuse an asset that has been used for a different dataset: the contract retains previously stored node and role names.
 
 ## Pizza delivery
 
-`pizza-delivery` è il dataset predefinito, definito negli script. È utile per un rendering rapido e non deriva da un file BPMN importato.
+`pizza-delivery` is the default dataset, defined in the scripts. It is useful for a quick rendering run and does not originate from an imported BPMN file.
 
 ```bash
 npm run flow:local -- <asset-address>
 ```
 
-Il comando popola l'asset, esporta i dati dal contratto e genera il BPMN in `bpmn-builder-js/example/output/pizza-delivery-from-contract.generated.bpmn.xml`.
+The command populates the asset, exports contract data, and generates BPMN at `bpmn-builder-js/example/output/pizza-delivery-from-contract.generated.bpmn.xml`.
 
 ## Parallel gateway example
 
-`parallel-gateway-example` è un modello sintetico con uno split e un join paralleli. Serve a verificare il supporto ai gateway senza la complessità del caso logistico.
+`parallel-gateway-example` is a small model with a parallel split and join. It is used to verify gateway support without the complexity of the logistics case.
 
 ```bash
 npm run flow:local -- <asset-address> parallel-gateway-example
 ```
 
-Per vedere un aggiornamento incrementale sullo stesso modello, esegui:
+To see an incremental update on the same model, run:
 
 ```bash
 npm run augment:parallel-gateway-example -- <asset-address>
 ```
 
-Lo script carica il modello base, genera un BPMN iniziale, aggiunge `Activity4` dopo il join parallelo e genera un secondo BPMN. Il dettaglio delle chiamate `setNodes(...)` è in [Aggiornamenti delta e chiamate Solidity](delta-update-and-solidity-calls.md).
+The script loads the baseline model, generates an initial BPMN, adds `Activity4` after the parallel join, and generates a second BPMN. See [Delta updates and Solidity calls](delta-update-and-solidity-calls.md) for the `setNodes(...)` details.
