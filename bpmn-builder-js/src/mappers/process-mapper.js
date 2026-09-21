@@ -201,7 +201,7 @@ function participantBandShapes(node, bounds, messageFlowById) {
     const isInitiating = participantId === node.initiatingParticipantRef;
     const messageVisible = Array.isArray(node.messageFlowRef) && node.messageFlowRef.some((messageFlowId) => {
       const messageFlow = messageFlowById.get(messageFlowId);
-      return messageFlow?.sourceRef === participantId;
+      return messageFlow?.sourceRef === participantId || messageFlow?.targetRef === participantId;
     });
 
     return {

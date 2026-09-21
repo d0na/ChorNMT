@@ -76,12 +76,15 @@ export function resolveDataset(datasetName = process.env.CHOREOGRAPHY_DATASET ||
   return { datasetName, dataset };
 }
 
-export async function populateContract(assetAddress, datasetName) {
+export async function populateDataset(assetAddress, dataset, datasetName = "custom") {
   if (!assetAddress) {
-    throw new Error("An asset address is required. Usage: npm run populate:local -- <asset-address> [dataset]");
+    throw new Error("An asset address is required.");
   }
 
-  const { dataset, datasetName: resolvedDatasetName } = resolveDataset(datasetName);
+  if (!dataset || !Array.isArray(dataset.roles) || !Array.isArray(dataset.nodes)) {
+    throw new Error('Dataset must contain "roles" and "nodes" arrays.');
+  }
+
   const provider = new JsonRpcProvider(RPC_URL);
   const signer = new Wallet(DEPLOYER_PRIVATE_KEY, provider);
   const contract = new Contract(assetAddress, CHOREOGRAPHY_MUTABLE_ASSET_ABI, signer);
@@ -114,9 +117,18 @@ export async function populateContract(assetAddress, datasetName) {
   await setNodesTx.wait();
 
   console.log(`Populated ChoreographyMutableAsset at: ${assetAddress}`);
-  console.log(`Dataset: ${resolvedDatasetName}`);
+  console.log(`Dataset: ${datasetName}`);
 
-  return { contractAddress: assetAddress, datasetName: resolvedDatasetName, roles: dataset.roles };
+  return { contractAddress: assetAddress, datasetName, roles: dataset.roles };
+}
+
+export async function populateContract(assetAddress, datasetName) {
+  if (!assetAddress) {
+    throw new Error("An asset address is required. Usage: npm run populate:local -- <asset-address> [dataset]");
+  }
+
+  const { dataset, datasetName: resolvedDatasetName } = resolveDataset(datasetName);
+  return populateDataset(assetAddress, dataset, resolvedDatasetName);
 }
 
 async function main() {

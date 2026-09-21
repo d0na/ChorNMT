@@ -9,6 +9,9 @@
     "populate:local": "node scripts/populate-local.js",
     "augment:paper-example": "node scripts/augment-paper-example-local.js",
     "flow:local": "node scripts/run-local-flow.js",
+    "flow:import-bpmn": "node scripts/run-imported-bpmn-flow.js",
+    "import:bpmn": "node bpmn-builder-js/scripts/import-bpmn.js",
+    "render:nmt": "node bpmn-builder-js/scripts/render-nmt.js",
     "clean": "node scripts/clean.js"
   },
   "devDependencies": {

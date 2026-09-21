@@ -19,6 +19,7 @@ dist/
 .env.*
 
 # Generated BPMN outputs
+example/input/*.nmt.json
 example/input/*.generated.json
 example/contract/*.generated.json
 example/output/*.generated.bpmn

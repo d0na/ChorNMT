@@ -12,7 +12,9 @@
   },
   "scripts": {
     "generate:example": "node ./scripts/generate-example.js",
-    "export:contract": "node ./scripts/web3.js"
+    "export:contract": "node ./scripts/web3.js",
+    "import:bpmn": "node ./scripts/import-bpmn.js",
+    "render:nmt": "node ./scripts/render-nmt.js"
   },
   "dependencies": {
     "bpmn-moddle": "^10.0.0",

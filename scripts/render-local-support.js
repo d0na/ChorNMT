@@ -37,6 +37,7 @@ export async function writeManifest({
     outputPath: `../input/${outputBaseName}.raw.generated.json`
   };
 
+  await fs.mkdir(path.dirname(manifestPath), { recursive: true });
   await fs.writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
   return manifestPath;
 }
