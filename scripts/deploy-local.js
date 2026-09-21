@@ -111,7 +111,15 @@ export async function deployAsset() {
     reportTransactionCost("Mint ChoreographyMutableAsset", mintReceipt)
   ];
   const totalCost = reportTotalCost(costs);
-  return { assetAddress, tokenId, choreographyNmtAddress: choreographyNmt.target, costs, totalCost };
+  return {
+    assetAddress,
+    tokenId,
+    choreographyNmtAddress: choreographyNmt.target,
+    creatorPolicyAddress: creatorPolicy.target,
+    holderPolicyAddress: holderPolicy.target,
+    costs,
+    totalCost
+  };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
