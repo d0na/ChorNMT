@@ -7,12 +7,12 @@ const __filename = fileURLToPath(import.meta.url);
 const DEFAULT_CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || "";
 const DEFAULT_DATASET = process.env.CHOREOGRAPHY_DATASET || "pizza-delivery";
 const DATASET_MANIFESTS = {
-  "paper-example": {
-    choreographyId: "PaperExample",
-    choreographyName: "Paper Example",
-    definitionsId: "PaperExample_definitions",
-    targetNamespace: "http://example.com/paper-example",
-    outputBaseName: "paper-example-from-contract"
+  "parallel-gateway-example": {
+    choreographyId: "ParallelGatewayExample",
+    choreographyName: "Parallel Gateway Example",
+    definitionsId: "ParallelGatewayExample_definitions",
+    targetNamespace: "http://example.com/parallel-gateway-example",
+    outputBaseName: "parallel-gateway-example-from-contract"
   },
   "pizza-delivery": {
     choreographyId: "PizzaDelivery",

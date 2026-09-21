@@ -30,7 +30,7 @@ const CHOREOGRAPHY_MUTABLE_ASSET_ABI = [
   }
 ];
 
-function buildPaperExampleDeltaNodes() {
+function buildParallelGatewayExampleDeltaNodes() {
   return [
     {
       name: "Parallel Join",
@@ -86,7 +86,7 @@ async function applyAugmentedNodes(assetAddress) {
   const provider = new JsonRpcProvider(RPC_URL);
   const signer = new Wallet(DEPLOYER_PRIVATE_KEY, provider);
   const contract = new Contract(assetAddress, CHOREOGRAPHY_MUTABLE_ASSET_ABI, signer);
-  const deltaNodes = buildPaperExampleDeltaNodes();
+  const deltaNodes = buildParallelGatewayExampleDeltaNodes();
   const payload = buildNodePayload(deltaNodes);
 
   const tx = await contract.setNodes(
@@ -110,28 +110,28 @@ async function main() {
 
   if (!assetAddress) {
     throw new Error(
-      "An asset address is required. Usage: npm run augment:paper-example -- <asset-address>"
+      "An asset address is required. Usage: npm run augment:parallel-gateway-example -- <asset-address>"
     );
   }
 
-  await populateContract(assetAddress, "paper-example");
+  await populateContract(assetAddress, "parallel-gateway-example");
   const baseline = await renderAssetToBpmn({
     assetAddress,
-    choreographyId: "PaperExample",
-    choreographyName: "Paper Example",
-    definitionsId: "PaperExample_definitions",
-    targetNamespace: "http://example.com/paper-example",
-    outputBaseName: "paper-example-baseline-from-contract"
+    choreographyId: "ParallelGatewayExample",
+    choreographyName: "Parallel Gateway Example",
+    definitionsId: "ParallelGatewayExample_definitions",
+    targetNamespace: "http://example.com/parallel-gateway-example",
+    outputBaseName: "parallel-gateway-example-baseline-from-contract"
   });
 
   const deltaNodes = await applyAugmentedNodes(assetAddress);
   const updated = await renderAssetToBpmn({
     assetAddress,
-    choreographyId: "PaperExampleAugmented",
-    choreographyName: "Paper Example Augmented",
-    definitionsId: "PaperExampleAugmented_definitions",
-    targetNamespace: "http://example.com/paper-example-augmented",
-    outputBaseName: "paper-example-augmented-from-contract"
+    choreographyId: "ParallelGatewayExampleAugmented",
+    choreographyName: "Parallel Gateway Example Augmented",
+    definitionsId: "ParallelGatewayExampleAugmented_definitions",
+    targetNamespace: "http://example.com/parallel-gateway-example-augmented",
+    outputBaseName: "parallel-gateway-example-augmented-from-contract"
   });
 
   console.log(`Baseline XML: ${baseline.xmlPath}`);

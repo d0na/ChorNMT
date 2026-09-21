@@ -1,4 +1,4 @@
-export const PAPER_EXAMPLE_CHOREOGRAPHY = {
+export const PARALLEL_GATEWAY_EXAMPLE_CHOREOGRAPHY = {
   roles: ["Ale", "Fra"],
   nodes: [
     {

@@ -1,7 +1,7 @@
 import { Contract, JsonRpcProvider, Wallet } from "ethers";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { PAPER_EXAMPLE_CHOREOGRAPHY } from "./data/paper-example.js";
+import { PARALLEL_GATEWAY_EXAMPLE_CHOREOGRAPHY } from "./data/parallel-gateway-example.js";
 import { PIZZA_DELIVERY_CHOREOGRAPHY } from "./data/pizza-delivery.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -10,7 +10,7 @@ const DEPLOYER_PRIVATE_KEY =
   process.env.DEPLOYER_PRIVATE_KEY ||
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 const DATASETS = {
-  "paper-example": PAPER_EXAMPLE_CHOREOGRAPHY,
+  "parallel-gateway-example": PARALLEL_GATEWAY_EXAMPLE_CHOREOGRAPHY,
   "pizza-delivery": PIZZA_DELIVERY_CHOREOGRAPHY
 };
 

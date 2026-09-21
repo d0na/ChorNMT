@@ -2,22 +2,22 @@
 
 This document describes:
 
-- what `npm run augment:paper-example -- <asset-address>` does
+- what `npm run augment:parallel-gateway-example -- <asset-address>` does
 - which delta payload it sends
 - which Solidity methods must be called to reproduce the same update
 
 ## Script Purpose
 
-The script [scripts/augment-paper-example-local.js](../scripts/augment-paper-example-local.js) is a local example of an external update applied to an already populated choreography asset.
+The script [scripts/augment-parallel-gateway-example-local.js](../scripts/augment-parallel-gateway-example-local.js) is a local example of an external update applied to an already populated choreography asset.
 
 It performs these steps:
 
-1. populate the target asset with the baseline `paper-example` dataset
+1. populate the target asset with the baseline `parallel-gateway-example` dataset
 2. render the baseline BPMN export
 3. apply an external `setNodes(...)` update with a delta only
 4. render the updated BPMN export
 
-The update is delta-only in the sense that the `setNodes(...)` call does not resend the full `paper-example` dataset.
+The update is delta-only in the sense that the `setNodes(...)` call does not resend the full `parallel-gateway-example` dataset.
 
 ## Delta Scope
 
@@ -261,7 +261,7 @@ That means:
 
 ## Related Files
 
-- [scripts/augment-paper-example-local.js](../scripts/augment-paper-example-local.js)
+- [scripts/augment-parallel-gateway-example-local.js](../scripts/augment-parallel-gateway-example-local.js)
 - [scripts/populate-local.js](../scripts/populate-local.js)
 - [scripts/run-local-flow.js](../scripts/run-local-flow.js)
 - [docs/contract-hierarchy.md](contract-hierarchy.md)

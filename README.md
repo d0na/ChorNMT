@@ -11,7 +11,7 @@ ChorNMT/
   references/
     BPMNChoreography.sol
     chornmt-use-case.bpmn
-    paper-example.bpmn
+    parallel-gateway-example.bpmn
   scripts/
     deploy-local.js
     deploy.js
@@ -95,12 +95,12 @@ npm run populate:local -- <contract-address> <dataset>
 Available datasets:
 
 - `pizza-delivery` default
-- `paper-example`
+- `parallel-gateway-example`
 
-To populate the contract from the reference [paper-example.bpmn](references/paper-example.bpmn):
+To populate the contract from the reference [parallel-gateway-example.bpmn](references/parallel-gateway-example.bpmn):
 
 ```bash
-npm run populate:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3 paper-example
+npm run populate:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3 parallel-gateway-example
 ```
 
 If the same contract was already populated with another dataset, deploy a fresh contract before populating it again. The contract updates existing nodes but does not clear the stored node-name list.
@@ -128,13 +128,13 @@ npm run flow:local -- <contract-address> <dataset>
 For the paper example:
 
 ```bash
-npm run flow:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3 paper-example
+npm run flow:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3 parallel-gateway-example
 ```
 
 To demonstrate an external update on the smart contract and render the difference, use:
 
 ```bash
-npm run augment:paper-example -- <asset-address>
+npm run augment:parallel-gateway-example -- <asset-address>
 ```
 
 For the current `chornmt-use-case`, use the reusable JSON delta instead:
@@ -148,7 +148,7 @@ The delta inserts a parallel split and join after `Order Special Transport`, add
 
 This command:
 
-- populates the asset with the baseline `paper-example`
+- populates the asset with the baseline `parallel-gateway-example`
 - renders the baseline BPMN
 - applies an external delta `setNodes(...)` update
 - updates only `Parallel Join`, the new `Activity4`, and `End`
@@ -161,7 +161,7 @@ Generated files:
 - `bpmn-builder-js/example/input/pizza-delivery-from-contract.normalized.generated.json`
 - `bpmn-builder-js/example/output/pizza-delivery-from-contract.generated.bpmn.xml`
 
-With `paper-example`, the generated files use the `paper-example-from-contract` prefix.
+With `parallel-gateway-example`, the generated files use the `parallel-gateway-example-from-contract` prefix.
 
 If the flow reports unexpected nodes or roles, the contract was already populated with another dataset. Run `npm run deploy:local` again and use the new address before rerunning the flow.
 
@@ -169,7 +169,7 @@ If you change dataset, use this sequence:
 
 1. Keep the local Hardhat node running with `npm run node`.
 2. Deploy a fresh contract with `npm run deploy:local`.
-3. Run the full flow with the new address and the target dataset, for example `npm run flow:local -- <new-contract-address> paper-example`.
+3. Run the full flow with the new address and the target dataset, for example `npm run flow:local -- <new-contract-address> parallel-gateway-example`.
 
 Do not reuse the old contract address when switching dataset. The contract updates node data but does not clear the stored node-name and role-name lists.
 
@@ -214,7 +214,7 @@ See:
 - [bpmn-builder-js/README.md](bpmn-builder-js/README.md)
 - [docs/contract-hierarchy.md](docs/contract-hierarchy.md)
 - [docs/delta-update-and-solidity-calls.md](docs/delta-update-and-solidity-calls.md)
-- [references/paper-example.bpmn](references/paper-example.bpmn)
+- [references/parallel-gateway-example.bpmn](references/parallel-gateway-example.bpmn)
 - [docs/bpmn-to-nmt-workflow.md](docs/bpmn-to-nmt-workflow.md)
 
 ## Useful Commands
@@ -224,9 +224,9 @@ npm run compile
 npm run node
 npm run deploy:local
 npm run populate:local -- <contract-address>
-npm run populate:local -- <contract-address> paper-example
-npm run augment:paper-example -- <asset-address>
+npm run populate:local -- <contract-address> parallel-gateway-example
+npm run augment:parallel-gateway-example -- <asset-address>
 npm run flow:local -- <contract-address>
-npm run flow:local -- <contract-address> paper-example
+npm run flow:local -- <contract-address> parallel-gateway-example
 npm run clean
 ```

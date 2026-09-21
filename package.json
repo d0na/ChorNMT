@@ -7,7 +7,7 @@
     "node": "hardhat node",
     "deploy:local": "node scripts/deploy-local.js",
     "populate:local": "node scripts/populate-local.js",
-    "augment:paper-example": "node scripts/augment-paper-example-local.js",
+    "augment:parallel-gateway-example": "node scripts/augment-parallel-gateway-example-local.js",
     "apply:asset-delta": "node scripts/apply-asset-delta.js",
     "flow:local": "node scripts/run-local-flow.js",
     "flow:import-bpmn": "node scripts/run-imported-bpmn-flow.js",
