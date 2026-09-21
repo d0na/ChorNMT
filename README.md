@@ -16,36 +16,64 @@ npm install
 (cd bpmn-builder-js && npm install)
 ```
 
-## Main path: import and modify the paper example
+## Main path: import, render, modify, and render the paper example
 
-Open two terminals in the repository root.
+### 1. Import
 
-In the first terminal, compile the contracts and start the local blockchain:
+Convert the source BPMN into its NMT dataset:
+
+```bash
+npm run import:bpmn -- references/paper-example.bpmn
+```
+
+### 2. Render the baseline
+
+Render the imported NMT dataset locally, before it is stored on-chain:
+
+```bash
+npm run render:nmt -- bpmn-builder-js/example/input/paper-example.nmt.json
+```
+
+This creates `bpmn-builder-js/example/output/paper-example.generated.bpmn.xml`.
+
+### 3. Store the baseline in an asset
+
+Open two terminals in the repository root. In the first one, compile the contracts and start the local blockchain:
 
 ```bash
 npm run compile
 npm run node
 ```
 
-In the second terminal, create a new asset. The command prints its address:
+In the second terminal, deploy a new asset and copy the printed address:
 
 ```bash
 npm run deploy:local
 ```
 
-Import the logistics BPMN into the newly created asset, export it again, and generate the baseline BPMN:
+Store the NMT dataset produced during step 1 in that asset:
 
 ```bash
-npm run flow:import-bpmn -- <asset-address> references/paper-example.bpmn
+npm run populate:nmt -- <asset-address> bpmn-builder-js/example/input/paper-example.nmt.json
 ```
 
-Then apply the reusable modification. It inserts a parallel split after `Order Special Transport`: transport-detail collection and transport-document preparation proceed in parallel, then join before the waybill.
+### 4. Modify
+
+Apply the reusable delta without rendering yet. It inserts a parallel split after `Order Special Transport`: transport-detail collection and transport-document preparation proceed in parallel, then join before the waybill.
 
 ```bash
-npm run apply:asset-delta -- <asset-address> scripts/data/paper-example-parallel-transport-preparation.delta.json
+npm run apply:asset-delta -- <asset-address> scripts/data/paper-example-parallel-transport-preparation.delta.json --no-render
 ```
 
-The final BPMN is generated at:
+### 5. Render the updated asset
+
+Export the changed on-chain asset and render the final BPMN:
+
+```bash
+npm run render:asset -- <asset-address> scripts/data/paper-example-parallel-transport-preparation.delta.json
+```
+
+The final BPMN is written to:
 
 ```text
 bpmn-builder-js/example/output/paper-example-parallel-transport-preparation-from-contract.generated.bpmn.xml
@@ -53,7 +81,7 @@ bpmn-builder-js/example/output/paper-example-parallel-transport-preparation-from
 
 ## Modify an existing asset
 
-Do not edit the exported BPMN XML directly: it is a view of the asset. Instead, create a JSON delta, apply it to the asset with `apply:asset-delta`, and regenerate BPMN.
+Do not edit the exported BPMN XML directly: it is a view of the asset. Instead, create a JSON delta, apply it to the asset with `apply:asset-delta`, and regenerate BPMN with `render:asset`.
 
 Use [scripts/data/paper-example-parallel-transport-preparation.delta.json](scripts/data/paper-example-parallel-transport-preparation.delta.json) as a template. A delta contains:
 

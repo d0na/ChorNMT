@@ -106,7 +106,7 @@ function validateDelta(delta) {
   }
 }
 
-export async function applyAssetDelta(assetAddress, deltaPath) {
+export async function applyAssetDelta(assetAddress, deltaPath, { render = true } = {}) {
   if (!assetAddress || !deltaPath) {
     throw new Error("Usage: npm run apply:asset-delta -- <asset-address> <delta.json>");
   }
@@ -135,17 +135,21 @@ export async function applyAssetDelta(assetAddress, deltaPath) {
   );
   await transaction.wait();
 
-  const artifacts = await renderAssetToBpmn({ assetAddress, ...delta.render });
+  const artifacts = render ? await renderAssetToBpmn({ assetAddress, ...delta.render }) : {};
   return { delta, resolvedDeltaPath, ...artifacts };
 }
 
 async function main() {
-  const result = await applyAssetDelta(process.argv[2], process.argv[3]);
+  const result = await applyAssetDelta(process.argv[2], process.argv[3], {
+    render: !process.argv.includes("--no-render")
+  });
   console.log(`Applied delta: ${result.resolvedDeltaPath}`);
   console.log(`Updated nodes: ${result.delta.nodes.map((node) => node.name).join(", ")}`);
-  console.log(`Generated raw JSON: ${result.rawJsonPath}`);
-  console.log(`Generated normalized JSON: ${result.normalizedPath}`);
-  console.log(`Generated BPMN: ${result.xmlPath}`);
+  if (result.xmlPath) {
+    console.log(`Generated raw JSON: ${result.rawJsonPath}`);
+    console.log(`Generated normalized JSON: ${result.normalizedPath}`);
+    console.log(`Generated BPMN: ${result.xmlPath}`);
+  }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
