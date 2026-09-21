@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { PARALLEL_GATEWAY_EXAMPLE_CHOREOGRAPHY } from "./data/parallel-gateway-example.js";
 import { PIZZA_DELIVERY_CHOREOGRAPHY } from "./data/pizza-delivery.js";
-import { reportTotalCost, reportTransactionCost } from "./transaction-cost.js";
+import { reportTotalCost, reportTransactionCost } from "./evaluation/transaction-cost.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const RPC_URL = process.env.RPC_URL || "http://127.0.0.1:8545";

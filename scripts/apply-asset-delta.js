@@ -3,8 +3,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Contract, JsonRpcProvider, Wallet } from "ethers";
 import { renderAssetToBpmn } from "./render-local-support.js";
-import { reportTotalCost, reportTransactionCost } from "./transaction-cost.js";
-import { summarizeNodes, writeMetrics } from "./metrics.js";
+import { reportTotalCost, reportTransactionCost } from "./evaluation/transaction-cost.js";
+import { summarizeNodes, writeMetrics } from "./evaluation/metrics.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const RPC_URL = process.env.RPC_URL || "http://127.0.0.1:8545";

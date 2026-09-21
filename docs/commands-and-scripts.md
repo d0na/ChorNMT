@@ -58,6 +58,14 @@ These scripts are used by public commands and are not intended as separate user-
 | `render-local-support.js` | `render:asset`, `modify:asset` | Writes manifest and JSON artifacts, normalizes data, and generates BPMN XML. |
 | `apply-asset-delta.js` | `modify:asset` | Validates and applies delta roles and nodes. |
 
+## Evaluation scripts
+
+The evaluation helpers are isolated under `scripts/evaluation/`:
+
+- `metrics.js` writes per-operation JSON reports;
+- `transaction-cost.js` formats receipt-derived gas and ETH costs;
+- `export-metrics-csv.js` aggregates reports into a CSV file for Gnuplot.
+
 ## Development and legacy scripts
 
 The following files are retained as development references or low-level utilities. They are deliberately not exposed as root npm commands and are not part of the supported paper-example workflow.

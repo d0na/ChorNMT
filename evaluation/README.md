@@ -5,7 +5,7 @@ Each `import:asset`, `modify:asset`, and `render:asset` execution writes a JSON 
 After collecting repeated runs, create a CSV file and figures:
 
 ```bash
-node scripts/export-metrics-csv.js
+node scripts/evaluation/export-metrics-csv.js
 mkdir -p evaluation/figures
 gnuplot evaluation/gnuplot/duration-by-nodes.gp
 gnuplot evaluation/gnuplot/duration-by-edges.gp

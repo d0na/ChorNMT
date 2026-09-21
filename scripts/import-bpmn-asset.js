@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { importBpmnToNmt } from "../bpmn-builder-js/scripts/import-bpmn.js";
 import { populateDataset } from "./populate-local.js";
-import { summarizeNodes, writeMetrics } from "./metrics.js";
+import { summarizeNodes, writeMetrics } from "./evaluation/metrics.js";
 
 const __filename = fileURLToPath(import.meta.url);
 

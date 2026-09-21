@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ContractFactory, JsonRpcProvider, NonceManager, Wallet } from "ethers";
-import { reportTotalCost, reportTransactionCost } from "./transaction-cost.js";
+import { reportTotalCost, reportTransactionCost } from "./evaluation/transaction-cost.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
