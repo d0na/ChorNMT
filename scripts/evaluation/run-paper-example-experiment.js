@@ -55,6 +55,10 @@ async function main() {
     ["final-render", finalMetric.timingsMs.total, 0, 0, finalMetric.model.nodes, finalMetric.model.sequenceEdges, finalMetric.model.gateways, finalMetric.model.messages]
   ];
   await fs.writeFile(resultsPath, `phase,durationMs,gasUsed,costEth,nodes,edges,gateways,messages\n${rows.map((row) => row.join(",")).join("\n")}\n`);
+  await fs.writeFile(
+    path.join(root, "evaluation", "model-structure.generated.csv"),
+    `model,nodes,edges,gateways,messages\nbaseline,${baselineMetric.model.nodes},${baselineMetric.model.sequenceEdges},${baselineMetric.model.gateways},${baselineMetric.model.messages}\nafter-delta,${finalMetric.model.nodes},${finalMetric.model.sequenceEdges},${finalMetric.model.gateways},${finalMetric.model.messages}\n`
+  );
   await fs.mkdir(path.join(root, "evaluation", "figures"), { recursive: true });
   for (const plot of ["phase-duration.gp", "phase-gas.gp", "model-comparison.gp"]) {
     await execute("gnuplot", [path.join(root, "evaluation", "gnuplot", plot)]);

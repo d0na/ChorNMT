@@ -5,5 +5,7 @@ set style data histograms
 set style histogram clustered
 set style fill solid
 set grid ytics
-set title "Model structure before and after the delta"
-plot "evaluation/experiment-results.generated.csv" every ::3::3 using 5:xtic(1) title "Nodes", '' every ::3::3 using 6 title "Edges", '' every ::3::3 using 7 title "Gateways", '' every ::3::3 using 8 title "Messages", "evaluation/experiment-results.generated.csv" every ::5::5 using 5:xtic(1) notitle, '' every ::5::5 using 6 notitle, '' every ::5::5 using 7 notitle, '' every ::5::5 using 8 notitle
+set key outside top center horizontal
+set ylabel "Count"
+set title "Model structure: baseline versus after parallel delta"
+plot "evaluation/model-structure.generated.csv" using 2:xtic(1) title "Nodes" lc rgb "#2878B5", '' using 3 title "Sequence edges" lc rgb "#F6C85F", '' using 4 title "Parallel gateways" lc rgb "#6F4E7C", '' using 5 title "Messages" lc rgb "#9DD866"

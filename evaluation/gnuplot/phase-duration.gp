@@ -4,6 +4,7 @@ set datafile separator comma
 set style data histograms
 set style fill solid
 set grid ytics
+unset key
 set ylabel "Duration (ms)"
-set title "End-to-end experiment: duration by phase"
-plot "evaluation/experiment-results.generated.csv" using 2:xtic(1) title "Duration"
+set title "Wall-clock duration by experiment phase"
+plot "evaluation/experiment-results.generated.csv" using 2:xtic(1) lc rgb "#2878B5" notitle
