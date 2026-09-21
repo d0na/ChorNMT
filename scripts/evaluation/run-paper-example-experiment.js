@@ -31,16 +31,17 @@ async function main() {
     await execute("gnuplot", [path.join(root, "evaluation", "gnuplot", plot)]);
   }
   const summaryPath = path.join(root, "evaluation", "experiment-summary.generated.md");
+  const relativeToSummary = (targetPath) => path.relative(path.dirname(summaryPath), targetPath);
   await fs.writeFile(summaryPath, [
     "# Paper example experiment summary",
     "",
     `- Asset: \`${deployment.assetAddress}\``,
     `- Total wall-clock duration: \`${(performance.now() - startedAt).toFixed(2)} ms\``,
-    `- Import metrics: [${path.basename(imported.metricsPath)}](../${imported.metricsPath})`,
-    `- Baseline render metrics: [${path.basename(baseline.metricsPath)}](../${baseline.metricsPath})`,
-    `- Modification metrics: [${path.basename(modified.metricsPath)}](../${modified.metricsPath})`,
-    `- Final render metrics: [${path.basename(finalRender.metricsPath)}](../${finalRender.metricsPath})`,
-    `- Aggregated CSV: [${path.basename(csvPath)}](../${csvPath})`,
+    `- Import metrics: [${path.basename(imported.metricsPath)}](${relativeToSummary(imported.metricsPath)})`,
+    `- Baseline render metrics: [${path.basename(baseline.metricsPath)}](${relativeToSummary(baseline.metricsPath)})`,
+    `- Modification metrics: [${path.basename(modified.metricsPath)}](${relativeToSummary(modified.metricsPath)})`,
+    `- Final render metrics: [${path.basename(finalRender.metricsPath)}](${relativeToSummary(finalRender.metricsPath)})`,
+    `- Aggregated CSV: [${path.basename(csvPath)}](${relativeToSummary(csvPath)})`,
     "",
     "Generated figures: `evaluation/figures/duration-by-nodes.png`, `evaluation/figures/duration-by-edges.png`, and `evaluation/figures/gas-by-changed-nodes.png`."
   ].join("\n") + "\n");
