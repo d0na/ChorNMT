@@ -1,232 +1,92 @@
 # ChorNMT
 
-Local Hardhat environment for the `BPMNChoreography` smart contract, plus the supporting `bpmn-builder-js` library used to export on-chain choreography data into BPMN-oriented JSON.
+ChorNMT importa una coreografia BPMN in un asset NMT locale, permette di modificarne i nodi on-chain e rigenera un BPMN dalla configurazione memorizzata nell'asset.
 
-## Project Layout
+Il percorso principale usa `paper-example`: una coreografia logistica con compratore, produttore, intermediario, fornitore e trasportatore speciale. Il repository contiene anche `parallel-gateway-example`, un modello piccolo usato per dimostrazioni tecniche di split e join paralleli.
 
-```text
-ChorNMT/
-  contracts/
-    BPMNChoreography.sol
-  references/
-    BPMNChoreography.sol
-    paper-example.bpmn
-    parallel-gateway-example.bpmn
-  scripts/
-    deploy-local.js
-    deploy.js
-    populate-local.js
-    run-local-flow.js
-    clean.js
-  bpmn-builder-js/
-    ...
-  hardhat.config.js
-  package.json
-```
+## Prerequisiti
 
-## Requirements
-
-- Node.js `>= 20`
+- Node.js 20 o successivo
 - npm
 
-## Install
-
-From the project root:
+Installa entrambe le dipendenze:
 
 ```bash
 npm install
+(cd bpmn-builder-js && npm install)
 ```
 
-If you also want the BPMN JSON/XML tooling:
+## Percorso principale: importa e modifica il paper example
 
-```bash
-cd bpmn-builder-js
-npm install
-```
+Apri due terminali nella root del repository.
 
-## Compile
+Nel primo, compila i contratti e avvia la blockchain locale:
 
 ```bash
 npm run compile
-```
-
-## Start The Local Node
-
-```bash
 npm run node
 ```
 
-This starts a local Hardhat JSON-RPC node on:
-
-```text
-http://127.0.0.1:8545
-```
-
-## Deploy The Contract
-
-In a second terminal, from the project root:
+Nel secondo, crea un nuovo asset. Il comando stampa il suo indirizzo:
 
 ```bash
 npm run deploy:local
 ```
 
-The current local deployment address obtained during setup was:
-
-```text
-0x5FbDB2315678afecb367f032d93F642f64180aa3
-```
-
-This address is valid for the current local Hardhat chain state. If you restart the node from a clean state and redeploy, you may get the same address again with the default deployer account.
-
-## Populate The Contract
-
-Once the contract is deployed, populate it with the built-in pizza delivery example:
-
-```bash
-npm run populate:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3
-```
-
-The populate script also accepts a dataset name as second argument:
-
-```bash
-npm run populate:local -- <contract-address> <dataset>
-```
-
-Available datasets:
-
-- `pizza-delivery` default
-- `parallel-gateway-example`
-
-To populate the contract from the reference [parallel-gateway-example.bpmn](references/parallel-gateway-example.bpmn):
-
-```bash
-npm run populate:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3 parallel-gateway-example
-```
-
-If the same contract was already populated with another dataset, deploy a fresh contract before populating it again. The contract updates existing nodes but does not clear the stored node-name list.
-
-## Run The Full Local Flow
-
-Assuming the local chain is already running and the contract is already deployed, this command:
-
-- populates the contract
-- exports choreography data to BPMN-like JSON
-- generates BPMN XML from that JSON
-
-`flow:local` already includes the populate step. If you use `flow:local`, you do not need to run `populate:local` separately first.
-
-```bash
-npm run flow:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3
-```
-
-Like `populate:local`, the full flow accepts an optional dataset name:
-
-```bash
-npm run flow:local -- <contract-address> <dataset>
-```
-
-For the paper example:
-
-```bash
-npm run flow:local -- 0x5FbDB2315678afecb367f032d93F642f64180aa3 parallel-gateway-example
-```
-
-To demonstrate an external update on the smart contract and render the difference, use:
-
-```bash
-npm run augment:parallel-gateway-example -- <asset-address>
-```
-
-For the current `paper-example`, use the reusable JSON delta instead:
+Importa il BPMN logistico nell'asset appena creato, riesportalo e genera il BPMN di base:
 
 ```bash
 npm run flow:import-bpmn -- <asset-address> references/paper-example.bpmn
+```
+
+Applica poi la modifica riutilizzabile. Essa inserisce uno split parallelo dopo `Order Special Transport`: la raccolta dei dettagli e la preparazione della documentazione del trasporto procedono in parallelo e si ricongiungono prima della waybill.
+
+```bash
 npm run apply:asset-delta -- <asset-address> scripts/data/paper-example-parallel-transport-preparation.delta.json
 ```
 
-The delta inserts a parallel split and join after `Order Special Transport`, adding `Prepare Transport Documentation` alongside the existing detail-collection path. Copy and edit this JSON file for later model changes; see [the BPMN-to-NMT workflow](docs/bpmn-to-nmt-workflow.md) for the delta rules.
+Il BPMN finale è generato in:
 
-This command:
-
-- populates the asset with the baseline `parallel-gateway-example`
-- renders the baseline BPMN
-- applies an external delta `setNodes(...)` update
-- updates only `Parallel Join`, the new `Activity4`, and `End`
-- adds two new messages, `msg5` and `msg6`
-- renders the updated BPMN to a second file so the difference is visible
-
-Generated files:
-
-- `bpmn-builder-js/example/input/pizza-delivery-from-contract.raw.generated.json`
-- `bpmn-builder-js/example/input/pizza-delivery-from-contract.normalized.generated.json`
-- `bpmn-builder-js/example/output/pizza-delivery-from-contract.generated.bpmn.xml`
-
-With `parallel-gateway-example`, the generated files use the `parallel-gateway-example-from-contract` prefix.
-
-If the flow reports unexpected nodes or roles, the contract was already populated with another dataset. Run `npm run deploy:local` again and use the new address before rerunning the flow.
-
-If you change dataset, use this sequence:
-
-1. Keep the local Hardhat node running with `npm run node`.
-2. Deploy a fresh contract with `npm run deploy:local`.
-3. Run the full flow with the new address and the target dataset, for example `npm run flow:local -- <new-contract-address> parallel-gateway-example`.
-
-Do not reuse the old contract address when switching dataset. The contract updates node data but does not clear the stored node-name and role-name lists.
-
-The generated BPMN XML includes a dynamic `bpmndi:BPMNDiagram` graphical layout block. The layout is derived from the exported nodes and sequence flows, so viewers can render the diagram without hardcoded coordinates.
-
-The flow also writes a generated manifest under `bpmn-builder-js/example/contract/*.generated.json`. These generated manifests are temporary artifacts, are ignored by git, and are removed by `npm run clean`.
-
-## Contract Files
-
-The project keeps one active contract source plus one historical reference:
-
-- [contracts/BPMNChoreography.sol](contracts/BPMNChoreography.sol)
-- [references/BPMNChoreography.sol](references/BPMNChoreography.sol)
-
-The `contracts/` version is the one used by Hardhat for compilation and deployment. The file under `references/` is preserved as starting material only.
-
-## Export Contract Data To BPMN JSON
-
-The BPMN export flow lives in [bpmn-builder-js](bpmn-builder-js).
-
-From that folder you can export choreography data from the deployed contract:
-
-```bash
-cd bpmn-builder-js
-npm run export:contract -- ./example/contract/pizza-delivery-contract.generated.json
+```text
+bpmn-builder-js/example/output/paper-example-parallel-transport-preparation-from-contract.generated.bpmn.xml
 ```
 
-The manifest path must point to either:
+## Come modificare un asset già popolato
 
-- a generated `*.generated.json` file created by `flow:local`
-- or a local ad hoc manifest you create for manual export
+Non si modifica direttamente il BPMN XML esportato: è una vista dell'asset. Si crea invece un file delta JSON, si applica all'asset con `apply:asset-delta` e si rigenera il BPMN.
 
-Important constraint:
+Usa [scripts/data/paper-example-parallel-transport-preparation.delta.json](scripts/data/paper-example-parallel-transport-preparation.delta.json) come modello. Un delta contiene:
 
-- `BPMNChoreography.sol` is name-based, not id-based
-- it exposes `getNode(name)`, `getNodeNames()`, `getRole(role)`, and `getRoleNames()`
-- the contract stores the full list of node names and role names internally, so the export script can read everything automatically
-- BPMN ids are generated later by the export mapper in `bpmn-builder-js`
+- `render`: nome e metadati del BPMN da generare;
+- `nodes`: i soli nodi aggiunti o cambiati, ciascuno descritto nel suo stato completo;
+- `roles` opzionale: mappa `nome ruolo → address Ethereum`, per ruoli nuovi.
 
-See:
+Quando cambia un collegamento, includi nel delta entrambi i nodi agli estremi con i rispettivi `incoming` e `outgoing` completi. L'asset può aggiungere o sostituire nodi, ma al momento non può rimuoverne definitivamente uno.
 
-- [bpmn-builder-js/README.md](bpmn-builder-js/README.md)
-- [docs/contract-hierarchy.md](docs/contract-hierarchy.md)
-- [docs/delta-update-and-solidity-calls.md](docs/delta-update-and-solidity-calls.md)
-- [references/parallel-gateway-example.bpmn](references/parallel-gateway-example.bpmn)
-- [docs/bpmn-to-nmt-workflow.md](docs/bpmn-to-nmt-workflow.md)
+I nomi di nodi e ruoli sono le chiavi di riferimento del contratto. Per importare un BPMN diverso o ricominciare dall'asset iniziale, esegui di nuovo `deploy:local` e usa il nuovo indirizzo: l'asset non svuota le liste di nomi già memorizzate.
 
-## Useful Commands
+## Altri esempi
 
-```bash
-npm run compile
-npm run node
-npm run deploy:local
-npm run populate:local -- <contract-address>
-npm run populate:local -- <contract-address> parallel-gateway-example
-npm run augment:parallel-gateway-example -- <asset-address>
-npm run flow:local -- <contract-address>
-npm run flow:local -- <contract-address> parallel-gateway-example
-npm run clean
+Il repository include anche `pizza-delivery`, un esempio introduttivo, e `parallel-gateway-example`, un modello minimo per verificare split e join paralleli. Sono dataset tecnici separati dal `paper-example` e richiedono un asset nuovo quando si cambia modello.
+
+I relativi comandi e lo scopo di ciascuno sono raccolti in [Altri esempi](docs/other-examples.md). Il README mantiene invece un solo percorso operativo: `paper-example` e il suo delta parallelo.
+
+## File generati
+
+Ogni import, export o rendering produce file in:
+
+```text
+bpmn-builder-js/example/input/
+bpmn-builder-js/example/output/
+bpmn-builder-js/example/contract/
 ```
+
+I file con suffisso `.generated.*` sono artefatti locali ignorati da Git: possono essere rigenerati con i comandi sopra. I BPMN di riferimento e i delta JSON restano invece versionati.
+
+## Documentazione tecnica
+
+- [Workflow BPMN → NMT](docs/bpmn-to-nmt-workflow.md): formato NMT, importazione e regole per i delta.
+- [Aggiornamenti delta e chiamate Solidity](docs/delta-update-and-solidity-calls.md): dettagli di `setNodes(...)` e `setRoles(...)`.
+- [Gerarchia dei contratti](docs/contract-hierarchy.md): modello degli asset e delle policy.
+- [bpmn-builder-js](bpmn-builder-js/README.md): renderer BPMN e formato JSON intermedio.
+- [Altri esempi](docs/other-examples.md): pizza delivery e parallel gateway.
