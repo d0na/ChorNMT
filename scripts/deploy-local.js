@@ -12,7 +12,7 @@ const DEPLOYER_PRIVATE_KEY =
   process.env.DEPLOYER_PRIVATE_KEY ||
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 
-async function main() {
+export async function deployAsset() {
   const choreographyNmtArtifact = JSON.parse(
     await fs.readFile(
       path.join(
@@ -110,9 +110,12 @@ async function main() {
     reportTransactionCost("Deploy ChoreographyNMT", nmtReceipt),
     reportTransactionCost("Mint ChoreographyMutableAsset", mintReceipt)
   ]);
+  return { assetAddress, tokenId, choreographyNmtAddress: choreographyNmt.target };
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  deployAsset().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}

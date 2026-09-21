@@ -119,12 +119,13 @@ export async function populateDataset(assetAddress, dataset, datasetName = "cust
 
   console.log(`Populated ChoreographyMutableAsset at: ${assetAddress}`);
   console.log(`Dataset: ${datasetName}`);
-  reportTotalCost([
+  const costs = [
     reportTransactionCost("setRoles", setRolesReceipt),
     reportTransactionCost("setNodes", setNodesReceipt)
-  ]);
+  ];
+  const totalCost = reportTotalCost(costs);
 
-  return { contractAddress: assetAddress, datasetName, roles: dataset.roles };
+  return { contractAddress: assetAddress, datasetName, roles: dataset.roles, costs, totalCost };
 }
 
 export async function populateContract(assetAddress, datasetName) {

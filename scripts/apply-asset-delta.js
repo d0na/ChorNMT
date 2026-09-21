@@ -138,13 +138,14 @@ export async function applyAssetDelta(assetAddress, deltaPath, { render = true }
     payload.returnMessages
   );
   costs.push(reportTransactionCost("setNodes", await transaction.wait()));
-  reportTotalCost(costs);
+  const totalCost = reportTotalCost(costs);
 
   const artifacts = render ? await renderAssetToBpmn({ assetAddress, ...delta.render }) : {};
   const metricsPath = await writeMetrics("modify-asset", {
     assetAddress,
     deltaPath: resolvedDeltaPath,
     delta: summarizeNodes(delta.nodes, Object.keys(delta.roles || {})),
+    blockchain: { transactions: costs, total: totalCost },
     rendered: render,
     timingsMs: { total: performance.now() - startedAt }
   });

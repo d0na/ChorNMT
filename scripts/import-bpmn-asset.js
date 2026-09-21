@@ -13,11 +13,12 @@ export async function importBpmnIntoAsset(assetAddress, bpmnPath, outputPath) {
   const startedAt = performance.now();
   const { dataset, outputPath: nmtPath } = await importBpmnToNmt(bpmnPath, outputPath);
   const importedAt = performance.now();
-  await populateDataset(assetAddress, dataset, path.basename(nmtPath));
+  const population = await populateDataset(assetAddress, dataset, path.basename(nmtPath));
   const metricsPath = await writeMetrics("import-asset", {
     assetAddress,
     sourceBpmn: bpmnPath,
     model: summarizeNodes(dataset.nodes, dataset.roles),
+    blockchain: { transactions: population.costs, total: population.totalCost },
     timingsMs: { import: importedAt - startedAt, populate: performance.now() - importedAt, total: performance.now() - startedAt }
   });
   return { nmtPath, metricsPath };

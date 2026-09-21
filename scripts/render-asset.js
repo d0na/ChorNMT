@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { renderAssetToBpmn } from "./render-local-support.js";
-import { writeMetrics } from "./evaluation/metrics.js";
+import { summarizeNodes, writeMetrics } from "./evaluation/metrics.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -30,7 +30,14 @@ export async function renderAsset(assetAddress, renderConfigPath) {
   const config = JSON.parse(await fs.readFile(resolvedConfigPath, "utf8"));
   const startedAt = performance.now();
   const artifacts = await renderAssetToBpmn({ assetAddress, ...renderMetadata(config, resolvedConfigPath) });
-  const metricsPath = await writeMetrics("render-asset", { assetAddress, configPath: resolvedConfigPath, timingsMs: { total: performance.now() - startedAt }, artifacts });
+  const exported = JSON.parse(await fs.readFile(artifacts.rawJsonPath, "utf8"));
+  const nodes = exported.choreography?.nodes || [];
+  const model = {
+    ...summarizeNodes(nodes.map((node) => ({ ...node, nodeType: node.contractNodeType === "TASK" ? 2 : /SPLIT|JOIN|GATEWAY/.test(node.contractNodeType || "") ? 3 : 0 })), exported.choreography?.participants || []),
+    sequenceEdges: exported.choreography?.sequenceFlows?.length || 0,
+    messages: exported.messages?.length || 0
+  };
+  const metricsPath = await writeMetrics("render-asset", { assetAddress, configPath: resolvedConfigPath, model, timingsMs: { total: performance.now() - startedAt }, artifacts });
   return { resolvedConfigPath, metricsPath, ...artifacts };
 }
 
