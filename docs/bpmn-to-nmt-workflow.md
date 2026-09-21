@@ -9,6 +9,7 @@ Use this procedure to encode a BPMN choreography in the NMT tool and generate a 
 | `npm run import:bpmn -- <input.bpmn> [output.nmt.json]` | Imports a BPMN choreography into the NMT dataset format. | BPMN choreography XML | NMT dataset JSON |
 | `npm run render:nmt -- <input.nmt.json> [output.bpmn]` | Renders an NMT dataset locally, without deploying a contract. | NMT dataset JSON | BPMN XML |
 | `npm run flow:import-bpmn -- <asset-address> <input.bpmn>` | Imports BPMN, stores its NMT dataset in a fresh local contract, re-exports it, and renders it. | Fresh asset address and BPMN choreography XML | NMT JSON, contract export JSON, and BPMN XML |
+| `npm run apply:asset-delta -- <asset-address> <delta.json>` | Applies a declarative delta to an already populated asset, re-exports it, and renders the revised BPMN. | Existing asset and delta JSON | Contract export JSON and revised BPMN XML |
 | `npm run flow:local -- <contract-address> <dataset-name>` | Persists a registered dataset in the local NMT contract, exports it, and renders it. | Registered dataset | Contract export JSON and BPMN XML |
 
 Use the first two commands for a local round-trip. Use `flow:import-bpmn` for the complete import, NMT persistence, export, and rendering flow.
@@ -116,6 +117,19 @@ npm run flow:local -- <contract-address> <dataset-name>
 ```
 
 Use a fresh contract whenever you switch datasets. Existing contract state retains node and role names from earlier population runs.
+
+### Modify an existing asset with a reusable delta
+
+After importing the source BPMN, modify the asset through a delta JSON rather than editing the original BPMN XML. A delta lists only the nodes whose final state changes and contains the output metadata used to render the revised BPMN.
+
+The repository includes a complete example based on `chornmt-use-case`: after `Order Special Transport`, it introduces a parallel split for detail collection and `Prepare Transport Documentation`, then joins both branches before the waybill.
+
+```bash
+npm run flow:import-bpmn -- <asset-address> references/chornmt-use-case.bpmn
+npm run apply:asset-delta -- <asset-address> scripts/data/chornmt-use-case-delivery-confirmation.delta.json
+```
+
+To create another modification, copy the example delta and edit its `nodes` array. Every listed node is fully replaced by `setNodes(...)`; therefore, when an edge changes, include both endpoints with their complete `incoming` and `outgoing` arrays. If a delta introduces roles that do not exist yet, add a `roles` object mapping each role name to its Ethereum address; it is applied through `setRoles(...)` before the nodes. Node names and role names are references in the current contract. Adding or replacing nodes is supported, but deletion is not yet supported.
 
 ## 5. Validate the generated artifacts
 

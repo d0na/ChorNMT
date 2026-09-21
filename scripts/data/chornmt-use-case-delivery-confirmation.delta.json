@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "1.0",
+  "description": "Split transport preparation into parallel detail collection and documentation preparation, then join before the waybill.",
+  "render": {
+    "choreographyId": "ChoreographyParallelTransportPreparation",
+    "choreographyName": "ChorNMT Use Case — Parallel Transport Preparation",
+    "definitionsId": "ChoreographyParallelTransportPreparation_definitions",
+    "targetNamespace": "http://example.com/chornmt/parallel-transport-preparation",
+    "outputBaseName": "chornmt-use-case-parallel-transport-preparation-from-contract"
+  },
+  "nodes": [
+    {
+      "name": "Order Special Transport",
+      "nodeType": 2,
+      "incoming": ["FWD Oder Intermediate"],
+      "outgoing": ["Parallel Transport Preparation Split"],
+      "conditions": [""],
+      "initiatorRole": "Middleman",
+      "participantRole": "Special Carrier",
+      "initiatingMessage": "Message_0dai5by",
+      "returnMessage": ""
+    },
+    {
+      "name": "Parallel Transport Preparation Split",
+      "nodeType": 5,
+      "incoming": ["Order Special Transport"],
+      "outgoing": ["Request Details", "Prepare Transport Documentation"],
+      "conditions": ["", ""],
+      "initiatorRole": "",
+      "participantRole": "",
+      "initiatingMessage": "",
+      "returnMessage": ""
+    },
+    {
+      "name": "Request Details",
+      "nodeType": 2,
+      "incoming": ["Parallel Transport Preparation Split"],
+      "outgoing": ["Transport Details"],
+      "conditions": [""],
+      "initiatorRole": "Special Carrier",
+      "participantRole": "Supplier",
+      "initiatingMessage": "Message_10n229k",
+      "returnMessage": ""
+    },
+    {
+      "name": "Transport Details",
+      "nodeType": 2,
+      "incoming": ["Request Details"],
+      "outgoing": ["Parallel Transport Preparation Join"],
+      "conditions": [""],
+      "initiatorRole": "Supplier",
+      "participantRole": "Special Carrier",
+      "initiatingMessage": "Message_1325zdq",
+      "returnMessage": ""
+    },
+    {
+      "name": "Prepare Transport Documentation",
+      "nodeType": 2,
+      "incoming": ["Parallel Transport Preparation Split"],
+      "outgoing": ["Parallel Transport Preparation Join"],
+      "conditions": [""],
+      "initiatorRole": "Middleman",
+      "participantRole": "Special Carrier",
+      "initiatingMessage": "Prepare transport documentation",
+      "returnMessage": ""
+    },
+    {
+      "name": "Parallel Transport Preparation Join",
+      "nodeType": 6,
+      "incoming": ["Transport Details", "Prepare Transport Documentation"],
+      "outgoing": ["Waybill for Intermediate"],
+      "conditions": [],
+      "initiatorRole": "",
+      "participantRole": "",
+      "initiatingMessage": "",
+      "returnMessage": ""
+    },
+    {
+      "name": "Waybill for Intermediate",
+      "nodeType": 2,
+      "incoming": ["Parallel Transport Preparation Join"],
+      "outgoing": ["Arrival Intermediate"],
+      "conditions": [""],
+      "initiatorRole": "Supplier",
+      "participantRole": "Special Carrier",
+      "initiatingMessage": "Message_1vaojlk",
+      "returnMessage": ""
+    }
+  ]
+}

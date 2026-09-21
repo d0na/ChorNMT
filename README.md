@@ -137,6 +137,15 @@ To demonstrate an external update on the smart contract and render the differenc
 npm run augment:paper-example -- <asset-address>
 ```
 
+For the current `chornmt-use-case`, use the reusable JSON delta instead:
+
+```bash
+npm run flow:import-bpmn -- <asset-address> references/chornmt-use-case.bpmn
+npm run apply:asset-delta -- <asset-address> scripts/data/chornmt-use-case-delivery-confirmation.delta.json
+```
+
+The delta inserts a parallel split and join after `Order Special Transport`, adding `Prepare Transport Documentation` alongside the existing detail-collection path. Copy and edit this JSON file for later model changes; see [the BPMN-to-NMT workflow](docs/bpmn-to-nmt-workflow.md) for the delta rules.
+
 This command:
 
 - populates the asset with the baseline `paper-example`
