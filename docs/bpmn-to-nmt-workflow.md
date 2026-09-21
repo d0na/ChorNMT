@@ -76,11 +76,11 @@ Verify that the imported dataset contains:
 To import a BPMN and immediately render the NMT representation, run:
 
 ```bash
-npm run import:bpmn -- references/chornmt-use-case.bpmn
-npm run render:nmt -- bpmn-builder-js/example/input/chornmt-use-case.nmt.json
+npm run import:bpmn -- references/paper-example.bpmn
+npm run render:nmt -- bpmn-builder-js/example/input/paper-example.nmt.json
 ```
 
-The second command creates `bpmn-builder-js/example/output/chornmt-use-case.generated.bpmn.xml` unless an output path is supplied. This sequence does not start a blockchain or modify a contract.
+The second command creates `bpmn-builder-js/example/output/paper-example.generated.bpmn.xml` unless an output path is supplied. This sequence does not start a blockchain or modify a contract.
 
 ### Contract-backed flow
 
@@ -105,7 +105,7 @@ npm run deploy:local
 For an imported BPMN, run the complete contract-backed flow with the minted `ChoreographyMutableAsset` address printed by deployment:
 
 ```bash
-npm run flow:import-bpmn -- <asset-address> references/chornmt-use-case.bpmn
+npm run flow:import-bpmn -- <asset-address> references/paper-example.bpmn
 ```
 
 This command imports the BPMN, stores the imported NMT dataset in the asset, exports the asset data, normalizes it, and renders the final BPMN. The generated BPMN is written to `bpmn-builder-js/example/output/<input-name>-from-contract.generated.bpmn.xml`.
@@ -122,11 +122,11 @@ Use a fresh contract whenever you switch datasets. Existing contract state retai
 
 After importing the source BPMN, modify the asset through a delta JSON rather than editing the original BPMN XML. A delta lists only the nodes whose final state changes and contains the output metadata used to render the revised BPMN.
 
-The repository includes a complete example based on `chornmt-use-case`: after `Order Special Transport`, it introduces a parallel split for detail collection and `Prepare Transport Documentation`, then joins both branches before the waybill.
+The repository includes a complete example based on `paper-example`: after `Order Special Transport`, it introduces a parallel split for detail collection and `Prepare Transport Documentation`, then joins both branches before the waybill.
 
 ```bash
-npm run flow:import-bpmn -- <asset-address> references/chornmt-use-case.bpmn
-npm run apply:asset-delta -- <asset-address> scripts/data/chornmt-use-case-delivery-confirmation.delta.json
+npm run flow:import-bpmn -- <asset-address> references/paper-example.bpmn
+npm run apply:asset-delta -- <asset-address> scripts/data/paper-example-parallel-transport-preparation.delta.json
 ```
 
 To create another modification, copy the example delta and edit its `nodes` array. Every listed node is fully replaced by `setNodes(...)`; therefore, when an edge changes, include both endpoints with their complete `incoming` and `outgoing` arrays. If a delta introduces roles that do not exist yet, add a `roles` object mapping each role name to its Ethereum address; it is applied through `setRoles(...)` before the nodes. Node names and role names are references in the current contract. Adding or replacing nodes is supported, but deletion is not yet supported.

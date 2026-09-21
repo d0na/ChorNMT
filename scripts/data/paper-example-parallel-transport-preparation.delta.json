@@ -2,11 +2,11 @@
   "schemaVersion": "1.0",
   "description": "Split transport preparation into parallel detail collection and documentation preparation, then join before the waybill.",
   "render": {
-    "choreographyId": "ChoreographyParallelTransportPreparation",
-    "choreographyName": "ChorNMT Use Case — Parallel Transport Preparation",
-    "definitionsId": "ChoreographyParallelTransportPreparation_definitions",
-    "targetNamespace": "http://example.com/chornmt/parallel-transport-preparation",
-    "outputBaseName": "chornmt-use-case-parallel-transport-preparation-from-contract"
+    "choreographyId": "PaperExampleParallelTransportPreparation",
+    "choreographyName": "Paper Example — Parallel Transport Preparation",
+    "definitionsId": "PaperExampleParallelTransportPreparation_definitions",
+    "targetNamespace": "http://example.com/paper-example/parallel-transport-preparation",
+    "outputBaseName": "paper-example-parallel-transport-preparation-from-contract"
   },
   "nodes": [
     {

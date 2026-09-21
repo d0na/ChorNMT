@@ -10,7 +10,7 @@ ChorNMT/
     BPMNChoreography.sol
   references/
     BPMNChoreography.sol
-    chornmt-use-case.bpmn
+    paper-example.bpmn
     parallel-gateway-example.bpmn
   scripts/
     deploy-local.js
@@ -137,11 +137,11 @@ To demonstrate an external update on the smart contract and render the differenc
 npm run augment:parallel-gateway-example -- <asset-address>
 ```
 
-For the current `chornmt-use-case`, use the reusable JSON delta instead:
+For the current `paper-example`, use the reusable JSON delta instead:
 
 ```bash
-npm run flow:import-bpmn -- <asset-address> references/chornmt-use-case.bpmn
-npm run apply:asset-delta -- <asset-address> scripts/data/chornmt-use-case-delivery-confirmation.delta.json
+npm run flow:import-bpmn -- <asset-address> references/paper-example.bpmn
+npm run apply:asset-delta -- <asset-address> scripts/data/paper-example-parallel-transport-preparation.delta.json
 ```
 
 The delta inserts a parallel split and join after `Order Special Transport`, adding `Prepare Transport Documentation` alongside the existing detail-collection path. Copy and edit this JSON file for later model changes; see [the BPMN-to-NMT workflow](docs/bpmn-to-nmt-workflow.md) for the delta rules.
