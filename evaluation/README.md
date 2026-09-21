@@ -10,6 +10,8 @@ npm run evaluate:paper
 
 The command deploys its own asset, executes import → baseline render → delta modification → final render, clears only previous `metrics/*.generated.*` artifacts, creates the CSV and figures, and writes `evaluation/experiment-summary.generated.md`.
 
+It fetches an ETH/USD spot price for the report. For a reproducible study, provide a fixed historical value instead: `ETH_USD_PRICE=<price> npm run evaluate:paper`.
+
 After collecting repeated runs, create a CSV file and figures:
 
 ```bash

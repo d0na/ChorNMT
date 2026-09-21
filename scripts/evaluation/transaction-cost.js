@@ -5,7 +5,9 @@ export function reportTransactionCost(label, receipt) {
   const gasPrice = receipt.gasPrice ?? 0n;
   const cost = gasUsed * gasPrice;
   console.log(`${label}: ${gasUsed} gas × ${formatUnits(gasPrice, "gwei")} gwei = ${formatEther(cost)} ETH`);
-  return { label, gasUsed: gasUsed.toString(), gasPriceWei: gasPrice.toString(), costWei: cost.toString(), costEth: formatEther(cost) };
+  const ethUsdPrice = Number(process.env.ETH_USD_PRICE || 0);
+  const costUsd = ethUsdPrice > 0 ? Number(formatEther(cost)) * ethUsdPrice : null;
+  return { label, gasUsed: gasUsed.toString(), gasPriceWei: gasPrice.toString(), costWei: cost.toString(), costEth: formatEther(cost), costUsd };
 }
 
 export function reportTotalCost(costs) {

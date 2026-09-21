@@ -13,8 +13,21 @@ const root = process.cwd();
 const bpmn = "references/paper-example.bpmn";
 const delta = "scripts/data/paper-example-parallel-transport-preparation.delta.json";
 
+async function resolveEthUsdPrice() {
+  if (Number(process.env.ETH_USD_PRICE) > 0) return Number(process.env.ETH_USD_PRICE);
+  try {
+    const response = await fetch("https://api.coinbase.com/v2/prices/ETH-USD/spot", { signal: AbortSignal.timeout(5000) });
+    const payload = await response.json();
+    return Number(payload.data.amount) || null;
+  } catch {
+    return null;
+  }
+}
+
 async function main() {
   const startedAt = performance.now();
+  const ethUsdPrice = await resolveEthUsdPrice();
+  if (ethUsdPrice) process.env.ETH_USD_PRICE = String(ethUsdPrice);
   const metricsDirectory = path.join(root, "metrics");
   await fs.mkdir(metricsDirectory, { recursive: true });
   for (const file of await fs.readdir(metricsDirectory)) {
@@ -54,6 +67,7 @@ async function main() {
     "",
     `- Asset: \`${deployment.assetAddress}\``,
     `- Total wall-clock duration: \`${(performance.now() - startedAt).toFixed(2)} ms\``,
+    `- ETH/USD price used: ${ethUsdPrice ? `$${ethUsdPrice.toFixed(2)}` : "not available"}`,
     `- Import metrics: [${path.basename(imported.metricsPath)}](${relativeToSummary(imported.metricsPath)})`,
     `- Baseline render metrics: [${path.basename(baseline.metricsPath)}](${relativeToSummary(baseline.metricsPath)})`,
     `- Modification metrics: [${path.basename(modified.metricsPath)}](${relativeToSummary(modified.metricsPath)})`,
@@ -62,14 +76,11 @@ async function main() {
     "",
     "## Deployment and mint costs",
     "",
-    "| Transaction | Smart contract / asset | Address | Gas | ETH cost |",
-    "| --- | --- | --- | ---: | ---: |",
-    `| ${deployment.costs[0].label} | CreatorSmartPolicy | \`${deployment.creatorPolicyAddress}\` | ${deployment.costs[0].gasUsed} | ${deployment.costs[0].costEth} |`,
-    `| ${deployment.costs[1].label} | HolderSmartPolicy | \`${deployment.holderPolicyAddress}\` | ${deployment.costs[1].gasUsed} | ${deployment.costs[1].costEth} |`,
-    `| ${deployment.costs[2].label} | ChoreographyNMT | \`${deployment.choreographyNmtAddress}\` | ${deployment.costs[2].gasUsed} | ${deployment.costs[2].costEth} |`,
-    `| ${deployment.costs[3].label} | ChoreographyMutableAsset (mint) | \`${deployment.assetAddress}\` | ${deployment.costs[3].gasUsed} | ${deployment.costs[3].costEth} |`,
-    `| **Deployment and mint total** | — | — | **${deployment.costs.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n)}** | **${deployment.totalCost.totalEth}** |`,
-    "| Transfer asset | Not executed in this experiment | — | Not applicable | Not applicable |",
+    "| Transaction | Smart contract / asset | Address | Gas | ETH cost | USD cost |",
+    "| --- | --- | --- | ---: | ---: | ---: |",
+    ...[[deployment.costs[0], "CreatorSmartPolicy", deployment.creatorPolicyAddress], [deployment.costs[1], "HolderSmartPolicy", deployment.holderPolicyAddress], [deployment.costs[2], "ChoreographyNMT", deployment.choreographyNmtAddress], [deployment.costs[3], "ChoreographyMutableAsset (mint)", deployment.assetAddress]].map(([cost, name, address]) => `| ${cost.label} | ${name} | \`${address}\` | ${cost.gasUsed} | ${cost.costEth} | ${cost.costUsd === null ? "N/A" : `$${cost.costUsd.toFixed(4)}`} |`),
+    `| **Deployment and mint total** | — | — | **${deployment.costs.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n)}** | **${deployment.totalCost.totalEth}** | **${ethUsdPrice ? `$${(Number(deployment.totalCost.totalEth) * ethUsdPrice).toFixed(4)}` : "N/A"}** |`,
+    "| Transfer asset | Not executed in this experiment | — | Not applicable | Not applicable | Not applicable |",
     "",
     "## Phase measurements",
     "",
