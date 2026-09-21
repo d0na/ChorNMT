@@ -10,6 +10,17 @@ npm run evaluate:paper
 
 The command deploys its own asset, executes import → baseline render → delta modification → final render, clears only previous `metrics/*.generated.*` artifacts, creates the CSV and figures, and writes `evaluation/experiment-summary.generated.md`.
 
+## Delta versus full population benchmark
+
+The experiment also creates a second fresh asset and fully populates it with the final, modified model. It compares that write cost with the delta update on the first asset.
+
+This is a benchmark only: it does **not** change the operational workflow or force a strategy. In normal usage you can still choose either:
+
+- `modify:asset` to update only the changed nodes of an existing asset;
+- complete population of a fresh asset when a clean full replacement is needed.
+
+The comparison excludes deployment cost, so it measures only model-write transactions. Its result appears in the `Delta update versus full model population` table of the generated experiment summary.
+
 It fetches an ETH/USD spot price for the report. For a reproducible study, provide a fixed historical value instead: `ETH_USD_PRICE=<price> npm run evaluate:paper`.
 
 After collecting repeated runs, create a CSV file and figures:
