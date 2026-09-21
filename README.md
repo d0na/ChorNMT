@@ -10,6 +10,7 @@ ChorNMT/
     BPMNChoreography.sol
   references/
     BPMNChoreography.sol
+    chornmt-use-case.bpmn
     paper-example.bpmn
   scripts/
     deploy-local.js
@@ -205,6 +206,7 @@ See:
 - [docs/contract-hierarchy.md](docs/contract-hierarchy.md)
 - [docs/delta-update-and-solidity-calls.md](docs/delta-update-and-solidity-calls.md)
 - [references/paper-example.bpmn](references/paper-example.bpmn)
+- [docs/bpmn-to-nmt-workflow.md](docs/bpmn-to-nmt-workflow.md)
 
 ## Useful Commands
 
