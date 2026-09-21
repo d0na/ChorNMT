@@ -6,6 +6,7 @@ import { deployAsset } from "../deploy-local.js";
 import { importBpmnIntoAsset } from "../import-bpmn-asset.js";
 import { renderAsset } from "../render-asset.js";
 import { applyAssetDelta } from "../apply-asset-delta.js";
+import { populateDataset } from "../populate-local.js";
 import { exportMetricsCsv } from "./export-metrics-csv.js";
 
 const execute = promisify(execFile);
@@ -40,6 +41,15 @@ async function main() {
   const baseline = await renderAsset(deployment.assetAddress, imported.nmtPath);
   const modified = await applyAssetDelta(deployment.assetAddress, delta, { render: false });
   const finalRender = await renderAsset(deployment.assetAddress, delta);
+  const baselineDataset = JSON.parse(await fs.readFile(imported.nmtPath, "utf8"));
+  const deltaDataset = JSON.parse(await fs.readFile(path.join(root, delta), "utf8"));
+  const finalNodes = new Map(baselineDataset.nodes.map((node) => [node.name, node]));
+  deltaDataset.nodes.forEach((node) => finalNodes.set(node.name, node));
+  const fullPopulationDeployment = await deployAsset();
+  const fullPopulation = await populateDataset(fullPopulationDeployment.assetAddress, {
+    ...baselineDataset,
+    nodes: [...finalNodes.values()]
+  }, "paper-example-final-full");
   const csvPath = await exportMetricsCsv();
   const readMetric = async (result) => JSON.parse(await fs.readFile(result.metricsPath, "utf8"));
   const importMetric = await readMetric(imported);
@@ -52,6 +62,8 @@ async function main() {
     const eth = Number(deploymentGas) * gwei / 1e9;
     return { gwei, eth, usd: ethUsdPrice ? eth * ethUsdPrice : null };
   });
+  const deltaGas = modifyMetric.blockchain.transactions.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n);
+  const fullGas = fullPopulation.costs.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n);
   const rows = [
     ["deploy", deployDurationMs, deployment.costs.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n), deployment.totalCost.totalEth, "", "", "", ""],
     ["import", importMetric.timingsMs.total, importMetric.blockchain.transactions.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n), importMetric.blockchain.total.totalEth, importMetric.model.nodes, importMetric.model.sequenceEdges, importMetric.model.gateways, importMetric.model.messages],
@@ -90,6 +102,15 @@ async function main() {
     ...[[deployment.costs[0], "CreatorSmartPolicy", deployment.creatorPolicyAddress], [deployment.costs[1], "HolderSmartPolicy", deployment.holderPolicyAddress], [deployment.costs[2], "ChoreographyNMT", deployment.choreographyNmtAddress], [deployment.costs[3], "ChoreographyMutableAsset (mint)", deployment.assetAddress]].map(([cost, name, address]) => `| ${cost.label} | ${name} | \`${address}\` | ${cost.gasUsed} | ${cost.costEth} | ${cost.costUsd === null ? "N/A" : `$${cost.costUsd.toFixed(4)}`} |`),
     `| **Deployment and mint total** | — | — | **${deploymentGas}** | **${deployment.totalCost.totalEth}** | **${ethUsdPrice ? `$${(Number(deployment.totalCost.totalEth) * ethUsdPrice).toFixed(4)}` : "N/A"}** |`,
     "| Transfer asset | Not executed in this experiment | — | Not applicable | Not applicable | Not applicable |",
+    "",
+    "## Delta update versus full model population",
+    "",
+    "Deployment cost is excluded: this comparison measures only the model-write transactions.",
+    "",
+    "| Strategy | Gas used | ETH cost | USD cost | Relative gas saving |",
+    "| --- | ---: | ---: | ---: | ---: |",
+    `| Delta update (${deltaDataset.nodes.length} changed nodes) | ${deltaGas} | ${modifyMetric.blockchain.total.totalEth} | ${ethUsdPrice ? `$${(Number(modifyMetric.blockchain.total.totalEth) * ethUsdPrice).toFixed(2)}` : "N/A"} | ${((1 - Number(deltaGas) / Number(fullGas)) * 100).toFixed(2)}% |`,
+    `| Full population (${finalNodes.size} nodes) | ${fullGas} | ${fullPopulation.totalCost.totalEth} | ${ethUsdPrice ? `$${(Number(fullPopulation.totalCost.totalEth) * ethUsdPrice).toFixed(2)}` : "N/A"} | 0.00% |`,
     "",
     "## Estimated deployment and mint cost under public-network gas-price scenarios",
     "",
