@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ContractFactory, JsonRpcProvider, NonceManager, Wallet } from "ethers";
+import { reportTotalCost, reportTransactionCost } from "./transaction-cost.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -76,12 +77,15 @@ async function main() {
 
   const creatorPolicy = await creatorPolicyFactory.deploy();
   await creatorPolicy.waitForDeployment();
+  const creatorReceipt = await creatorPolicy.deploymentTransaction().wait();
 
   const holderPolicy = await holderPolicyFactory.deploy();
   await holderPolicy.waitForDeployment();
+  const holderReceipt = await holderPolicy.deploymentTransaction().wait();
 
   const choreographyNmt = await choreographyNmtFactory.deploy();
   await choreographyNmt.waitForDeployment();
+  const nmtReceipt = await choreographyNmt.deploymentTransaction().wait();
 
   const [assetAddress, tokenId] = await choreographyNmt.mint.staticCall(
     deployerAddress,
@@ -93,13 +97,19 @@ async function main() {
     creatorPolicy.target,
     holderPolicy.target
   );
-  await mintTx.wait();
+  const mintReceipt = await mintTx.wait();
 
   console.log(`ChoreographyNMT deployed to: ${choreographyNmt.target}`);
   console.log(`CreatorSmartPolicy deployed to: ${creatorPolicy.target}`);
   console.log(`HolderSmartPolicy deployed to: ${holderPolicy.target}`);
   console.log(`ChoreographyMutableAsset minted at: ${assetAddress}`);
   console.log(`Token ID: ${tokenId}`);
+  reportTotalCost([
+    reportTransactionCost("Deploy CreatorSmartPolicy", creatorReceipt),
+    reportTransactionCost("Deploy HolderSmartPolicy", holderReceipt),
+    reportTransactionCost("Deploy ChoreographyNMT", nmtReceipt),
+    reportTransactionCost("Mint ChoreographyMutableAsset", mintReceipt)
+  ]);
 }
 
 main().catch((error) => {

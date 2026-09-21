@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { renderAssetToBpmn } from "./render-local-support.js";
+import { writeMetrics } from "./metrics.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -27,8 +28,10 @@ export async function renderAsset(assetAddress, renderConfigPath) {
   }
   const resolvedConfigPath = path.resolve(process.cwd(), renderConfigPath);
   const config = JSON.parse(await fs.readFile(resolvedConfigPath, "utf8"));
+  const startedAt = performance.now();
   const artifacts = await renderAssetToBpmn({ assetAddress, ...renderMetadata(config, resolvedConfigPath) });
-  return { resolvedConfigPath, ...artifacts };
+  const metricsPath = await writeMetrics("render-asset", { assetAddress, configPath: resolvedConfigPath, timingsMs: { total: performance.now() - startedAt }, artifacts });
+  return { resolvedConfigPath, metricsPath, ...artifacts };
 }
 
 async function main() {
@@ -37,6 +40,7 @@ async function main() {
   console.log(`Generated raw JSON: ${result.rawJsonPath}`);
   console.log(`Generated normalized JSON: ${result.normalizedPath}`);
   console.log(`Generated BPMN: ${result.xmlPath}`);
+  console.log(`Metrics: ${result.metricsPath}`);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {

@@ -3,6 +3,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Contract, JsonRpcProvider, Wallet } from "ethers";
 import { renderAssetToBpmn } from "./render-local-support.js";
+import { reportTotalCost, reportTransactionCost } from "./transaction-cost.js";
+import { summarizeNodes, writeMetrics } from "./metrics.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const RPC_URL = process.env.RPC_URL || "http://127.0.0.1:8545";
@@ -112,14 +114,16 @@ export async function applyAssetDelta(assetAddress, deltaPath, { render = true }
   }
   const resolvedDeltaPath = path.resolve(process.cwd(), deltaPath);
   const delta = JSON.parse(await fs.readFile(resolvedDeltaPath, "utf8"));
+  const startedAt = performance.now();
   validateDelta(delta);
 
   const provider = new JsonRpcProvider(RPC_URL);
   const signer = new Wallet(DEPLOYER_PRIVATE_KEY, provider);
   const asset = new Contract(assetAddress, CHOREOGRAPHY_MUTABLE_ASSET_ABI, signer);
+  const costs = [];
   if (delta.roles && Object.keys(delta.roles).length > 0) {
     const roleTransaction = await asset.setRoles(Object.keys(delta.roles), Object.values(delta.roles));
-    await roleTransaction.wait();
+    costs.push(reportTransactionCost("setRoles", await roleTransaction.wait()));
   }
   const payload = nodePayload(delta.nodes);
   const transaction = await asset.setNodes(
@@ -133,10 +137,18 @@ export async function applyAssetDelta(assetAddress, deltaPath, { render = true }
     payload.initiatingMessages,
     payload.returnMessages
   );
-  await transaction.wait();
+  costs.push(reportTransactionCost("setNodes", await transaction.wait()));
+  reportTotalCost(costs);
 
   const artifacts = render ? await renderAssetToBpmn({ assetAddress, ...delta.render }) : {};
-  return { delta, resolvedDeltaPath, ...artifacts };
+  const metricsPath = await writeMetrics("modify-asset", {
+    assetAddress,
+    deltaPath: resolvedDeltaPath,
+    delta: summarizeNodes(delta.nodes, Object.keys(delta.roles || {})),
+    rendered: render,
+    timingsMs: { total: performance.now() - startedAt }
+  });
+  return { delta, resolvedDeltaPath, metricsPath, ...artifacts };
 }
 
 async function main() {
@@ -145,6 +157,7 @@ async function main() {
   });
   console.log(`Applied delta: ${result.resolvedDeltaPath}`);
   console.log(`Updated nodes: ${result.delta.nodes.map((node) => node.name).join(", ")}`);
+  console.log(`Metrics: ${result.metricsPath}`);
   if (result.xmlPath) {
     console.log(`Generated raw JSON: ${result.rawJsonPath}`);
     console.log(`Generated normalized JSON: ${result.normalizedPath}`);

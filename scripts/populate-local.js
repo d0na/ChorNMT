@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { PARALLEL_GATEWAY_EXAMPLE_CHOREOGRAPHY } from "./data/parallel-gateway-example.js";
 import { PIZZA_DELIVERY_CHOREOGRAPHY } from "./data/pizza-delivery.js";
+import { reportTotalCost, reportTransactionCost } from "./transaction-cost.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const RPC_URL = process.env.RPC_URL || "http://127.0.0.1:8545";
@@ -97,7 +98,7 @@ export async function populateDataset(assetAddress, dataset, datasetName = "cust
   const setRolesTx = await contract.setRoles(dataset.roles, roleAddresses, {
     nonce
   });
-  await setRolesTx.wait();
+  const setRolesReceipt = await setRolesTx.wait();
   nonce += 1;
 
   const setNodesTx = await contract.setNodes(
@@ -114,10 +115,14 @@ export async function populateDataset(assetAddress, dataset, datasetName = "cust
       nonce
     }
   );
-  await setNodesTx.wait();
+  const setNodesReceipt = await setNodesTx.wait();
 
   console.log(`Populated ChoreographyMutableAsset at: ${assetAddress}`);
   console.log(`Dataset: ${datasetName}`);
+  reportTotalCost([
+    reportTransactionCost("setRoles", setRolesReceipt),
+    reportTransactionCost("setNodes", setNodesReceipt)
+  ]);
 
   return { contractAddress: assetAddress, datasetName, roles: dataset.roles };
 }

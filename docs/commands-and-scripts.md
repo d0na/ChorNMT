@@ -27,6 +27,24 @@ The full command sequence is in the [README](../README.md).
 
 `clean` is a maintenance command and is not part of the operational workflow.
 
+## Blockchain costs
+
+The commands print measured transaction costs after every on-chain write. Each line reports `gas used × effective gas price = ETH cost`, followed by a total for the command.
+
+| Operation | On-chain transaction | Cost behavior |
+| --- | --- | --- |
+| `deploy:asset` | Deploys two policies, deploys `ChoreographyNMT`, and mints the asset. | Four transactions; typically the highest setup cost. |
+| `import:asset` | Calls `setRoles(...)` and `setNodes(...)`. | Two transactions; grows with roles, nodes, messages, and graph edges. |
+| `modify:asset` | Calls `setNodes(...)`; calls `setRoles(...)` only for new roles declared in the delta. | One or two transactions; grows with the number and size of changed nodes. |
+| `render:asset` | Reads contract state and writes local files. | No blockchain transaction and no gas cost. |
+| `start:operations` and `clean` | Local operations only. | No gas cost. |
+
+Costs are exact for the RPC network used by the command. On Hardhat's local node they use test ETH and have no real monetary value. On a public network, the displayed ETH value depends on the network's actual gas price; convert it to fiat currency separately using the current ETH price.
+
+## Evaluation measurements
+
+Import, modification, and rendering write JSON reports under `metrics/` with timing and model size. The [evaluation toolkit](../evaluation/README.md) aggregates them to CSV and provides Gnuplot figures for operation duration against nodes and sequence edges. Repeat scenarios and report median, mean, and standard deviation.
+
 ## Implementation scripts
 
 These scripts are used by public commands and are not intended as separate user-facing entry points.
