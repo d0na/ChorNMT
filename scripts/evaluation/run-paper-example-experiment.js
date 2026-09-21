@@ -47,6 +47,11 @@ async function main() {
   const modifyMetric = await readMetric(modified);
   const finalMetric = await readMetric(finalRender);
   const resultsPath = path.join(root, "evaluation", "experiment-results.generated.csv");
+  const deploymentGas = deployment.costs.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n);
+  const scenarioCosts = [10, 30, 100].map((gwei) => {
+    const eth = Number(deploymentGas) * gwei / 1e9;
+    return { gwei, eth, usd: ethUsdPrice ? eth * ethUsdPrice : null };
+  });
   const rows = [
     ["deploy", deployDurationMs, deployment.costs.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n), deployment.totalCost.totalEth, "", "", "", ""],
     ["import", importMetric.timingsMs.total, importMetric.blockchain.transactions.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n), importMetric.blockchain.total.totalEth, importMetric.model.nodes, importMetric.model.sequenceEdges, importMetric.model.gateways, importMetric.model.messages],
@@ -83,8 +88,16 @@ async function main() {
     "| Transaction | Smart contract / asset | Address | Gas | ETH cost | USD cost |",
     "| --- | --- | --- | ---: | ---: | ---: |",
     ...[[deployment.costs[0], "CreatorSmartPolicy", deployment.creatorPolicyAddress], [deployment.costs[1], "HolderSmartPolicy", deployment.holderPolicyAddress], [deployment.costs[2], "ChoreographyNMT", deployment.choreographyNmtAddress], [deployment.costs[3], "ChoreographyMutableAsset (mint)", deployment.assetAddress]].map(([cost, name, address]) => `| ${cost.label} | ${name} | \`${address}\` | ${cost.gasUsed} | ${cost.costEth} | ${cost.costUsd === null ? "N/A" : `$${cost.costUsd.toFixed(4)}`} |`),
-    `| **Deployment and mint total** | — | — | **${deployment.costs.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n)}** | **${deployment.totalCost.totalEth}** | **${ethUsdPrice ? `$${(Number(deployment.totalCost.totalEth) * ethUsdPrice).toFixed(4)}` : "N/A"}** |`,
+    `| **Deployment and mint total** | — | — | **${deploymentGas}** | **${deployment.totalCost.totalEth}** | **${ethUsdPrice ? `$${(Number(deployment.totalCost.totalEth) * ethUsdPrice).toFixed(4)}` : "N/A"}** |`,
     "| Transfer asset | Not executed in this experiment | — | Not applicable | Not applicable | Not applicable |",
+    "",
+    "## Public-network deployment cost scenarios",
+    "",
+    "These estimates reuse the measured deployment-and-mint gas, but replace the local Hardhat gas price with representative public-network scenarios.",
+    "",
+    "| Gas price scenario | Deployment + mint gas | Estimated ETH cost | Estimated USD cost |",
+    "| --- | ---: | ---: | ---: |",
+    ...scenarioCosts.map((scenario) => `| ${scenario.gwei} gwei | ${deploymentGas} | ${scenario.eth.toFixed(6)} | ${scenario.usd === null ? "N/A" : `$${scenario.usd.toFixed(2)}`} |`),
     "",
     "## Phase measurements",
     "",
