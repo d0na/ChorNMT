@@ -5,14 +5,29 @@ import { renderAssetToBpmn } from "./render-local-support.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
+function renderMetadata(config, resolvedConfigPath) {
+  if (config.render) return config.render;
+  if (Array.isArray(config.nodes)) {
+    const baseName = path.basename(config.sourceBpmn || resolvedConfigPath).replace(/\.nmt\.json$/i, "").replace(/\.bpmn$/i, "");
+    const id = config.id || "ImportedChoreography";
+    return {
+      choreographyId: id,
+      choreographyName: config.name || baseName,
+      definitionsId: `${id}_definitions`,
+      targetNamespace: "http://example.com/chornmt/import",
+      outputBaseName: `${baseName}-from-contract`
+    };
+  }
+  return config;
+}
+
 export async function renderAsset(assetAddress, renderConfigPath) {
   if (!assetAddress || !renderConfigPath) {
-    throw new Error("Usage: npm run render:asset -- <asset-address> <delta-or-render-config.json>");
+    throw new Error("Usage: npm run render:asset -- <asset-address> <delta-or-nmt.json>");
   }
   const resolvedConfigPath = path.resolve(process.cwd(), renderConfigPath);
   const config = JSON.parse(await fs.readFile(resolvedConfigPath, "utf8"));
-  const render = config.render || config;
-  const artifacts = await renderAssetToBpmn({ assetAddress, ...render });
+  const artifacts = await renderAssetToBpmn({ assetAddress, ...renderMetadata(config, resolvedConfigPath) });
   return { resolvedConfigPath, ...artifacts };
 }
 

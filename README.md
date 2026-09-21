@@ -18,56 +18,47 @@ npm install
 
 ## Main path: import, render, modify, and render the paper example
 
-### 1. Import
-
-Convert the source BPMN into its NMT dataset:
+Before importing, open two terminals in the repository root. In the first, start the local operations environment (it compiles contracts and starts the blockchain):
 
 ```bash
-npm run import:bpmn -- references/paper-example.bpmn
+npm run start:operations
+```
+
+In the second terminal, deploy a new asset and copy the printed `ChoreographyMutableAsset` address:
+
+```bash
+npm run deploy:asset
+```
+
+Use that exact value in every `<asset-address>` placeholder below; all commands must target the same asset.
+
+### 1. Import
+
+Convert the source BPMN into NMT and store that dataset in the asset:
+
+```bash
+npm run import:asset -- <asset-address> references/paper-example.bpmn
 ```
 
 ### 2. Render the baseline
 
-Render the imported NMT dataset locally, before it is stored on-chain:
+Render BPMN from the imported data stored on-chain:
 
 ```bash
-npm run render:nmt -- bpmn-builder-js/example/input/paper-example.nmt.json
+npm run render:asset -- <asset-address> bpmn-builder-js/example/input/paper-example.nmt.json
 ```
 
-This creates `bpmn-builder-js/example/output/paper-example.generated.bpmn.xml`.
+This creates `bpmn-builder-js/example/output/paper-example-from-contract.generated.bpmn.xml`.
 
-### 3. Store the baseline in an asset
-
-Open two terminals in the repository root. In the first one, compile the contracts and start the local blockchain:
-
-```bash
-npm run compile
-npm run node
-```
-
-In the second terminal, deploy a new asset and copy the printed address:
-
-```bash
-npm run deploy:local
-```
-
-The deployment prints the `ChoreographyMutableAsset` address. Use that exact value in every subsequent `<asset-address>` placeholder; all three commands below must target the same asset.
-
-Store the NMT dataset produced during step 1 in that asset:
-
-```bash
-npm run populate:nmt -- <asset-address> bpmn-builder-js/example/input/paper-example.nmt.json
-```
-
-### 4. Modify
+### 3. Modify
 
 Apply the reusable delta without rendering yet. It inserts a parallel split after `Order Special Transport`: transport-detail collection and transport-document preparation proceed in parallel, then join before the waybill.
 
 ```bash
-npm run apply:asset-delta -- <asset-address> scripts/data/paper-example-parallel-transport-preparation.delta.json --no-render
+npm run modify:asset -- <asset-address> scripts/data/paper-example-parallel-transport-preparation.delta.json --no-render
 ```
 
-### 5. Render the updated asset
+### 4. Render the updated asset
 
 Export the changed on-chain asset and render the final BPMN:
 
@@ -83,7 +74,7 @@ bpmn-builder-js/example/output/paper-example-parallel-transport-preparation-from
 
 ## Modify an existing asset
 
-Do not edit the exported BPMN XML directly: it is a view of the asset. Instead, create a JSON delta, apply it to the asset with `apply:asset-delta`, and regenerate BPMN with `render:asset`.
+Do not edit the exported BPMN XML directly: it is a view of the asset. Instead, create a JSON delta, apply it to the asset with `modify:asset`, and regenerate BPMN with `render:asset`.
 
 Use [scripts/data/paper-example-parallel-transport-preparation.delta.json](scripts/data/paper-example-parallel-transport-preparation.delta.json) as a template. A delta contains:
 
@@ -93,13 +84,11 @@ Use [scripts/data/paper-example-parallel-transport-preparation.delta.json](scrip
 
 When an edge changes, include both endpoint nodes in the delta with their complete `incoming` and `outgoing` arrays. The asset can add or replace nodes, but it cannot yet permanently remove one.
 
-Node and role names are the contract reference keys. To import another BPMN or start again from a clean asset, run `deploy:local` again and use the new address: the asset does not clear the names already stored in its lists.
+Node and role names are the contract reference keys. To import another BPMN or start again from a clean asset, run `deploy:asset` again and use the new address: the asset does not clear the names already stored in its lists.
 
 ## Other examples
 
-The repository also includes `pizza-delivery`, an introductory example, and `parallel-gateway-example`, a small model for checking parallel splits and joins. These technical datasets are separate from `paper-example` and require a new asset when changing model.
-
-Their commands and purpose are documented in [Other examples](docs/other-examples.md). This README intentionally keeps one operational path: `paper-example` and its parallel delta.
+The repository also includes `pizza-delivery`, an introductory example, and `parallel-gateway-example`, a small model for checking parallel splits and joins. They are retained as development references; the supported operational path is only `paper-example` and its parallel delta.
 
 ## Generated files
 
@@ -118,5 +107,5 @@ Files with a `.generated.*` suffix are local artifacts ignored by Git and can be
 - [BPMN to NMT workflow](docs/bpmn-to-nmt-workflow.md): NMT format, import, and delta rules.
 - [Delta updates and Solidity calls](docs/delta-update-and-solidity-calls.md): `setNodes(...)` and `setRoles(...)` details.
 - [Contract hierarchy](docs/contract-hierarchy.md): asset and policy model.
+- [Commands and scripts](docs/commands-and-scripts.md): public npm commands, implementation scripts, and legacy references.
 - [bpmn-builder-js](bpmn-builder-js/README.md): BPMN renderer and intermediate JSON format.
-- [Other examples](docs/other-examples.md): pizza delivery and parallel gateway examples.

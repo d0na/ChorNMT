@@ -3,18 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "compile": "hardhat compile",
-    "node": "hardhat node",
-    "deploy:local": "node scripts/deploy-local.js",
-    "populate:local": "node scripts/populate-local.js",
-    "populate:nmt": "node scripts/populate-nmt.js",
-    "augment:parallel-gateway-example": "node scripts/augment-parallel-gateway-example-local.js",
-    "apply:asset-delta": "node scripts/apply-asset-delta.js",
+    "start:operations": "hardhat compile && hardhat node",
+    "deploy:asset": "node scripts/deploy-local.js",
     "render:asset": "node scripts/render-asset.js",
-    "flow:local": "node scripts/run-local-flow.js",
-    "flow:import-bpmn": "node scripts/run-imported-bpmn-flow.js",
-    "import:bpmn": "node bpmn-builder-js/scripts/import-bpmn.js",
-    "render:nmt": "node bpmn-builder-js/scripts/render-nmt.js",
+    "import:asset": "node scripts/import-bpmn-asset.js",
+    "modify:asset": "node scripts/apply-asset-delta.js",
     "clean": "node scripts/clean.js"
   },
   "devDependencies": {

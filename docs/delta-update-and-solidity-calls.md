@@ -2,7 +2,7 @@
 
 This document describes:
 
-- what `npm run augment:parallel-gateway-example -- <asset-address>` does
+- what the legacy `scripts/augment-parallel-gateway-example-local.js` example does
 - which delta payload it sends
 - which Solidity methods must be called to reproduce the same update
 
