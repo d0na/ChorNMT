@@ -6,3 +6,4 @@ metrics/*.generated.json
 metrics/*.generated.csv
 evaluation/figures/*.png
 evaluation/*.generated.md
+evaluation/*.generated.csv

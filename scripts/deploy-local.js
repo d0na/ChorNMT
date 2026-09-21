@@ -104,13 +104,14 @@ export async function deployAsset() {
   console.log(`HolderSmartPolicy deployed to: ${holderPolicy.target}`);
   console.log(`ChoreographyMutableAsset minted at: ${assetAddress}`);
   console.log(`Token ID: ${tokenId}`);
-  reportTotalCost([
+  const costs = [
     reportTransactionCost("Deploy CreatorSmartPolicy", creatorReceipt),
     reportTransactionCost("Deploy HolderSmartPolicy", holderReceipt),
     reportTransactionCost("Deploy ChoreographyNMT", nmtReceipt),
     reportTransactionCost("Mint ChoreographyMutableAsset", mintReceipt)
-  ]);
-  return { assetAddress, tokenId, choreographyNmtAddress: choreographyNmt.target };
+  ];
+  const totalCost = reportTotalCost(costs);
+  return { assetAddress, tokenId, choreographyNmtAddress: choreographyNmt.target, costs, totalCost };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {

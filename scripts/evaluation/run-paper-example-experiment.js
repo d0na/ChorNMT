@@ -20,18 +20,35 @@ async function main() {
   for (const file of await fs.readdir(metricsDirectory)) {
     if (file.includes(".generated.")) await fs.unlink(path.join(metricsDirectory, file));
   }
+  const deployStartedAt = performance.now();
   const deployment = await deployAsset();
+  const deployDurationMs = performance.now() - deployStartedAt;
   const imported = await importBpmnIntoAsset(deployment.assetAddress, bpmn);
   const baseline = await renderAsset(deployment.assetAddress, imported.nmtPath);
   const modified = await applyAssetDelta(deployment.assetAddress, delta, { render: false });
   const finalRender = await renderAsset(deployment.assetAddress, delta);
   const csvPath = await exportMetricsCsv();
+  const readMetric = async (result) => JSON.parse(await fs.readFile(result.metricsPath, "utf8"));
+  const importMetric = await readMetric(imported);
+  const baselineMetric = await readMetric(baseline);
+  const modifyMetric = await readMetric(modified);
+  const finalMetric = await readMetric(finalRender);
+  const resultsPath = path.join(root, "evaluation", "experiment-results.generated.csv");
+  const rows = [
+    ["deploy", deployDurationMs, deployment.costs.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n), deployment.totalCost.totalEth, "", "", "", ""],
+    ["import", importMetric.timingsMs.total, importMetric.blockchain.transactions.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n), importMetric.blockchain.total.totalEth, importMetric.model.nodes, importMetric.model.sequenceEdges, importMetric.model.gateways, importMetric.model.messages],
+    ["baseline-render", baselineMetric.timingsMs.total, 0, 0, baselineMetric.model.nodes, baselineMetric.model.sequenceEdges, baselineMetric.model.gateways, baselineMetric.model.messages],
+    ["modify", modifyMetric.timingsMs.total, modifyMetric.blockchain.transactions.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n), modifyMetric.blockchain.total.totalEth, modifyMetric.delta.nodes, modifyMetric.delta.sequenceEdges, modifyMetric.delta.gateways, modifyMetric.delta.messages],
+    ["final-render", finalMetric.timingsMs.total, 0, 0, finalMetric.model.nodes, finalMetric.model.sequenceEdges, finalMetric.model.gateways, finalMetric.model.messages]
+  ];
+  await fs.writeFile(resultsPath, `phase,durationMs,gasUsed,costEth,nodes,edges,gateways,messages\n${rows.map((row) => row.join(",")).join("\n")}\n`);
   await fs.mkdir(path.join(root, "evaluation", "figures"), { recursive: true });
-  for (const plot of ["duration-by-nodes.gp", "duration-by-edges.gp", "gas-by-changed-nodes.gp"]) {
+  for (const plot of ["phase-duration.gp", "phase-gas.gp", "model-comparison.gp"]) {
     await execute("gnuplot", [path.join(root, "evaluation", "gnuplot", plot)]);
   }
   const summaryPath = path.join(root, "evaluation", "experiment-summary.generated.md");
   const relativeToSummary = (targetPath) => path.relative(path.dirname(summaryPath), targetPath);
+  const tableCell = (value) => value === "" || value === undefined ? "—" : value;
   await fs.writeFile(summaryPath, [
     "# Paper example experiment summary",
     "",
@@ -43,7 +60,29 @@ async function main() {
     `- Final render metrics: [${path.basename(finalRender.metricsPath)}](${relativeToSummary(finalRender.metricsPath)})`,
     `- Aggregated CSV: [${path.basename(csvPath)}](${relativeToSummary(csvPath)})`,
     "",
-    "Generated figures: `evaluation/figures/duration-by-nodes.png`, `evaluation/figures/duration-by-edges.png`, and `evaluation/figures/gas-by-changed-nodes.png`."
+    "## Deployment and mint costs",
+    "",
+    "| Transaction | Gas | ETH cost |",
+    "| --- | ---: | ---: |",
+    ...deployment.costs.map((cost) => `| ${cost.label} | ${cost.gasUsed} | ${cost.costEth} |`),
+    `| **Deployment and mint total** | **${deployment.costs.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n)}** | **${deployment.totalCost.totalEth}** |`,
+    "| Transfer asset | Not executed in this experiment | Not applicable |",
+    "",
+    "## Phase measurements",
+    "",
+    "| Phase | Duration (ms) | Gas | ETH cost | Nodes | Edges | Gateways | Messages |",
+    "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ...rows.map((row) => `| ${row[0]} | ${Number(row[1]).toFixed(2)} | ${row[2]} | ${row[3]} | ${tableCell(row[4])} | ${tableCell(row[5])} | ${tableCell(row[6])} | ${tableCell(row[7])} |`),
+    "",
+    `Experiment CSV: [${path.basename(resultsPath)}](${relativeToSummary(resultsPath)})`,
+    "",
+    "## Figures",
+    "",
+    "![Duration by phase](figures/phase-duration.png)",
+    "",
+    "![Gas by phase](figures/phase-gas.png)",
+    "",
+    "![Model comparison](figures/model-comparison.png)"
   ].join("\n") + "\n");
   console.log(`Experiment summary: ${summaryPath}`);
 }
