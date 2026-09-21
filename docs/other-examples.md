@@ -2,7 +2,7 @@
 
 This page collects technical examples that are not the project's main workflow. For the complete BPMN flow, including on-chain import and modification, use [paper-example](../README.md).
 
-Every command on this page must use an asset newly created with `npm run deploy:local`. Do not reuse an asset that has been used for a different dataset: the contract retains previously stored node and role names.
+Every command on this page must use an asset newly created with `npm run deploy:local`. Replace `<asset-address>` with the `ChoreographyMutableAsset` address printed by that deployment. Do not reuse an asset that has been used for a different dataset: the contract retains previously stored node and role names.
 
 ## Pizza delivery
 

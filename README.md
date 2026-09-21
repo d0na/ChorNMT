@@ -51,6 +51,8 @@ In the second terminal, deploy a new asset and copy the printed address:
 npm run deploy:local
 ```
 
+The deployment prints the `ChoreographyMutableAsset` address. Use that exact value in every subsequent `<asset-address>` placeholder; all three commands below must target the same asset.
+
 Store the NMT dataset produced during step 1 in that asset:
 
 ```bash
