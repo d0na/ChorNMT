@@ -3,19 +3,27 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "compile": "hardhat compile",
     "start:operations": "hardhat compile && hardhat node",
     "deploy:asset": "node scripts/deploy-local.js",
     "render:asset": "node scripts/render-asset.js",
     "import:asset": "node scripts/import-bpmn-asset.js",
     "modify:asset": "node scripts/apply-asset-delta.js",
     "test:policies": "hardhat run scripts/test-policies.js",
+    "evaluate:policies": "hardhat run scripts/evaluation/run-policy-lifecycle-evaluation.js",
+    "evaluate:summary": "node scripts/evaluation/generate-evaluation-summary.js",
     "evaluate:paper": "node scripts/evaluation/run-paper-example-experiment.js",
+    "evaluate:all": "npm run clean && npm run compile && npm run evaluate:paper && npm run evaluate:policies && npm run test:policies && npm run evaluate:summary",
+    "setup:evaluation": "playwright install chromium",
     "clean": "node scripts/clean.js"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^4.0.13",
+    "bpmn-js": "^18.29.1",
+    "chor-js": "^0.7.1",
     "ethers": "^6.17.0",
-    "hardhat": "^3.9.0"
+    "hardhat": "^3.9.0",
+    "playwright": "^1.63.0"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.0"

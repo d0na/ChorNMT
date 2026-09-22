@@ -8,6 +8,7 @@ import { renderAsset } from "../render-asset.js";
 import { applyAssetDelta } from "../apply-asset-delta.js";
 import { populateDataset } from "../populate-local.js";
 import { exportMetricsCsv } from "./export-metrics-csv.js";
+import { renderBpmnImages } from "./render-bpmn-images.js";
 
 const execute = promisify(execFile);
 const root = process.cwd();
@@ -41,6 +42,14 @@ async function main() {
   const baseline = await renderAsset(deployment.assetAddress, imported.nmtPath);
   const modified = await applyAssetDelta(deployment.assetAddress, delta, { render: false });
   const finalRender = await renderAsset(deployment.assetAddress, delta);
+  const baselineImage = await renderBpmnImages({
+    xmlPath: baseline.xmlPath,
+    outputBaseName: "paper-example-baseline"
+  });
+  const finalImage = await renderBpmnImages({
+    xmlPath: finalRender.xmlPath,
+    outputBaseName: "paper-example-final"
+  });
   const baselineDataset = JSON.parse(await fs.readFile(imported.nmtPath, "utf8"));
   const deltaDataset = JSON.parse(await fs.readFile(path.join(root, delta), "utf8"));
   const finalNodes = new Map(baselineDataset.nodes.map((node) => [node.name, node]));
@@ -94,6 +103,23 @@ async function main() {
     `- Modification metrics: [${path.basename(modified.metricsPath)}](${relativeToSummary(modified.metricsPath)})`,
     `- Final render metrics: [${path.basename(finalRender.metricsPath)}](${relativeToSummary(finalRender.metricsPath)})`,
     `- Aggregated CSV: [${path.basename(csvPath)}](${relativeToSummary(csvPath)})`,
+    "",
+    "## Generated BPMN",
+    "",
+    `- Baseline BPMN from the asset: [${path.basename(baseline.xmlPath)}](${relativeToSummary(baseline.xmlPath)})`,
+    `- Final BPMN after the delta: [${path.basename(finalRender.xmlPath)}](${relativeToSummary(finalRender.xmlPath)})`,
+    `- Baseline image: [SVG](${relativeToSummary(baselineImage.svgPath)}) · [PNG](${relativeToSummary(baselineImage.pngPath)})`,
+    `- Final image: [SVG](${relativeToSummary(finalImage.svgPath)}) · [PNG](${relativeToSummary(finalImage.pngPath)})`,
+    "",
+    "The BPMN 2.0 XML and its SVG/PNG images are generated from the asset state. SVG preserves vector quality for publication; PNG is embedded below for immediate inspection.",
+    "",
+    "### Baseline model",
+    "",
+    `![Baseline BPMN](${relativeToSummary(baselineImage.pngPath)})`,
+    "",
+    "### Model after delta",
+    "",
+    `![Final BPMN](${relativeToSummary(finalImage.pngPath)})`,
     "",
     "## Deployment and mint costs",
     "",

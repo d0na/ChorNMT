@@ -15,5 +15,11 @@ export default {
     sources: "./contracts",
     cache: "./cache",
     artifacts: "./artifacts"
+  },
+  networks: {
+    hardhat: {
+      type: "edr-simulated",
+      transactionGasCap: false
+    }
   }
 };
