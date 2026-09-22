@@ -30,7 +30,7 @@ In terminal 2, regenerate all experimental data:
 npm run evaluate:all
 ```
 
-Open `evaluation/summary.generated.md`. It is the final report and contains:
+Open `evaluation/final-report.generated.md`. It is the final report and contains:
 
 - paper workflow: BPMN import, baseline/final chor-js images, delta update, full population, and gnuplot charts;
 - policy lifecycle: empty versus populated mint and Master/Creator/Holder outcomes;
@@ -51,7 +51,7 @@ npm run evaluate:paper
 npm run evaluate:policies
 npm run test:policies
 
-# Rebuilds only the final index from existing reports
+# Rebuilds only the final report from existing reports
 npm run evaluate:summary
 ```
 
@@ -97,7 +97,7 @@ After running either or both evaluations, generate one local entry point with:
 npm run evaluate:summary
 ```
 
-It writes `evaluation/summary.generated.md`, linking and embedding the available paper-workflow, policy-lifecycle, and policy-test reports. Missing evaluations are explicitly marked, so it is safe to run after any command.
+It writes `evaluation/final-report.generated.md`, linking and embedding the available paper-workflow, policy-lifecycle, and policy-test reports. `evaluation/summary.generated.md` is retained as a compatibility copy. Missing evaluations are explicitly marked, so it is safe to run after any command.
 
 ## Delta versus full population benchmark
 

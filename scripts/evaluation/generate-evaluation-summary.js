@@ -53,6 +53,7 @@ function markdownLinks(files, outputPath) {
 async function main() {
   const availableReports = await Promise.all(reports.map(readReport));
   const outputPath = path.join(evaluationDirectory, "summary.generated.md");
+  const finalReportPath = path.join(evaluationDirectory, "final-report.generated.md");
   const projectRoot = process.cwd();
   const [metrics, figures, bpmnArtifacts] = await Promise.all([
     listGeneratedFiles(path.join(projectRoot, "metrics")),
@@ -64,7 +65,7 @@ async function main() {
     ]).then((groups) => groups.flat())
   ]);
   const lines = [
-    "# ChorNMT evaluation overview",
+    "# ChorNMT final evaluation report",
     "",
     `Generated at: ${new Date().toISOString()}`,
     "",
@@ -106,8 +107,13 @@ async function main() {
     lines.push("", `---`, "", report.content.trim());
   }
 
-  await fs.writeFile(outputPath, `${lines.join("\n")}\n`);
-  console.log(`Evaluation overview: ${outputPath}`);
+  const report = `${lines.join("\n")}\n`;
+  await Promise.all([
+    fs.writeFile(outputPath, report),
+    fs.writeFile(finalReportPath, report)
+  ]);
+  console.log(`Final evaluation report: ${finalReportPath}`);
+  console.log(`Compatibility overview: ${outputPath}`);
 }
 
 main().catch((error) => {
