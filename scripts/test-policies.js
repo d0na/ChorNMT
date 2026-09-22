@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import hre from "hardhat";
-import { writeMetrics } from "./evaluation/metrics.js";
+import { resolveEthUsdPrice, scenarioUsd, writeMetrics } from "./evaluation/metrics.js";
 
 const GAS_LIMIT = 1_000_000n;
 
@@ -53,6 +53,7 @@ function totalGas(report, outcome) {
 }
 
 async function main() {
+  const ethUsdPrice = await resolveEthUsdPrice();
   const { ethers } = await hre.network.connect();
   const [administrator, eligibleHolder, unauthorizedCreator, ineligibleHolder] = await ethers.getSigners();
 
@@ -365,20 +366,21 @@ async function main() {
     deniedGas: totalGas(report, "denied").toString(),
     caseCount: report.length
   };
-  const metricsPath = await writeMetrics("policy-tests", { summary, cases: report });
+  const metricsPath = await writeMetrics("policy-tests", { summary: { ...summary, ethUsdPrice }, cases: report });
   const markdownPath = path.join(process.cwd(), "evaluation", "policy-tests.generated.md");
   await fs.writeFile(markdownPath, [
     "# Policy integration test results",
     "",
     "This report persists the receipt-derived values printed by `npm run test:policies`.",
+    `USD estimates use ETH/USD ${ethUsdPrice ? `$${ethUsdPrice.toFixed(2)}` : "not available"}; set \`ETH_USD_PRICE\` for a fixed reproducible value.`,
     "",
     "- Cases: " + summary.caseCount,
     "- Allowed-operation gas total: " + summary.allowedGas,
     "- Denied-operation gas total: " + summary.deniedGas,
     "",
-    "| Case | Outcome | Gas | Cost (wei) |",
-    "| --- | --- | ---: | ---: |",
-    ...report.map((entry) => `| ${entry.label} | ${entry.outcome} | ${entry.gasUsed} | ${entry.costWei} |`),
+    "| Case | Outcome | Gas | Cost (wei) | USD @10 gwei | USD @30 gwei | USD @100 gwei |",
+    "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
+    ...report.map((entry) => `| ${entry.label} | ${entry.outcome} | ${entry.gasUsed} | ${entry.costWei} | ${scenarioUsd(entry.gasUsed, ethUsdPrice).join(" | ")} |`),
     "",
     "The test covers Master mint and eligibility controls, Creator BPMN constraints, Holder restrictions, freezing, version evolution, and ownership transfer. Denied rows are reverted transactions with receipts, not simulated calls.",
     ""

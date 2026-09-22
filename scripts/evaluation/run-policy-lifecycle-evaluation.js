@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import hre from "hardhat";
 import { importBpmnToNmt } from "../../bpmn-builder-js/scripts/import-bpmn.js";
-import { summarizeNodes, writeMetrics } from "./metrics.js";
+import { resolveEthUsdPrice, scenarioUsd, summarizeNodes, writeMetrics } from "./metrics.js";
 
 const GAS_LIMIT = 1_500_000n;
 
@@ -42,11 +42,11 @@ function totalGas(results) {
   return results.reduce((total, result) => total + BigInt(result.gasUsed), 0n);
 }
 
-function markdownTable(results) {
+function markdownTable(results, ethUsdPrice) {
   return [
-    "| Operation | Outcome | Gas | Cost (wei) |",
-    "| --- | --- | ---: | ---: |",
-    ...results.map((result) => `| ${result.label} | ${result.outcome} | ${result.gasUsed} | ${result.costWei} |`)
+    "| Operation | Outcome | Gas | Cost (wei) | USD @10 gwei | USD @30 gwei | USD @100 gwei |",
+    "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
+    ...results.map((result) => `| ${result.label} | ${result.outcome} | ${result.gasUsed} | ${result.costWei} | ${scenarioUsd(result.gasUsed, ethUsdPrice).join(" | ")} |`)
   ];
 }
 
@@ -98,6 +98,7 @@ function countNodes(nodes) {
 }
 
 async function main() {
+  const ethUsdPrice = await resolveEthUsdPrice();
   const { ethers } = await hre.network.connect("hardhat");
   const signers = await ethers.getSigners();
   const [administrator, eligibleHolder, unauthorizedCreator, ineligibleHolder] = signers;
@@ -264,7 +265,7 @@ async function main() {
     allowedPolicyGas: totalGas(policyResults.filter((result) => result.outcome === "allowed")).toString(),
     deniedPolicyGas: totalGas(policyResults.filter((result) => result.outcome === "denied")).toString()
   };
-  const metricsPath = await writeMetrics("policy-lifecycle", { summary, deployment, strategy, policyResults });
+  const metricsPath = await writeMetrics("policy-lifecycle", { summary: { ...summary, ethUsdPrice }, deployment, strategy, policyResults });
   const markdownPath = path.join(process.cwd(), "evaluation", "policy-lifecycle.generated.md");
   await fs.writeFile(markdownPath, [
     "# Policy lifecycle evaluation",
@@ -272,6 +273,7 @@ async function main() {
     "## Purpose",
     "",
     "This evaluation measures the cost of creating a choreography instance and demonstrates that Master, Creator, and Holder policies govern the lifecycle and BPMN updates. It runs on an ephemeral Hardhat network, so it does not require or alter the persistent local operations node.",
+    `USD estimates use ETH/USD ${ethUsdPrice ? `$${ethUsdPrice.toFixed(2)}` : "not available"}; set \`ETH_USD_PRICE\` for a fixed reproducible value.`,
     "",
     "## Policy model",
     "",
@@ -293,25 +295,25 @@ async function main() {
     "",
     "## Mint strategy comparison",
     "",
-    "| Strategy | Gas |",
-    "| --- | ---: |",
-    `| Empty mint + import | ${summary.emptyMintAndImportGas} |`,
-    `| Populated mint | ${summary.populatedMintGas} |`,
-    `| Saving | ${summary.populatedMintSavingGas} (${summary.populatedMintSavingPercent}%) |`,
+    "| Strategy | Gas | USD @10 gwei | USD @30 gwei | USD @100 gwei |",
+    "| --- | ---: | ---: | ---: | ---: |",
+    `| Empty mint + import | ${summary.emptyMintAndImportGas} | ${scenarioUsd(summary.emptyMintAndImportGas, ethUsdPrice).join(" | ")} |`,
+    `| Populated mint | ${summary.populatedMintGas} | ${scenarioUsd(summary.populatedMintGas, ethUsdPrice).join(" | ")} |`,
+    `| Saving | ${summary.populatedMintSavingGas} (${summary.populatedMintSavingPercent}%) | ${scenarioUsd(summary.populatedMintSavingGas, ethUsdPrice).join(" | ")} |`,
     "",
     "Both strategies write the same roles and nodes to storage. The populated mint avoids the two post-mint transactions, but storage writes remain the dominant cost; therefore the gas saving is expected to be modest while atomic creation is the main operational benefit.",
     "",
     "## Deployment",
     "",
-    ...markdownTable(deployment),
+    ...markdownTable(deployment, ethUsdPrice),
     "",
     "## Mint and import operations",
     "",
-    ...markdownTable(strategy),
+    ...markdownTable(strategy, ethUsdPrice),
     "",
     "## Policy operations",
     "",
-    ...markdownTable(policyResults),
+    ...markdownTable(policyResults, ethUsdPrice),
     "",
     `- Allowed policy-operation gas total: ${summary.allowedPolicyGas}`,
     `- Denied policy-operation gas total: ${summary.deniedPolicyGas}`,

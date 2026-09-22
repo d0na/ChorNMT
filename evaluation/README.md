@@ -39,6 +39,18 @@ Open `evaluation/final-report.generated.md`. It is the final report and contains
 
 `evaluate:all` performs `clean → compile → evaluate:paper → evaluate:policies → test:policies → evaluate:summary`. It is safe to use for every fresh evaluation run.
 
+## USD price for gas scenarios
+
+By default, the evaluation fetches the current ETH/USD spot price automatically from Coinbase and uses it to calculate the `USD @10 gwei`, `USD @30 gwei`, and `USD @100 gwei` columns. No configuration is needed for an exploratory run.
+
+For a reproducible experiment, provide a fixed value. The same value is then used by the paper, policy lifecycle, and policy test reports:
+
+```bash
+ETH_USD_PRICE=3000 npm run evaluate:all
+```
+
+If the automatic price lookup is unavailable and `ETH_USD_PRICE` is not set, USD scenario cells are reported as `N/A` while gas and wei measurements remain available.
+
 ## Targeted runs
 
 Use these only when a complete run is unnecessary:

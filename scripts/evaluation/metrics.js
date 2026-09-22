@@ -1,6 +1,26 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+export const GAS_PRICE_SCENARIOS = [10, 30, 100];
+
+export async function resolveEthUsdPrice() {
+  if (Number(process.env.ETH_USD_PRICE) > 0) return Number(process.env.ETH_USD_PRICE);
+  try {
+    const response = await fetch("https://api.coinbase.com/v2/prices/ETH-USD/spot", { signal: AbortSignal.timeout(5000) });
+    const payload = await response.json();
+    return Number(payload.data.amount) || null;
+  } catch {
+    return null;
+  }
+}
+
+export function scenarioUsd(gasUsed, ethUsdPrice) {
+  return GAS_PRICE_SCENARIOS.map((gwei) => {
+    if (!ethUsdPrice) return "N/A";
+    return `$${(Number(gasUsed) * gwei / 1e9 * ethUsdPrice).toFixed(4)}`;
+  });
+}
+
 export function summarizeNodes(nodes = [], roles = []) {
   const tasks = nodes.filter((node) => node.nodeType === 2);
   return {

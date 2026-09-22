@@ -9,22 +9,12 @@ import { applyAssetDelta } from "../apply-asset-delta.js";
 import { populateDataset } from "../populate-local.js";
 import { exportMetricsCsv } from "./export-metrics-csv.js";
 import { renderBpmnImages } from "./render-bpmn-images.js";
+import { resolveEthUsdPrice, scenarioUsd } from "./metrics.js";
 
 const execute = promisify(execFile);
 const root = process.cwd();
 const bpmn = "references/paper-example.bpmn";
 const delta = "scripts/data/paper-example-parallel-transport-preparation.delta.json";
-
-async function resolveEthUsdPrice() {
-  if (Number(process.env.ETH_USD_PRICE) > 0) return Number(process.env.ETH_USD_PRICE);
-  try {
-    const response = await fetch("https://api.coinbase.com/v2/prices/ETH-USD/spot", { signal: AbortSignal.timeout(5000) });
-    const payload = await response.json();
-    return Number(payload.data.amount) || null;
-  } catch {
-    return null;
-  }
-}
 
 async function main() {
   const startedAt = performance.now();
@@ -123,20 +113,20 @@ async function main() {
     "",
     "## Deployment and mint costs",
     "",
-    "| Transaction | Smart contract / asset | Address | Gas | ETH cost | USD cost |",
-    "| --- | --- | --- | ---: | ---: | ---: |",
-    ...[[deployment.costs[0], "MasterSmartPolicy", deployment.masterPolicyAddress], [deployment.costs[1], "CreatorSmartPolicy", deployment.creatorPolicyAddress], [deployment.costs[2], "HolderSmartPolicy", deployment.holderPolicyAddress], [deployment.costs[3], "ChoreographyNMT", deployment.choreographyNmtAddress], [deployment.costs[4], "ChoreographyMutableAsset (mint)", deployment.assetAddress]].map(([cost, name, address]) => `| ${cost.label} | ${name} | \`${address}\` | ${cost.gasUsed} | ${cost.costEth} | ${cost.costUsd === null ? "N/A" : `$${cost.costUsd.toFixed(4)}`} |`),
-    `| **Deployment and mint total** | — | — | **${deploymentGas}** | **${deployment.totalCost.totalEth}** | **${ethUsdPrice ? `$${(Number(deployment.totalCost.totalEth) * ethUsdPrice).toFixed(4)}` : "N/A"}** |`,
-    "| Transfer asset | Not executed in this experiment | — | Not applicable | Not applicable | Not applicable |",
+    "| Transaction | Smart contract / asset | Address | Gas | ETH cost | USD @10 gwei | USD @30 gwei | USD @100 gwei |",
+    "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |",
+    ...[[deployment.costs[0], "MasterSmartPolicy", deployment.masterPolicyAddress], [deployment.costs[1], "CreatorSmartPolicy", deployment.creatorPolicyAddress], [deployment.costs[2], "HolderSmartPolicy", deployment.holderPolicyAddress], [deployment.costs[3], "ChoreographyNMT", deployment.choreographyNmtAddress], [deployment.costs[4], "ChoreographyMutableAsset (mint)", deployment.assetAddress]].map(([cost, name, address]) => `| ${cost.label} | ${name} | \`${address}\` | ${cost.gasUsed} | ${cost.costEth} | ${scenarioUsd(cost.gasUsed, ethUsdPrice).join(" | ")} |`),
+    `| **Deployment and mint total** | — | — | **${deploymentGas}** | **${deployment.totalCost.totalEth}** | **${scenarioUsd(deploymentGas, ethUsdPrice).join(" | ")}** |`,
+    "| Transfer asset | Not executed in this experiment | — | Not applicable | Not applicable | Not applicable | Not applicable | Not applicable |",
     "",
     "## Delta update versus full model population",
     "",
     "Deployment cost is excluded: this comparison measures only the model-write transactions.",
     "",
-    "| Strategy | Gas used | ETH cost | USD cost | Relative gas saving |",
-    "| --- | ---: | ---: | ---: | ---: |",
-    `| Delta update (${deltaDataset.nodes.length} changed nodes) | ${deltaGas} | ${modifyMetric.blockchain.total.totalEth} | ${ethUsdPrice ? `$${(Number(modifyMetric.blockchain.total.totalEth) * ethUsdPrice).toFixed(2)}` : "N/A"} | ${((1 - Number(deltaGas) / Number(fullGas)) * 100).toFixed(2)}% |`,
-    `| Full population (${finalNodes.size} nodes) | ${fullGas} | ${fullPopulation.totalCost.totalEth} | ${ethUsdPrice ? `$${(Number(fullPopulation.totalCost.totalEth) * ethUsdPrice).toFixed(2)}` : "N/A"} | 0.00% |`,
+    "| Strategy | Gas used | ETH cost | USD @10 gwei | USD @30 gwei | USD @100 gwei | Relative gas saving |",
+    "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+    `| Delta update (${deltaDataset.nodes.length} changed nodes) | ${deltaGas} | ${modifyMetric.blockchain.total.totalEth} | ${scenarioUsd(deltaGas, ethUsdPrice).join(" | ")} | ${((1 - Number(deltaGas) / Number(fullGas)) * 100).toFixed(2)}% |`,
+    `| Full population (${finalNodes.size} nodes) | ${fullGas} | ${fullPopulation.totalCost.totalEth} | ${scenarioUsd(fullGas, ethUsdPrice).join(" | ")} | 0.00% |`,
     "",
     "## Estimated deployment and mint cost under public-network gas-price scenarios",
     "",
