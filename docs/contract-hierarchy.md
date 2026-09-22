@@ -33,7 +33,9 @@ NMT (ERC721Enumerable)
 
 ```text
 ChoreographyNMT : NMT
-  -> deploys ChoreographyMutableAsset on mint
+  - evaluates mint, transfer, and version actions with MasterSmartPolicy
+  - deploys ChoreographyMutableAsset on mint
+  - can initialize an asset atomically with mintWithInitialModel
 
 ChoreographyMutableAsset : MutableAsset
   - stores choreography descriptor:
@@ -41,7 +43,9 @@ ChoreographyMutableAsset : MutableAsset
     - nodes
     - messages embedded in node fields
   - currently identifies participants in nodes by role name strings
+  - can be frozen permanently after initialization
 
+MasterSmartPolicy  : SmartPolicy
 CreatorSmartPolicy : SmartPolicy
 HolderSmartPolicy  : SmartPolicy
 ```
@@ -75,6 +79,7 @@ flowchart TD
 
   CNMT[ChoreographyNMT]
   CMA[ChoreographyMutableAsset]
+  CMSP[Choreography MasterSmartPolicy]
   CCSP[Choreography CreatorSmartPolicy]
   CHSP[Choreography HolderSmartPolicy]
 
@@ -86,6 +91,7 @@ flowchart TD
   OZ --> NMT
   SP --> CCSP
   SP --> CHSP
+  SP --> CMSP
   SP --> PCSP
   SP --> PHSP
 
@@ -95,6 +101,7 @@ flowchart TD
   NMT --> PNMT
 
   CNMT -- mints --> CMA
+  CNMT -. evaluates mint/transfer/version .-> CMSP
   PNMT -- mints --> PMA
 
   CMA -. evaluatedBySmartPolicies .-> CCSP

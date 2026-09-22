@@ -13,6 +13,7 @@ These are the only commands intended for the normal `paper-example` workflow.
 | `npm run import:asset -- <asset-address> <input.bpmn>` | Imports BPMN into NMT and stores NMT in the asset. | Asset address and BPMN file. | An `.nmt.json` file and populated asset. |
 | `npm run render:asset -- <asset-address> <nmt-or-delta.json>` | Exports the asset and generates BPMN XML. | Asset address plus imported NMT or delta file. | Raw JSON, normalized JSON, and BPMN XML. |
 | `npm run modify:asset -- <asset-address> <delta.json> [--no-render]` | Applies a delta to existing asset nodes. | Asset address and delta JSON. | Updated asset; also rendered artifacts unless `--no-render` is used. |
+| `npm run test:policies` | Runs policy allow/deny integration tests and prints receipt-derived gas costs. | None. | Policy matrix and atomic-mint benchmark on an ephemeral Hardhat network. |
 | `npm run clean` | Removes generated files and local Hardhat build artifacts. | None. | Clean local workspace artifacts. |
 
 All commands after deployment must receive the same `<asset-address>` printed by `deploy:asset`.
@@ -33,8 +34,9 @@ The commands print measured transaction costs after every on-chain write. Each l
 
 | Operation | On-chain transaction | Cost behavior |
 | --- | --- | --- |
-| `deploy:asset` | Deploys two policies, deploys `ChoreographyNMT`, and mints the asset. | Four transactions; typically the highest setup cost. |
+| `deploy:asset` | Deploys Master, Creator, and Holder policies, deploys `ChoreographyNMT`, and mints the asset. | Five transactions; typically the highest setup cost. |
 | `import:asset` | Calls `setRoles(...)` and `setNodes(...)`. | Two transactions; grows with roles, nodes, messages, and graph edges. |
+| `mintWithInitialModel(...)` | Mints and initializes a trusted model in one NMT transaction. | Creator/Holder policies and an `InitialModel` struct. | Replaces the mint plus two import transactions for fixed templates. |
 | `modify:asset` | Calls `setNodes(...)`; calls `setRoles(...)` only for new roles declared in the delta. | One or two transactions; grows with the number and size of changed nodes. |
 | `render:asset` | Reads contract state and writes local files. | No blockchain transaction and no gas cost. |
 | `start:operations` and `clean` | Local operations only. | No gas cost. |
@@ -57,6 +59,7 @@ These scripts are used by public commands and are not intended as separate user-
 | `render-asset.js` | `render:asset` | Reads render metadata and triggers contract export plus BPMN generation. |
 | `render-local-support.js` | `render:asset`, `modify:asset` | Writes manifest and JSON artifacts, normalizes data, and generates BPMN XML. |
 | `apply-asset-delta.js` | `modify:asset` | Validates and applies delta roles and nodes. |
+| `test-policies.js` | `test:policies` | Exercises policy allow/deny paths and compares initial-population gas. |
 
 ## Evaluation scripts
 

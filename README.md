@@ -86,6 +86,8 @@ When an edge changes, include both endpoint nodes in the delta with their comple
 
 Node and role names are the contract reference keys. To import another BPMN or start again from a clean asset, run `deploy:asset` again and use the new address: the asset does not clear the names already stored in its lists.
 
+For a trusted fixed template, `ChoreographyNMT.mintWithInitialModel(...)` creates and populates an instance atomically. It avoids the two post-mint import transactions; the policy test compares its gas cost with the empty-asset workflow.
+
 ## Other examples
 
 The repository also includes `pizza-delivery`, an introductory example, and `parallel-gateway-example`, a small model for checking parallel splits and joins. They are retained as development references; the supported operational path is only `paper-example` and its parallel delta.
@@ -107,6 +109,7 @@ Files with a `.generated.*` suffix are local artifacts ignored by Git and can be
 - [BPMN to NMT workflow](docs/bpmn-to-nmt-workflow.md): NMT format, import, and delta rules.
 - [Delta updates and Solidity calls](docs/delta-update-and-solidity-calls.md): `setNodes(...)` and `setRoles(...)` details.
 - [Contract hierarchy](docs/contract-hierarchy.md): asset and policy model.
+- [Choreography policies](docs/choreography-policies.md): minting, ownership, updates, freezing, and versioning rules.
 - [Commands and scripts](docs/commands-and-scripts.md): public npm commands, implementation scripts, and legacy references.
 - [Evaluation toolkit](evaluation/README.md): measurement reports, CSV aggregation, and Gnuplot figure templates.
 - [bpmn-builder-js](bpmn-builder-js/README.md): BPMN renderer and intermediate JSON format.
