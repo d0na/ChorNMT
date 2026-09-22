@@ -71,6 +71,8 @@ async function main() {
     "",
     "This is the single entry point for experimental evidence. The paper workflow report measures BPMN import, rendering, and delta updates; the policy lifecycle report measures governance and BPMN-update enforcement. Run the corresponding evaluation command to refresh each embedded section.",
     "",
+    "Policy semantics, BPMN constraints, and the allow/deny test mapping are documented in [Choreography Policy and Test Specification](../docs/policy-test-specification.md).",
+    "",
     "```bash",
     "npm run evaluate:paper",
     "npm run evaluate:policies",

@@ -2,6 +2,9 @@
 
 `ChoreographyNMT` delegates master-level decisions to `MasterSmartPolicy` and instance-level decisions to the Creator and Holder policies passed at mint time.
 
+For the full English policy model, structural-rule semantics, and automated
+test mapping, see [Policy and Test Specification](policy-test-specification.md).
+
 ## Master policy
 
 The policy administrator configures authorized creators and eligible holders with `setAuthorizedCreator` and `setEligibleHolder`.
