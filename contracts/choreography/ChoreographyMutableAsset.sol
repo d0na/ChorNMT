@@ -36,10 +36,33 @@ contract ChoreographyMutableAsset is MutableAsset {
         string[] roleNames;
     }
 
+    struct InitialModel {
+        string[] roleNames;
+        address[] roleAddresses;
+        string[] names;
+        NodeType[] nodeTypes;
+        string[][] incoming;
+        string[][] outgoing;
+        string[][] conditions;
+        string[] initiatorRoles;
+        string[] participantRoles;
+        string[] initiatingMessages;
+        string[] returnMessages;
+    }
+
     Descriptor private descriptor;
+    bool public frozen;
+    bool public initialized;
 
     event RolesChanged(string[] roleNames);
     event NodesChanged(string[] nodeNames);
+    event ChoreographyFrozen(address indexed frozenBy);
+    event ChoreographyInitialized(string[] roleNames, string[] nodeNames);
+
+    modifier notFrozen() {
+        require(!frozen, "Choreography is frozen");
+        _;
+    }
 
     constructor(
         address nmtAddress,
@@ -58,12 +81,20 @@ contract ChoreographyMutableAsset is MutableAsset {
         address[] memory addresses
     )
         public
+        notFrozen
         evaluatedBySmartPolicies(
             msg.sender,
             abi.encodeWithSignature("setRoles(string[],address[])", roleNames, addresses),
             address(this)
         )
     {
+        _setRoles(roleNames, addresses);
+    }
+
+    function _setRoles(
+        string[] memory roleNames,
+        address[] memory addresses
+    ) private {
         require(roleNames.length == addresses.length, "Array size mismatch");
 
         for (uint256 i = 0; i < roleNames.length; i++) {
@@ -92,6 +123,7 @@ contract ChoreographyMutableAsset is MutableAsset {
         string[] memory returnMessages
     )
         public
+        notFrozen
         evaluatedBySmartPolicies(
             msg.sender,
             abi.encodeWithSignature(
@@ -109,6 +141,30 @@ contract ChoreographyMutableAsset is MutableAsset {
             address(this)
         )
     {
+        _setNodes(
+            names,
+            nodeTypes,
+            incoming,
+            outgoing,
+            conditions,
+            initiatorRoles,
+            participantRoles,
+            initiatingMessages,
+            returnMessages
+        );
+    }
+
+    function _setNodes(
+        string[] memory names,
+        NodeType[] memory nodeTypes,
+        string[][] memory incoming,
+        string[][] memory outgoing,
+        string[][] memory conditions,
+        string[] memory initiatorRoles,
+        string[] memory participantRoles,
+        string[] memory initiatingMessages,
+        string[] memory returnMessages
+    ) private {
         require(
             names.length == nodeTypes.length &&
                 names.length == incoming.length &&
@@ -156,10 +212,29 @@ contract ChoreographyMutableAsset is MutableAsset {
         emit NodesChanged(names);
     }
 
+    function initializeChoreography(InitialModel memory model) public onlyNMT {
+        require(!initialized, "Choreography already initialized");
+        _setRoles(model.roleNames, model.roleAddresses);
+        _setNodes(
+            model.names,
+            model.nodeTypes,
+            model.incoming,
+            model.outgoing,
+            model.conditions,
+            model.initiatorRoles,
+            model.participantRoles,
+            model.initiatingMessages,
+            model.returnMessages
+        );
+        initialized = true;
+        emit ChoreographyInitialized(model.roleNames, model.names);
+    }
+
     function setTokenURI(
         string memory uri
     )
         public
+        notFrozen
         evaluatedBySmartPolicies(
             msg.sender,
             abi.encodeWithSignature("setTokenURI(string)", uri),
@@ -167,6 +242,19 @@ contract ChoreographyMutableAsset is MutableAsset {
         )
     {
         _setTokenURI(uri);
+    }
+
+    function freeze()
+        public
+        notFrozen
+        evaluatedBySmartPolicies(
+            msg.sender,
+            abi.encodeWithSignature("freeze()"),
+            address(this)
+        )
+    {
+        frozen = true;
+        emit ChoreographyFrozen(msg.sender);
     }
 
     function getNode(

@@ -12,7 +12,7 @@ abstract contract NMT is ERC721Enumerable {
         address to,
         address creatorSmartPolicy,
         address holderSmartPolicy
-    ) public returns (address, uint256) {
+    ) public virtual returns (address, uint256) {
         require(to != address(0), "Invalid address");
         return _mint(to, creatorSmartPolicy, holderSmartPolicy);
     }

@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 abstract contract SmartPolicy {
     function decodeSignature(
-        bytes calldata payload
+        bytes memory payload
     ) public pure returns (bytes4) {
         return
             bytes4(
