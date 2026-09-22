@@ -52,8 +52,6 @@ contract ChoreographyMutableAsset is MutableAsset {
     }
 
     Descriptor private descriptor;
-    bool public initialized;
-
     event RolesChanged(string[] roleNames);
     event NodesChanged(string[] nodeNames);
     event ChoreographyInitialized(string[] roleNames, string[] nodeNames);
@@ -227,7 +225,6 @@ contract ChoreographyMutableAsset is MutableAsset {
     }
 
     function initializeChoreography(InitialModel memory model) public onlyNMT {
-        require(!initialized, "Choreography already initialized");
         _setRoles(model.roleNames, model.roleAddresses);
         _setNodes(
             model.names,
@@ -240,7 +237,6 @@ contract ChoreographyMutableAsset is MutableAsset {
             model.initiatingMessages,
             model.returnMessages
         );
-        initialized = true;
         emit ChoreographyInitialized(model.roleNames, model.names);
     }
 

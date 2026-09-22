@@ -137,7 +137,6 @@ async function main() {
     () => nmt.mintWithInitialModel(...mintArguments, initialModel)
   ));
   const initializedAsset = await ethers.getContractAt("ChoreographyMutableAsset", initializedAssetAddress);
-  assert.equal(await initializedAsset.initialized(), true);
   assert.deepEqual(Array.from(await initializedAsset.getNodeNames()), initialModel.names);
 
   const emptyThenImportGas =

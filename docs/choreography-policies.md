@@ -23,7 +23,7 @@ The policy administrator configures authorized creators and eligible holders wit
 - node names and node types;
 - incoming and outgoing edges, conditions, roles, and messages for every node.
 
-The array-length validation is the same as `setRoles(...)` and `setNodes(...)`. Initialization is callable only by `ChoreographyNMT`, happens in the mint transaction, and sets `initialized` to `true`. Subsequent mutations remain governed by the Creator and Holder policies.
+The array-length validation is the same as `setRoles(...)` and `setNodes(...)`. Initialization is callable only by `ChoreographyNMT` and happens in the mint transaction. Subsequent mutations remain governed by the Creator and Holder policies.
 
 The Master policy authorizes the Creator and initial Holder but does not currently register or compare a BPMN/template hash. Use this route only when the authorized Creator is trusted to provide the selected model.
 
