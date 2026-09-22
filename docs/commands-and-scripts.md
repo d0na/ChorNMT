@@ -14,7 +14,11 @@ These are the only commands intended for the normal `paper-example` workflow.
 | `npm run render:asset -- <asset-address> <nmt-or-delta.json>` | Exports the asset and generates BPMN XML. | Asset address plus imported NMT or delta file. | Raw JSON, normalized JSON, and BPMN XML. |
 | `npm run modify:asset -- <asset-address> <delta.json> [--no-render]` | Applies a delta to existing asset nodes. | Asset address and delta JSON. | Updated asset; also rendered artifacts unless `--no-render` is used. |
 | `npm run test:policies` | Runs policy allow/deny integration tests and prints receipt-derived gas costs. | None. | Policy matrix and atomic-mint benchmark on an ephemeral Hardhat network. |
-| `npm run clean` | Removes generated files and local Hardhat build artifacts. | None. | Clean local workspace artifacts. |
+| `npm run evaluate:policies` | Runs the lifecycle cost evaluation for a new BPMN model. | None. | JSON and Markdown reports with mint-strategy and policy-operation totals. |
+| `npm run evaluate:summary` | Collects generated experiment reports in one overview. | Existing evaluation reports. | `evaluation/summary.generated.md`. |
+| `npm run evaluate:all` | Cleans then executes paper, policy, and integration evaluations in the correct order. | Local operations node; Chromium installed. | Complete reports, graphs, BPMN SVG/PNG images, and unified overview. |
+| `npm run setup:evaluation` | Installs the local headless Chromium used to render BPMN SVG/PNG images. | Internet access; run once after `npm install`. | Browser cache used by `evaluate:paper`. |
+| `npm run clean` | Removes local Hardhat artifacts/cache, generated BPMN files, metrics, and generated evaluation reports. | None. | Reset only reproducible local outputs. |
 
 All commands after deployment must receive the same `<asset-address>` printed by `deploy:asset`.
 
@@ -37,7 +41,7 @@ The commands print measured transaction costs after every on-chain write. Each l
 | `deploy:asset` | Deploys Master, Creator, and Holder policies, deploys `ChoreographyNMT`, and mints the asset. | Five transactions; typically the highest setup cost. |
 | `import:asset` | Calls `setRoles(...)` and `setNodes(...)`. | Two transactions; grows with roles, nodes, messages, and graph edges. |
 | `mintWithInitialModel(...)` | Mints and initializes a trusted model in one NMT transaction. | Creator/Holder policies and an `InitialModel` struct. | Replaces the mint plus two import transactions for fixed templates. |
-| `modify:asset` | Calls `setNodes(...)`; calls `setRoles(...)` only for new roles declared in the delta. | One or two transactions; grows with the number and size of changed nodes. |
+| `modify:asset` | Calls `setNodes(...)`; calls `setRoles(...)` only for new roles declared in the delta. | One or two transactions; a configured Creator policy also evaluates BPMN structural constraints. |
 | `render:asset` | Reads contract state and writes local files. | No blockchain transaction and no gas cost. |
 | `start:operations` and `clean` | Local operations only. | No gas cost. |
 
@@ -60,6 +64,7 @@ These scripts are used by public commands and are not intended as separate user-
 | `render-local-support.js` | `render:asset`, `modify:asset` | Writes manifest and JSON artifacts, normalizes data, and generates BPMN XML. |
 | `apply-asset-delta.js` | `modify:asset` | Validates and applies delta roles and nodes. |
 | `test-policies.js` | `test:policies` | Exercises policy allow/deny paths and compares initial-population gas. |
+| `evaluation/run-policy-lifecycle-evaluation.js` | `evaluate:policies` | Measures deployment, empty versus populated mint, and Master/Creator/Holder allow-deny operations. |
 
 ## Evaluation scripts
 
