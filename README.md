@@ -88,6 +88,10 @@ Node and role names are the contract reference keys. To import another BPMN or s
 
 For a trusted fixed template, `ChoreographyNMT.mintWithInitialModel(...)` creates and populates an instance atomically. It avoids the two post-mint import transactions; the policy test compares its gas cost with the empty-asset workflow.
 
+The `CreatorSmartPolicy` can optionally limit BPMN updates by task count, sequence-flow count, permitted task names, valid flow targets, and protected nodes. Existing import and delta workflows remain unchanged until these constraints are configured.
+
+Run `npm run evaluate:policies` to measure a fresh model's empty-versus-populated mint cost and the allow/deny cost of Master, Creator, and Holder policy calls. It writes local JSON and Markdown evaluation reports.
+
 ## Other examples
 
 The repository also includes `pizza-delivery`, an introductory example, and `parallel-gateway-example`, a small model for checking parallel splits and joins. They are retained as development references; the supported operational path is only `paper-example` and its parallel delta.
@@ -106,6 +110,7 @@ Files with a `.generated.*` suffix are local artifacts ignored by Git and can be
 
 ## Technical documentation
 
+- [Evaluation quick start](evaluation/README.md#complete-evaluation-run): commands for the complete paper and policy evaluation suite.
 - [BPMN to NMT workflow](docs/bpmn-to-nmt-workflow.md): NMT format, import, and delta rules.
 - [Delta updates and Solidity calls](docs/delta-update-and-solidity-calls.md): `setNodes(...)` and `setRoles(...)` details.
 - [Contract hierarchy](docs/contract-hierarchy.md): asset and policy model.

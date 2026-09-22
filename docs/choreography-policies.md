@@ -30,17 +30,30 @@ The Master policy authorizes the Creator and initial Holder but does not current
 
 | Route | Gas used |
 | --- | ---: |
-| `mint` + `setRoles` + `setNodes` | 3,534,708 |
-| `mintWithInitialModel` | 3,511,462 |
-| Saving | 23,246 (0.66%) |
+| `mint` + `setRoles` + `setNodes` | 3,757,968 |
+| `mintWithInitialModel` | 3,700,593 |
+| Saving | 57,375 (1.53%) |
 
-The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage.
+The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 412,738 gas and structural deny paths used 143,798--163,789 gas.
 
 ## Instance policies
 
 The default Creator and Holder policies both allow the current holder to update roles, nodes, token metadata, links, and the Creator policy. Their intersection is required for every mutable operation, so a Holder can further restrict an instance by replacing its Holder policy.
 
 The defaults also permit `freeze()`. Once frozen, an instance rejects role, node, and token-URI updates permanently. Replacing the Holder policy remains available to the holder as an administrative action.
+
+## BPMN constraints in the Creator policy
+
+`CreatorSmartPolicy` also defines the structural boundaries for `setNodes(...)`; it is not a fourth policy type. Its administrator can configure:
+
+- `setBpmnLimits(maxTasks, maxSequenceFlows)`;
+- `setTaskNameAllowlistEnabled(...)` and `setAllowedTaskName(...)`;
+- `setKnownFlowTargetsEnabled(...)`;
+- `setProtectedNode(...)`.
+
+Before writing storage, the asset asks its Creator policy to evaluate the post-update task count and total outgoing sequence-flow count. The policy rejects duplicate names in a delta, protected-node updates, task names outside an enabled allowlist, and outgoing flows whose target does not already exist or appear in the same delta.
+
+The Holder policy remains an independent second approval. A Holder can further restrict an instance by installing `DenyAllSmartPolicy`, without weakening the Creator-defined BPMN boundaries.
 
 The Master policy is deployed before `ChoreographyNMT`; `deploy:asset` creates a default configuration in which the deployer is both an authorized creator and an eligible holder. Configure additional organizations on the deployed Master policy before minting or transferring assets to them.
 

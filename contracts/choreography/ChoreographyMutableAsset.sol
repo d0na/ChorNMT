@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "../base/MutableAsset.sol";
+import "./IChoreographyCreatorPolicy.sol";
 
 contract ChoreographyMutableAsset is MutableAsset {
     enum NodeType {
@@ -141,6 +142,7 @@ contract ChoreographyMutableAsset is MutableAsset {
             address(this)
         )
     {
+        _evaluateCreatorNodePolicy(names, nodeTypes, outgoing);
         _setNodes(
             names,
             nodeTypes,
@@ -151,6 +153,27 @@ contract ChoreographyMutableAsset is MutableAsset {
             participantRoles,
             initiatingMessages,
             returnMessages
+        );
+    }
+
+    function _evaluateCreatorNodePolicy(
+        string[] memory names,
+        NodeType[] memory nodeTypes,
+        string[][] memory outgoing
+    ) private view {
+        uint8[] memory types = new uint8[](nodeTypes.length);
+        for (uint256 i = 0; i < nodeTypes.length; i++) {
+            types[i] = uint8(nodeTypes[i]);
+        }
+
+        require(
+            IChoreographyCreatorPolicy(creatorSmartPolicy).evaluateNodeUpdate(
+                address(this),
+                names,
+                types,
+                outgoing
+            ),
+            "Operation DENIED by CREATOR BPMN policy"
         );
     }
 
@@ -291,6 +314,17 @@ contract ChoreographyMutableAsset is MutableAsset {
 
     function getNodeNames() public view returns (string[] memory) {
         return descriptor.nodeNames;
+    }
+
+    function hasNode(string memory name) public view returns (bool) {
+        return descriptor.hasNode[name];
+    }
+
+    function getNodeTypeAndOutgoing(
+        string memory name
+    ) public view returns (uint8, string[] memory) {
+        Node storage node = descriptor.nodesByName[name];
+        return (uint8(node.nodeType), node.outgoing);
     }
 
     function getRole(string memory role) public view returns (address) {

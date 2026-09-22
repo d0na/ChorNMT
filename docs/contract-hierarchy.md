@@ -41,12 +41,14 @@ ChoreographyMutableAsset : MutableAsset
   - stores choreography descriptor:
     - roles
     - nodes
-    - messages embedded in node fields
+  - messages embedded in node fields
   - currently identifies participants in nodes by role name strings
   - can be frozen permanently after initialization
+  - asks CreatorSmartPolicy to validate every node update
 
 MasterSmartPolicy  : SmartPolicy
 CreatorSmartPolicy : SmartPolicy
+  - authorizes editors and defines BPMN structural limits
 HolderSmartPolicy  : SmartPolicy
 ```
 
@@ -106,6 +108,7 @@ flowchart TD
 
   CMA -. evaluatedBySmartPolicies .-> CCSP
   CMA -. evaluatedBySmartPolicies .-> CHSP
+  CMA -. validates setNodes .-> CCSP
   PMA -. evaluatedBySmartPolicies .-> PCSP
   PMA -. evaluatedBySmartPolicies .-> PHSP
 ```

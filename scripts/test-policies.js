@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
+import fs from "node:fs/promises";
+import path from "node:path";
 import hre from "hardhat";
+import { writeMetrics } from "./evaluation/metrics.js";
 
 const GAS_LIMIT = 1_000_000n;
 
@@ -41,6 +44,12 @@ function printReport(report) {
 
 function gasFor(report, label) {
   return BigInt(report.find((entry) => entry.label === label).gasUsed);
+}
+
+function totalGas(report, outcome) {
+  return report
+    .filter((entry) => entry.outcome === outcome)
+    .reduce((total, entry) => total + BigInt(entry.gasUsed), 0n);
 }
 
 async function main() {
@@ -138,6 +147,99 @@ async function main() {
   console.log(
     `Initial model gas: mint then import=${emptyThenImportGas}, mintWithInitialModel=${initializedMintGas}, saving=${emptyThenImportGas - initializedMintGas}`
   );
+
+  report.push(await expectAllowed(
+    "creator configures BPMN structural limits",
+    () => creatorPolicy.setBpmnLimits(2, 3)
+  ));
+  await (await creatorPolicy.setTaskNameAllowlistEnabled(true)).wait();
+  await (await creatorPolicy.setKnownFlowTargetsEnabled(true)).wait();
+  await (await creatorPolicy.setAllowedTaskName("Inspection", true)).wait();
+  await (await creatorPolicy.setAllowedTaskName("Packing", true)).wait();
+  await (await creatorPolicy.setProtectedNode("Start", true)).wait();
+
+  const [constrainedAssetAddress] = await nmt.mintWithInitialModel.staticCall(
+    ...mintArguments,
+    initialModel
+  );
+  await (await nmt.mintWithInitialModel(...mintArguments, initialModel)).wait();
+  const constrainedAsset = await ethers.getContractAt(
+    "ChoreographyMutableAsset",
+    constrainedAssetAddress
+  );
+  const nodeUpdate = (name, nodeType, incoming, outgoing) => [
+    [name],
+    [nodeType],
+    [incoming],
+    [outgoing],
+    [[]],
+    [nodeType === 2 ? "Buyer" : ""],
+    [nodeType === 2 ? "Supplier" : ""],
+    [nodeType === 2 ? `${name}Request` : ""],
+    [nodeType === 2 ? `${name}Response` : ""]
+  ];
+  const inspectionUpdate = nodeUpdate("Inspection", 2, ["Delivery"], ["End"]);
+  report.push(await expectAllowed(
+    "creator policy allows approved task within limits",
+    () => constrainedAsset.setNodes(...inspectionUpdate)
+  ));
+
+  const packingUpdate = nodeUpdate("Packing", 2, ["Inspection"], ["End"]);
+  report.push(await expectDenied(
+    "creator policy denies task count above limit",
+    administrator,
+    {
+      to: constrainedAssetAddress,
+      data: constrainedAsset.interface.encodeFunctionData("setNodes", packingUpdate)
+    }
+  ));
+
+  await (await creatorPolicy.setBpmnLimits(3, 3)).wait();
+  report.push(await expectDenied(
+    "creator policy denies sequence flow count above limit",
+    administrator,
+    {
+      to: constrainedAssetAddress,
+      data: constrainedAsset.interface.encodeFunctionData("setNodes", packingUpdate)
+    }
+  ));
+
+  await (await creatorPolicy.setBpmnLimits(3, 4)).wait();
+  report.push(await expectAllowed(
+    "creator policy allows whitelisted task after limit increase",
+    () => constrainedAsset.setNodes(...packingUpdate)
+  ));
+
+  await (await creatorPolicy.setBpmnLimits(4, 5)).wait();
+  const unapprovedUpdate = nodeUpdate("Unapproved", 2, ["Packing"], ["End"]);
+  report.push(await expectDenied(
+    "creator policy denies task outside name allowlist",
+    administrator,
+    {
+      to: constrainedAssetAddress,
+      data: constrainedAsset.interface.encodeFunctionData("setNodes", unapprovedUpdate)
+    }
+  ));
+
+  const unknownTargetUpdate = nodeUpdate("Inspection", 2, ["Delivery"], ["Unknown"]);
+  report.push(await expectDenied(
+    "creator policy denies flow to unknown node",
+    administrator,
+    {
+      to: constrainedAssetAddress,
+      data: constrainedAsset.interface.encodeFunctionData("setNodes", unknownTargetUpdate)
+    }
+  ));
+
+  const protectedStartUpdate = nodeUpdate("Start", 0, [], ["Delivery"]);
+  report.push(await expectDenied(
+    "creator policy denies protected node update",
+    administrator,
+    {
+      to: constrainedAssetAddress,
+      data: constrainedAsset.interface.encodeFunctionData("setNodes", protectedStartUpdate)
+    }
+  ));
 
   report.push(await expectDenied(
     "unauthorized creator cannot mint",
@@ -258,6 +360,31 @@ async function main() {
   ));
 
   printReport(report);
+  const summary = {
+    allowedGas: totalGas(report, "allowed").toString(),
+    deniedGas: totalGas(report, "denied").toString(),
+    caseCount: report.length
+  };
+  const metricsPath = await writeMetrics("policy-tests", { summary, cases: report });
+  const markdownPath = path.join(process.cwd(), "evaluation", "policy-tests.generated.md");
+  await fs.writeFile(markdownPath, [
+    "# Policy integration test results",
+    "",
+    "This report persists the receipt-derived values printed by `npm run test:policies`.",
+    "",
+    "- Cases: " + summary.caseCount,
+    "- Allowed-operation gas total: " + summary.allowedGas,
+    "- Denied-operation gas total: " + summary.deniedGas,
+    "",
+    "| Case | Outcome | Gas | Cost (wei) |",
+    "| --- | --- | ---: | ---: |",
+    ...report.map((entry) => `| ${entry.label} | ${entry.outcome} | ${entry.gasUsed} | ${entry.costWei} |`),
+    "",
+    "The test covers Master mint and eligibility controls, Creator BPMN constraints, Holder restrictions, freezing, version evolution, and ownership transfer. Denied rows are reverted transactions with receipts, not simulated calls.",
+    ""
+  ].join("\n"));
+  console.log(`Policy test metrics: ${metricsPath}`);
+  console.log(`Policy test report: ${markdownPath}`);
 }
 
 main().catch((error) => {
