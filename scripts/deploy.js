@@ -9,6 +9,10 @@ async function main() {
     "contracts/choreography/CreatorSmartPolicy.sol:CreatorSmartPolicy",
     deployer
   );
+  const masterPolicyFactory = await hre.ethers.getContractFactory(
+    "contracts/choreography/MasterSmartPolicy.sol:MasterSmartPolicy",
+    deployer
+  );
   const holderPolicyFactory = await hre.ethers.getContractFactory(
     "contracts/choreography/HolderSmartPolicy.sol:HolderSmartPolicy",
     deployer
@@ -18,10 +22,12 @@ async function main() {
     deployer
   );
 
+  const masterPolicy = await masterPolicyFactory.deploy(deployerAddress);
   const creatorPolicy = await creatorPolicyFactory.deploy();
   const holderPolicy = await holderPolicyFactory.deploy();
-  const nmt = await nmtFactory.deploy();
+  const nmt = await nmtFactory.deploy(masterPolicy.target);
 
+  await masterPolicy.waitForDeployment();
   await creatorPolicy.waitForDeployment();
   await holderPolicy.waitForDeployment();
   await nmt.waitForDeployment();
@@ -39,6 +45,7 @@ async function main() {
   await mintTx.wait();
 
   console.log(`ChoreographyNMT deployed to: ${nmt.target}`);
+  console.log(`MasterSmartPolicy deployed to: ${masterPolicy.target}`);
   console.log(`CreatorSmartPolicy deployed to: ${creatorPolicy.target}`);
   console.log(`HolderSmartPolicy deployed to: ${holderPolicy.target}`);
   console.log(`ChoreographyMutableAsset minted at: ${assetAddress}`);

@@ -99,7 +99,7 @@ async function main() {
     "",
     "| Transaction | Smart contract / asset | Address | Gas | ETH cost | USD cost |",
     "| --- | --- | --- | ---: | ---: | ---: |",
-    ...[[deployment.costs[0], "CreatorSmartPolicy", deployment.creatorPolicyAddress], [deployment.costs[1], "HolderSmartPolicy", deployment.holderPolicyAddress], [deployment.costs[2], "ChoreographyNMT", deployment.choreographyNmtAddress], [deployment.costs[3], "ChoreographyMutableAsset (mint)", deployment.assetAddress]].map(([cost, name, address]) => `| ${cost.label} | ${name} | \`${address}\` | ${cost.gasUsed} | ${cost.costEth} | ${cost.costUsd === null ? "N/A" : `$${cost.costUsd.toFixed(4)}`} |`),
+    ...[[deployment.costs[0], "MasterSmartPolicy", deployment.masterPolicyAddress], [deployment.costs[1], "CreatorSmartPolicy", deployment.creatorPolicyAddress], [deployment.costs[2], "HolderSmartPolicy", deployment.holderPolicyAddress], [deployment.costs[3], "ChoreographyNMT", deployment.choreographyNmtAddress], [deployment.costs[4], "ChoreographyMutableAsset (mint)", deployment.assetAddress]].map(([cost, name, address]) => `| ${cost.label} | ${name} | \`${address}\` | ${cost.gasUsed} | ${cost.costEth} | ${cost.costUsd === null ? "N/A" : `$${cost.costUsd.toFixed(4)}`} |`),
     `| **Deployment and mint total** | — | — | **${deploymentGas}** | **${deployment.totalCost.totalEth}** | **${ethUsdPrice ? `$${(Number(deployment.totalCost.totalEth) * ethUsdPrice).toFixed(4)}` : "N/A"}** |`,
     "| Transfer asset | Not executed in this experiment | — | Not applicable | Not applicable | Not applicable |",
     "",
