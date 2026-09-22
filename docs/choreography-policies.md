@@ -23,7 +23,7 @@ The policy administrator configures authorized creators and eligible holders wit
 - node names and node types;
 - incoming and outgoing edges, conditions, roles, and messages for every node.
 
-The array-length validation is the same as `setRoles(...)` and `setNodes(...)`. Initialization is callable only by `ChoreographyNMT`, happens in the mint transaction, and sets `initialized` to `true`. Existing mutation methods remain available until `freeze()` is called.
+The array-length validation is the same as `setRoles(...)` and `setNodes(...)`. Initialization is callable only by `ChoreographyNMT`, happens in the mint transaction, and sets `initialized` to `true`. Subsequent mutations remain governed by the Creator and Holder policies.
 
 The Master policy authorizes the Creator and initial Holder but does not currently register or compare a BPMN/template hash. Use this route only when the authorized Creator is trusted to provide the selected model.
 
@@ -43,7 +43,7 @@ The values are reproducible local gas measurements, not public-network prices. S
 
 The default Creator and Holder policies both allow the current holder to update roles, nodes, token metadata, links, and the Creator policy. Their intersection is required for every mutable operation, so a Holder can further restrict an instance by replacing its Holder policy.
 
-The defaults also permit `freeze()`. Once frozen, an instance rejects role, node, and token-URI updates permanently. Replacing the Holder policy remains available to the holder as an administrative action.
+The default policies permit the Holder to update roles, nodes, token metadata, links, and the Creator policy. A stricter Holder policy can deny any of these operations; `DenyAllSmartPolicy` is used in tests to demonstrate this restriction.
 
 ## BPMN constraints in the Creator policy
 

@@ -277,16 +277,6 @@ async function main() {
     }
   ));
 
-  report.push(await expectAllowed("holder freezes choreography", () => asset.freeze()));
-  report.push(await expectDenied(
-    "frozen choreography rejects updates",
-    administrator,
-    {
-      to: assetAddress,
-      data: asset.interface.encodeFunctionData("setRoles", [roles, roleAddresses])
-    }
-  ));
-
   const [versionAddress, versionTokenId] = await nmt.mintVersion.staticCall(
     administrator.address,
     creatorPolicyAddress,
@@ -382,7 +372,7 @@ async function main() {
     "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
     ...report.map((entry) => `| ${entry.label} | ${entry.outcome} | ${entry.gasUsed} | ${entry.costWei} | ${scenarioUsd(entry.gasUsed, ethUsdPrice).join(" | ")} |`),
     "",
-    "The test covers Master mint and eligibility controls, Creator BPMN constraints, Holder restrictions, freezing, version evolution, and ownership transfer. Denied rows are reverted transactions with receipts, not simulated calls.",
+    "The test covers Master mint and eligibility controls, Creator BPMN constraints, Holder restrictions, version evolution, and ownership transfer. Denied rows are reverted transactions with receipts, not simulated calls.",
     ""
   ].join("\n"));
   console.log(`Policy test metrics: ${metricsPath}`);

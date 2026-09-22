@@ -19,7 +19,6 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     bytes4 private constant SET_TOKEN_URI = bytes4(keccak256("setTokenURI(string)"));
     bytes4 private constant SET_LINKED = bytes4(keccak256("setLinked(address)"));
     bytes4 private constant SET_CREATOR_POLICY = bytes4(keccak256("setCreatorSmartPolicy(address)"));
-    bytes4 private constant FREEZE = bytes4(keccak256("freeze()"));
     bytes4 private constant TRANSFER = bytes4(keccak256("transferFrom(address,address)"));
     uint8 private constant TASK = 2;
 
@@ -80,7 +79,6 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
             signature == SET_TOKEN_URI ||
             signature == SET_LINKED ||
             signature == SET_CREATOR_POLICY ||
-            signature == FREEZE ||
             signature == TRANSFER;
     }
 

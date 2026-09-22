@@ -30,11 +30,10 @@ Creator decision therefore does not override a Holder denial.
 For `setNodes(...)`, `ChoreographyMutableAsset` performs the following checks
 in order:
 
-1. The instance must not be frozen.
-2. The regular Creator and Holder policy evaluations must permit the action.
-3. The current Creator policy evaluates the submitted BPMN node update against
+1. The regular Creator and Holder policy evaluations must permit the action.
+2. The current Creator policy evaluates the submitted BPMN node update against
    its structural configuration.
-4. Only then are the changed node records written to contract storage.
+3. Only then are the changed node records written to contract storage.
 
 A rejected transaction reverts. It still consumes gas because the authorization
 and, where applicable, structural checks execute before the revert.
@@ -94,17 +93,18 @@ The permitted delta is followed by denials for:
 - a flow pointing to an unknown BPMN node; and
 - a modification of the protected `Order` node.
 
-## Holder Policy and Freezing
+## Holder Policy Restrictions
 
 The Holder policy is evaluated together with the Creator policy. It allows the
 Holder to adopt a stricter local rule without weakening Creator constraints. In
 the tests, the Holder installs `DenyAllSmartPolicy`; a later model update is
 then denied even though the Creator policy would otherwise allow it.
 
-`freeze()` is a separate lifecycle action. Once an authorized party freezes an
-instance, role, node, and token-URI mutations are rejected permanently. The
-tests also demonstrate that administrative Holder-policy replacement remains
-available as an explicitly allowed administrative operation.
+The model has no permanent freeze flag. A Holder who needs to block changes
+installs a stricter Holder policy; this preserves the option to later replace
+that policy under the Holder's administrative authority. The tests demonstrate
+this behavior by installing `DenyAllSmartPolicy` and rejecting a later model
+update.
 
 ## Atomic Initialization and Cost Comparison
 
@@ -123,7 +123,7 @@ than assuming a universal saving.
 
 | Command | Model | Evidence produced |
 | --- | --- | --- |
-| `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, freezing, transfer, versioning, and receipt gas/wei. |
+| `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, versioning, and receipt gas/wei. |
 | `npm run evaluate:policies` | Imported `paper-example` plus real delta | Empty versus populated mint, paper-model structural allow/deny cases, and scenario costs. |
 | `npm run evaluate:paper` | Imported `paper-example` plus real delta | Import/render/delta/full-population measurements, chor-js BPMN images, and gnuplot charts. |
 | `npm run evaluate:all` | All of the above | Rebuilds the canonical final report. |

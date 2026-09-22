@@ -52,18 +52,11 @@ contract ChoreographyMutableAsset is MutableAsset {
     }
 
     Descriptor private descriptor;
-    bool public frozen;
     bool public initialized;
 
     event RolesChanged(string[] roleNames);
     event NodesChanged(string[] nodeNames);
-    event ChoreographyFrozen(address indexed frozenBy);
     event ChoreographyInitialized(string[] roleNames, string[] nodeNames);
-
-    modifier notFrozen() {
-        require(!frozen, "Choreography is frozen");
-        _;
-    }
 
     constructor(
         address nmtAddress,
@@ -82,7 +75,6 @@ contract ChoreographyMutableAsset is MutableAsset {
         address[] memory addresses
     )
         public
-        notFrozen
         evaluatedBySmartPolicies(
             msg.sender,
             abi.encodeWithSignature("setRoles(string[],address[])", roleNames, addresses),
@@ -124,7 +116,6 @@ contract ChoreographyMutableAsset is MutableAsset {
         string[] memory returnMessages
     )
         public
-        notFrozen
         evaluatedBySmartPolicies(
             msg.sender,
             abi.encodeWithSignature(
@@ -257,7 +248,6 @@ contract ChoreographyMutableAsset is MutableAsset {
         string memory uri
     )
         public
-        notFrozen
         evaluatedBySmartPolicies(
             msg.sender,
             abi.encodeWithSignature("setTokenURI(string)", uri),
@@ -265,19 +255,6 @@ contract ChoreographyMutableAsset is MutableAsset {
         )
     {
         _setTokenURI(uri);
-    }
-
-    function freeze()
-        public
-        notFrozen
-        evaluatedBySmartPolicies(
-            msg.sender,
-            abi.encodeWithSignature("freeze()"),
-            address(this)
-        )
-    {
-        frozen = true;
-        emit ChoreographyFrozen(msg.sender);
     }
 
     function getNode(

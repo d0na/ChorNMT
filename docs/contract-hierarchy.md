@@ -43,7 +43,6 @@ ChoreographyMutableAsset : MutableAsset
     - nodes
   - messages embedded in node fields
   - currently identifies participants in nodes by role name strings
-  - can be frozen permanently after initialization
   - asks CreatorSmartPolicy to validate every node update
 
 MasterSmartPolicy  : SmartPolicy

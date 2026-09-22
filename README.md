@@ -114,7 +114,7 @@ Files with a `.generated.*` suffix are local artifacts ignored by Git and can be
 - [BPMN to NMT workflow](docs/bpmn-to-nmt-workflow.md): NMT format, import, and delta rules.
 - [Delta updates and Solidity calls](docs/delta-update-and-solidity-calls.md): `setNodes(...)` and `setRoles(...)` details.
 - [Contract hierarchy](docs/contract-hierarchy.md): asset and policy model.
-- [Choreography policies](docs/choreography-policies.md): minting, ownership, updates, freezing, and versioning rules.
+- [Choreography policies](docs/choreography-policies.md): minting, ownership, policy-controlled updates, and versioning rules.
 - [Commands and scripts](docs/commands-and-scripts.md): public npm commands, implementation scripts, and legacy references.
 - [Evaluation toolkit](evaluation/README.md): measurement reports, CSV aggregation, and Gnuplot figure templates.
 - [bpmn-builder-js](bpmn-builder-js/README.md): BPMN renderer and intermediate JSON format.

@@ -10,7 +10,6 @@ contract HolderSmartPolicy is SmartPolicy {
     bytes4 private constant SET_TOKEN_URI = bytes4(keccak256("setTokenURI(string)"));
     bytes4 private constant SET_LINKED = bytes4(keccak256("setLinked(address)"));
     bytes4 private constant SET_CREATOR_POLICY = bytes4(keccak256("setCreatorSmartPolicy(address)"));
-    bytes4 private constant FREEZE = bytes4(keccak256("freeze()"));
 
     function evaluate(
         address subject,
@@ -27,7 +26,6 @@ contract HolderSmartPolicy is SmartPolicy {
             signature == SET_NODES ||
             signature == SET_TOKEN_URI ||
             signature == SET_LINKED ||
-            signature == SET_CREATOR_POLICY ||
-            signature == FREEZE;
+            signature == SET_CREATOR_POLICY;
     }
 }
