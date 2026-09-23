@@ -112,6 +112,7 @@ Files with a `.generated.*` suffix are local artifacts ignored by Git and can be
 
 - [Evaluation quick start](evaluation/README.md#complete-evaluation-run): commands for the complete paper and policy evaluation suite.
 - [BPMN to NMT workflow](docs/bpmn-to-nmt-workflow.md): NMT format, import, and delta rules.
+- [Architecture](docs/architettura.md): general design and the NMT, choreography, and participant assets.
 - [Delta updates and Solidity calls](docs/delta-update-and-solidity-calls.md): `setNodes(...)` and `setRoles(...)` details.
 - [Contract hierarchy](docs/contract-hierarchy.md): asset and policy model.
 - [Choreography policies](docs/choreography-policies.md): minting, ownership, updates, freezing, and versioning rules.
