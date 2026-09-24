@@ -4,7 +4,7 @@ import path from "node:path";
 import hre from "hardhat";
 import { resolveEthUsdPrice, scenarioUsd, writeMetrics } from "./evaluation/metrics.js";
 
-const GAS_LIMIT = 1_000_000n;
+const GAS_LIMIT = 10_000_000n;
 
 function formatCost(receipt) {
   return {
@@ -21,16 +21,17 @@ async function expectAllowed(label, send) {
 }
 
 async function expectDenied(label, signer, transaction) {
+  let receipt;
   try {
     const response = await signer.sendTransaction({ ...transaction, gasLimit: GAS_LIMIT });
-    const receipt = await response.wait();
-    assert.fail(`${label} unexpectedly succeeded with status ${receipt.status}`);
+    receipt = await response.wait();
   } catch (error) {
-    const receipt = error.receipt || (error.transactionHash && await signer.provider.getTransactionReceipt(error.transactionHash));
+    receipt = error.receipt || (error.transactionHash && await signer.provider.getTransactionReceipt(error.transactionHash));
     assert.ok(receipt, `${label} did not produce a transaction receipt`);
-    assert.equal(receipt.status, 0, `${label} should revert`);
-    return { label, outcome: "denied", ...formatCost(receipt) };
   }
+  assert.equal(receipt.status, 0, `${label} should revert`);
+  assert.ok(receipt.gasUsed < GAS_LIMIT, `${label} ran out of gas instead of being denied`);
+  return { label, outcome: "denied", ...formatCost(receipt) };
 }
 
 function printReport(report) {
@@ -333,6 +334,48 @@ async function main() {
 
   const denyAllPolicy = await denyAllFactory.deploy();
   await denyAllPolicy.waitForDeployment();
+
+  const holderMintArguments = [eligibleHolder.address, creatorPolicyAddress, holderPolicyAddress];
+  const [holderAssetAddress] = await nmt.mint.staticCall(...holderMintArguments);
+  await (await nmt.mint(...holderMintArguments)).wait();
+  const holderAsset = await ethers.getContractAt("ChoreographyMutableAsset", holderAssetAddress);
+  report.push(await expectDenied(
+    "holder cannot replace creator policy",
+    eligibleHolder,
+    {
+      to: holderAssetAddress,
+      data: holderAsset.interface.encodeFunctionData("setCreatorSmartPolicy", [holderPolicyAddress])
+    }
+  ));
+  assert.equal(await holderAsset.creatorSmartPolicy(), creatorPolicyAddress);
+  report.push(await expectAllowed(
+    "creator policy administrator replaces creator policy",
+    () => holderAsset.setCreatorSmartPolicy(creatorPolicyAddress)
+  ));
+
+  await (await master.setVersioningEnabled(true)).wait();
+  report.push(await expectDenied(
+    "holder cannot mint version with another creator policy",
+    eligibleHolder,
+    {
+      to: nmtAddress,
+      data: nmt.interface.encodeFunctionData("mintVersion", [
+        eligibleHolder.address,
+        holderPolicyAddress,
+        holderPolicyAddress,
+        BigInt(holderAssetAddress)
+      ])
+    }
+  ));
+  report.push(await expectAllowed(
+    "holder mints version keeping creator policy",
+    () => nmt.connect(eligibleHolder).mintVersion(
+      eligibleHolder.address,
+      creatorPolicyAddress,
+      holderPolicyAddress,
+      BigInt(holderAssetAddress)
+    )
+  ));
   const secondMint = await nmt.mint.staticCall(...mintArguments);
   await (await nmt.mint(...mintArguments)).wait();
   const restrictedAsset = await ethers.getContractAt("ChoreographyMutableAsset", secondMint[0]);

@@ -79,10 +79,15 @@ contract MasterSmartPolicy is SmartPolicy {
 
         if (signature == MINT_VERSION) {
             address holder = _addressAt(action, 4);
+            address creatorPolicy = _addressAt(action, 36);
+            MutableAsset predecessor = MutableAsset(resource);
+            bool holderKeepsCreatorPolicy =
+                predecessor.getHolder() == subject &&
+                predecessor.creatorSmartPolicy() == creatorPolicy;
             return
                 versioningEnabled &&
                 eligibleHolders[holder] &&
-                (authorizedCreators[subject] || MutableAsset(resource).getHolder() == subject);
+                (authorizedCreators[subject] || holderKeepsCreatorPolicy);
         }
 
         return false;

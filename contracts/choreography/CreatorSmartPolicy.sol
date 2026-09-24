@@ -68,17 +68,20 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
         bytes memory action,
         address resource
     ) public view override returns (bool) {
+        bytes4 signature = decodeSignature(action);
+        if (signature == SET_CREATOR_POLICY) {
+            return subject == administrator;
+        }
+
         if (MutableAsset(resource).getHolder() != subject) {
             return false;
         }
 
-        bytes4 signature = decodeSignature(action);
         return
             signature == SET_ROLES ||
             signature == SET_NODES ||
             signature == SET_TOKEN_URI ||
             signature == SET_LINKED ||
-            signature == SET_CREATOR_POLICY ||
             signature == TRANSFER;
     }
 

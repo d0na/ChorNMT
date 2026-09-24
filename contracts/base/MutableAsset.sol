@@ -64,7 +64,7 @@ abstract contract MutableAsset {
     )
         public
         virtual
-        evaluatedBySmartPolicies(
+        evaluatedByCreator(
             msg.sender,
             abi.encodeWithSignature(
                 "setCreatorSmartPolicy(address)",

@@ -5,11 +5,15 @@ import "../base/MutableAsset.sol";
 import "../base/SmartPolicy.sol";
 
 contract CreatorSmartPolicy is SmartPolicy {
+    bytes4 private constant SET_CREATOR_POLICY = bytes4(keccak256("setCreatorSmartPolicy(address)"));
+
     function evaluate(
         address subject,
-        bytes memory,
+        bytes memory action,
         address resource
     ) public view override returns (bool) {
-        return MutableAsset(resource).getHolder() == subject;
+        return
+            decodeSignature(action) != SET_CREATOR_POLICY &&
+            MutableAsset(resource).getHolder() == subject;
     }
 }
