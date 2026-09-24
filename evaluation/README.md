@@ -13,6 +13,15 @@ npm run setup:evaluation
 ```
 
 `setup:evaluation` downloads the local Chromium used to produce the BPMN SVG/PNG images.
+Install `gnuplot` as well: it generates the PNG charts included in the paper workflow.
+
+```bash
+# macOS (Homebrew)
+brew install gnuplot
+
+# Debian/Ubuntu
+sudo apt install gnuplot
+```
 
 ## Complete evaluation run
 
