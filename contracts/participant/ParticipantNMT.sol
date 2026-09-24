@@ -25,7 +25,7 @@ contract ParticipantNMT is NMT {
         );
 
         uint256 tokenId = uint160(address(participant));
-        _safeMint(to, tokenId);
+        _mint(to, tokenId);
 
         return (address(participant), tokenId);
     }

@@ -141,7 +141,7 @@ contract ChoreographyNMT is NMT {
         );
 
         uint256 tokenId = uint160(address(choreography));
-        _safeMint(to, tokenId);
+        _mint(to, tokenId);
 
         return (address(choreography), tokenId);
     }
