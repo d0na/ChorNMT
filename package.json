@@ -9,6 +9,7 @@
     "render:asset": "node scripts/render-asset.js",
     "import:asset": "node scripts/import-bpmn-asset.js",
     "modify:asset": "node scripts/apply-asset-delta.js",
+    "test": "npm run test:policies",
     "test:policies": "hardhat run scripts/test-policies.js",
     "evaluate:policies": "hardhat run scripts/evaluation/run-policy-lifecycle-evaluation.js",
     "evaluate:summary": "node scripts/evaluation/generate-evaluation-summary.js",
