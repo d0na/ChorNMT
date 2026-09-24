@@ -15,6 +15,8 @@ const BPMN_NODE_TYPE_TO_NMT_TYPE = {
   "bpmn:EventBasedGateway": 7
 };
 
+const SPLIT_TO_JOIN_NMT_TYPE = { 3: 4, 5: 6 };
+
 function nameOf(element, label) {
   const name = element?.name?.trim() || element?.id;
   if (!name) {
@@ -28,7 +30,13 @@ function nodeTypeOf(element) {
   if (nodeType === undefined) {
     throw new Error(`Unsupported BPMN flow element "${element.$type}" (${element.id}).`);
   }
-  return nodeType;
+  const joinType = SPLIT_TO_JOIN_NMT_TYPE[nodeType];
+  const converging =
+    element.gatewayDirection === "Converging" ||
+    (element.gatewayDirection !== "Diverging" &&
+      (element.incoming || []).length > 1 &&
+      (element.outgoing || []).length <= 1);
+  return joinType !== undefined && converging ? joinType : nodeType;
 }
 
 function messageName(flow) {
@@ -55,26 +63,24 @@ function toNmtDataset(choreography, sourcePath) {
     return role;
   });
 
-  const elements = choreography.flowElements || [];
+  const elements = (choreography.flowElements || []).filter((element) => element.$type !== "bpmn:SequenceFlow");
   const nodeNames = new Map();
   elements.forEach((element) => {
-    if (BPMN_NODE_TYPE_TO_NMT_TYPE[element.$type] !== undefined) {
-      const name = nameOf(element, "Flow element");
-      if ([...nodeNames.values()].includes(name)) {
-        throw new Error(`Flow element name "${name}" is not unique.`);
-      }
-      nodeNames.set(element.id, name);
+    nodeTypeOf(element);
+    const name = nameOf(element, "Flow element");
+    if ([...nodeNames.values()].includes(name)) {
+      throw new Error(`Flow element name "${name}" is not unique.`);
     }
+    nodeNames.set(element.id, name);
   });
 
   const messageFlows = new Map((choreography.messageFlows || []).map((flow) => [flow.id, flow]));
   const nodes = elements
-    .filter((element) => BPMN_NODE_TYPE_TO_NMT_TYPE[element.$type] !== undefined)
     .map((element) => {
       const nodeType = nodeTypeOf(element);
       const name = nodeNames.get(element.id);
-      const outgoing = (element.outgoing || []).map((flow) => nodeNames.get(flow.targetRef?.id)).filter(Boolean);
-      const incoming = (element.incoming || []).map((flow) => nodeNames.get(flow.sourceRef?.id)).filter(Boolean);
+      const outgoing = (element.outgoing || []).map((flow) => nodeNames.get(flow.targetRef?.id));
+      const incoming = (element.incoming || []).map((flow) => nodeNames.get(flow.sourceRef?.id));
       const node = {
         name,
         nodeType,
