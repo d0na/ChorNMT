@@ -242,6 +242,57 @@ async function main() {
     }
   ));
 
+  const unknownSourceUpdate = nodeUpdate("Inspection", 2, ["Unknown"], ["End"]);
+  report.push(await expectDenied(
+    "creator policy denies flow from unknown node",
+    administrator,
+    {
+      to: constrainedAssetAddress,
+      data: constrainedAsset.interface.encodeFunctionData("setNodes", unknownSourceUpdate)
+    }
+  ));
+
+  await (await creatorPolicy.setAllowedTaskName("Delivery", true)).wait();
+  report.push(await expectAllowed(
+    "creator policy allows update keeping protected node links",
+    () => constrainedAsset.setNodes(...nodeUpdate("Delivery", 2, ["Start"], ["End"]))
+  ));
+  report.push(await expectDenied(
+    "creator policy denies unlinking protected node",
+    administrator,
+    {
+      to: constrainedAssetAddress,
+      data: constrainedAsset.interface.encodeFunctionData("setNodes", nodeUpdate("Delivery", 2, [], ["End"]))
+    }
+  ));
+  report.push(await expectDenied(
+    "creator policy denies new link to protected node",
+    administrator,
+    {
+      to: constrainedAssetAddress,
+      data: constrainedAsset.interface.encodeFunctionData(
+        "setNodes",
+        nodeUpdate("Inspection", 2, ["Delivery", "Start"], ["End"])
+      )
+    }
+  ));
+
+  await (await creatorPolicy.setProtectedRole("Buyer", true)).wait();
+  report.push(await expectAllowed(
+    "creator policy allows unprotected role update",
+    () => constrainedAsset.setRoles(["Supplier"], [ineligibleHolder.address])
+  ));
+  report.push(await expectDenied(
+    "creator policy denies protected role update",
+    administrator,
+    {
+      to: constrainedAssetAddress,
+      data: constrainedAsset.interface.encodeFunctionData("setRoles", [["Buyer"], [ineligibleHolder.address]])
+    }
+  ));
+  assert.equal(await constrainedAsset.getRole("Buyer"), administrator.address);
+  await (await creatorPolicy.setProtectedRole("Buyer", false)).wait();
+
   report.push(await expectDenied(
     "unauthorized creator cannot mint",
     unauthorizedCreator,

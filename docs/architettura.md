@@ -84,8 +84,10 @@ Oltre al controllo combinato creator/holder, `setNodes` invoca `evaluateNodeUpda
 
 - numero massimo di task e sequence flow;
 - allowlist dei nomi delle task;
-- destinazioni dei flow già note o incluse nello stesso aggiornamento;
-- nodi protetti che non possono essere modificati.
+- estremi dei flow (`incoming` e `outgoing`) già noti o inclusi nello stesso aggiornamento;
+- nodi protetti che non possono essere modificati né collegati o scollegati tramite i nodi vicini.
+
+Allo stesso modo `setRoles` invoca `evaluateRoleUpdate`, che rifiuta nomi vuoti o duplicati e i ruoli protetti con `setProtectedRole`.
 
 Questi vincoli sono illimitati o disattivati per default. `initializeChoreography` è chiamabile solo dal NMT ed è il percorso interno di `mintWithInitialModel`, che la invoca una volta su un asset appena creato. Il modello iniziale è considerato fidato: lo fornisce un creator autorizzato dalla master policy e non passa per `evaluateNodeUpdate`.
 

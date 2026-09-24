@@ -15,16 +15,20 @@ The table is the intended trust model with the default policies. Every change to
 | `mint` / `mintWithInitialModel` to an eligible holder | yes (registered as creator) | yes | no | no | no |
 | `mintVersion` | yes (registered as creator) | yes, with any policies | yes, only keeping the predecessor's Creator policy | no | no |
 | `transferFrom` to an eligible holder, when enabled | no | no | yes | no | no |
-| `setRoles`, `setNodes`, `setTokenURI`, `setLinked` | no | no | yes, within the Creator BPMN constraints | no | no |
+| `setNodes` | no | no | yes, within the Creator BPMN constraints | no | no |
+| `setRoles` | no | no | yes, except protected roles | no | no |
+| `setTokenURI`, `setLinked` | no | no | yes | no | no |
 | `setHolderSmartPolicy` | no | no | yes | no | no |
 | `setCreatorSmartPolicy` | no | no | **no** | yes | no |
-| Configure BPMN constraints (`setBpmnLimits`, allowlist, known targets, protected nodes) | no | no | no | yes | no |
+| Configure BPMN constraints (`setBpmnLimits`, allowlist, known endpoints, protected nodes and roles) | no | no | no | yes | no |
 
 Design decisions behind the table:
 
 - The Creator policy is a constraint the Holder cannot remove. `setCreatorSmartPolicy` is evaluated by the current Creator policy only, and the choreography `CreatorSmartPolicy` allows it only to its `administrator`.
 - A new version starts from an empty model; it does not copy nodes or roles from its predecessor. A Holder who is not an authorized creator must reuse the predecessor's Creator policy, so versioning cannot be used to escape the Creator constraints.
 - The initial model passed to `mintWithInitialModel` is trusted: it comes from an authorized creator and is not checked by `evaluateNodeUpdate`. The constraints apply to every later `setNodes`.
+- A protected node is frozen together with its sequence flows: an update of another node cannot add or remove a link to it, in either `incoming` or `outgoing`, so a protected node cannot be disconnected through its neighbours.
+- A protected role keeps its address: `setRoles` rejects any entry for it. Roles referenced by a protected task are not protected implicitly; protect them explicitly when their address must not change.
 - Nodes are never deleted: a node with the same name is overwritten. Roles are currently name-to-address entries that can be overwritten but not removed; the target design identifies participants by `ParticipantMutableAsset` NFTs, which can be destroyed independently of the choreography.
 - A transfer resets the Holder policy to zero. The new Holder must install a Holder policy with `setHolderSmartPolicy` before editing the model.
 - NMT tokens are minted with `_mint`, not `_safeMint`, so no receiver callback runs before an asset is initialized and its version lineage is recorded.
@@ -57,11 +61,11 @@ The Master policy authorizes the Creator and initial Holder but does not current
 
 | Route | Gas used |
 | --- | ---: |
-| `mint` + `setRoles` + `setNodes` | 3,558,684 |
-| `mintWithInitialModel` | 3,483,565 |
-| Saving | 75,119 (2.11%) |
+| `mint` + `setRoles` + `setNodes` | 3,756,233 |
+| `mintWithInitialModel` | 3,664,473 |
+| Saving | 91,760 (2.44%) |
 
-The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 410,796 gas and structural deny paths used 142,056--162,114 gas.
+The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 424,218 gas and structural deny paths used 143,057--187,666 gas.
 
 ## Instance policies
 
@@ -76,9 +80,10 @@ Replacing the Creator policy is not a Holder operation: only the Creator policy'
 - `setBpmnLimits(maxTasks, maxSequenceFlows)`;
 - `setTaskNameAllowlistEnabled(...)` and `setAllowedTaskName(...)`;
 - `setKnownFlowTargetsEnabled(...)`;
-- `setProtectedNode(...)`.
+- `setProtectedNode(...)`;
+- `setProtectedRole(...)`, evaluated by `evaluateRoleUpdate` on every `setRoles`.
 
-Before writing storage, the asset asks its Creator policy to evaluate the post-update task count and total outgoing sequence-flow count. The policy rejects duplicate names in a delta, protected-node updates, task names outside an enabled allowlist, and outgoing flows whose target does not already exist or appear in the same delta.
+Before writing storage, the asset asks its Creator policy to evaluate the post-update task count and total outgoing sequence-flow count. The policy rejects duplicate names in a delta, protected-node updates, task names outside an enabled allowlist, incoming or outgoing flows whose endpoint does not already exist or appear in the same delta, and any change to the links of a protected node. `setRoles` is checked the same way for empty or duplicate names and protected roles.
 
 The Holder policy remains an independent second approval. A Holder can further restrict an instance by installing `DenyAllSmartPolicy`, without weakening the Creator-defined BPMN boundaries.
 

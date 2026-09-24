@@ -79,6 +79,14 @@ contract ChoreographyMutableAsset is MutableAsset {
             address(this)
         )
     {
+        require(
+            IChoreographyCreatorPolicy(creatorSmartPolicy).evaluateRoleUpdate(
+                address(this),
+                roleNames,
+                addresses
+            ),
+            "Operation DENIED by CREATOR role policy"
+        );
         _setRoles(roleNames, addresses);
     }
 
@@ -131,7 +139,7 @@ contract ChoreographyMutableAsset is MutableAsset {
             address(this)
         )
     {
-        _evaluateCreatorNodePolicy(names, nodeTypes, outgoing);
+        _evaluateCreatorNodePolicy(names, nodeTypes, incoming, outgoing);
         _setNodes(
             names,
             nodeTypes,
@@ -148,6 +156,7 @@ contract ChoreographyMutableAsset is MutableAsset {
     function _evaluateCreatorNodePolicy(
         string[] memory names,
         NodeType[] memory nodeTypes,
+        string[][] memory incoming,
         string[][] memory outgoing
     ) private view {
         uint8[] memory types = new uint8[](nodeTypes.length);
@@ -160,6 +169,7 @@ contract ChoreographyMutableAsset is MutableAsset {
                 address(this),
                 names,
                 types,
+                incoming,
                 outgoing
             ),
             "Operation DENIED by CREATOR BPMN policy"
@@ -298,6 +308,13 @@ contract ChoreographyMutableAsset is MutableAsset {
     ) public view returns (uint8, string[] memory) {
         Node storage node = descriptor.nodesByName[name];
         return (uint8(node.nodeType), node.outgoing);
+    }
+
+    function getNodeTypeAndEdges(
+        string memory name
+    ) public view returns (uint8, string[] memory, string[] memory) {
+        Node storage node = descriptor.nodesByName[name];
+        return (uint8(node.nodeType), node.incoming, node.outgoing);
     }
 
     function getRole(string memory role) public view returns (address) {

@@ -72,8 +72,9 @@ the maximum unsigned value until configured.
 | Task limit | `setBpmnLimits(maxTasks, maxSequenceFlows)` | The post-update model cannot contain more task nodes than `maxTasks`. |
 | Flow limit | `setBpmnLimits(maxTasks, maxSequenceFlows)` | The post-update model cannot contain more outgoing sequence flows than `maxSequenceFlows`. |
 | Task-name allowlist | `setTaskNameAllowlistEnabled(bool)`, `setAllowedTaskName(name, bool)` | When enabled, every changed task name must be approved. |
-| Known flow target | `setKnownFlowTargetsEnabled(bool)` | When enabled, each outgoing target must exist already or be present in the same update. |
-| Protected node | `setProtectedNode(name, bool)` | A protected node cannot be changed by `setNodes`. |
+| Known flow endpoint | `setKnownFlowTargetsEnabled(bool)` | When enabled, each `incoming` source and `outgoing` target must exist already or be present in the same update. |
+| Protected node | `setProtectedNode(name, bool)` | A protected node cannot be changed by `setNodes`, and no other node may add or remove a sequence flow to or from it. |
+| Protected role | `setProtectedRole(name, bool)` | Evaluated on `setRoles`: a protected role cannot be reassigned. |
 
 The implementation also rejects duplicate node names in the same submitted
 delta. Counts are computed over the effective post-update model: existing node

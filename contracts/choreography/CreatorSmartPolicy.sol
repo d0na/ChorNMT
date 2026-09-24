@@ -11,6 +11,9 @@ interface IChoreographyAssetView {
     function getNodeTypeAndOutgoing(
         string memory name
     ) external view returns (uint8, string[] memory);
+    function getNodeTypeAndEdges(
+        string memory name
+    ) external view returns (uint8, string[] memory, string[] memory);
 }
 
 contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
@@ -29,6 +32,8 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     bool public enforceKnownFlowTargets;
     mapping(bytes32 => bool) public allowedTaskNames;
     mapping(bytes32 => bool) public protectedNodes;
+    uint256 public protectedNodeCount;
+    mapping(bytes32 => bool) public protectedRoles;
 
     modifier onlyAdministrator() {
         require(msg.sender == administrator, "Caller is not the policy administrator");
@@ -60,7 +65,20 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     }
 
     function setProtectedNode(string calldata name, bool protectedNode) external onlyAdministrator {
-        protectedNodes[keccak256(bytes(name))] = protectedNode;
+        bytes32 nameHash = keccak256(bytes(name));
+        if (protectedNodes[nameHash] == protectedNode) {
+            return;
+        }
+        protectedNodes[nameHash] = protectedNode;
+        if (protectedNode) {
+            protectedNodeCount++;
+        } else {
+            protectedNodeCount--;
+        }
+    }
+
+    function setProtectedRole(string calldata name, bool protectedRole) external onlyAdministrator {
+        protectedRoles[keccak256(bytes(name))] = protectedRole;
     }
 
     function evaluate(
@@ -89,9 +107,14 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
         address asset,
         string[] memory names,
         uint8[] memory nodeTypes,
+        string[][] memory incoming,
         string[][] memory outgoing
     ) public view override returns (bool) {
-        if (names.length != nodeTypes.length || names.length != outgoing.length) {
+        if (
+            names.length != nodeTypes.length ||
+            names.length != incoming.length ||
+            names.length != outgoing.length
+        ) {
             return false;
         }
 
@@ -104,8 +127,11 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
                 return false;
             }
 
+            string[] memory currentIncoming;
+            string[] memory currentOutgoing;
             if (choreography.hasNode(names[i])) {
-                (uint8 currentType, string[] memory currentOutgoing) = choreography.getNodeTypeAndOutgoing(names[i]);
+                uint8 currentType;
+                (currentType, currentIncoming, currentOutgoing) = choreography.getNodeTypeAndEdges(names[i]);
                 taskCount = _replaceTaskCount(taskCount, currentType, nodeTypes[i]);
                 sequenceFlowCount = sequenceFlowCount - currentOutgoing.length + outgoing[i].length;
             } else {
@@ -119,12 +145,45 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
                 return false;
             }
 
-            if (enforceKnownFlowTargets && !_hasKnownFlowTargets(choreography, outgoing[i], names)) {
+            if (
+                enforceKnownFlowTargets &&
+                (!_hasKnownFlowTargets(choreography, incoming[i], names) ||
+                    !_hasKnownFlowTargets(choreography, outgoing[i], names))
+            ) {
+                return false;
+            }
+
+            if (
+                protectedNodeCount > 0 &&
+                (!_sameProtectedEndpoints(currentIncoming, incoming[i]) ||
+                    !_sameProtectedEndpoints(currentOutgoing, outgoing[i]))
+            ) {
                 return false;
             }
         }
 
         return taskCount <= maxTaskCount && sequenceFlowCount <= maxSequenceFlowCount;
+    }
+
+    function evaluateRoleUpdate(
+        address,
+        string[] memory roleNames,
+        address[] memory addresses
+    ) public view override returns (bool) {
+        if (roleNames.length != addresses.length) {
+            return false;
+        }
+
+        for (uint256 i = 0; i < roleNames.length; i++) {
+            if (
+                bytes(roleNames[i]).length == 0 ||
+                protectedRoles[keccak256(bytes(roleNames[i]))] ||
+                _isDuplicate(roleNames, i)
+            ) {
+                return false;
+            }
+        }
+        return true;
     }
 
     function _currentCounts(
@@ -170,6 +229,25 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     ) private view returns (bool) {
         for (uint256 i = 0; i < targets.length; i++) {
             if (!choreography.hasNode(targets[i]) && !_containsName(pendingNames, targets[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function _sameProtectedEndpoints(
+        string[] memory current,
+        string[] memory next
+    ) private view returns (bool) {
+        return _protectedSubset(current, next) && _protectedSubset(next, current);
+    }
+
+    function _protectedSubset(
+        string[] memory source,
+        string[] memory target
+    ) private view returns (bool) {
+        for (uint256 i = 0; i < source.length; i++) {
+            if (protectedNodes[keccak256(bytes(source[i]))] && !_containsName(target, source[i])) {
                 return false;
             }
         }
