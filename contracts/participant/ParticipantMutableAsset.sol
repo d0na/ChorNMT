@@ -12,6 +12,7 @@ contract ParticipantMutableAsset is MutableAsset {
     }
 
     ParticipantDescriptor public participantDescriptor;
+    string public tokenURI;
 
     event StateChanged(ParticipantDescriptor participantDescriptorValue);
 
@@ -101,7 +102,7 @@ contract ParticipantMutableAsset is MutableAsset {
             address(this)
         )
     {
-        _setTokenURI(uri);
+        tokenURI = uri;
     }
 
     function getMessages() public view returns (bytes32[] memory) {

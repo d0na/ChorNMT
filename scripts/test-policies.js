@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import hre from "hardhat";
 import { resolveEthUsdPrice, scenarioUsd, writeMetrics } from "./evaluation/metrics.js";
+import { decodeTokenURI } from "../bpmn-builder-js/scripts/web3.js";
 
 const GAS_LIMIT = 10_000_000n;
 
@@ -32,6 +33,23 @@ async function expectDenied(label, signer, transaction) {
   assert.equal(receipt.status, 0, `${label} should revert`);
   assert.ok(receipt.gasUsed < GAS_LIMIT, `${label} ran out of gas instead of being denied`);
   return { label, outcome: "denied", ...formatCost(receipt) };
+}
+
+function modelFromTokenURI(tokenURI) {
+  const { choreography } = decodeTokenURI(tokenURI);
+  return {
+    roleNames: choreography.roles.map((role) => role.name),
+    roleAddresses: choreography.roles.map((role) => role.address),
+    names: choreography.nodes.map((node) => node.name),
+    nodeTypes: choreography.nodes.map((node) => node.nodeType),
+    incoming: choreography.nodes.map((node) => node.incoming),
+    outgoing: choreography.nodes.map((node) => node.outgoing),
+    conditions: choreography.nodes.map((node) => node.conditions),
+    initiatorRoles: choreography.nodes.map((node) => node.initiatorRole),
+    participantRoles: choreography.nodes.map((node) => node.participantRole),
+    initiatingMessages: choreography.nodes.map((node) => node.initiatingMessage),
+    returnMessages: choreography.nodes.map((node) => node.returnMessage)
+  };
 }
 
 function printReport(report) {
@@ -66,12 +84,15 @@ async function main() {
     "contracts/choreography/HolderSmartPolicy.sol:HolderSmartPolicy"
   );
   const denyAllFactory = await ethers.getContractFactory("DenyAllSmartPolicy");
+  const rendererFactory = await ethers.getContractFactory("ChoreographyTokenURIRenderer");
   const nmtFactory = await ethers.getContractFactory("ChoreographyNMT");
 
   const master = await masterFactory.deploy(administrator.address);
   const creatorPolicy = await creatorFactory.deploy();
   const holderPolicy = await holderFactory.deploy();
-  const nmt = await nmtFactory.deploy(await master.getAddress());
+  const renderer = await rendererFactory.deploy();
+  await renderer.waitForDeployment();
+  const nmt = await nmtFactory.deploy(await master.getAddress(), await renderer.getAddress());
   await Promise.all([
     master.waitForDeployment(),
     creatorPolicy.waitForDeployment(),
@@ -139,6 +160,23 @@ async function main() {
   ));
   const initializedAsset = await ethers.getContractAt("ChoreographyMutableAsset", initializedAssetAddress);
   assert.deepEqual(Array.from(await initializedAsset.getNodeNames()), initialModel.names);
+  const initializedTokenURI = await nmt.tokenURI(BigInt(initializedAssetAddress));
+  assert.equal(await initializedAsset.tokenURI(), initializedTokenURI);
+  assert.deepEqual(modelFromTokenURI(initializedTokenURI), initialModel);
+
+  const escapedModel = {
+    ...initialModel,
+    roleNames: ['Buyer "B"', "Supplier\\S"],
+    names: ["Start", 'Say "hi"\nnow', "Città ✓"],
+    incoming: [[], ["Start"], ['Say "hi"\nnow']],
+    outgoing: [['Say "hi"\nnow'], ["Città ✓"], []],
+    conditions: [[], ["tab\there"], []],
+    initiatorRoles: ["", 'Buyer "B"', ""],
+    participantRoles: ["", "Supplier\\S", ""]
+  };
+  const [escapedAssetAddress] = await nmt.mintWithInitialModel.staticCall(...mintArguments, escapedModel);
+  await (await nmt.mintWithInitialModel(...mintArguments, escapedModel)).wait();
+  assert.deepEqual(modelFromTokenURI(await nmt.tokenURI(BigInt(escapedAssetAddress))), escapedModel);
 
   const emptyThenImportGas =
     gasFor(report, "authorized creator mints eligible holder") +

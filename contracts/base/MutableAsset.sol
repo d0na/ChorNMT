@@ -7,7 +7,6 @@ import "./SmartPolicy.sol";
 abstract contract MutableAsset {
     address public immutable nmt;
     address public linked;
-    string public tokenURI;
     address public holderSmartPolicy;
     address public creatorSmartPolicy;
 
@@ -29,10 +28,6 @@ abstract contract MutableAsset {
         nmt = nmtAddress;
         creatorSmartPolicy = creatorSmartPolicyAddress;
         holderSmartPolicy = holderSmartPolicyAddress;
-    }
-
-    function _setTokenURI(string memory tokenUriValue) internal virtual {
-        tokenURI = tokenUriValue;
     }
 
     function getHolder() public view returns (address) {

@@ -38,11 +38,11 @@ The commands print measured transaction costs after every on-chain write. Each l
 
 | Operation | On-chain transaction | Cost behavior |
 | --- | --- | --- |
-| `deploy:asset` | Deploys Master, Creator, and Holder policies, deploys `ChoreographyNMT`, and mints the asset. | Five transactions; typically the highest setup cost. |
+| `deploy:asset` | Deploys Master, Creator, and Holder policies and `ChoreographyTokenURIRenderer`, deploys `ChoreographyNMT`, and mints the asset. | Six transactions; typically the highest setup cost. |
 | `import:asset` | Calls `setRoles(...)` and `setNodes(...)`. | Two transactions; grows with roles, nodes, messages, and graph edges. |
 | `mintWithInitialModel(...)` | Mints and initializes a trusted model with its Creator/Holder policies and an `InitialModel` struct in one NMT transaction. | One transaction; replaces the mint plus two import transactions for fixed templates. |
 | `modify:asset` | Calls `setNodes(...)`; calls `setRoles(...)` for every role in the delta `roles` map, adding new roles and overwriting the address of existing ones. | One or two transactions; a configured Creator policy also evaluates BPMN structural constraints. |
-| `render:asset` | Reads contract state and writes local files. | No blockchain transaction and no gas cost. |
+| `render:asset` | Reads the asset with one `tokenURI()` call and writes local files. | No blockchain transaction and no gas cost; the call executes about 1.7M gas for the evolved paper example, within the `eth_call` limits of common RPC providers. |
 | `start:operations` and `clean` | Local operations only. | No gas cost. |
 
 Costs are exact for the RPC network used by the command. On Hardhat's local node they use test ETH and have no real monetary value. On a public network, the displayed ETH value depends on the network's actual gas price; convert it to fiat currency separately using the current ETH price.

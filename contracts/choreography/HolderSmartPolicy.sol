@@ -7,7 +7,6 @@ import "../base/SmartPolicy.sol";
 contract HolderSmartPolicy is SmartPolicy {
     bytes4 private constant SET_ROLES = bytes4(keccak256("setRoles(string[],address[])"));
     bytes4 private constant SET_NODES = bytes4(keccak256("setNodes(string[],uint8[],string[][],string[][],string[][],string[],string[],string[],string[])"));
-    bytes4 private constant SET_TOKEN_URI = bytes4(keccak256("setTokenURI(string)"));
     bytes4 private constant SET_LINKED = bytes4(keccak256("setLinked(address)"));
 
     function evaluate(
@@ -23,7 +22,6 @@ contract HolderSmartPolicy is SmartPolicy {
         return
             signature == SET_ROLES ||
             signature == SET_NODES ||
-            signature == SET_TOKEN_URI ||
             signature == SET_LINKED;
     }
 }

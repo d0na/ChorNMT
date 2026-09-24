@@ -250,17 +250,8 @@ contract ChoreographyMutableAsset is MutableAsset {
         emit ChoreographyInitialized(model.roleNames, model.names);
     }
 
-    function setTokenURI(
-        string memory uri
-    )
-        public
-        evaluatedBySmartPolicies(
-            msg.sender,
-            abi.encodeWithSignature("setTokenURI(string)", uri),
-            address(this)
-        )
-    {
-        _setTokenURI(uri);
+    function tokenURI() public view returns (string memory) {
+        return NMT(nmt).tokenURI(uint160(address(this)));
     }
 
     function getNode(

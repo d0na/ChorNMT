@@ -115,7 +115,7 @@ async function main() {
     "",
     "| Transaction | Smart contract / asset | Address | Gas | ETH cost | USD @10 gwei | USD @30 gwei | USD @100 gwei |",
     "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |",
-    ...[[deployment.costs[0], "MasterSmartPolicy", deployment.masterPolicyAddress], [deployment.costs[1], "CreatorSmartPolicy", deployment.creatorPolicyAddress], [deployment.costs[2], "HolderSmartPolicy", deployment.holderPolicyAddress], [deployment.costs[3], "ChoreographyNMT", deployment.choreographyNmtAddress], [deployment.costs[4], "ChoreographyMutableAsset (mint)", deployment.assetAddress]].map(([cost, name, address]) => `| ${cost.label} | ${name} | \`${address}\` | ${cost.gasUsed} | ${cost.costEth} | ${scenarioUsd(cost.gasUsed, ethUsdPrice).join(" | ")} |`),
+    ...[[deployment.costs[0], "MasterSmartPolicy", deployment.masterPolicyAddress], [deployment.costs[1], "CreatorSmartPolicy", deployment.creatorPolicyAddress], [deployment.costs[2], "HolderSmartPolicy", deployment.holderPolicyAddress], [deployment.costs[3], "ChoreographyTokenURIRenderer", deployment.rendererAddress], [deployment.costs[4], "ChoreographyNMT", deployment.choreographyNmtAddress], [deployment.costs[5], "ChoreographyMutableAsset (mint)", deployment.assetAddress]].map(([cost, name, address]) => `| ${cost.label} | ${name} | \`${address}\` | ${cost.gasUsed} | ${cost.costEth} | ${scenarioUsd(cost.gasUsed, ethUsdPrice).join(" | ")} |`),
     `| **Deployment and mint total** | — | — | **${deploymentGas}** | **${deployment.totalCost.totalEth}** | **${scenarioUsd(deploymentGas, ethUsdPrice).join(" | ")}** |`,
     "| Transfer asset | Not executed in this experiment | — | Not applicable | Not applicable | Not applicable | Not applicable | Not applicable |",
     "",

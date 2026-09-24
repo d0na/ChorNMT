@@ -7,44 +7,15 @@ const __filename = fileURLToPath(import.meta.url);
 
 const CONTRACT_ABI = [
   {
-    inputs: [{ internalType: "string", name: "name", type: "string" }],
-    name: "getNode",
-    outputs: [
-      { internalType: "string", name: "", type: "string" },
-      { internalType: "enum ChoreographyMutableAsset.NodeType", name: "", type: "uint8" },
-      { internalType: "string[]", name: "", type: "string[]" },
-      { internalType: "string[]", name: "", type: "string[]" },
-      { internalType: "string[]", name: "", type: "string[]" },
-      { internalType: "string", name: "", type: "string" },
-      { internalType: "string", name: "", type: "string" },
-      { internalType: "string", name: "", type: "string" },
-      { internalType: "string", name: "", type: "string" }
-    ],
-    stateMutability: "view",
-    type: "function"
-  },
-  {
     inputs: [],
-    name: "getNodeNames",
-    outputs: [{ internalType: "string[]", name: "", type: "string[]" }],
-    stateMutability: "view",
-    type: "function"
-  },
-  {
-    inputs: [{ internalType: "string", name: "role", type: "string" }],
-    name: "getRole",
-    outputs: [{ internalType: "address", name: "", type: "address" }],
-    stateMutability: "view",
-    type: "function"
-  },
-  {
-    inputs: [],
-    name: "getRoleNames",
-    outputs: [{ internalType: "string[]", name: "", type: "string[]" }],
+    name: "tokenURI",
+    outputs: [{ internalType: "string", name: "", type: "string" }],
     stateMutability: "view",
     type: "function"
   }
 ];
+
+const JSON_DATA_URI_PREFIX = "data:application/json;base64,";
 
 const NODE_TYPE_MAP = {
   0: { type: "startEvent", contractNodeType: "START_EVENT" },
@@ -61,17 +32,17 @@ function toArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
-function normalizeNode(rawNode) {
+function normalizeNode(node) {
   return {
-    name: rawNode[0],
-    nodeType: Number(rawNode[1]),
-    incoming: toArray(rawNode[2]),
-    outgoing: toArray(rawNode[3]),
-    conditions: toArray(rawNode[4]),
-    initiatorRole: rawNode[5],
-    participantRole: rawNode[6],
-    initiatingMessage: rawNode[7],
-    returnMessage: rawNode[8]
+    name: node.name,
+    nodeType: Number(node.nodeType),
+    incoming: toArray(node.incoming),
+    outgoing: toArray(node.outgoing),
+    conditions: toArray(node.conditions),
+    initiatorRole: node.initiatorRole || "",
+    participantRole: node.participantRole || "",
+    initiatingMessage: node.initiatingMessage || "",
+    returnMessage: node.returnMessage || ""
   };
 }
 
@@ -207,29 +178,26 @@ export async function loadManifest(manifestPath) {
   return manifest;
 }
 
-export async function readRoles(contract) {
-  const roleNames = await contract.methods.getRoleNames().call();
-  return Promise.all(
-    roleNames.map(async (name) => ({
-      name,
-      address: await contract.methods.getRole(name).call()
-    }))
-  );
+export function decodeTokenURI(tokenURI) {
+  if (!tokenURI.startsWith(JSON_DATA_URI_PREFIX)) {
+    throw new Error(`tokenURI must be a "${JSON_DATA_URI_PREFIX}" data URI.`);
+  }
+  const metadata = JSON.parse(Buffer.from(tokenURI.slice(JSON_DATA_URI_PREFIX.length), "base64").toString("utf8"));
+  if (!metadata.choreography || !Array.isArray(metadata.choreography.roles) || !Array.isArray(metadata.choreography.nodes)) {
+    throw new Error('tokenURI metadata must contain "choreography.roles" and "choreography.nodes" arrays.');
+  }
+  return metadata;
 }
 
-export async function readNodes(contract) {
-  const nodeNames = await contract.methods.getNodeNames().call();
-  const nodes = await Promise.all(
-    nodeNames.map(async (name) => normalizeNode(await contract.methods.getNode(name).call()))
-  );
-
+export async function readChoreography(contract) {
+  const { choreography } = decodeTokenURI(await contract.methods.tokenURI().call());
+  const nodes = choreography.nodes.map(normalizeNode);
   nodes.forEach((node, index) => {
     if (!node.name) {
-      throw new Error(`Contract returned an empty node for requested name "${nodeNames[index]}".`);
+      throw new Error(`tokenURI returned a node without a name at index ${index}.`);
     }
   });
-
-  return nodes;
+  return { roles: choreography.roles, nodes };
 }
 
 export async function exportContractToJson(manifestArg, outputArg) {
@@ -238,7 +206,7 @@ export async function exportContractToJson(manifestArg, outputArg) {
   const web3 = new Web3(manifest.rpcUrl);
   const contract = new web3.eth.Contract(CONTRACT_ABI, manifest.contractAddress);
 
-  const [roles, nodes] = await Promise.all([readRoles(contract), readNodes(contract)]);
+  const { roles, nodes } = await readChoreography(contract);
   const output = buildRawOutput(manifest, roles, nodes);
   const outputPath = resolveOutputPath(manifestPath, manifest, outputArg);
 

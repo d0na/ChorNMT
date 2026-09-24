@@ -18,7 +18,6 @@ MutableAsset
   - stores:
     - nmt
     - linked
-    - tokenURI
     - creatorSmartPolicy
     - holderSmartPolicy
   - enforces smart-policy evaluation on mutable operations

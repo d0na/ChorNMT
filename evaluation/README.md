@@ -102,7 +102,7 @@ npm run evaluate:policies
 
 It imports `references/paper-example.bpmn` into a fresh instance and applies the real parallel-transport-preparation delta. The smaller `Start → Delivery → End` fixture remains only in the policy integration test. The evaluation reports:
 
-- deployment gas for Master, Creator, Holder, and `ChoreographyNMT`;
+- deployment gas for Master, Creator, Holder, `ChoreographyTokenURIRenderer`, and `ChoreographyNMT`;
 - `mint` followed by roles/nodes import versus `mintWithInitialModel`;
 - Master allow/deny cases for authorized Creators and eligible Holders;
 - Creator allow/deny cases for compliant updates, task limits, task-name allowlist, known flow targets, and protected nodes;

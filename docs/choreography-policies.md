@@ -17,7 +17,8 @@ The table is the intended trust model with the default policies. Every change to
 | `transferFrom` to an eligible holder, when enabled | no | no | yes | no | no |
 | `setNodes` | no | no | yes, within the Creator BPMN constraints | no | no |
 | `setRoles` | no | no | yes, except protected roles | no | no |
-| `setTokenURI`, `setLinked` | no | no | yes | no | no |
+| `setLinked` | no | no | yes | no | no |
+| Read `tokenURI` (metadata generated from the asset state) | yes | yes | yes | yes | yes |
 | `setHolderSmartPolicy` | no | no | yes | no | no |
 | `setCreatorSmartPolicy` | no | no | **no** | yes | no |
 | Configure BPMN constraints (`setBpmnLimits`, allowlist, known endpoints, protected nodes and roles) | no | no | no | yes | no |
@@ -69,7 +70,7 @@ The values are reproducible local gas measurements, not public-network prices. S
 
 ## Instance policies
 
-The default Creator and Holder policies both allow the current holder to update roles, nodes, token metadata, and links. Their intersection is required for every such operation, so a Holder can further restrict an instance by replacing its Holder policy; `DenyAllSmartPolicy` is used in tests to demonstrate this restriction.
+The default Creator and Holder policies both allow the current holder to update roles, nodes, and links. Token metadata is not stored: `tokenURI` is always generated from the current model. Their intersection is required for every such operation, so a Holder can further restrict an instance by replacing its Holder policy; `DenyAllSmartPolicy` is used in tests to demonstrate this restriction.
 
 Replacing the Creator policy is not a Holder operation: only the Creator policy's administrator can do it.
 

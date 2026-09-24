@@ -55,6 +55,20 @@ export async function deployAsset() {
       "utf8"
     )
   );
+  const rendererArtifact = JSON.parse(
+    await fs.readFile(
+      path.join(
+        __dirname,
+        "..",
+        "artifacts",
+        "contracts",
+        "choreography",
+        "ChoreographyTokenURIRenderer.sol",
+        "ChoreographyTokenURIRenderer.json"
+      ),
+      "utf8"
+    )
+  );
   const holderPolicyArtifact = JSON.parse(
     await fs.readFile(
       path.join(
@@ -88,6 +102,11 @@ export async function deployAsset() {
     holderPolicyArtifact.bytecode,
     signer
   );
+  const rendererFactory = new ContractFactory(
+    rendererArtifact.abi,
+    rendererArtifact.bytecode,
+    signer
+  );
   const choreographyNmtFactory = new ContractFactory(
     choreographyNmtArtifact.abi,
     choreographyNmtArtifact.bytecode,
@@ -106,7 +125,11 @@ export async function deployAsset() {
   await holderPolicy.waitForDeployment();
   const holderReceipt = await holderPolicy.deploymentTransaction().wait();
 
-  const choreographyNmt = await choreographyNmtFactory.deploy(masterPolicy.target);
+  const renderer = await rendererFactory.deploy();
+  await renderer.waitForDeployment();
+  const rendererReceipt = await renderer.deploymentTransaction().wait();
+
+  const choreographyNmt = await choreographyNmtFactory.deploy(masterPolicy.target, renderer.target);
   await choreographyNmt.waitForDeployment();
   const nmtReceipt = await choreographyNmt.deploymentTransaction().wait();
 
@@ -126,12 +149,14 @@ export async function deployAsset() {
   console.log(`MasterSmartPolicy deployed to: ${masterPolicy.target}`);
   console.log(`CreatorSmartPolicy deployed to: ${creatorPolicy.target}`);
   console.log(`HolderSmartPolicy deployed to: ${holderPolicy.target}`);
+  console.log(`ChoreographyTokenURIRenderer deployed to: ${renderer.target}`);
   console.log(`ChoreographyMutableAsset minted at: ${assetAddress}`);
   console.log(`Token ID: ${tokenId}`);
   const costs = [
     reportTransactionCost("Deploy MasterSmartPolicy", masterReceipt),
     reportTransactionCost("Deploy CreatorSmartPolicy", creatorReceipt),
     reportTransactionCost("Deploy HolderSmartPolicy", holderReceipt),
+    reportTransactionCost("Deploy ChoreographyTokenURIRenderer", rendererReceipt),
     reportTransactionCost("Deploy ChoreographyNMT", nmtReceipt),
     reportTransactionCost("Mint ChoreographyMutableAsset", mintReceipt)
   ];
@@ -143,6 +168,7 @@ export async function deployAsset() {
     masterPolicyAddress: masterPolicy.target,
     creatorPolicyAddress: creatorPolicy.target,
     holderPolicyAddress: holderPolicy.target,
+    rendererAddress: renderer.target,
     costs,
     totalCost
   };

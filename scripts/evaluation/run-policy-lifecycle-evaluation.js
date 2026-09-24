@@ -115,6 +115,7 @@ async function main() {
     "contracts/choreography/HolderSmartPolicy.sol:HolderSmartPolicy"
   );
   const denyAllFactory = await ethers.getContractFactory("DenyAllSmartPolicy");
+  const rendererFactory = await ethers.getContractFactory("ChoreographyTokenURIRenderer");
   const nmtFactory = await ethers.getContractFactory("ChoreographyNMT");
 
   const deployment = [];
@@ -127,7 +128,10 @@ async function main() {
   const holderPolicy = await holderFactory.deploy();
   await holderPolicy.waitForDeployment();
   deployment.push({ label: "deploy HolderSmartPolicy", outcome: "allowed", ...receiptCost(await holderPolicy.deploymentTransaction().wait()) });
-  const nmt = await nmtFactory.deploy(await master.getAddress());
+  const renderer = await rendererFactory.deploy();
+  await renderer.waitForDeployment();
+  deployment.push({ label: "deploy ChoreographyTokenURIRenderer", outcome: "allowed", ...receiptCost(await renderer.deploymentTransaction().wait()) });
+  const nmt = await nmtFactory.deploy(await master.getAddress(), await renderer.getAddress());
   await nmt.waitForDeployment();
   deployment.push({ label: "deploy ChoreographyNMT", outcome: "allowed", ...receiptCost(await nmt.deploymentTransaction().wait()) });
 

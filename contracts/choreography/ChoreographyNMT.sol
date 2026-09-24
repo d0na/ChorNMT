@@ -5,9 +5,11 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../base/NMT.sol";
 import "../base/SmartPolicy.sol";
 import "./ChoreographyMutableAsset.sol";
+import "./ChoreographyTokenURIRenderer.sol";
 
 contract ChoreographyNMT is NMT {
     address public immutable masterSmartPolicy;
+    address public immutable tokenURIRenderer;
     mapping(uint256 => uint256) public predecessorOf;
     mapping(uint256 => uint256) public versionOf;
 
@@ -22,14 +24,16 @@ contract ChoreographyNMT is NMT {
         _;
     }
 
-    constructor(address masterSmartPolicyAddress)
+    constructor(address masterSmartPolicyAddress, address tokenURIRendererAddress)
         ERC721(
             "Mutable Choreography for a PUB Decentraland UniPi Project",
             "PUBMNTCHOREO"
         )
     {
         require(masterSmartPolicyAddress != address(0), "Invalid master policy");
+        require(tokenURIRendererAddress != address(0), "Invalid tokenURI renderer");
         masterSmartPolicy = masterSmartPolicyAddress;
+        tokenURIRenderer = tokenURIRendererAddress;
     }
 
     function mint(
@@ -149,7 +153,10 @@ contract ChoreographyNMT is NMT {
     function tokenURI(
         uint256 tokenId
     ) public view override returns (string memory) {
+        _requireOwned(tokenId);
         return
-            ChoreographyMutableAsset(getMutableAssetAddress(tokenId)).tokenURI();
+            ChoreographyTokenURIRenderer(tokenURIRenderer).tokenURI(
+                getMutableAssetAddress(tokenId)
+            );
     }
 }

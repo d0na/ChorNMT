@@ -166,12 +166,12 @@ npm run export:contract -- <manifest.json>
 
 ## Export From Smart Contract
 
-The script [scripts/web3.js](scripts/web3.js) reads `BPMNChoreography.sol` through `web3` and produces a JSON file shaped like the choreography input examples.
+The script [scripts/web3.js](scripts/web3.js) reads a `ChoreographyMutableAsset` through `web3` and produces a JSON file shaped like the choreography input examples.
 
 How the contract export works:
 
-- the contract exposes `getNode(name)`, `getNodeNames()`, `getRole(role)`, and `getRoleNames()`;
-- node names and role names are stored on-chain, so the export script can discover them automatically;
+- the script makes a single `tokenURI()` call on the asset, which returns ERC-721 metadata as a `data:application/json;base64,...` URI;
+- the metadata is generated on-chain by `ChoreographyTokenURIRenderer` from the asset state; its `choreography` field contains `roles` (`name`, `address`) and `nodes` in the same shape as an NMT dataset;
 - the manifest is only used for RPC/configuration and output metadata.
 
 Manifest example:

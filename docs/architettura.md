@@ -19,9 +19,9 @@ L'importatore trasforma BPMN in NMT e popola l'asset. Gli aggiornamenti passano 
 
 ### NMT e asset mutabile
 
-`NMT` è la base ERC-721. Al mint crea un `MutableAsset` specializzato; il suo indirizzo è anche il token ID (`uint160(indirizzo dell'asset)`). `getMutableAssetAddress(tokenId)` ricava l'asset dal token e `tokenURI` è delegata all'asset. Prima di un trasferimento l'NMT chiede all'asset di valutare la creator policy; l'asset disabilita poi la holder policy e il trasferimento ERC-721 viene completato.
+`NMT` è la base ERC-721. Al mint crea un `MutableAsset` specializzato; il suo indirizzo è anche il token ID (`uint160(indirizzo dell'asset)`). `getMutableAssetAddress(tokenId)` ricava l'asset dal token. Prima di un trasferimento l'NMT chiede all'asset di valutare la creator policy; l'asset disabilita poi la holder policy e il trasferimento ERC-721 viene completato.
 
-`MutableAsset` contiene il riferimento al proprio NMT (`nmt`), un collegamento opzionale (`linked`), `tokenURI`, `creatorSmartPolicy` e `holderSmartPolicy`. Le modifiche standard richiedono entrambe le policy. Il possessore può cambiare la holder policy; cambiare la creator policy richiede entrambe.
+`MutableAsset` contiene il riferimento al proprio NMT (`nmt`), un collegamento opzionale (`linked`), `creatorSmartPolicy` e `holderSmartPolicy`. Le modifiche standard richiedono entrambe le policy. Il possessore può cambiare la holder policy; cambiare la creator policy richiede entrambe.
 
 Ogni policy implementa:
 
@@ -46,6 +46,8 @@ Il token non conserva direttamente il modello: punta implicitamente al contratto
 ## Asset NMT e coreografia
 
 `ChoreographyNMT` conia token di coreografie e distribuisce un `ChoreographyMutableAsset` per ciascuno. La sua `masterSmartPolicy` autorizza mint, mint atomico, trasferimenti e versioning.
+
+`tokenURI` non è salvato ma calcolato dallo stato dell'asset. `ChoreographyNMT.tokenURI(tokenId)` e `ChoreographyMutableAsset.tokenURI()` restituiscono lo stesso URI `data:application/json;base64,...`, generato da `ChoreographyTokenURIRenderer`, un contratto senza stato deployato una volta e passato al costruttore dell'NMT. Il JSON segue i metadati ERC-721 (`name`, `description`) e aggiunge il campo `choreography` con `roles` e `nodes` nello stesso formato di un dataset NMT; lo script di render lo legge con una sola chiamata. Il renderer è separato perché l'NMT include il bytecode dell'asset ed è vicino al limite di 24 KB.
 
 | Operazione | Effetto |
 | --- | --- |
