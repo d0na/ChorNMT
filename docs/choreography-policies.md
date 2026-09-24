@@ -5,13 +5,37 @@
 For the full English policy model, structural-rule semantics, and automated
 test mapping, see [Policy and Test Specification](policy-test-specification.md).
 
+## Who can do what
+
+The table is the intended trust model with the default policies. Every change to a policy contract must keep this table, the tests in `scripts/test-policies.js`, and the code in agreement.
+
+| Action | Master administrator | Authorized creator | Holder | Creator policy administrator | Anyone else |
+| --- | --- | --- | --- | --- | --- |
+| Configure creators, holders, transfer and versioning switches | yes | no | no | no | no |
+| `mint` / `mintWithInitialModel` to an eligible holder | yes (registered as creator) | yes | no | no | no |
+| `mintVersion` | yes (registered as creator) | yes, with any policies | yes, only keeping the predecessor's Creator policy | no | no |
+| `transferFrom` to an eligible holder, when enabled | no | no | yes | no | no |
+| `setRoles`, `setNodes`, `setTokenURI`, `setLinked` | no | no | yes, within the Creator BPMN constraints | no | no |
+| `setHolderSmartPolicy` | no | no | yes | no | no |
+| `setCreatorSmartPolicy` | no | no | **no** | yes | no |
+| Configure BPMN constraints (`setBpmnLimits`, allowlist, known targets, protected nodes) | no | no | no | yes | no |
+
+Design decisions behind the table:
+
+- The Creator policy is a constraint the Holder cannot remove. `setCreatorSmartPolicy` is evaluated by the current Creator policy only, and the choreography `CreatorSmartPolicy` allows it only to its `administrator`.
+- A new version starts from an empty model; it does not copy nodes or roles from its predecessor. A Holder who is not an authorized creator must reuse the predecessor's Creator policy, so versioning cannot be used to escape the Creator constraints.
+- The initial model passed to `mintWithInitialModel` is trusted: it comes from an authorized creator and is not checked by `evaluateNodeUpdate`. The constraints apply to every later `setNodes`.
+- Nodes are never deleted: a node with the same name is overwritten. Roles are currently name-to-address entries that can be overwritten but not removed; the target design identifies participants by `ParticipantMutableAsset` NFTs, which can be destroyed independently of the choreography.
+- A transfer resets the Holder policy to zero. The new Holder must install a Holder policy with `setHolderSmartPolicy` before editing the model.
+- NMT tokens are minted with `_mint`, not `_safeMint`, so no receiver callback runs before an asset is initialized and its version lineage is recorded.
+
 ## Master policy
 
 The policy administrator configures authorized creators and eligible holders with `setAuthorizedCreator` and `setEligibleHolder`.
 
 - `mint(...)` requires an authorized creator and an eligible initial holder.
 - `transferFrom(...)` requires an enabled transfer policy, the current holder as caller, and an eligible receiving holder.
-- `mintVersion(...)` requires enabled versioning, an eligible holder for the new instance, and either an authorized creator or the holder of the predecessor instance.
+- `mintVersion(...)` requires enabled versioning, an eligible holder for the new instance, and either an authorized creator or the holder of the predecessor instance. A holder who is not an authorized creator must pass the predecessor's Creator policy.
 
 `setTransfersEnabled(false)` disables ownership transfers. `setVersioningEnabled(false)` disables new versions without changing existing instances or their history. `predecessorOf` and `versionOf` on `ChoreographyNMT` expose that history.
 
@@ -33,17 +57,17 @@ The Master policy authorizes the Creator and initial Holder but does not current
 
 | Route | Gas used |
 | --- | ---: |
-| `mint` + `setRoles` + `setNodes` | 3,757,968 |
-| `mintWithInitialModel` | 3,700,593 |
-| Saving | 57,375 (1.53%) |
+| `mint` + `setRoles` + `setNodes` | 3,558,684 |
+| `mintWithInitialModel` | 3,483,565 |
+| Saving | 75,119 (2.11%) |
 
-The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 412,738 gas and structural deny paths used 143,798--163,789 gas.
+The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 410,796 gas and structural deny paths used 142,056--162,114 gas.
 
 ## Instance policies
 
-The default Creator and Holder policies both allow the current holder to update roles, nodes, token metadata, links, and the Creator policy. Their intersection is required for every mutable operation, so a Holder can further restrict an instance by replacing its Holder policy.
+The default Creator and Holder policies both allow the current holder to update roles, nodes, token metadata, and links. Their intersection is required for every such operation, so a Holder can further restrict an instance by replacing its Holder policy; `DenyAllSmartPolicy` is used in tests to demonstrate this restriction.
 
-The default policies permit the Holder to update roles, nodes, token metadata, links, and the Creator policy. A stricter Holder policy can deny any of these operations; `DenyAllSmartPolicy` is used in tests to demonstrate this restriction.
+Replacing the Creator policy is not a Holder operation: only the Creator policy's administrator can do it.
 
 ## BPMN constraints in the Creator policy
 

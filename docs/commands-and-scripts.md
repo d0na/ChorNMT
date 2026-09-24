@@ -13,7 +13,7 @@ These are the only commands intended for the normal `paper-example` workflow.
 | `npm run import:asset -- <asset-address> <input.bpmn>` | Imports BPMN into NMT and stores NMT in the asset. | Asset address and BPMN file. | An `.nmt.json` file and populated asset. |
 | `npm run render:asset -- <asset-address> <nmt-or-delta.json>` | Exports the asset and generates BPMN XML. | Asset address plus imported NMT or delta file. | Raw JSON, normalized JSON, and BPMN XML. |
 | `npm run modify:asset -- <asset-address> <delta.json> [--no-render]` | Applies a delta to existing asset nodes. | Asset address and delta JSON. | Updated asset; also rendered artifacts unless `--no-render` is used. |
-| `npm run test:policies` | Runs policy allow/deny integration tests and prints receipt-derived gas costs. | None. | Policy matrix and atomic-mint benchmark on an ephemeral Hardhat network. |
+| `npm run test:policies` (alias `npm test`) | Runs policy allow/deny integration tests, fails on any unexpected outcome, and prints receipt-derived gas costs. The GitHub Actions workflow runs it on every push. | None. | Policy matrix and atomic-mint benchmark on an ephemeral Hardhat network. |
 | `npm run evaluate:policies` | Runs the lifecycle cost evaluation for a new BPMN model. | None. | JSON and Markdown reports with mint-strategy and policy-operation totals. |
 | `npm run evaluate:summary` | Collects generated experiment reports in one overview. | Existing evaluation reports. | `evaluation/summary.generated.md`. |
 | `npm run evaluate:all` | Cleans then executes paper, policy, and integration evaluations in the correct order. | Local operations node; Chromium installed. | Complete reports, graphs, BPMN SVG/PNG images, and unified overview. |
@@ -40,8 +40,8 @@ The commands print measured transaction costs after every on-chain write. Each l
 | --- | --- | --- |
 | `deploy:asset` | Deploys Master, Creator, and Holder policies, deploys `ChoreographyNMT`, and mints the asset. | Five transactions; typically the highest setup cost. |
 | `import:asset` | Calls `setRoles(...)` and `setNodes(...)`. | Two transactions; grows with roles, nodes, messages, and graph edges. |
-| `mintWithInitialModel(...)` | Mints and initializes a trusted model in one NMT transaction. | Creator/Holder policies and an `InitialModel` struct. | Replaces the mint plus two import transactions for fixed templates. |
-| `modify:asset` | Calls `setNodes(...)`; calls `setRoles(...)` only for new roles declared in the delta. | One or two transactions; a configured Creator policy also evaluates BPMN structural constraints. |
+| `mintWithInitialModel(...)` | Mints and initializes a trusted model with its Creator/Holder policies and an `InitialModel` struct in one NMT transaction. | One transaction; replaces the mint plus two import transactions for fixed templates. |
+| `modify:asset` | Calls `setNodes(...)`; calls `setRoles(...)` for every role in the delta `roles` map, adding new roles and overwriting the address of existing ones. | One or two transactions; a configured Creator policy also evaluates BPMN structural constraints. |
 | `render:asset` | Reads contract state and writes local files. | No blockchain transaction and no gas cost. |
 | `start:operations` and `clean` | Local operations only. | No gas cost. |
 

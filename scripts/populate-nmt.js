@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 
 export async function populateNmtAsset(assetAddress, datasetPath) {
   if (!assetAddress || !datasetPath) {
-    throw new Error("Usage: npm run populate:nmt -- <asset-address> <input.nmt.json>");
+    throw new Error("Usage: node scripts/populate-nmt.js <asset-address> <input.nmt.json>");
   }
   const resolvedDatasetPath = path.resolve(process.cwd(), datasetPath);
   const dataset = JSON.parse(await fs.readFile(resolvedDatasetPath, "utf8"));

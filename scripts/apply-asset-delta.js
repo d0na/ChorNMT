@@ -110,7 +110,7 @@ function validateDelta(delta) {
 
 export async function applyAssetDelta(assetAddress, deltaPath, { render = true } = {}) {
   if (!assetAddress || !deltaPath) {
-    throw new Error("Usage: npm run apply:asset-delta -- <asset-address> <delta.json>");
+    throw new Error("Usage: npm run modify:asset -- <asset-address> <delta.json> [--no-render]");
   }
   const resolvedDeltaPath = path.resolve(process.cwd(), deltaPath);
   const delta = JSON.parse(await fs.readFile(resolvedDeltaPath, "utf8"));

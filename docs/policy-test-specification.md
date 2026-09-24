@@ -52,12 +52,16 @@ two lifecycle switches.
 
 `ChoreographyNMT` records version lineage through `predecessorOf(tokenId)` and
 `versionOf(tokenId)`. A version may be created by an authorized Creator or by
-the Holder of the predecessor, provided that Master-policy conditions hold.
+the Holder of the predecessor, provided that Master-policy conditions hold. A
+Holder who is not an authorized Creator must keep the predecessor's Creator
+policy. A new version starts from an empty model.
 
 ## Creator Policy
 
 The Creator policy has two responsibilities: ordinary edit authorization and
-optional BPMN structural governance. Its administrator configures the latter.
+optional BPMN structural governance. Its administrator configures the latter
+and is the only party allowed to replace the Creator policy of an instance;
+the Holder cannot remove the constraints it is subject to.
 All structural controls are opt-in by default, except that limits are set to
 the maximum unsigned value until configured.
 
@@ -123,7 +127,7 @@ than assuming a universal saving.
 
 | Command | Model | Evidence produced |
 | --- | --- | --- |
-| `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, versioning, and receipt gas/wei. |
+| `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, versioning, attempts to bypass the Creator policy, and receipt gas/wei. The script exits with an error if any case has an unexpected outcome. |
 | `npm run evaluate:policies` | Imported `paper-example` plus real delta | Empty versus populated mint, paper-model structural allow/deny cases, and scenario costs. |
 | `npm run evaluate:paper` | Imported `paper-example` plus real delta | Import/render/delta/full-population measurements, chor-js BPMN images, and gnuplot charts. |
 | `npm run evaluate:all` | All of the above | Rebuilds the canonical final report. |

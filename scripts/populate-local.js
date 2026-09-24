@@ -130,7 +130,7 @@ export async function populateDataset(assetAddress, dataset, datasetName = "cust
 
 export async function populateContract(assetAddress, datasetName) {
   if (!assetAddress) {
-    throw new Error("An asset address is required. Usage: npm run populate:local -- <asset-address> [dataset]");
+    throw new Error("An asset address is required. Usage: node scripts/populate-local.js <asset-address> [dataset]");
   }
 
   const { dataset, datasetName: resolvedDatasetName } = resolveDataset(datasetName);

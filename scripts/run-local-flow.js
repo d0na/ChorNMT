@@ -73,7 +73,7 @@ async function main() {
 
   if (!contractAddress) {
     throw new Error(
-      "An asset address is required. Usage: npm run flow:local -- <asset-address> [dataset]"
+      "An asset address is required. Usage: node scripts/run-local-flow.js <asset-address> [dataset]"
     );
   }
 

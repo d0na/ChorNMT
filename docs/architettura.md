@@ -87,7 +87,9 @@ Oltre al controllo combinato creator/holder, `setNodes` invoca `evaluateNodeUpda
 - destinazioni dei flow già note o incluse nello stesso aggiornamento;
 - nodi protetti che non possono essere modificati.
 
-Questi vincoli sono illimitati o disattivati per default. `freeze` blocca in modo irreversibile `setRoles`, `setNodes` e `setTokenURI`, con consenso di entrambe le policy. `initializeChoreography` è chiamabile una volta sola dal NMT ed è il percorso interno di `mintWithInitialModel`.
+Questi vincoli sono illimitati o disattivati per default. `initializeChoreography` è chiamabile solo dal NMT ed è il percorso interno di `mintWithInitialModel`, che la invoca una volta su un asset appena creato. Il modello iniziale è considerato fidato: lo fornisce un creator autorizzato dalla master policy e non passa per `evaluateNodeUpdate`.
+
+`setCreatorSmartPolicy` è valutato solo dalla creator policy corrente, non dall'holder: la `CreatorSmartPolicy` della coreografia lo consente soltanto al suo `administrator`, quindi l'holder non può rimuovere i vincoli a cui è sottoposto.
 
 ### Identità dei partecipanti
 
