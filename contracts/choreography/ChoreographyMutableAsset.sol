@@ -312,6 +312,10 @@ contract ChoreographyMutableAsset is MutableAsset {
         return descriptor.roles[role];
     }
 
+    function hasRole(string memory role) public view returns (bool) {
+        return descriptor.hasRole[role];
+    }
+
     function getRoleNames() public view returns (string[] memory) {
         return descriptor.roleNames;
     }

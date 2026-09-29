@@ -75,6 +75,9 @@ the maximum unsigned value until configured.
 | Known flow endpoint | `setKnownFlowTargetsEnabled(bool)` | When enabled, each `incoming` source and `outgoing` target must exist already or be present in the same update. |
 | Protected node | `setProtectedNode(name, bool)` | A protected node cannot be changed by `setNodes`, and no other node may add or remove a sequence flow to or from it. |
 | Protected role | `setProtectedRole(name, bool)` | Evaluated on `setRoles`: a protected role cannot be reassigned. |
+| Role license requirement | `setParticipantRegistry(nmt, certifier)`, `setRoleRequirement(name, type, capabilities)` | Evaluated on `setRoles`: the role can be linked only to a participant license from `nmt`, certified by `certifier`, with the required type and capabilities. |
+| Known roles | `setKnownRolesEnabled(bool)` | Evaluated on `setRoles`: only existing roles can be reassigned; new roles are rejected. |
+| Distinct role accounts | `setDistinctRoleAccountsEnabled(bool)` | Evaluated on `setRoles`: after the update, no account plays two roles. |
 
 The implementation also rejects duplicate node names in the same submitted
 delta. Counts are computed over the effective post-update model: existing node
@@ -97,6 +100,43 @@ The permitted delta is followed by denials for:
 - a task outside the name allowlist;
 - a flow pointing to an unknown BPMN node; and
 - a modification of the protected `Order` node.
+
+### Example: Special Carrier License Sale
+
+The same evaluation then changes the organization that plays `Special
+Carrier`. The role is played by a license, a `ParticipantMutableAsset`; the
+choreography links the role to the license once, and the organization changes
+when Carrier A sells the license to Carrier B. The role, its tasks, and every
+node stay unchanged.
+
+The authority is the participant Master administrator and the certifier. It
+qualifies Carrier A and Carrier B for `Carrier` and `SpecialTransport`,
+Carrier C for `Carrier` only, and the Supplier company for `Supplier`. It
+mints the `Special Carrier` license to Carrier A with type `Carrier` and
+capability `SpecialTransport`.
+
+| Case | Expected outcome | Rule |
+| --- | --- | --- |
+| Link the role to a plain account | denied | The role requires a license. |
+| Link the role to a `Carrier` license without `SpecialTransport` | denied | The license lacks a required capability. |
+| Link the role to a `Supplier` license | denied | Wrong license type. |
+| Link the role to the Special Carrier license | allowed | The license meets the requirement. |
+| Create a `Backup Carrier` role | denied | Only existing roles can be reassigned. |
+| Carrier A changes the license capabilities | denied | Only the certifier sets them. |
+| Sell the license to Carrier C | denied | Carrier C is not qualified for `SpecialTransport`. |
+| Sell the license to the Supplier company | denied | Not qualified for `Carrier`. |
+| Carrier B takes the license by itself | denied | Only the holder sells. |
+| Carrier A sells the license to Carrier B | allowed | Carrier B is qualified. |
+| Carrier B updates the license before installing a Holder policy | denied | The sale reset the Holder policy. |
+| Carrier B installs its Holder policy, then updates and links its data | allowed | Carrier B is the holder. |
+| Carrier A updates the license after the sale | denied | Carrier A is no longer the holder. |
+| The authority revokes `SpecialTransport` from Carrier B | allowed | `isHolderQualified` then returns `false`. |
+
+After the sale the evaluation checks that the license belongs to Carrier B,
+that `getRole("Special Carrier")` still returns the license, and that every
+task of the role still references it. `npm run test:policies` covers the same
+rules on the small fixture, plus an unauthorized issuer, a license certified
+by an untrusted policy, and an account playing two roles.
 
 ## Holder Policy Restrictions
 
@@ -129,7 +169,7 @@ than assuming a universal saving.
 | Command | Model | Evidence produced |
 | --- | --- | --- |
 | `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, versioning, attempts to bypass the Creator policy, and receipt gas/wei. The script exits with an error if any case has an unexpected outcome. |
-| `npm run evaluate:policies` | Imported `paper-example` plus real delta | Empty versus populated mint, paper-model structural allow/deny cases, and scenario costs. |
+| `npm run evaluate:policies` | Imported `paper-example` plus real delta | Empty versus populated mint, paper-model structural allow/deny cases, the Special Carrier license sale allow/deny cases, and scenario costs. |
 | `npm run evaluate:paper` | Imported `paper-example` plus real delta | Import/render/delta/full-population measurements, chor-js BPMN images, and gnuplot charts. |
 | `npm run evaluate:all` | All of the above | Rebuilds the canonical final report. |
 

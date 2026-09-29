@@ -13,8 +13,13 @@ contract ParticipantMutableAsset is MutableAsset {
 
     ParticipantDescriptor public participantDescriptor;
     string public tokenURI;
+    // Set by the Creator policy administrator (the certifier): the role this license grants.
+    bytes32 public participantType;
+    bytes32[] private capabilities;
 
     event StateChanged(ParticipantDescriptor participantDescriptorValue);
+    event ParticipantTypeChanged(bytes32 participantType);
+    event CapabilitiesChanged(bytes32[] capabilities);
 
     constructor(
         address nmtAddress,
@@ -103,6 +108,47 @@ contract ParticipantMutableAsset is MutableAsset {
         )
     {
         tokenURI = uri;
+    }
+
+    function setParticipantType(
+        bytes32 participantTypeValue
+    )
+        public
+        evaluatedByCreator(
+            msg.sender,
+            abi.encodeWithSignature("setParticipantType(bytes32)", participantTypeValue),
+            address(this)
+        )
+    {
+        participantType = participantTypeValue;
+        emit ParticipantTypeChanged(participantTypeValue);
+    }
+
+    function setCapabilities(
+        bytes32[] memory capabilityValues
+    )
+        public
+        evaluatedByCreator(
+            msg.sender,
+            abi.encodeWithSignature("setCapabilities(bytes32[])", capabilityValues),
+            address(this)
+        )
+    {
+        capabilities = capabilityValues;
+        emit CapabilitiesChanged(capabilityValues);
+    }
+
+    function getCapabilities() public view returns (bytes32[] memory) {
+        return capabilities;
+    }
+
+    function hasCapability(bytes32 capability) public view returns (bool) {
+        for (uint256 i = 0; i < capabilities.length; i++) {
+            if (capabilities[i] == capability) {
+                return true;
+            }
+        }
+        return false;
     }
 
     function getMessages() public view returns (bytes32[] memory) {

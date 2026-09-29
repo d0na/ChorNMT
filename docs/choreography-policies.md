@@ -16,12 +16,12 @@ The table is the intended trust model with the default policies. Every change to
 | `mintVersion` | yes (registered as creator) | yes, with any policies | yes, only keeping the predecessor's Creator policy | no | no |
 | `transferFrom` to an eligible holder, when enabled | no | no | yes | no | no |
 | `setNodes` | no | no | yes, within the Creator BPMN constraints | no | no |
-| `setRoles` | no | no | yes, except protected roles | no | no |
+| `setRoles` | no | no | yes, except protected roles and within the Creator role constraints | no | no |
 | `setLinked` | no | no | yes | no | no |
 | Read `tokenURI` (metadata generated from the asset state) | yes | yes | yes | yes | yes |
 | `setHolderSmartPolicy` | no | no | yes | no | no |
 | `setCreatorSmartPolicy` | no | no | **no** | yes | no |
-| Configure BPMN constraints (`setBpmnLimits`, allowlist, known endpoints, protected nodes and roles) | no | no | no | yes | no |
+| Configure BPMN and role constraints (`setBpmnLimits`, allowlist, known endpoints, protected nodes and roles, role license requirements, known roles, distinct role accounts) | no | no | no | yes | no |
 
 Design decisions behind the table:
 
@@ -29,7 +29,7 @@ Design decisions behind the table:
 - A new version starts from an empty model; it does not copy nodes or roles from its predecessor. A Holder who is not an authorized creator must reuse the predecessor's Creator policy, so versioning cannot be used to escape the Creator constraints.
 - The initial model passed to `mintWithInitialModel` is trusted: it comes from an authorized creator and is not checked by `evaluateNodeUpdate`. The constraints apply to every later `setNodes`.
 - A protected node is frozen together with its sequence flows: an update of another node cannot add or remove a link to it, in either `incoming` or `outgoing`, so a protected node cannot be disconnected through its neighbours.
-- A protected role keeps its address: `setRoles` rejects any entry for it. Roles referenced by a protected task are not protected implicitly; protect them explicitly when their address must not change.
+- A protected role keeps its address: `setRoles` rejects any entry for it. A role with a requirement can be linked only to a participant license (`ParticipantMutableAsset`) of the required type and capabilities. The organization behind the role changes when the license is sold, not through `setRoles`: see [Role licenses](#role-licenses). Roles referenced by a protected task are not protected implicitly; protect them explicitly when their address must not change.
 - Nodes are never deleted: a node with the same name is overwritten. Roles are currently name-to-address entries that can be overwritten but not removed; the target design identifies participants by `ParticipantMutableAsset` NFTs, which can be destroyed independently of the choreography.
 - A transfer resets the Holder policy to zero. The new Holder must install a Holder policy with `setHolderSmartPolicy` before editing the model.
 - NMT tokens are minted with `_mint`, not `_safeMint`, so no receiver callback runs before an asset is initialized and its version lineage is recorded.
@@ -82,12 +82,30 @@ Replacing the Creator policy is not a Holder operation: only the Creator policy'
 - `setTaskNameAllowlistEnabled(...)` and `setAllowedTaskName(...)`;
 - `setKnownFlowTargetsEnabled(...)`;
 - `setProtectedNode(...)`;
-- `setProtectedRole(...)`, evaluated by `evaluateRoleUpdate` on every `setRoles`.
+- `setProtectedRole(...)`, evaluated by `evaluateRoleUpdate` on every `setRoles`;
+- `setParticipantRegistry(participantNmt, certifier)` and `setRoleRequirement(role, type, capabilities)`: the role can be linked only to a license minted by `participantNmt`, certified by the `certifier` participant Creator policy, with the required type and every required capability;
+- `setKnownRolesEnabled(...)`: `setRoles` can reassign existing roles but not create new ones;
+- `setDistinctRoleAccountsEnabled(...)`: after the update, no account plays two roles.
 
-Before writing storage, the asset asks its Creator policy to evaluate the post-update task count and total outgoing sequence-flow count. The policy rejects duplicate names in a delta, protected-node updates, task names outside an enabled allowlist, incoming or outgoing flows whose endpoint does not already exist or appear in the same delta, and any change to the links of a protected node. `setRoles` is checked the same way for empty or duplicate names and protected roles.
+Before writing storage, the asset asks its Creator policy to evaluate the post-update task count and total outgoing sequence-flow count. The policy rejects duplicate names in a delta, protected-node updates, task names outside an enabled allowlist, incoming or outgoing flows whose endpoint does not already exist or appear in the same delta, and any change to the links of a protected node. `setRoles` is checked the same way for empty or duplicate names, protected roles, new roles when known roles are enforced, addresses that are not a suitable license for a role with a requirement, and accounts that would play two roles.
 
 The Holder policy remains an independent second approval. A Holder can further restrict an instance by installing `DenyAllSmartPolicy`, without weakening the Creator-defined BPMN boundaries.
 
 The Master policy is deployed before `ChoreographyNMT`; `deploy:asset` creates a default configuration in which the deployer is both an authorized creator and an eligible holder. Configure additional organizations on the deployed Master policy before minting or transferring assets to them.
 
 Run `npm run test:policies` to execute allowed and denied paths for each policy category. The test reports the gas used and wei cost for both outcomes, including reverted transactions.
+
+## Role licenses
+
+A role is played by a license: a `ParticipantMutableAsset` minted by `ParticipantNMT`. The choreography links the role to the license once. The organization that plays the role is the license holder; it changes when the holder sells the license.
+
+| Action | Participant Master administrator | Certifier (participant Creator policy administrator) | License holder | Buyer | Anyone else |
+| --- | --- | --- | --- | --- | --- |
+| Mint a license | yes, and authorized issuers | no | no | no | no |
+| Set organization qualifications (`setQualification`) | yes | no | no | no | no |
+| Set license type and capabilities | no | yes | no | no | no |
+| Sell the license (`transferFrom`) to an organization qualified for its type and capabilities | no | no | yes | no | no |
+| Update the license data (`setName`, `setDescriptor`, `setBpmn`, `setMessages`, `setLinked`) | no | no | yes, after installing a Holder policy | no | no |
+
+A sale resets the license Holder policy. The new holder installs one and then updates or links its own data; the former holder loses every right on the license. Qualifications are checked at the sale: `isHolderQualified` reports whether the current holder is still qualified after a revocation.
+

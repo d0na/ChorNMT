@@ -263,7 +263,7 @@ sequenceDiagram
 | Lettura | Uso |
 | --- | --- |
 | `getNode(name)` | Tutti i campi di un nodo. La usa il renderer on-chain. |
-| `getNodeNames()`, `getRoleNames()`, `getRole(name)` | Enumerazione. La usano il renderer on-chain e i test. |
+| `getNodeNames()`, `getRoleNames()`, `getRole(name)`, `hasRole(name)` | Enumerazione. La usano il renderer on-chain, la Creator policy e i test. |
 | `hasNode(name)`, `getNodeTypeAndOutgoing(name)`, `getNodeTypeAndEdges(name)` | Letture compatte per i controlli della Creator policy. |
 
 ### Policy della coreografia
@@ -271,7 +271,7 @@ sequenceDiagram
 | Policy | Stato interno | Decide |
 | --- | --- | --- |
 | `MasterSmartPolicy` | `administrator` (immutabile), `authorizedCreators`, `eligibleHolders`, `transfersEnabled`, `versioningEnabled` | Operazioni dell'NMT: mint, mint con modello, versioni, trasferimenti. |
-| `CreatorSmartPolicy` | `administrator` (il deployer), `maxTaskCount`, `maxSequenceFlowCount`, `enforceTaskNameAllowlist`, `enforceKnownFlowTargets`, `allowedTaskNames`, `protectedNodes` e `protectedNodeCount`, `protectedRoles` | Modifiche dell'holder e vincoli strutturali, più la propria sostituzione (solo `administrator`). |
+| `CreatorSmartPolicy` | `administrator` (il deployer), `maxTaskCount`, `maxSequenceFlowCount`, `enforceTaskNameAllowlist`, `enforceKnownFlowTargets`, `allowedTaskNames`, `protectedNodes` e `protectedNodeCount`, `protectedRoles`, `enforceKnownRoles`, `enforceDistinctRoleAccounts`, `participantNmt`, `participantCertifier`, requisiti per ruolo | Modifiche dell'holder e vincoli strutturali, più la propria sostituzione (solo `administrator`). |
 | `HolderSmartPolicy` | nessuno | Seconda approvazione: consente all'holder `setRoles`, `setNodes` e `setLinked`. |
 | `DenyAllSmartPolicy` | nessuno | Nega tutto. Installata come Holder policy, blocca l'asset finché l'holder non la sostituisce. |
 
@@ -283,7 +283,14 @@ I vincoli della `CreatorSmartPolicy` sono tutti disattivati per default. `evalua
 - ha un estremo di `incoming` o `outgoing` sconosciuto, quando il controllo sugli estremi è attivo;
 - modifica un nodo protetto, oppure aggiunge o toglie un collegamento verso di esso.
 
-`evaluateRoleUpdate` rifiuta nomi vuoti o duplicati e ruoli protetti. Le chiavi di allowlist e protezioni sono `keccak256(nome)`.
+`evaluateRoleUpdate` controlla chi può interpretare un ruolo. Rifiuta l'aggiornamento se:
+
+- contiene nomi vuoti o duplicati, o un ruolo protetto;
+- crea un ruolo nuovo, quando `enforceKnownRoles` è attivo: si possono solo riassegnare i ruoli esistenti;
+- collega un ruolo con requisito (`setRoleRequirement`) a qualcosa che non è una licenza adatta: l'indirizzo deve essere un `ParticipantMutableAsset` emesso da `participantNmt`, certificato da `participantCertifier`, con il tipo e tutte le caratteristiche richieste;
+- fa interpretare due ruoli allo stesso account, quando `enforceDistinctRoleAccounts` è attivo. Il controllo usa i ruoli dopo l'aggiornamento.
+
+Il requisito si verifica quando il ruolo viene collegato. `isRoleRequirementSatisfied(asset, ruolo)` lo ricontrolla in sola lettura. Le chiavi di allowlist e protezioni sono `keccak256(nome)`.
 
 La tabella completa di chi può fare cosa è in [Choreography policies](choreography-policies.md#who-can-do-what). La semantica dei vincoli e la corrispondenza con i test sono in [Policy test specification](policy-test-specification.md).
 
@@ -293,7 +300,17 @@ La tabella completa di chi può fare cosa è in [Choreography policies](choreogr
 
 ## Livello participant
 
-`ParticipantNMT` e `ParticipantMutableAsset` sono il primo passo verso partecipanti rappresentati come NFT, invece che come semplici nomi di ruolo associati a indirizzi. **Nessuno script li deploya o li usa**, e il modello delle coreografie non li referenzia.
+Un `ParticipantMutableAsset` è la **licenza di un ruolo**. La coreografia collega il ruolo alla licenza una volta: `roles["Special Carrier"]` contiene l'indirizzo della licenza. La licenza resta collegata finché serve. L'organizzazione che interpreta il ruolo è l'holder della licenza, e cambia quando la licenza viene venduta con `transferFrom`: la coreografia non cambia.
+
+| Contratto | Ruolo |
+| --- | --- |
+| `ParticipantMasterSmartPolicy` | Valuta mint e transfer del `ParticipantNMT`. Solo gli `authorizedIssuers` emettono licenze. Una licenza si vende solo a un'organizzazione qualificata per il suo tipo e per tutte le sue caratteristiche (`setQualification`). `isHolderQualified(licenza)` ricontrolla l'holder attuale. |
+| `CreatorSmartPolicy` (participant) | Il suo `administrator` è il certificatore: solo lui scrive tipo e caratteristiche della licenza (`setParticipantType`, `setCapabilities`) e sostituisce la Creator policy. Il resto è dell'holder. |
+| `HolderSmartPolicy` (participant) | Seconda approvazione: consente tutto all'holder. |
+
+Un transfer azzera la Holder policy della licenza: il nuovo holder ne installa una con `setHolderSmartPolicy`, poi aggiorna i propri dati. Il vecchio holder perde ogni diritto sulla licenza. Le qualifiche contano al momento della vendita: se l'autorità ne revoca una, la licenza resta all'holder e `isHolderQualified` restituisce `false`.
+
+Gli script di import e popolamento assegnano ancora ai ruoli gli account del nodo locale. Le licenze le usano per ora `test:policies` e `evaluate:policies`.
 
 ```solidity
 struct ParticipantDescriptor {
@@ -304,16 +321,17 @@ struct ParticipantDescriptor {
 }
 ```
 
-Ogni campo ha il suo setter (`setName`, `setBpmn`, `setDescriptor`, `setMessages`), che richiede entrambe le policy ed emette `StateChanged`. A differenza delle coreografie, il participant ha un `tokenURI` salvato e modificabile con `setTokenURI`. Le policy participant consentono tutto all'holder corrente, tranne sostituire la Creator policy.
+Ogni campo ha il suo setter (`setName`, `setBpmn`, `setDescriptor`, `setMessages`), che richiede entrambe le policy ed emette `StateChanged`. A differenza delle coreografie, il participant ha un `tokenURI` salvato e modificabile con `setTokenURI`. Tipo (`participantType`) e caratteristiche (`getCapabilities`, `hasCapability`) stanno fuori dal descrittore, e li scrive solo il certificatore.
 
-Oggi le coreografie identificano i partecipanti con nomi di ruolo:
+I nodi continuano a riferirsi ai ruoli per nome. Il ruolo si risolve nell'indirizzo della licenza:
 
 ```text
-roles["Buyer"] = 0x...     // tipicamente un EOA
-node.initiatorRole = "Buyer"
+node.initiatorRole        = "Special Carrier"
+roles["Special Carrier"]  = 0xLicenza        // ParticipantMutableAsset
+ownerOf(0xLicenza)        = Carrier A → Carrier B dopo la vendita
 ```
 
-L'evoluzione che identifica un partecipante con l'indirizzo del suo `ParticipantMutableAsset` è descritta in [Contract hierarchy](contract-hierarchy.md#target-design-participantmutableasset-address-as-identity), ma non è implementata.
+Il render BPMN usa ancora i nomi dei ruoli come identità dei partecipanti. L'export address-first descritto in [Contract hierarchy](contract-hierarchy.md#target-design-participantmutableasset-address-as-identity) non è implementato.
 
 ## Componenti off-chain
 

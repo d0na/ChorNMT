@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import "../base/MutableAsset.sol";
 import "../base/SmartPolicy.sol";
 import "./IChoreographyCreatorPolicy.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 interface IChoreographyAssetView {
     function hasNode(string memory name) external view returns (bool);
@@ -14,6 +15,15 @@ interface IChoreographyAssetView {
     function getNodeTypeAndEdges(
         string memory name
     ) external view returns (uint8, string[] memory, string[] memory);
+    function hasRole(string memory role) external view returns (bool);
+    function getRole(string memory role) external view returns (address);
+    function getRoleNames() external view returns (string[] memory);
+}
+
+interface IParticipantView {
+    function creatorSmartPolicy() external view returns (address);
+    function participantType() external view returns (bytes32);
+    function hasCapability(bytes32 capability) external view returns (bool);
 }
 
 contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
@@ -33,6 +43,18 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     mapping(bytes32 => bool) public protectedNodes;
     uint256 public protectedNodeCount;
     mapping(bytes32 => bool) public protectedRoles;
+    bool public enforceKnownRoles;
+    bool public enforceDistinctRoleAccounts;
+    address public participantNmt;
+    address public participantCertifier;
+
+    struct RoleRequirement {
+        bool enabled;
+        bytes32 participantType;
+        bytes32[] capabilities;
+    }
+
+    mapping(bytes32 => RoleRequirement) private roleRequirements;
 
     modifier onlyAdministrator() {
         require(msg.sender == administrator, "Caller is not the policy administrator");
@@ -78,6 +100,53 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
 
     function setProtectedRole(string calldata name, bool protectedRole) external onlyAdministrator {
         protectedRoles[keccak256(bytes(name))] = protectedRole;
+    }
+
+    function setKnownRolesEnabled(bool enabled) external onlyAdministrator {
+        enforceKnownRoles = enabled;
+    }
+
+    function setDistinctRoleAccountsEnabled(bool enabled) external onlyAdministrator {
+        enforceDistinctRoleAccounts = enabled;
+    }
+
+    // Participants must be minted by participantNmt and certified by participantCertifier,
+    // the Creator policy whose administrator sets participant types and capabilities.
+    function setParticipantRegistry(
+        address participantNmtAddress,
+        address participantCertifierAddress
+    ) external onlyAdministrator {
+        participantNmt = participantNmtAddress;
+        participantCertifier = participantCertifierAddress;
+    }
+
+    function setRoleRequirement(
+        string calldata name,
+        bytes32 participantTypeValue,
+        bytes32[] calldata capabilities
+    ) external onlyAdministrator {
+        roleRequirements[keccak256(bytes(name))] = RoleRequirement(true, participantTypeValue, capabilities);
+    }
+
+    function clearRoleRequirement(string calldata name) external onlyAdministrator {
+        delete roleRequirements[keccak256(bytes(name))];
+    }
+
+    function getRoleRequirement(
+        string calldata name
+    ) external view returns (bool, bytes32, bytes32[] memory) {
+        RoleRequirement storage requirement = roleRequirements[keccak256(bytes(name))];
+        return (requirement.enabled, requirement.participantType, requirement.capabilities);
+    }
+
+    function isRoleRequirementSatisfied(
+        address asset,
+        string calldata name
+    ) external view returns (bool) {
+        return _satisfiesRoleRequirement(
+            roleRequirements[keccak256(bytes(name))],
+            IChoreographyAssetView(asset).getRole(name)
+        );
     }
 
     function evaluate(
@@ -164,7 +233,7 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     }
 
     function evaluateRoleUpdate(
-        address,
+        address asset,
         string[] memory roleNames,
         address[] memory addresses
     ) public view override returns (bool) {
@@ -172,13 +241,84 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
             return false;
         }
 
+        IChoreographyAssetView choreography = IChoreographyAssetView(asset);
         for (uint256 i = 0; i < roleNames.length; i++) {
+            bytes32 nameHash = keccak256(bytes(roleNames[i]));
             if (
                 bytes(roleNames[i]).length == 0 ||
-                protectedRoles[keccak256(bytes(roleNames[i]))] ||
-                _isDuplicate(roleNames, i)
+                protectedRoles[nameHash] ||
+                _isDuplicate(roleNames, i) ||
+                (enforceKnownRoles && !choreography.hasRole(roleNames[i])) ||
+                !_satisfiesRoleRequirement(roleRequirements[nameHash], addresses[i])
             ) {
                 return false;
+            }
+        }
+        return !enforceDistinctRoleAccounts || _hasDistinctRoleAccounts(choreography, roleNames, addresses);
+    }
+
+    function _satisfiesRoleRequirement(
+        RoleRequirement storage requirement,
+        address participant
+    ) private view returns (bool) {
+        if (!requirement.enabled) {
+            return true;
+        }
+        if (!_isParticipantAsset(participant)) {
+            return false;
+        }
+
+        IParticipantView candidate = IParticipantView(participant);
+        if (
+            candidate.creatorSmartPolicy() != participantCertifier ||
+            candidate.participantType() != requirement.participantType
+        ) {
+            return false;
+        }
+        for (uint256 i = 0; i < requirement.capabilities.length; i++) {
+            if (!candidate.hasCapability(requirement.capabilities[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // A participant asset is genuine when participantNmt has minted its token: the token id
+    // is the asset address, and only the NMT deploys the asset.
+    function _isParticipantAsset(address participant) private view returns (bool) {
+        if (participantNmt == address(0) || participant == address(0)) {
+            return false;
+        }
+        try IERC721(participantNmt).ownerOf(uint256(uint160(participant))) returns (address) {
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    function _hasDistinctRoleAccounts(
+        IChoreographyAssetView choreography,
+        string[] memory roleNames,
+        address[] memory addresses
+    ) private view returns (bool) {
+        for (uint256 i = 0; i < addresses.length; i++) {
+            for (uint256 j = 0; j < i; j++) {
+                if (addresses[i] == addresses[j]) {
+                    return false;
+                }
+            }
+        }
+
+        string[] memory currentRoles = choreography.getRoleNames();
+        for (uint256 i = 0; i < currentRoles.length; i++) {
+            if (_containsName(roleNames, currentRoles[i])) {
+                continue;
+            }
+            address current = choreography.getRole(currentRoles[i]);
+            for (uint256 j = 0; j < addresses.length; j++) {
+                if (addresses[j] == current) {
+                    return false;
+                }
             }
         }
         return true;

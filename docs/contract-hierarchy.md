@@ -5,7 +5,7 @@ This document describes:
 - the current contract hierarchy in the repository
 - the target design for participant integration where choreography participants are identified by `ParticipantMutableAsset` addresses
 
-The participant-address integration described here is only a design target for now. It is not implemented yet.
+On-chain, a role can already be linked to a `ParticipantMutableAsset` license, and the choreography Creator policy can require it (see [Choreography policies](choreography-policies.md#role-licenses)). The address-first BPMN export described below is still a design target.
 
 ## Current Hierarchy
 
@@ -54,16 +54,22 @@ HolderSmartPolicy  : SmartPolicy
 
 ```text
 ParticipantNMT : NMT
+  -> evaluates mint and transfer with ParticipantMasterSmartPolicy
   -> deploys ParticipantMutableAsset on mint
 
 ParticipantMutableAsset : MutableAsset
+  - a role license
   - stores participant descriptor:
     - name
     - bpmn
     - descriptor
     - messages
+  - stores participantType and capabilities, set by the certifier
 
+ParticipantMasterSmartPolicy : SmartPolicy
+  - authorizes issuers and sells licenses only to qualified organizations
 CreatorSmartPolicy : SmartPolicy
+  - its administrator is the certifier
 HolderSmartPolicy  : SmartPolicy
 ```
 
