@@ -55,8 +55,9 @@ async function main() {
   const outputPath = path.join(evaluationDirectory, "summary.generated.md");
   const finalReportPath = path.join(evaluationDirectory, "final-report.generated.md");
   const projectRoot = process.cwd();
-  const [metrics, figures, bpmnArtifacts] = await Promise.all([
+  const [metrics, csvFiles, figures, bpmnArtifacts] = await Promise.all([
     listGeneratedFiles(path.join(projectRoot, "metrics")),
+    listGeneratedFiles(evaluationDirectory, (fileName) => fileName.endsWith(".generated.csv")),
     listGeneratedFiles(path.join(evaluationDirectory, "figures"), (fileName) => /\.(png|svg)$/i.test(fileName)),
     Promise.all([
       listGeneratedFiles(path.join(projectRoot, "bpmn-builder-js", "example", "contract")),
@@ -93,7 +94,7 @@ async function main() {
     "",
     "### Receipt metrics and CSV data",
     "",
-    ...markdownLinks(metrics, outputPath),
+    ...markdownLinks([...csvFiles, ...metrics], outputPath),
     "",
     "## Available evaluations",
     ""

@@ -227,7 +227,7 @@ async function main() {
   const protectedOrder = dataset.nodes.find((node) => node.name === "Order");
   await deny(policyResults, "creator denies paper-example protected node update", administrator, {
     to: populatedAssetAddress,
-    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([{ ...protectedOrder, outgoing: ["Order Intermediate"] }]))
+    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([{ ...protectedOrder, initiatingMessage: "Modified order request" }]))
   });
 
   const denyAll = await denyAllFactory.deploy();
@@ -288,7 +288,7 @@ async function main() {
     `- Tasks: ${summary.model.tasks}`,
     `- Sequence flows: ${summary.model.sequenceEdges}`,
     "",
-    `The instance is initialized from [\`${path.relative(process.cwd(), paperExamplePath)}\`](../${path.relative(process.cwd(), paperExamplePath)}) and applies the real choreography delta: ${delta.description} The permitted update adds \`Prepare Transport Documentation\` and the split/join gateways; denied updates exceed the evolved task limit, use an unapproved task name, target an unknown BPMN node, or modify protected \`Order\`.`,
+    `The instance is initialized from [\`${path.relative(process.cwd(), paperExamplePath)}\`](../${path.relative(process.cwd(), paperExamplePath)}) and applies the real choreography delta: ${delta.description} The permitted update adds \`Prepare Transport Documentation\` and the split/join gateways; denied updates exceed the evolved task limit or sequence-flow limit, use an unapproved task name, target an unknown BPMN node, or modify protected \`Order\`.`,
     "",
     `- Initial model: ${summary.initialTaskCount} tasks and ${summary.initialFlowCount} sequence flows.`,
     `- Model after the permitted delta: ${summary.evolvedTaskCount} tasks and ${summary.evolvedFlowCount} sequence flows.`,

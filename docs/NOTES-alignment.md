@@ -4,10 +4,11 @@ File di appunti versionato per riprendere il lavoro da qualsiasi computer. Aggio
 
 Ultima revisione completa: 2026-10-01 (commit di partenza `a2f2b68`).
 
+Commit di questa sessione: `8446524` docs, `a77719a` import, `0bc664d` render, `6ba8bc9` policy, più il commit con D14/D28/D29/D30.
+
 ## Prossimi passi
 
-1. Voci D rimaste (D14, D28, D29 testo report, D30): richiedono piccole modifiche al codice.
-2. C2/C3 (ruoli esistenti, lunghezza `conditions`), poi T2–T5 (test).
+1. C2/C3 (ruoli esistenti, lunghezza `conditions`), poi T2–T5 (test).
 3. Da discutere: C4 (rimozione nodi), C5 (`mintVersion` da creator non holder), C6 (costo O(n) di `_currentCounts`).
 
 ## Stato verificato
@@ -15,6 +16,12 @@ Ultima revisione completa: 2026-10-01 (commit di partenza `a2f2b68`).
 - `npm test`: 40 casi, nessun esito inatteso; motivi dei revert verificati. Valori di gas aggiornati in [choreography-policies.md](choreography-policies.md#cost-benchmark) (3,756,456 / 3,664,473 / 91,983 / 424,397 / 143,079–187,688).
 - Workflow completo `deploy → import → render → modify → render` su nodo locale: OK; il BPMN finale reimportato coincide con import + delta.
 - `evaluate:policies`: OK.
+- `ETH_USD_PRICE=3000 npm run evaluate:all` (con nodo locale): OK; il report finale linka i CSV, il report lifecycle cita il flow limit, il caso `Order` protetto è una modifica reale.
+
+## Note sull'ambiente
+
+- Su un computer nuovo, prima di `evaluate:all`: `npm ci`, `(cd bpmn-builder-js && npm ci)`, `npm run setup:evaluation` (scarica Chromium per la versione di Playwright installata) e `gnuplot` installato. Senza `npm ci`, `playwright` può mancare da `node_modules` anche se è in `package.json`.
+- Queste note vanno tenute complete e committate insieme al lavoro relativo (richiesta dell'utente, 2026-10-01).
 - Round trip import → render → re-import del `paper-example`: dati dei nodi identici.
 - Colonne gnuplot ↔ CSV esportati: coerenti.
 
@@ -24,6 +31,7 @@ Ultima revisione completa: 2026-10-01 (commit di partenza `a2f2b68`).
 - 2026-10-01 — Lato off-chain, il renderer (`normalize.js`) rifiuta **sempre** modelli con archi incoerenti o nodi sconosciuti, invece di produrre XML con `undefined`. `web3.js` e `nmt.js` emettono sempre `incoming`/`outgoing`, anche vuoti.
 - 2026-10-01 — Importer: gli archi derivano da `sequenceFlow sourceRef/targetRef`; l'ordine dei figli `<incoming>`/`<outgoing>`, se presenti, è mantenuto (output del `paper-example` invariato).
 - 2026-10-01 — Nome messaggio in import: `messageRef.name` → `flow.name` → `messageRef.id` → `flow.id`.
+- 2026-10-01 — `clean` rimuove anche gli `*.nmt.json` importati e i file temporanei di evaluation in `/tmp` (nessun file versionato coinvolto).
 - 2026-10-01 — I test di diniego verificano il motivo del revert; il caso "task limit" usa limiti (2, 4) per violare solo il limite sui task.
 
 ## D. Correzioni alla documentazione
@@ -44,7 +52,7 @@ Ultima revisione completa: 2026-10-01 (commit di partenza `a2f2b68`).
 - [x] D11 Variabili d'ambiente non documentate: `RPC_URL`, `DEPLOYER_PRIVATE_KEY` (default: account Hardhat #0).
 - [x] D12 `import:asset` assegna ai ruoli gli indirizzi `eth_accounts[1..]`: funziona solo su nodo locale e con ≤ 19 ruoli.
 - [x] D13 Script legacy citano comandi npm inesistenti (`augment:parallel-gateway-example`, `flow:import-bpmn`).
-- [ ] D14 `clean` non rimuove `example/input/*.nmt.json` né i file temporanei in `/tmp` (`chornmt-paper-example-policy-evaluation.nmt.json`, `chornmt-bpmn-image-viewer.html`). Correggere doc o codice.
+- [x] D14 _(risolto nel codice: `clean` ora rimuove anche `*.nmt.json`, `*.generated.svg` e i due file in `/tmp`)_ `clean` non rimuoveva `example/input/*.nmt.json` né i file temporanei in `/tmp` (`chornmt-paper-example-policy-evaluation.nmt.json`, `chornmt-bpmn-image-viewer.html`). Correggere doc o codice.
 
 ### Mapping BPMN ↔ NMT ([bpmn-to-nmt-workflow.md](bpmn-to-nmt-workflow.md))
 - [x] D15 Espandere la tabella: nomi nodo = `name` (o `id`) e devono essere unici; `conditions` = nomi dei flow uscenti (non `conditionExpression`), con `""` di padding; ruolo = `name` del participant (o `id`); risoluzione nome messaggio; solo il primo `bpmn:Choreography` è importato.
@@ -64,9 +72,9 @@ Ultima revisione completa: 2026-10-01 (commit di partenza `a2f2b68`).
 ### Evaluation
 - [x] D26 [evaluation/README.md:136](../evaluation/README.md): le "repeated runs" non si accumulano, `evaluate:paper` svuota `metrics/` a ogni run.
 - [x] D27 Solo `phase-duration`, `phase-gas`, `model-comparison` sono generati automaticamente; gli altri tre `.gp` vanno lanciati a mano.
-- [ ] D28 Il report finale non linka i CSV in `evaluation/*.generated.csv` (doc dice di sì).
-- [ ] D29 Il diniego per flow-limit manca in evaluation/README.md:108 e nel testo del report. _(README corretto; resta il testo generato in `run-policy-lifecycle-evaluation.js:291`)_
-- [ ] D30 Il caso "modifica di `Order` protetto" in realtà re-invia `Order` invariato: rendere la modifica reale o riformulare.
+- [x] D28 _(risolto nel codice: `generate-evaluation-summary.js` linka `evaluation/*.generated.csv`)_ Il report finale non linkava i CSV in `evaluation/*.generated.csv` (doc dice di sì).
+- [x] D29 Il diniego per flow-limit manca in evaluation/README.md:108 e nel testo del report. _(README e testo del report corretti)_
+- [x] D30 Il caso "modifica di `Order` protetto" re-inviava `Order` invariato. _(risolto nel codice: ora cambia `initiatingMessage`)_
 - [x] D31 Prezzo ETH/USD condiviso tra i report solo se `ETH_USD_PRICE` è impostato; valore invalido/0 → fetch silenzioso.
 - [x] D32 `model-comparison.gp:11` etichetta "Parallel gateways" ma la colonna conta tutti i gateway.
 

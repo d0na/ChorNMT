@@ -84,7 +84,7 @@ npm run evaluate:summary
 npm run clean
 ```
 
-This intentionally deletes generated reports, BPMN images, graphs, metrics, and local Hardhat artifacts. Use it only to discard outputs; normally `evaluate:all` already performs it as its first step.
+This intentionally deletes generated reports and CSV files, BPMN images, graphs, metrics, imported `*.nmt.json` files, the evaluation temporary files in `/tmp`, and local Hardhat artifacts. Use it only to discard outputs; normally `evaluate:all` already performs it as its first step.
 
 ## Paper workflow details
 

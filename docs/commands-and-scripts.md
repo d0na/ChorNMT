@@ -19,7 +19,7 @@ These are the only commands intended for the normal `paper-example` workflow.
 | `npm run evaluate:summary` | Collects generated experiment reports in one overview. | Existing evaluation reports. | `evaluation/final-report.generated.md` (plus the compatibility copy `evaluation/summary.generated.md`). |
 | `npm run evaluate:all` | Cleans then executes paper, policy, and integration evaluations in the correct order. | Local operations node; Chromium; `gnuplot`. | Complete reports, graphs, BPMN SVG/PNG images, and unified overview. |
 | `npm run setup:evaluation` | Installs the local headless Chromium used to render BPMN SVG/PNG images. | Internet access; run once after `npm install`. | Browser cache used by `evaluate:paper`. |
-| `npm run clean` | Removes local Hardhat artifacts/cache, generated BPMN files, metrics, and generated evaluation reports. | None. | Reset only reproducible local outputs. |
+| `npm run clean` | Removes local Hardhat artifacts/cache, `*.generated.*` files and imported `*.nmt.json` files under `bpmn-builder-js/example/`, `metrics/`, and `evaluation/`, the `evaluation/figures/` folder, and the evaluation temporary files in `/tmp`. | None. | Reset only reproducible local outputs. |
 
 All commands after deployment must receive the same `<asset-address>` printed by `deploy:asset`.
 
