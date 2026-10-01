@@ -21,7 +21,7 @@ L'importatore trasforma BPMN in NMT e popola l'asset. Gli aggiornamenti passano 
 
 `NMT` è la base ERC-721. Al mint crea un `MutableAsset` specializzato; il suo indirizzo è anche il token ID (`uint160(indirizzo dell'asset)`). `getMutableAssetAddress(tokenId)` ricava l'asset dal token e `tokenURI` è delegata all'asset. Prima di un trasferimento l'NMT chiede all'asset di valutare la creator policy; l'asset disabilita poi la holder policy e il trasferimento ERC-721 viene completato.
 
-`MutableAsset` contiene il riferimento al proprio NMT (`nmt`), un collegamento opzionale (`linked`), `tokenURI`, `creatorSmartPolicy` e `holderSmartPolicy`. Le modifiche standard richiedono entrambe le policy. Il possessore può cambiare la holder policy; cambiare la creator policy richiede entrambe.
+`MutableAsset` contiene il riferimento al proprio NMT (`nmt`), un collegamento opzionale (`linked`), `tokenURI`, `creatorSmartPolicy` e `holderSmartPolicy`. Le modifiche standard richiedono entrambe le policy. Il possessore può cambiare la holder policy; cambiare la creator policy è valutato solo dalla creator policy corrente (si veda più sotto).
 
 Ogni policy implementa:
 
@@ -85,6 +85,7 @@ Oltre al controllo combinato creator/holder, `setNodes` invoca `evaluateNodeUpda
 - numero massimo di task e sequence flow;
 - allowlist dei nomi delle task;
 - estremi dei flow (`incoming` e `outgoing`) già noti o inclusi nello stesso aggiornamento;
+- coerenza dei flow: B compare in `A.outgoing` se e solo se A compare in `B.incoming`, nel modello risultante;
 - nodi protetti che non possono essere modificati né collegati o scollegati tramite i nodi vicini.
 
 Allo stesso modo `setRoles` invoca `evaluateRoleUpdate`, che rifiuta nomi vuoti o duplicati e i ruoli protetti con `setProtectedRole`.
@@ -127,7 +128,7 @@ ParticipantDescriptor {
 | `descriptor` | Descrittore applicativo compatto. |
 | `messages` | Identificatori di messaggio. |
 
-`setName`, `setBpmn`, `setDescriptor`, `setMessages` e `setTokenURI` modificano lo stato ed emettono `StateChanged`; richiedono sempre creator e holder policy. Le due policy participant incluse autorizzano solo l'holder corrente.
+`setName`, `setBpmn`, `setDescriptor`, `setMessages` e `setTokenURI` modificano lo stato ed emettono `StateChanged`; richiedono sempre creator e holder policy. Le due policy participant incluse autorizzano solo l'holder corrente. La `CreatorSmartPolicy` participant rifiuta `setCreatorSmartPolicy` per chiunque: la creator policy di un participant asset non può essere sostituita.
 
 ## Confini di responsabilità
 

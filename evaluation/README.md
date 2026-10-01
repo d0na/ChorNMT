@@ -52,7 +52,7 @@ Open `evaluation/final-report.generated.md`. It is the final report and contains
 
 By default, the evaluation fetches the current ETH/USD spot price automatically from Coinbase and uses it to calculate the `USD @10 gwei`, `USD @30 gwei`, and `USD @100 gwei` columns. No configuration is needed for an exploratory run.
 
-For a reproducible experiment, provide a fixed value. The same value is then used by the paper, policy lifecycle, and policy test reports:
+Without a fixed value, each report fetches its own spot price, so the paper, policy lifecycle, and policy test reports may use slightly different prices. For a reproducible experiment, provide a fixed positive value; the same value is then used by all three reports (an invalid or zero value is ignored and the price is fetched):
 
 ```bash
 ETH_USD_PRICE=3000 npm run evaluate:all
@@ -88,7 +88,9 @@ This intentionally deletes generated reports, BPMN images, graphs, metrics, and 
 
 ## Paper workflow details
 
-The command deploys its own asset, executes import → baseline render → delta modification → final render, clears only previous `metrics/*.generated.*` artifacts, creates the CSV and figures, and writes `evaluation/experiment-summary.generated.md`.
+The command deploys its own asset, executes import → baseline render → delta modification → final render, clears only previous `metrics/*.generated.*` artifacts, creates the CSV and figures, and writes `evaluation/experiment-summary.generated.md`. It renders the `phase-duration`, `phase-gas`, and `model-comparison` charts automatically; the other templates in `evaluation/gnuplot/` are run manually (see below).
+
+Because every run clears `metrics/*.generated.*` first, including policy lifecycle and policy test reports, metrics from separate runs do not accumulate.
 
 The paper report links the baseline and final BPMN 2.0 XML generated from the on-chain asset and automatically produces SVG and PNG images using `chor-js` and local headless Chromium. `chor-js` renders BPMN choreography task bands, gateways, and sequence flows. SVG preserves vector quality for publication; PNG is embedded directly in the report.
 
@@ -105,7 +107,7 @@ It imports `references/paper-example.bpmn` into a fresh instance and applies the
 - deployment gas for Master, Creator, Holder, and `ChoreographyNMT`;
 - `mint` followed by roles/nodes import versus `mintWithInitialModel`;
 - Master allow/deny cases for authorized Creators and eligible Holders;
-- Creator allow/deny cases for compliant updates, task limits, task-name allowlist, known flow targets, and protected nodes;
+- Creator allow/deny cases for compliant updates, task limits, sequence-flow limits, task-name allowlist, known flow targets, and protected nodes;
 - Holder installation of a restrictive policy and a denied model update.
 
 The command writes a timestamped JSON report under `metrics/` and `evaluation/policy-lifecycle.generated.md`. Both include individual gas and wei costs, plus aggregate gas totals for allowed and denied policy operations.
@@ -133,7 +135,7 @@ The comparison excludes deployment cost, so it measures only model-write transac
 
 It fetches an ETH/USD spot price for the report. For a reproducible study, provide a fixed historical value instead: `ETH_USD_PRICE=<price> npm run evaluate:paper`.
 
-After collecting repeated runs, create a CSV file and figures:
+To produce the remaining per-operation figures from the current `metrics/` reports, create the CSV file and run the manual templates. For repeated runs, copy the CSV of each run elsewhere before starting the next one, since each `evaluate:paper` resets `metrics/`:
 
 ```bash
 node scripts/evaluation/export-metrics-csv.js

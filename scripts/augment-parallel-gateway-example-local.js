@@ -110,7 +110,7 @@ async function main() {
 
   if (!assetAddress) {
     throw new Error(
-      "An asset address is required. Usage: npm run augment:parallel-gateway-example -- <asset-address>"
+      "An asset address is required. Usage: node scripts/augment-parallel-gateway-example-local.js <asset-address>"
     );
   }
 

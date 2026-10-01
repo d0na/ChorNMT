@@ -43,11 +43,13 @@ ChoreographyMutableAsset : MutableAsset
     - nodes
   - messages embedded in node fields
   - currently identifies participants in nodes by role name strings
-  - asks CreatorSmartPolicy to validate every node update
+  - asks CreatorSmartPolicy to validate every node update (evaluateNodeUpdate)
+    and every role update (evaluateRoleUpdate)
 
 MasterSmartPolicy  : SmartPolicy
-CreatorSmartPolicy : SmartPolicy
-  - authorizes editors and defines BPMN structural limits
+CreatorSmartPolicy : SmartPolicy, IChoreographyCreatorPolicy
+  - authorizes editors and defines BPMN structural limits and protected roles
+  - only its administrator may replace it (setCreatorSmartPolicy)
 HolderSmartPolicy  : SmartPolicy
 ```
 
@@ -65,6 +67,7 @@ ParticipantMutableAsset : MutableAsset
     - messages
 
 CreatorSmartPolicy : SmartPolicy
+  - allows the holder; denies setCreatorSmartPolicy to everyone
 HolderSmartPolicy  : SmartPolicy
 ```
 
@@ -107,7 +110,7 @@ flowchart TD
 
   CMA -. evaluatedBySmartPolicies .-> CCSP
   CMA -. evaluatedBySmartPolicies .-> CHSP
-  CMA -. validates setNodes .-> CCSP
+  CMA -. validates setNodes/setRoles .-> CCSP
   PMA -. evaluatedBySmartPolicies .-> PCSP
   PMA -. evaluatedBySmartPolicies .-> PHSP
 ```

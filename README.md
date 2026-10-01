@@ -80,7 +80,9 @@ Use [scripts/data/paper-example-parallel-transport-preparation.delta.json](scrip
 
 - `render`: the generated BPMN name and metadata;
 - `nodes`: only nodes that are added or changed, each in its complete final state;
-- optional `roles`: a `role name → Ethereum address` map for new roles.
+- optional `roles`: a `role name → Ethereum address` map; new roles are added and existing ones get the new address.
+
+The full field list and validation rules are in [BPMN to NMT workflow](docs/bpmn-to-nmt-workflow.md#delta-rules).
 
 When an edge changes, include both endpoint nodes in the delta with their complete `incoming` and `outgoing` arrays. The asset can add or replace nodes, but it cannot yet permanently remove one.
 
@@ -88,7 +90,7 @@ Node and role names are the contract reference keys. To import another BPMN or s
 
 For a trusted fixed template, `ChoreographyNMT.mintWithInitialModel(...)` creates and populates an instance atomically. It avoids the two post-mint import transactions; the policy test compares its gas cost with the empty-asset workflow.
 
-The `CreatorSmartPolicy` can optionally limit BPMN updates by task count, sequence-flow count, permitted task names, valid flow targets, and protected nodes. Existing import and delta workflows remain unchanged until these constraints are configured.
+The `CreatorSmartPolicy` can optionally limit BPMN updates by task count, sequence-flow count, permitted task names, valid flow targets, sequence flows declared consistently on both endpoints, and protected nodes and roles. Existing import and delta workflows remain unchanged until these constraints are configured.
 
 Run `npm run evaluate:policies` to measure a fresh model's empty-versus-populated mint cost and the allow/deny cost of Master, Creator, and Holder policy calls. It writes local JSON and Markdown evaluation reports.
 
@@ -104,9 +106,11 @@ Every import, export, or rendering operation writes files to:
 bpmn-builder-js/example/input/
 bpmn-builder-js/example/output/
 bpmn-builder-js/example/contract/
+metrics/
+evaluation/
 ```
 
-Files with a `.generated.*` suffix are local artifacts ignored by Git and can be regenerated with the commands above. Reference BPMNs and JSON deltas are versioned.
+Files with a `.generated.*` suffix and imported `*.nmt.json` files are local artifacts ignored by Git and can be regenerated with the commands above. Reference BPMNs and JSON deltas are versioned.
 
 ## Technical documentation
 

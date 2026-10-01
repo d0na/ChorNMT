@@ -16,7 +16,7 @@ async function main() {
 
   if (!assetAddress || !bpmnPath) {
     throw new Error(
-      "Usage: npm run flow:import-bpmn -- <asset-address> <input.bpmn>"
+      "Usage: node scripts/run-imported-bpmn-flow.js <asset-address> <input.bpmn>"
     );
   }
 
