@@ -59,6 +59,8 @@ Non esiste un meccanismo di versioning applicativo: la storia del modello è man
 
 ### `ChoreographyMutableAsset`
 
+Campi, eventi e metodi sono descritti in dettaglio in [ChoreographyMutableAsset](choreography-mutable-asset.md).
+
 L'asset conserva un descrittore della coreografia indicizzato per nome:
 
 ```text
@@ -120,7 +122,7 @@ Il renderer costruisce i partecipanti BPMN dai nomi dei ruoli; l'indirizzo del p
 
 `ParticipantNMT` usa il comportamento `mint` e `transferFrom` della base NMT e crea un `ParticipantMutableAsset` per token. Non definisce una master policy propria.
 
-`ParticipantMutableAsset` mantiene questo descrittore:
+`ParticipantMutableAsset` mantiene questo descrittore (dettagli di campi e metodi in [ParticipantMutableAsset](participant-mutable-asset.md)):
 
 ```solidity
 ParticipantDescriptor {
@@ -135,7 +137,7 @@ ParticipantDescriptor {
 | --- | --- |
 | `name` | Nome compatto, codificato in `bytes32`. |
 | `bpmn` | Rappresentazione BPMN testuale del partecipante. |
-| `descriptor` | Descrittore applicativo compatto. |
+| `descriptor` | Categoria del partecipante (es. `CARRIER`), confrontata con la categoria del ruolo. |
 | `messages` | Identificatori di messaggio. |
 
 `setName`, `setBpmn`, `setDescriptor`, `setMessages` e `setTokenURI` modificano lo stato ed emettono `StateChanged`; richiedono sempre creator e holder policy. Le due policy participant incluse autorizzano solo l'holder corrente. La `CreatorSmartPolicy` participant rifiuta `setCreatorSmartPolicy` per chiunque: la creator policy di un participant asset non può essere sostituita.
