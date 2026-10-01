@@ -141,7 +141,7 @@ IChoreographyMutableAsset(assetAddress).setRoles(
 );
 ```
 
-Each address must be the zero address or a `ParticipantMutableAsset` minted by the `ParticipantNMT` configured in the Creator policy; any other address is rejected. If `Ale` and `Fra` already exist with the intended participants, this call is not needed.
+Each address must be the zero address or a `ParticipantMutableAsset` that the Holder has allowlisted in its Holder policy (`setAllowedParticipant`) and whose `descriptor` matches the role category set in the Creator policy; any other address is rejected. If `Ale` and `Fra` already exist with the intended participants, this call is not needed.
 
 ## Solidity Example: Delta Update
 

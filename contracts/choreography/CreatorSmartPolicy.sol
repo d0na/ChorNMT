@@ -16,10 +16,6 @@ interface IChoreographyAssetView {
     ) external view returns (uint8, string[] memory, string[] memory);
 }
 
-interface IParticipantRegistry {
-    function ownerOf(uint256 tokenId) external view returns (address);
-}
-
 contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     bytes4 private constant SET_ROLES = bytes4(keccak256("setRoles(string[],address[])"));
     bytes4 private constant SET_NODES = bytes4(keccak256("setNodes(string[],uint8[],string[][],string[][],string[][],string[],string[],string[],string[])"));
@@ -39,7 +35,7 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     mapping(bytes32 => bool) public protectedNodes;
     uint256 public protectedNodeCount;
     mapping(bytes32 => bool) public protectedRoles;
-    address public participantNmt;
+    mapping(bytes32 => bytes32) public roleCategories;
 
     modifier onlyAdministrator() {
         require(msg.sender == administrator, "Caller is not the policy administrator");
@@ -87,8 +83,10 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
         }
     }
 
-    function setParticipantNmt(address participantNmtAddress) external onlyAdministrator {
-        participantNmt = participantNmtAddress;
+    // The category a role requires from its participant, matched against the
+    // participant asset descriptor. Zero means any participant asset.
+    function setRoleCategory(string calldata role, bytes32 category) external onlyAdministrator {
+        roleCategories[keccak256(bytes(role))] = category;
     }
 
     function setProtectedRole(string calldata name, bool protectedRole) external onlyAdministrator {
@@ -274,7 +272,7 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
                 bytes(roleNames[i]).length == 0 ||
                 protectedRoles[keccak256(bytes(roleNames[i]))] ||
                 _isDuplicate(roleNames, i) ||
-                !_isEmptyOrParticipant(addresses[i])
+                !_isEmptyOrParticipant(addresses[i], roleCategories[keccak256(bytes(roleNames[i]))])
             ) {
                 return false;
             }
@@ -283,20 +281,40 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     }
 
     // A role is either unassigned (zero address) or bound to a
-    // ParticipantMutableAsset minted by the trusted ParticipantNMT, whose token
-    // ID is the asset address.
-    function _isEmptyOrParticipant(address participant) private view returns (bool) {
+    // ParticipantMutableAsset: a tokenized asset (its NMT owns the token whose ID
+    // is the asset address) whose descriptor matches the role category, if any.
+    // Which specific participants are acceptable is decided by the holder.
+    function _isEmptyOrParticipant(address participant, bytes32 category) private view returns (bool) {
         if (participant == address(0)) {
             return true;
         }
-        if (participantNmt == address(0)) {
+        if (participant.code.length == 0) {
             return false;
         }
-        try IParticipantRegistry(participantNmt).ownerOf(uint160(participant)) returns (address owner) {
-            return owner != address(0);
-        } catch {
+        (bool hasNmt, address participantNmt) = _staticAddress(participant, abi.encodeWithSignature("nmt()"));
+        if (!hasNmt || participantNmt.code.length == 0) {
             return false;
         }
+        (bool hasOwner, address owner) = _staticAddress(
+            participantNmt,
+            abi.encodeWithSignature("ownerOf(uint256)", uint256(uint160(participant)))
+        );
+        if (!hasOwner || owner == address(0)) {
+            return false;
+        }
+        (bool hasDescriptor, bytes memory descriptor) = participant.staticcall(abi.encodeWithSignature("getDescriptor()"));
+        if (!hasDescriptor || descriptor.length != 32) {
+            return false;
+        }
+        return category == bytes32(0) || abi.decode(descriptor, (bytes32)) == category;
+    }
+
+    function _staticAddress(address target, bytes memory data) private view returns (bool, address) {
+        (bool success, bytes memory result) = target.staticcall(data);
+        if (!success || result.length != 32) {
+            return (false, address(0));
+        }
+        return (true, abi.decode(result, (address)));
     }
 
     function _currentCounts(

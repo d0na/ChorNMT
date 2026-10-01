@@ -119,8 +119,15 @@ async function main() {
     await (await participantNmt.mint(...participantArguments)).wait();
     return participantAddress;
   };
+  const BUYER = ethers.encodeBytes32String("BUYER");
+  const SUPPLIER = ethers.encodeBytes32String("SUPPLIER");
   const buyerParticipant = await mintParticipant(administrator);
+  const otherBuyerParticipant = await mintParticipant(administrator);
   const supplierParticipant = await mintParticipant(eligibleHolder);
+  const participantAt = (address) => ethers.getContractAt("ParticipantMutableAsset", address);
+  await (await (await participantAt(buyerParticipant)).setDescriptor(BUYER)).wait();
+  await (await (await participantAt(otherBuyerParticipant)).setDescriptor(BUYER)).wait();
+  await (await (await participantAt(supplierParticipant)).connect(eligibleHolder).setDescriptor(SUPPLIER)).wait();
   const creatorPolicyAddress = await creatorPolicy.getAddress();
   const holderPolicyAddress = await holderPolicy.getAddress();
 
@@ -155,8 +162,8 @@ async function main() {
     returnMessages: ["", "deliveryConfirmed", ""]
   };
   report.push(await expectAllowed(
-    "creator configures trusted ParticipantNMT",
-    () => creatorPolicy.setParticipantNmt(participantNmt.target)
+    "creator sets participant category for a role",
+    () => creatorPolicy.setRoleCategory("Buyer", BUYER)
   ));
   report.push(await expectAllowed("creator and holder update roles", () => asset.setRoles(roles, roleAddresses)));
   report.push(await expectAllowed(
@@ -187,27 +194,63 @@ async function main() {
   assert.equal(await initializedAsset.getRole("Buyer"), ZeroAddress);
 
   report.push(await expectAllowed(
+    "holder allowlists participant in holder policy",
+    () => holderPolicy.setAllowedParticipant(assetAddress, buyerParticipant, true)
+  ));
+  report.push(await expectAllowed(
     "holder binds participant asset to role",
     () => asset.setRoles(["Buyer"], [buyerParticipant])
   ));
   assert.equal(await asset.getRole("Buyer"), buyerParticipant);
   report.push(await expectDenied(
-    "creator policy denies externally owned account as role participant",
+    "holder policy denies participant outside holder allowlist",
     administrator,
     {
       to: assetAddress,
-      data: asset.interface.encodeFunctionData("setRoles", [["Supplier"], [eligibleHolder.address]])
+      data: asset.interface.encodeFunctionData("setRoles", [["Buyer"], [otherBuyerParticipant]])
+    },
+    "Operation DENIED by HOLDER policy"
+  ));
+
+  // Allowlisted by the holder, but outside the Creator rules for the role.
+  for (const candidate of [supplierParticipant, eligibleHolder.address, initializedAssetAddress]) {
+    await (await holderPolicy.setAllowedParticipant(assetAddress, candidate, true)).wait();
+  }
+  report.push(await expectDenied(
+    "creator policy denies participant of another category",
+    administrator,
+    {
+      to: assetAddress,
+      data: asset.interface.encodeFunctionData("setRoles", [["Buyer"], [supplierParticipant]])
     },
     "Operation DENIED by CREATOR role policy"
   ));
   report.push(await expectDenied(
-    "creator policy denies contract outside ParticipantNMT as role participant",
+    "creator policy denies externally owned account as role participant",
     administrator,
     {
       to: assetAddress,
-      data: asset.interface.encodeFunctionData("setRoles", [["Supplier"], [initializedAssetAddress]])
+      data: asset.interface.encodeFunctionData("setRoles", [["Buyer"], [eligibleHolder.address]])
     },
     "Operation DENIED by CREATOR role policy"
+  ));
+  report.push(await expectDenied(
+    "creator policy denies non-participant contract as role participant",
+    administrator,
+    {
+      to: assetAddress,
+      data: asset.interface.encodeFunctionData("setRoles", [["Buyer"], [initializedAssetAddress]])
+    },
+    "Operation DENIED by CREATOR role policy"
+  ));
+  report.push(await expectDenied(
+    "non-holder cannot edit holder participant allowlist",
+    eligibleHolder,
+    {
+      to: holderPolicyAddress,
+      data: holderPolicy.interface.encodeFunctionData("setAllowedParticipant", [assetAddress, otherBuyerParticipant, true])
+    },
+    "Caller is not the holder"
   ));
   report.push(await expectAllowed(
     "holder unbinds role participant",
@@ -360,6 +403,9 @@ async function main() {
     "Operation DENIED by CREATOR BPMN policy"
   ));
 
+  for (const participant of [supplierParticipant, buyerParticipant]) {
+    await (await holderPolicy.setAllowedParticipant(constrainedAssetAddress, participant, true)).wait();
+  }
   await (await creatorPolicy.setProtectedRole("Buyer", true)).wait();
   report.push(await expectAllowed(
     "creator policy allows unprotected role update",

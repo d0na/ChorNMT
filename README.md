@@ -90,7 +90,7 @@ Node and role names are the contract reference keys. To import another BPMN or s
 
 For a trusted fixed template, `ChoreographyNMT.mintWithInitialModel(...)` creates and populates an instance atomically. It avoids the two post-mint import transactions; the policy test compares its gas cost with the empty-asset workflow.
 
-The `CreatorSmartPolicy` can optionally limit BPMN updates by task count, sequence-flow count, permitted task names, valid flow targets, sequence flows declared consistently on both endpoints, and protected nodes and roles. Existing import and delta workflows remain unchanged until these constraints are configured. Role addresses are always restricted: a role is either unassigned (zero address) or bound to a `ParticipantMutableAsset`, and imported choreographies start without participants.
+The `CreatorSmartPolicy` can optionally limit BPMN updates by task count, sequence-flow count, permitted task names, valid flow targets, sequence flows declared consistently on both endpoints, and protected nodes and roles. Existing import and delta workflows remain unchanged until these constraints are configured. Role addresses are always restricted: a role is either unassigned (zero address) or bound to a `ParticipantMutableAsset` of the category the Creator set for that role and allowlisted by the Holder; imported choreographies start without participants.
 
 Run `npm run evaluate:policies` to measure a fresh model's empty-versus-populated mint cost and the allow/deny cost of Master, Creator, and Holder policy calls. It writes local JSON and Markdown evaluation reports.
 

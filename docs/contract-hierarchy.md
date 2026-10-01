@@ -134,7 +134,8 @@ This means:
 
 - a choreography is created without participants: import and `mintWithInitialModel` create every role with the zero address;
 - binding, rebinding, or clearing a participant is a holder `setRoles` update, approved by both Creator and Holder policies; protected roles cannot change;
-- the choreography `CreatorSmartPolicy` always accepts only the zero address or an asset minted by the trusted `ParticipantNMT` (`setParticipantNmt`), checked with `ownerOf(uint160(address))`;
+- the choreography `CreatorSmartPolicy` sets a category per role (`setRoleCategory`) and always accepts only the zero address or a tokenized participant asset whose `descriptor` matches that category;
+- the choreography `HolderSmartPolicy` keeps the holder's allowlist of participant assets per asset and holder (`setAllowedParticipant`); `setRoles` may only use listed addresses;
 - on-chain nodes and exported BPMN participants are still keyed by role name; the participant-asset address is exported as metadata.
 
 ## Target Design: ParticipantMutableAsset Address As Identity

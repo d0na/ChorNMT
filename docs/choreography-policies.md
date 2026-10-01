@@ -15,11 +15,12 @@ The table is the intended trust model with the default policies. Every change to
 | `mint` / `mintWithInitialModel` to an eligible holder | yes (registered as creator) | yes | no | no | no |
 | `transferFrom` to an eligible holder, when enabled | no | no | yes | no | no |
 | `setNodes` | no | no | yes, within the Creator BPMN constraints | no | no |
-| `setRoles` (define roles, bind/rebind/clear participants) | no | no | yes, except protected roles; addresses must be empty or a `ParticipantMutableAsset` | no | no |
+| `setRoles` (define roles, bind/rebind/clear participants) | no | no | yes, except protected roles; addresses must be empty or a `ParticipantMutableAsset` of the role category in the Holder allowlist | no | no |
 | `setTokenURI`, `setLinked` | no | no | yes | no | no |
 | `setHolderSmartPolicy` | no | no | yes | no | no |
 | `setCreatorSmartPolicy` | no | no | **no** | yes | no |
-| Configure BPMN constraints (`setBpmnLimits`, allowlist, known endpoints, consistent flows, protected nodes and roles, trusted `ParticipantNMT`) | no | no | no | yes | no |
+| Configure BPMN constraints (`setBpmnLimits`, allowlist, known endpoints, consistent flows, protected nodes and roles, role categories) | no | no | no | yes | no |
+| Allowlist participant assets for an asset (`setAllowedParticipant` in the Holder policy) | no | no | yes | no | no |
 
 Design decisions behind the table:
 
@@ -27,7 +28,7 @@ Design decisions behind the table:
 - There is no application-level versioning. The model history is kept by the blockchain: every accepted change is a transaction on the asset and emits `ChoreographyInitialized`, `RolesChanged`, or `NodesChanged`.
 - The initial model passed to `mintWithInitialModel` is trusted: it comes from an authorized creator and is not checked by `evaluateNodeUpdate`. The constraints apply to every later `setNodes`.
 - A protected node is frozen together with its sequence flows: an update of another node cannot add or remove a link to it, in either `incoming` or `outgoing`, so a protected node cannot be disconnected through its neighbours.
-- A choreography starts without participants: imported and initial roles have the zero address. Binding a `ParticipantMutableAsset` to a role is part of the choreography evolution and is done by the Holder with `setRoles`; the same call rebinds a role or clears it back to the zero address. The Creator policy always accepts only the zero address or an asset minted by its trusted `ParticipantNMT`; externally owned accounts are rejected.
+- A choreography starts without participants: imported and initial roles have the zero address. Binding a `ParticipantMutableAsset` to a role is part of the choreography evolution and is done by the Holder with `setRoles`; the same call rebinds a role or clears it back to the zero address. The Master policy is not involved: it governs the token, not its evolution. The Creator policy sets a category per role (`setRoleCategory`) and always accepts only the zero address or a tokenized participant asset whose `descriptor` matches the role category (any participant asset when the role has no category); externally owned accounts and other contracts are rejected. The Holder policy accepts only participant assets the Holder has allowlisted for that asset (`setAllowedParticipant`); a new Holder starts with an empty list after a transfer. The category is self-declared by the participant asset, so the trust in a specific participant comes from the Holder's allowlist.
 - A protected role keeps its address: `setRoles` rejects any entry for it. Roles referenced by a protected task are not protected implicitly; protect them explicitly when their address must not change.
 - Nodes are never deleted: a node with the same name is overwritten. Roles are currently name-to-address entries that can be overwritten but not removed; the target design identifies participants by `ParticipantMutableAsset` NFTs, which can be destroyed independently of the choreography.
 - A transfer resets the Holder policy to zero. The new Holder must install a Holder policy with `setHolderSmartPolicy` before editing the model.
@@ -60,11 +61,11 @@ The Master policy authorizes the Creator and initial Holder but does not current
 
 | Route | Gas used |
 | --- | ---: |
-| `mint` + `setRoles` + `setNodes` | 3,719,237 |
+| `mint` + `setRoles` + `setNodes` | 3,726,949 |
 | `mintWithInitialModel` | 3,624,234 |
-| Saving | 95,003 (2.55%) |
+| Saving | 102,715 (2.76%) |
 
-The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 424,620 gas and structural deny paths used 143,546--188,155 gas.
+The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 424,731 gas and structural deny paths used 143,657--188,266 gas.
 
 ## Instance policies
 
@@ -82,9 +83,9 @@ Replacing the Creator policy is not a Holder operation: only the Creator policy'
 - `setConsistentFlowsEnabled(...)`;
 - `setProtectedNode(...)`;
 - `setProtectedRole(...)`, evaluated by `evaluateRoleUpdate` on every `setRoles`;
-- `setParticipantNmt(...)`, the trusted `ParticipantNMT` whose assets may be bound to roles.
+- `setRoleCategory(...)`, the participant category required by a role.
 
-Before writing storage, the asset asks its Creator policy to evaluate the post-update task count and total outgoing sequence-flow count. The policy rejects duplicate names in a delta, protected-node updates, task names outside an enabled allowlist, incoming or outgoing flows whose endpoint does not already exist or appear in the same delta, flows declared on only one endpoint when consistent flows are enabled, and any change to the links of a protected node. `setRoles` is checked the same way for empty or duplicate names, protected roles, and addresses that are neither zero nor a `ParticipantMutableAsset` of the trusted `ParticipantNMT`.
+Before writing storage, the asset asks its Creator policy to evaluate the post-update task count and total outgoing sequence-flow count. The policy rejects duplicate names in a delta, protected-node updates, task names outside an enabled allowlist, incoming or outgoing flows whose endpoint does not already exist or appear in the same delta, flows declared on only one endpoint when consistent flows are enabled, and any change to the links of a protected node. `setRoles` is checked the same way for empty or duplicate names, protected roles, and addresses that are neither zero nor a participant asset of the role category.
 
 The Holder policy remains an independent second approval. A Holder can further restrict an instance by installing `DenyAllSmartPolicy`, without weakening the Creator-defined BPMN boundaries.
 

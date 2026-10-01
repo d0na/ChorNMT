@@ -75,7 +75,7 @@ the maximum unsigned value until configured.
 | Consistent flows | `setConsistentFlowsEnabled(bool)` | When enabled, the post-update model must declare every sequence flow on both endpoints: B is in A's `outgoing` if and only if A is in B's `incoming`. Adding or removing a flow therefore requires updating both nodes. |
 | Protected node | `setProtectedNode(name, bool)` | A protected node cannot be changed by `setNodes`, and no other node may add or remove a sequence flow to or from it. |
 | Protected role | `setProtectedRole(name, bool)` | Evaluated on `setRoles`: a protected role cannot be reassigned. |
-| Role participants | `setParticipantNmt(address)` | Always evaluated on `setRoles`: every address must be zero (role not assigned) or a `ParticipantMutableAsset` minted by the trusted `ParticipantNMT`. Without a configured `ParticipantNMT`, only the zero address is accepted. |
+| Role category | `setRoleCategory(role, bytes32)` | Always evaluated on `setRoles`: every address must be zero (role not assigned) or a tokenized participant asset whose `descriptor` equals the role category; a role without category accepts any participant asset. |
 
 The implementation also rejects duplicate node names in the same submitted
 delta. Counts are computed over the effective post-update model: existing node
@@ -100,6 +100,8 @@ The permitted delta is followed by denials for:
 - a modification of the protected `Order` node.
 
 ## Holder Policy Restrictions
+
+The Holder policy also keeps the Holder's participant allowlist. `setAllowedParticipant(asset, participant, bool)` is callable only by the current Holder of `asset`, and entries are keyed by asset and Holder, so a new Holder does not inherit them after a transfer. On `setRoles`, every non-zero address must be in the current Holder's list.
 
 The Holder policy is evaluated together with the Creator policy. It allows the
 Holder to adopt a stricter local rule without weakening Creator constraints. In

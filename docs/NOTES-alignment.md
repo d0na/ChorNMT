@@ -13,8 +13,8 @@ Commit di questa sessione: `8446524` docs, `a77719a` import, `0bc664d` render, `
 
 ## Stato verificato
 
-- `npm test`: 40 casi (35 + 5 sui partecipanti: configurazione `ParticipantNMT`, associazione, diniego EOA, diniego contratto non participant, rimozione), nessun esito inatteso; motivi dei revert e storia eventi verificati. Valori di gas in [choreography-policies.md](choreography-policies.md#cost-benchmark) (3,719,237 / 3,624,234 / 95,003 (2.55%) / 424,620 / 143,546–188,155).
-- Dopo il cambio sui partecipanti: `ETH_USD_PRICE=3000 npm run evaluate:all` OK; i ruoli del `paper-example` sono esportati con indirizzo vuoto.
+- `npm test`: 44 casi (35 + 9 sui partecipanti: categoria del ruolo, allowlist holder, associazione, diniego fuori allowlist, diniego categoria diversa, diniego EOA, diniego contratto non participant, diniego allowlist modificata da non-holder, rimozione), nessun esito inatteso; motivi dei revert e storia eventi verificati. Valori di gas in [choreography-policies.md](choreography-policies.md#cost-benchmark) (3,726,949 / 3,624,234 / 102,715 (2.76%) / 424,731 / 143,657–188,266). `evaluate:policies` OK.
+- Dopo il cambio sui partecipanti (anche con categoria + allowlist): `ETH_USD_PRICE=3000 npm run evaluate:all` OK; i ruoli del `paper-example` sono esportati con indirizzo vuoto.
 - Workflow completo `deploy → import → render → modify → render` su nodo locale: OK; il BPMN finale reimportato coincide con import + delta.
 - `evaluate:policies`: OK.
 - `ETH_USD_PRICE=3000 npm run evaluate:all` (con nodo locale): OK; il report finale linka i CSV, il report lifecycle cita il flow limit, il caso `Order` protetto è una modifica reale.
@@ -34,9 +34,14 @@ Commit di questa sessione: `8446524` docs, `a77719a` import, `0bc664d` render, `
 - 2026-10-01 — Nome messaggio in import: `messageRef.name` → `flow.name` → `messageRef.id` → `flow.id`.
 - 2026-10-01 — **Partecipanti dei ruoli** (decisioni dell'utente):
   - l'indirizzo di un ruolo è sempre o vuoto (`address(0)`, ruolo non assegnato) oppure un `ParticipantMutableAsset`; gli EOA non sono più ammessi;
-  - il vincolo è **sempre attivo** nella `CreatorSmartPolicy` (`evaluateRoleUpdate`); l'administrator configura il `ParticipantNMT` fidato con `setParticipantNmt`; la verifica è `ownerOf(uint160(indirizzo))` sul `ParticipantNMT` (token ID = indirizzo dell'asset). Senza `ParticipantNMT` configurato è ammesso solo l'indirizzo vuoto;
+  - il vincolo è **sempre attivo** nella `CreatorSmartPolicy` (`evaluateRoleUpdate`). ~~L'administrator configura il `ParticipantNMT` fidato con `setParticipantNmt`~~ → superato il 2026-10-01, vedi decisione "Categoria e allowlist";
   - la coreografia nasce **senza partecipanti**: `InitialModel` non ha più `roleAddresses` (firma di `mintWithInitialModel` cambiata anche nella master policy), l'import (`populate-local.js`) e la lifecycle evaluation usano indirizzi vuoti;
   - associare un partecipante è evoluzione della coreografia e lo fa **solo l'holder** con `setRoles` (creator + holder policy); **riassegnare o tornare a vuoto** è consentito agli stessi autorizzati; i ruoli protetti restano bloccati. Nessun consenso richiesto al partecipante.
+- 2026-10-01 — **Categoria e allowlist dei partecipanti** (decisioni dell'utente, sostituisce `setParticipantNmt`): admin e creator non conoscono gli indirizzi precisi dei partecipanti, al più le tipologie; la Master policy governa il token (mint/trasferimenti), non l'evoluzione.
+  - **Creator** stabilisce una **categoria per ruolo**: `CreatorSmartPolicy.setRoleCategory(ruolo, bytes32)`. L'indirizzo deve essere zero oppure un participant asset tokenizzato (`nmt()` dell'asset, poi `ownerOf(uint160(asset))` sul suo NMT) con `getDescriptor()` uguale alla categoria; ruolo senza categoria = qualsiasi participant asset. EOA e contratti non participant sempre rifiutati.
+  - **Holder** mantiene un'**allowlist nella Holder policy**: `HolderSmartPolicy.setAllowedParticipant(asset, participant, bool)`, solo l'holder corrente, chiavi per asset **e holder** (dopo un transfer il nuovo holder parte da lista vuota). `setRoles` accetta solo indirizzi non zero presenti in lista.
+  - Aggiunto `ParticipantMutableAsset.getDescriptor()`. La categoria è autodichiarata dal participant asset: la fiducia sul singolo partecipante viene dall'allowlist dell'holder.
+  - La Holder policy decodifica gli indirizzi dalla calldata con `mcopy`: la copia byte per byte costava ~100k gas per `setRoles`.
 - 2026-10-01 — Creato `CLAUDE.md`: i commit non devono contenere trailer `Co-Authored-By` né attribuzioni a Claude/Anthropic (i commit precedenti di questa sessione li contengono ancora).
 - 2026-10-01 — **Versioning rimosso** (richiesta dell'utente): eliminati `mintVersion`, `predecessorOf`, `versionOf` da `ChoreographyNMT` e `MINT_VERSION`, `versioningEnabled`, `setVersioningEnabled` da `MasterSmartPolicy`. La versione è mantenuta dalla blockchain: ogni modifica accettata è una transazione ed emette `ChoreographyInitialized` / `RolesChanged` / `NodesChanged`. I test di versioning sono stati sostituiti da un controllo che gli eventi `NodesChanged` riproducano la sequenza degli aggiornamenti. Gas di riferimento aggiornati: 3,756,566 / 3,664,451 / 92,115 (2.45%) / 424,441 / 143,123–187,732.
 - 2026-10-01 — `clean` rimuove anche gli `*.nmt.json` importati e i file temporanei di evaluation in `/tmp` (nessun file versionato coinvolto).
@@ -88,7 +93,7 @@ Commit di questa sessione: `8446524` docs, `a77719a` import, `0bc664d` render, `
 
 ## P. Partecipanti (aperti)
 
-- [ ] P1 `deploy:asset` non deploya un `ParticipantNMT` né chiama `setParticipantNmt`: nel workflow locale si possono usare solo ruoli vuoti. Serve un comando per deployare il `ParticipantNMT`, configurarlo nella Creator policy e coniare participant asset.
+- [ ] P1 Nessun comando npm per deployare un `ParticipantNMT`, coniare participant asset, impostarne il `descriptor`, impostare le categorie dei ruoli (creator) e l'allowlist (holder): nel workflow locale oggi si usano solo ruoli vuoti. `modify:asset` con `roles` funziona solo dopo questi passi manuali.
 - [ ] P2 L'export BPMN usa ancora il nome del ruolo come identità; l'indirizzo del participant asset è solo metadato (`web3.js`) e non compare nell'XML. Valutare se esporlo (es. extension element o `participant` id).
 - [ ] P3 Nessun controllo che il ruolo referenziato da un task esista (vedi C2) né che sia assegnato prima di eseguire la coreografia.
 - [ ] P4 Un `ParticipantMutableAsset` non può essere distrutto: il caso "partecipante rimosso indipendentemente dalla coreografia" citato nella doc non è ancora modellato.

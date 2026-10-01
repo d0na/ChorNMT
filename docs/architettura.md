@@ -106,7 +106,13 @@ node.participantRole = "Supplier"
 
 Una coreografia nasce senza partecipanti: l'import e `mintWithInitialModel` creano i ruoli con indirizzo vuoto. Associare un partecipante fa parte dell'evoluzione della coreografia ed è una `setRoles` dell'holder, sottoposta a creator e holder policy. Lo stesso vale per riassegnarlo o riportarlo a vuoto; i ruoli protetti restano bloccati.
 
-La `CreatorSmartPolicy` accetta sempre solo l'indirizzo zero oppure un participant asset coniato dal `ParticipantNMT` fidato, configurato dall'administrator con `setParticipantNmt`. Il controllo usa il fatto che il token ID di un participant asset è il suo indirizzo: `ownerOf(uint160(indirizzo))` sul `ParticipantNMT` fidato deve esistere. Gli indirizzi EOA e i contratti non coniati da quel NMT sono rifiutati; senza `ParticipantNMT` configurato è ammesso solo l'indirizzo vuoto.
+Le responsabilità sono divise così:
+
+- la **Master policy** governa solo il token (mint e trasferimenti), non l'evoluzione dei partecipanti;
+- la **Creator policy** stabilisce una *categoria* per ruolo con `setRoleCategory(ruolo, categoria)`, senza conoscere indirizzi specifici. Accetta sempre l'indirizzo zero oppure un participant asset tokenizzato (il suo NMT possiede il token il cui ID è l'indirizzo dell'asset) il cui `descriptor` coincide con la categoria del ruolo; un ruolo senza categoria accetta qualsiasi participant asset. Gli EOA e i contratti che non sono participant asset sono sempre rifiutati;
+- la **Holder policy** mantiene l'allowlist dei participant asset scelti dall'holder, per asset e per holder corrente (`setAllowedParticipant(asset, participant, bool)`); `setRoles` può usare solo indirizzi in lista. Dopo un trasferimento il nuovo holder parte da una lista vuota.
+
+Il controllo di categoria si basa su ciò che il participant asset dichiara: la garanzia sull'identità del singolo partecipante viene dalla scelta dell'holder, che lo inserisce nella propria allowlist.
 
 Il renderer costruisce i partecipanti BPMN dai nomi dei ruoli; l'indirizzo del participant asset è esportato come metadato. Si veda [Contract hierarchy](contract-hierarchy.md#current-choreography-identity-model).
 
