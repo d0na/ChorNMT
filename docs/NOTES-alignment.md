@@ -17,6 +17,7 @@ Commit di questa sessione: `8446524` docs, `a77719a` import, `0bc664d` render, `
 - Dopo il cambio sui partecipanti (anche con categoria + allowlist): `ETH_USD_PRICE=3000 npm run evaluate:all` OK; i ruoli del `paper-example` sono esportati con indirizzo vuoto.
 - Workflow completo `deploy → import → render → modify → render` su nodo locale: OK; il BPMN finale reimportato coincide con import + delta.
 - `evaluate:policies`: OK.
+- Comandi partecipanti su nodo locale con `paper-example`: assegnazione `BUYER` a "Bulk Buyer" OK e visibile nell'export raw; categoria diversa ed EOA rifiutati con `Operation DENIED by CREATOR role policy`; dopo il rifiuto il partecipante non resta in allowlist; `0x0` riporta il ruolo a vuoto.
 - `ETH_USD_PRICE=3000 npm run evaluate:all` (con nodo locale): OK; il report finale linka i CSV, il report lifecycle cita il flow limit, il caso `Order` protetto è una modifica reale.
 
 ## Note sull'ambiente
@@ -42,6 +43,7 @@ Commit di questa sessione: `8446524` docs, `a77719a` import, `0bc664d` render, `
   - **Holder** mantiene un'**allowlist nella Holder policy**: `HolderSmartPolicy.setAllowedParticipant(asset, participant, bool)`, solo l'holder corrente, chiavi per asset **e holder** (dopo un transfer il nuovo holder parte da lista vuota). `setRoles` accetta solo indirizzi non zero presenti in lista.
   - Aggiunto `ParticipantMutableAsset.getDescriptor()`. La categoria è autodichiarata dal participant asset: la fiducia sul singolo partecipante viene dall'allowlist dell'holder.
   - La Holder policy decodifica gli indirizzi dalla calldata con `mcopy`: la copia byte per byte costava ~100k gas per `setRoles`.
+- 2026-10-01 — `assign:participant` simula `setRoles` con `staticCall` prima di inviarlo: se la simulazione fallisce non parte nessuna transazione (altrimenti il `NonceManager` perde il nonce) e la voce di allowlist appena aggiunta viene revocata. Se il partecipante è già in lista, la voce non viene ri-scritta.
 - 2026-10-01 — Creato `CLAUDE.md`: i commit non devono contenere trailer `Co-Authored-By` né attribuzioni a Claude/Anthropic (i commit precedenti di questa sessione li contengono ancora).
 - 2026-10-01 — **Versioning rimosso** (richiesta dell'utente): eliminati `mintVersion`, `predecessorOf`, `versionOf` da `ChoreographyNMT` e `MINT_VERSION`, `versioningEnabled`, `setVersioningEnabled` da `MasterSmartPolicy`. La versione è mantenuta dalla blockchain: ogni modifica accettata è una transazione ed emette `ChoreographyInitialized` / `RolesChanged` / `NodesChanged`. I test di versioning sono stati sostituiti da un controllo che gli eventi `NodesChanged` riproducano la sequenza degli aggiornamenti. Gas di riferimento aggiornati: 3,756,566 / 3,664,451 / 92,115 (2.45%) / 424,441 / 143,123–187,732.
 - 2026-10-01 — `clean` rimuove anche gli `*.nmt.json` importati e i file temporanei di evaluation in `/tmp` (nessun file versionato coinvolto).
@@ -93,7 +95,7 @@ Commit di questa sessione: `8446524` docs, `a77719a` import, `0bc664d` render, `
 
 ## P. Partecipanti (aperti)
 
-- [ ] P1 Nessun comando npm per deployare un `ParticipantNMT`, coniare participant asset, impostarne il `descriptor`, impostare le categorie dei ruoli (creator) e l'allowlist (holder): nel workflow locale oggi si usano solo ruoli vuoti. `modify:asset` con `roles` funziona solo dopo questi passi manuali.
+- [x] P1 Comandi per i partecipanti: `deploy:participants`, `mint:participant -- <categoria>`, `set:role-category -- <asset> <ruolo> <categoria>` (creator), `assign:participant -- <asset> <ruolo> <participant|0x0>` (holder: allowlist + `setRoles`). Implementati in `scripts/participants.js`; deployment salvato in `bpmn-builder-js/example/contract/participant-deployment.generated.json` (rimosso da `clean`).
 - [ ] P2 L'export BPMN usa ancora il nome del ruolo come identità; l'indirizzo del participant asset è solo metadato (`web3.js`) e non compare nell'XML. Valutare se esporlo (es. extension element o `participant` id).
 - [ ] P3 Nessun controllo che il ruolo referenziato da un task esista (vedi C2) né che sia assegnato prima di eseguire la coreografia.
 - [ ] P4 Un `ParticipantMutableAsset` non può essere distrutto: il caso "partecipante rimosso indipendentemente dalla coreografia" citato nella doc non è ancora modellato.

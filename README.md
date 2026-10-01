@@ -94,6 +94,19 @@ The `CreatorSmartPolicy` can optionally limit BPMN updates by task count, sequen
 
 Run `npm run evaluate:policies` to measure a fresh model's empty-versus-populated mint cost and the allow/deny cost of Master, Creator, and Holder policy calls. It writes local JSON and Markdown evaluation reports.
 
+## Assign participants
+
+An imported choreography starts without participants. The Creator sets a category per role and the Holder chooses which participant asset fills it:
+
+```bash
+npm run deploy:participants
+npm run mint:participant -- BUYER
+npm run set:role-category -- <asset-address> "Bulk Buyer" BUYER
+npm run assign:participant -- <asset-address> "Bulk Buyer" <participant-address>
+```
+
+Details are in [Commands and scripts](docs/commands-and-scripts.md#participants).
+
 ## Other examples
 
 The repository also includes `pizza-delivery`, an introductory example, and `parallel-gateway-example`, a small model for checking parallel splits and joins. They are retained as development references; the supported operational path is only `paper-example` and its parallel delta.

@@ -12,7 +12,7 @@ Guidance for Claude Code when working in this repository.
 ChorNMT stores a BPMN choreography in an on-chain mutable asset (`ChoreographyMutableAsset`) owned through an ERC-721 NMT, with Master, Creator, and Holder smart policies. JavaScript scripts import BPMN into the asset, apply JSON deltas, and render BPMN back from the chain. See [README.md](README.md) and [docs/](docs/).
 
 - `contracts/` — Solidity (`base/`, `choreography/`, `participant/`).
-- `scripts/` — npm entry points (`deploy-local.js`, `import-bpmn-asset.js`, `apply-asset-delta.js`, `render-asset.js`), tests (`test-policies.js`), and `evaluation/`.
+- `scripts/` — npm entry points (`deploy-local.js`, `import-bpmn-asset.js`, `apply-asset-delta.js`, `render-asset.js`, `participants.js`), tests (`test-policies.js`), and `evaluation/`.
 - `bpmn-builder-js/` — BPMN ↔ NMT conversion and BPMN XML generation (separate `package.json`).
 
 ## Commands
