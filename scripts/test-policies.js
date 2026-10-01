@@ -371,6 +371,13 @@ async function main() {
     ["Inspection"]
   );
 
+  // Model history is kept by the chain: every accepted change is an event.
+  const nodeHistory = await consistentAsset.queryFilter(consistentAsset.filters.NodesChanged());
+  assert.deepEqual(
+    nodeHistory.map((event) => Array.from(event.args.nodeNames)),
+    [initialModel.names, ["Delivery", "Inspection", "End"]]
+  );
+
   report.push(await expectDenied(
     "unauthorized creator cannot mint",
     unauthorizedCreator,
@@ -407,41 +414,6 @@ async function main() {
       data: asset.interface.encodeFunctionData("setRoles", [roles, roleAddresses])
     },
     "Operation DENIED by CREATOR policy"
-  ));
-
-  const [versionAddress, versionTokenId] = await nmt.mintVersion.staticCall(
-    administrator.address,
-    creatorPolicyAddress,
-    holderPolicyAddress,
-    BigInt(assetAddress)
-  );
-  report.push(await expectAllowed(
-    "authorized version evolution",
-    () => nmt.mintVersion(
-      administrator.address,
-      creatorPolicyAddress,
-      holderPolicyAddress,
-      BigInt(assetAddress)
-    )
-  ));
-  assert.equal(await nmt.predecessorOf(versionTokenId), BigInt(assetAddress));
-  assert.equal(await nmt.versionOf(versionTokenId), 1n);
-  assert.notEqual(versionAddress, ethers.ZeroAddress);
-
-  report.push(await expectAllowed("master disables versioning", () => master.setVersioningEnabled(false)));
-  report.push(await expectDenied(
-    "disabled versioning rejects new versions",
-    administrator,
-    {
-      to: nmtAddress,
-      data: nmt.interface.encodeFunctionData("mintVersion", [
-        administrator.address,
-        creatorPolicyAddress,
-        holderPolicyAddress,
-        BigInt(assetAddress)
-      ])
-    },
-    "Operation DENIED by MASTER policy"
   ));
 
   report.push(await expectAllowed("master enables transfer to eligible holder", () => master.setTransfersEnabled(true)));
@@ -488,30 +460,6 @@ async function main() {
     () => holderAsset.setCreatorSmartPolicy(creatorPolicyAddress)
   ));
 
-  await (await master.setVersioningEnabled(true)).wait();
-  report.push(await expectDenied(
-    "holder cannot mint version with another creator policy",
-    eligibleHolder,
-    {
-      to: nmtAddress,
-      data: nmt.interface.encodeFunctionData("mintVersion", [
-        eligibleHolder.address,
-        holderPolicyAddress,
-        holderPolicyAddress,
-        BigInt(holderAssetAddress)
-      ])
-    },
-    "Operation DENIED by MASTER policy"
-  ));
-  report.push(await expectAllowed(
-    "holder mints version keeping creator policy",
-    () => nmt.connect(eligibleHolder).mintVersion(
-      eligibleHolder.address,
-      creatorPolicyAddress,
-      holderPolicyAddress,
-      BigInt(holderAssetAddress)
-    )
-  ));
   const secondMint = await nmt.mint.staticCall(...mintArguments);
   await (await nmt.mint(...mintArguments)).wait();
   const restrictedAsset = await ethers.getContractAt("ChoreographyMutableAsset", secondMint[0]);
@@ -551,7 +499,7 @@ async function main() {
     "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
     ...report.map((entry) => `| ${entry.label} | ${entry.outcome} | ${entry.gasUsed} | ${entry.costWei} | ${scenarioUsd(entry.gasUsed, ethUsdPrice).join(" | ")} |`),
     "",
-    "The test covers Master mint and eligibility controls, Creator BPMN constraints, Holder restrictions, version evolution, and ownership transfer. Denied rows are reverted transactions with receipts, not simulated calls.",
+    "The test covers Master mint and eligibility controls, Creator BPMN constraints, Holder restrictions, and ownership transfer. Denied rows are reverted transactions with receipts, not simulated calls.",
     ""
   ].join("\n"));
   console.log(`Policy test metrics: ${metricsPath}`);

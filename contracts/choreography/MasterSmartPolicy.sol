@@ -8,11 +8,9 @@ contract MasterSmartPolicy is SmartPolicy {
     bytes4 private constant MINT = bytes4(keccak256("mint(address,address,address)"));
     bytes4 private constant MINT_WITH_INITIAL_MODEL = bytes4(keccak256("mintWithInitialModel(address,address,address,(string[],address[],string[],uint8[],string[][],string[][],string[][],string[],string[],string[],string[]))"));
     bytes4 private constant TRANSFER = bytes4(keccak256("transferFrom(address,address)"));
-    bytes4 private constant MINT_VERSION = bytes4(keccak256("mintVersion(address,address,address,uint256)"));
 
     address public immutable administrator;
     bool public transfersEnabled = true;
-    bool public versioningEnabled = true;
     mapping(address => bool) public authorizedCreators;
     mapping(address => bool) public eligibleHolders;
 
@@ -38,10 +36,6 @@ contract MasterSmartPolicy is SmartPolicy {
 
     function setTransfersEnabled(bool enabled) external onlyAdministrator {
         transfersEnabled = enabled;
-    }
-
-    function setVersioningEnabled(bool enabled) external onlyAdministrator {
-        versioningEnabled = enabled;
     }
 
     function _word(bytes memory action, uint256 offset) private pure returns (bytes32 value) {
@@ -75,19 +69,6 @@ contract MasterSmartPolicy is SmartPolicy {
                 subject == from &&
                 eligibleHolders[to] &&
                 MutableAsset(resource).getHolder() == from;
-        }
-
-        if (signature == MINT_VERSION) {
-            address holder = _addressAt(action, 4);
-            address creatorPolicy = _addressAt(action, 36);
-            MutableAsset predecessor = MutableAsset(resource);
-            bool holderKeepsCreatorPolicy =
-                predecessor.getHolder() == subject &&
-                predecessor.creatorSmartPolicy() == creatorPolicy;
-            return
-                versioningEnabled &&
-                eligibleHolders[holder] &&
-                (authorizedCreators[subject] || holderKeepsCreatorPolicy);
         }
 
         return false;

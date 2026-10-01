@@ -9,11 +9,11 @@ Commit di questa sessione: `8446524` docs, `a77719a` import, `0bc664d` render, `
 ## Prossimi passi
 
 1. C2/C3 (ruoli esistenti, lunghezza `conditions`), poi T2–T5 (test).
-3. Da discutere: C4 (rimozione nodi), C5 (`mintVersion` da creator non holder), C6 (costo O(n) di `_currentCounts`).
+3. Da discutere: C4 (rimozione nodi), C6 (costo O(n) di `_currentCounts`).
 
 ## Stato verificato
 
-- `npm test`: 40 casi, nessun esito inatteso; motivi dei revert verificati. Valori di gas aggiornati in [choreography-policies.md](choreography-policies.md#cost-benchmark) (3,756,456 / 3,664,473 / 91,983 / 424,397 / 143,079–187,688).
+- `npm test`: 35 casi dopo la rimozione del versioning (5 casi di versioning tolti), nessun esito inatteso; motivi dei revert e storia eventi verificati. Valori di gas in [choreography-policies.md](choreography-policies.md#cost-benchmark) (3,756,566 / 3,664,451 / 92,115 / 424,441 / 143,123–187,732).
 - Workflow completo `deploy → import → render → modify → render` su nodo locale: OK; il BPMN finale reimportato coincide con import + delta.
 - `evaluate:policies`: OK.
 - `ETH_USD_PRICE=3000 npm run evaluate:all` (con nodo locale): OK; il report finale linka i CSV, il report lifecycle cita il flow limit, il caso `Order` protetto è una modifica reale.
@@ -31,6 +31,7 @@ Commit di questa sessione: `8446524` docs, `a77719a` import, `0bc664d` render, `
 - 2026-10-01 — Lato off-chain, il renderer (`normalize.js`) rifiuta **sempre** modelli con archi incoerenti o nodi sconosciuti, invece di produrre XML con `undefined`. `web3.js` e `nmt.js` emettono sempre `incoming`/`outgoing`, anche vuoti.
 - 2026-10-01 — Importer: gli archi derivano da `sequenceFlow sourceRef/targetRef`; l'ordine dei figli `<incoming>`/`<outgoing>`, se presenti, è mantenuto (output del `paper-example` invariato).
 - 2026-10-01 — Nome messaggio in import: `messageRef.name` → `flow.name` → `messageRef.id` → `flow.id`.
+- 2026-10-01 — **Versioning rimosso** (richiesta dell'utente): eliminati `mintVersion`, `predecessorOf`, `versionOf` da `ChoreographyNMT` e `MINT_VERSION`, `versioningEnabled`, `setVersioningEnabled` da `MasterSmartPolicy`. La versione è mantenuta dalla blockchain: ogni modifica accettata è una transazione ed emette `ChoreographyInitialized` / `RolesChanged` / `NodesChanged`. I test di versioning sono stati sostituiti da un controllo che gli eventi `NodesChanged` riproducano la sequenza degli aggiornamenti. Gas di riferimento aggiornati: 3,756,566 / 3,664,451 / 92,115 (2.45%) / 424,441 / 143,123–187,732.
 - 2026-10-01 — `clean` rimuove anche gli `*.nmt.json` importati e i file temporanei di evaluation in `/tmp` (nessun file versionato coinvolto).
 - 2026-10-01 — I test di diniego verificano il motivo del revert; il caso "task limit" usa limiti (2, 4) per violare solo il limite sui task.
 
@@ -85,7 +86,7 @@ Commit di questa sessione: `8446524` docs, `a77719a` import, `0bc664d` render, `
 - [ ] C2 `initiatorRole` / `participantRole` non sono verificati contro i ruoli registrati.
 - [ ] C3 Nessun vincolo su `conditions.length` vs `outgoing.length`; convenzione dati non uniforme (task con `[""]`, join con `[]`).
 - [ ] C4 Nessuna rimozione di nodi (limite documentato) — valutare `removeNodes` con controllo della creator policy.
-- [ ] C5 Un creator autorizzato può fare `mintVersion` di token non suoi, con qualsiasi policy (documentato, da confermare come scelta di design).
+- [x] C5 ~~Un creator autorizzato può fare `mintVersion` di token non suoi~~ — superato: `mintVersion` è stato rimosso (vedi decisioni).
 - [ ] C6 `_currentCounts` fa una chiamata esterna per ogni nodo a ogni `setNodes`: costo O(n) crescente col modello. Valutare contatori in storage nell'asset.
 - [ ] C7 Se la creator policy viene sostituita con un contratto che non implementa `IChoreographyCreatorPolicy`, `setNodes`/`setRoles` vanno in revert permanente.
 
@@ -111,6 +112,6 @@ Commit di questa sessione: `8446524` docs, `a77719a` import, `0bc664d` render, `
 - [x] T1 I test di diniego non verificano il motivo del revert. Due casi "task limit" violano anche il flow limit e passerebbero anche se il check sui task fosse rotto.
 - [ ] T2 `deny` in `run-policy-lifecycle-evaluation.js:30`: `assert.fail` dentro il `try` viene inghiottito; manca il guard out-of-gas.
 - [ ] T3 Un solo signer copre master admin, creator, creator-policy admin e holder: molte celle "no" della tabella "Who can do what" sono indistinguibili. Usare signer distinti.
-- [ ] T4 Celle non testate: configurazione master da non-admin; mint da creator non-admin; diniego `mintWithInitialModel`; `mintVersion` con policy diverse; `transferFrom` da non-holder e verso holder non idoneo; `setNodes` da non-holder; `setTokenURI`/`setLinked` (mai testati); `setHolderSmartPolicy` da non-holder; configurazione vincoli BPMN da non-admin.
-- [ ] T5 Decisioni di design senza test: reset della holder policy al transfer; nuova versione vuota; nomi duplicati/vuoti in delta e `setRoles`.
+- [ ] T4 Celle non testate: configurazione master da non-admin; mint da creator non-admin; diniego `mintWithInitialModel`; `transferFrom` da non-holder e verso holder non idoneo; `setNodes` da non-holder; `setTokenURI`/`setLinked` (mai testati); `setHolderSmartPolicy` da non-holder; configurazione vincoli BPMN da non-admin.
+- [ ] T5 Decisioni di design senza test: reset della holder policy al transfer; nomi duplicati/vuoti in delta e `setRoles`.
 - [ ] T6 Una sola `CreatorSmartPolicy` condivisa tra tutti gli asset di test: i vincoli di un caso si propagano ai successivi. _(i nuovi casi di coerenza usano già una policy dedicata)_

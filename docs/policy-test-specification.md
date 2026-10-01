@@ -41,20 +41,19 @@ and, where applicable, structural checks execute before the revert.
 ## Master Policy
 
 The Master policy is administered by its deployer. It maintains allowlists and
-two lifecycle switches.
+a transfer switch.
 
 | Control | Configuration method | Enforced action | Expected effect |
 | --- | --- | --- | --- |
-| Authorized Creator | `setAuthorizedCreator(address, bool)` | `mint`, `mintWithInitialModel`, `mintVersion` | Only approved organizations can create instances. |
-| Eligible Holder | `setEligibleHolder(address, bool)` | mint, transfer, version mint | An instance can only be assigned to an approved Holder. |
+| Authorized Creator | `setAuthorizedCreator(address, bool)` | `mint`, `mintWithInitialModel` | Only approved organizations can create instances. |
+| Eligible Holder | `setEligibleHolder(address, bool)` | mint, transfer | An instance can only be assigned to an approved Holder. |
 | Transfer switch | `setTransfersEnabled(bool)` | `transferFrom` | Disables ownership transfer without deleting the instance. |
-| Version switch | `setVersioningEnabled(bool)` | `mintVersion` | Prevents creation of additional versions while retaining history. |
 
-`ChoreographyNMT` records version lineage through `predecessorOf(tokenId)` and
-`versionOf(tokenId)`. A version may be created by an authorized Creator or by
-the Holder of the predecessor, provided that Master-policy conditions hold. A
-Holder who is not an authorized Creator must keep the predecessor's Creator
-policy. A new version starts from an empty model.
+There is no application-level versioning. The model history is kept by the
+blockchain: every accepted change is a transaction on the asset and emits
+`ChoreographyInitialized`, `RolesChanged`, or `NodesChanged`. The policy test
+checks that the `NodesChanged` events reproduce the sequence of accepted node
+updates.
 
 ## Creator Policy
 
@@ -129,7 +128,7 @@ than assuming a universal saving.
 
 | Command | Model | Evidence produced |
 | --- | --- | --- |
-| `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, versioning, attempts to bypass the Creator policy, and receipt gas/wei. The script exits with an error if any case has an unexpected outcome. |
+| `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, event-based model history, attempts to bypass the Creator policy, and receipt gas/wei. The script exits with an error if any case has an unexpected outcome. |
 | `npm run evaluate:policies` | Imported `paper-example` plus real delta | Empty versus populated mint, paper-model structural allow/deny cases, and scenario costs. |
 | `npm run evaluate:paper` | Imported `paper-example` plus real delta | Import/render/delta/full-population measurements, chor-js BPMN images, and gnuplot charts. |
 | `npm run evaluate:all` | All of the above | Rebuilds the canonical final report. |

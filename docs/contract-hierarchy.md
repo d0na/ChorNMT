@@ -33,7 +33,7 @@ NMT (ERC721Enumerable)
 
 ```text
 ChoreographyNMT : NMT
-  - evaluates mint, transfer, and version actions with MasterSmartPolicy
+  - evaluates mint and transfer actions with MasterSmartPolicy
   - deploys ChoreographyMutableAsset on mint
   - can initialize an asset atomically with mintWithInitialModel
 
@@ -105,7 +105,7 @@ flowchart TD
   NMT --> PNMT
 
   CNMT -- mints --> CMA
-  CNMT -. evaluates mint/transfer/version .-> CMSP
+  CNMT -. evaluates mint/transfer .-> CMSP
   PNMT -- mints --> PMA
 
   CMA -. evaluatedBySmartPolicies .-> CCSP

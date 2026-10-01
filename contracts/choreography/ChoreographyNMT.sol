@@ -8,8 +8,6 @@ import "./ChoreographyMutableAsset.sol";
 
 contract ChoreographyNMT is NMT {
     address public immutable masterSmartPolicy;
-    mapping(uint256 => uint256) public predecessorOf;
-    mapping(uint256 => uint256) public versionOf;
 
     modifier evaluatedByMaster(
         bytes memory action,
@@ -51,38 +49,6 @@ contract ChoreographyNMT is NMT {
         returns (address, uint256)
     {
         return super.mint(to, creatorSmartPolicy, holderSmartPolicy);
-    }
-
-    function mintVersion(
-        address to,
-        address creatorSmartPolicy,
-        address holderSmartPolicy,
-        uint256 predecessorTokenId
-    )
-        public
-        evaluatedByMaster(
-            abi.encodeWithSignature(
-                "mintVersion(address,address,address,uint256)",
-                to,
-                creatorSmartPolicy,
-                holderSmartPolicy,
-                predecessorTokenId
-            ),
-            getMutableAssetAddress(predecessorTokenId)
-        )
-        returns (address, uint256)
-    {
-        require(_ownerOf(predecessorTokenId) != address(0), "Unknown predecessor");
-
-        (address assetAddress, uint256 tokenId) = _mint(
-            to,
-            creatorSmartPolicy,
-            holderSmartPolicy
-        );
-        predecessorOf[tokenId] = predecessorTokenId;
-        versionOf[tokenId] = versionOf[predecessorTokenId] + 1;
-
-        return (assetAddress, tokenId);
     }
 
     function mintWithInitialModel(

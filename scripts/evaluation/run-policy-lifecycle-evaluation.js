@@ -277,7 +277,7 @@ async function main() {
     "",
     "## Policy model",
     "",
-    "- **Master policy** authorizes Creators, eligible initial Holders, transfers, and version evolution.",
+    "- **Master policy** authorizes Creators, eligible initial Holders, and transfers.",
     "- **Creator policy** defines BPMN update constraints: task and sequence-flow limits, task-name allowlist, known flow targets, and protected nodes.",
     "- **Holder policy** is the second authorization layer and can further restrict an instance by installing a deny-all policy.",
     "",

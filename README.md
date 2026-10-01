@@ -119,7 +119,7 @@ Files with a `.generated.*` suffix and imported `*.nmt.json` files are local art
 - [Architecture](docs/architettura.md): general design and the NMT, choreography, and participant assets.
 - [Delta updates and Solidity calls](docs/delta-update-and-solidity-calls.md): `setNodes(...)` and `setRoles(...)` details.
 - [Contract hierarchy](docs/contract-hierarchy.md): asset and policy model.
-- [Choreography policies](docs/choreography-policies.md): minting, ownership, policy-controlled updates, and versioning rules.
+- [Choreography policies](docs/choreography-policies.md): minting, ownership, policy-controlled updates, and model history.
 - [Commands and scripts](docs/commands-and-scripts.md): public npm commands, implementation scripts, and legacy references.
 - [Evaluation toolkit](evaluation/README.md): measurement reports, CSV aggregation, and Gnuplot figure templates.
 - [bpmn-builder-js](bpmn-builder-js/README.md): BPMN renderer and intermediate JSON format.

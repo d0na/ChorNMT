@@ -11,9 +11,8 @@ The table is the intended trust model with the default policies. Every change to
 
 | Action | Master administrator | Authorized creator | Holder | Creator policy administrator | Anyone else |
 | --- | --- | --- | --- | --- | --- |
-| Configure creators, holders, transfer and versioning switches | yes | no | no | no | no |
+| Configure creators, holders, and the transfer switch | yes | no | no | no | no |
 | `mint` / `mintWithInitialModel` to an eligible holder | yes (registered as creator) | yes | no | no | no |
-| `mintVersion` | yes (registered as creator) | yes, with any policies | yes, only keeping the predecessor's Creator policy | no | no |
 | `transferFrom` to an eligible holder, when enabled | no | no | yes | no | no |
 | `setNodes` | no | no | yes, within the Creator BPMN constraints | no | no |
 | `setRoles` | no | no | yes, except protected roles | no | no |
@@ -25,13 +24,13 @@ The table is the intended trust model with the default policies. Every change to
 Design decisions behind the table:
 
 - The Creator policy is a constraint the Holder cannot remove. `setCreatorSmartPolicy` is evaluated by the current Creator policy only, and the choreography `CreatorSmartPolicy` allows it only to its `administrator`.
-- A new version starts from an empty model; it does not copy nodes or roles from its predecessor. A Holder who is not an authorized creator must reuse the predecessor's Creator policy, so versioning cannot be used to escape the Creator constraints.
+- There is no application-level versioning. The model history is kept by the blockchain: every accepted change is a transaction on the asset and emits `ChoreographyInitialized`, `RolesChanged`, or `NodesChanged`.
 - The initial model passed to `mintWithInitialModel` is trusted: it comes from an authorized creator and is not checked by `evaluateNodeUpdate`. The constraints apply to every later `setNodes`.
 - A protected node is frozen together with its sequence flows: an update of another node cannot add or remove a link to it, in either `incoming` or `outgoing`, so a protected node cannot be disconnected through its neighbours.
 - A protected role keeps its address: `setRoles` rejects any entry for it. Roles referenced by a protected task are not protected implicitly; protect them explicitly when their address must not change.
 - Nodes are never deleted: a node with the same name is overwritten. Roles are currently name-to-address entries that can be overwritten but not removed; the target design identifies participants by `ParticipantMutableAsset` NFTs, which can be destroyed independently of the choreography.
 - A transfer resets the Holder policy to zero. The new Holder must install a Holder policy with `setHolderSmartPolicy` before editing the model.
-- NMT tokens are minted with `_mint`, not `_safeMint`, so no receiver callback runs before an asset is initialized and its version lineage is recorded.
+- NMT tokens are minted with `_mint`, not `_safeMint`, so no receiver callback runs before an asset is initialized.
 
 ## Master policy
 
@@ -39,9 +38,8 @@ The policy administrator configures authorized creators and eligible holders wit
 
 - `mint(...)` requires an authorized creator and an eligible initial holder.
 - `transferFrom(...)` requires an enabled transfer policy, the current holder as caller, and an eligible receiving holder.
-- `mintVersion(...)` requires enabled versioning, an eligible holder for the new instance, and either an authorized creator or the holder of the predecessor instance. A holder who is not an authorized creator must pass the predecessor's Creator policy.
 
-`setTransfersEnabled(false)` disables ownership transfers. `setVersioningEnabled(false)` disables new versions without changing existing instances or their history. `predecessorOf` and `versionOf` on `ChoreographyNMT` expose that history.
+`setTransfersEnabled(false)` disables ownership transfers.
 
 ## Atomic initialization
 
@@ -61,11 +59,11 @@ The Master policy authorizes the Creator and initial Holder but does not current
 
 | Route | Gas used |
 | --- | ---: |
-| `mint` + `setRoles` + `setNodes` | 3,756,456 |
-| `mintWithInitialModel` | 3,664,473 |
-| Saving | 91,983 (2.45%) |
+| `mint` + `setRoles` + `setNodes` | 3,756,566 |
+| `mintWithInitialModel` | 3,664,451 |
+| Saving | 92,115 (2.45%) |
 
-The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 424,397 gas and structural deny paths used 143,079--187,688 gas.
+The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 424,441 gas and structural deny paths used 143,123--187,732 gas.
 
 ## Instance policies
 

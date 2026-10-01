@@ -45,18 +45,17 @@ Il token non conserva direttamente il modello: punta implicitamente al contratto
 
 ## Asset NMT e coreografia
 
-`ChoreographyNMT` conia token di coreografie e distribuisce un `ChoreographyMutableAsset` per ciascuno. La sua `masterSmartPolicy` autorizza mint, mint atomico, trasferimenti e versioning.
+`ChoreographyNMT` conia token di coreografie e distribuisce un `ChoreographyMutableAsset` per ciascuno. La sua `masterSmartPolicy` autorizza mint, mint atomico e trasferimenti.
 
 | Operazione | Effetto |
 | --- | --- |
 | `mint` | Crea un asset vuoto e il relativo NFT. |
 | `mintWithInitialModel` | Crea e inizializza asset e modello nella stessa transazione. |
-| `mintVersion` | Crea un asset collegato logicamente a un token predecessore. |
 | `transferFrom` | Trasferisce il token dopo i controlli master e creator. |
 
-Per una versione, `predecessorOf[tokenId]` identifica il token sorgente e `versionOf[tokenId]` conserva il numero di versione. Il modello del predecessore non viene copiato automaticamente: il nuovo asset nasce vuoto e va popolato separatamente.
+Non esiste un meccanismo di versioning applicativo: la storia del modello è mantenuta dalla blockchain. Ogni modifica accettata è una transazione sull'asset ed emette un evento (`ChoreographyInitialized`, `RolesChanged`, `NodesChanged`), quindi gli stati precedenti si ricostruiscono dalla cronologia delle transazioni e degli eventi.
 
-`MasterSmartPolicy` conserva administrator, creator autorizzati, holder idonei e i flag per trasferimenti e versioning. Il mint richiede creator autorizzato e holder idoneo; il trasferimento richiede inoltre che il chiamante sia l'holder corrente.
+`MasterSmartPolicy` conserva administrator, creator autorizzati, holder idonei e il flag per i trasferimenti. Il mint richiede creator autorizzato e holder idoneo; il trasferimento richiede inoltre che il chiamante sia l'holder corrente.
 
 ### `ChoreographyMutableAsset`
 
@@ -108,7 +107,7 @@ Il renderer costruisce i partecipanti BPMN da questi nomi. L'evoluzione verso gl
 
 ## Asset participant
 
-`ParticipantNMT` usa il comportamento `mint` e `transferFrom` della base NMT e crea un `ParticipantMutableAsset` per token. Non definisce master policy o versioning propri.
+`ParticipantNMT` usa il comportamento `mint` e `transferFrom` della base NMT e crea un `ParticipantMutableAsset` per token. Non definisce una master policy propria.
 
 `ParticipantMutableAsset` mantiene questo descrittore:
 
