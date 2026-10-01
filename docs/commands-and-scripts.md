@@ -40,7 +40,7 @@ bpmn-builder-js/example/output/<base>.generated.bpmn.xml
 | `DEPLOYER_PRIVATE_KEY` | Hardhat account #0 | `deploy:asset`, `import:asset`, `modify:asset` (signer and initial holder) |
 | `ETH_USD_PRICE` | fetched from Coinbase | evaluation reports (see the [evaluation toolkit](../evaluation/README.md#usd-price-for-gas-scenarios)) |
 
-`import:asset` assigns role addresses from the node's unlocked accounts (`eth_accounts`, starting from index 1). It therefore works only against a local development node and supports at most as many roles as available accounts minus one (19 on a default Hardhat node).
+`import:asset` creates every role with the zero address: an imported choreography has no participants yet. Bind `ParticipantMutableAsset` addresses later with a delta `roles` map.
 
 ## Public workflow
 
@@ -61,7 +61,7 @@ The commands print measured transaction costs after every on-chain write. Each l
 | `deploy:asset` | Deploys Master, Creator, and Holder policies, deploys `ChoreographyNMT`, and mints the asset. | Five transactions; typically the highest setup cost. |
 | `import:asset` | Calls `setRoles(...)` and `setNodes(...)`. | Two transactions; grows with roles, nodes, messages, and graph edges. |
 | `mintWithInitialModel(...)` | Mints and initializes a trusted model with its Creator/Holder policies and an `InitialModel` struct in one NMT transaction. | One transaction; replaces the mint plus two import transactions for fixed templates. |
-| `modify:asset` | Calls `setNodes(...)`; calls `setRoles(...)` for every role in the delta `roles` map, adding new roles and overwriting the address of existing ones. | One or two transactions; a configured Creator policy also evaluates BPMN structural constraints. |
+| `modify:asset` | Calls `setNodes(...)`; calls `setRoles(...)` for every role in the delta `roles` map, adding new roles and binding, rebinding, or clearing their `ParticipantMutableAsset`. | One or two transactions; a configured Creator policy also evaluates BPMN structural constraints. |
 | `render:asset` | Reads contract state and writes local files. | No blockchain transaction and no gas cost. |
 | `start:operations` and `clean` | Local operations only. | No gas cost. |
 

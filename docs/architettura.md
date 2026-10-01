@@ -77,7 +77,7 @@ nodes: nome nodo -> Node
 | `initiatorRole`, `participantRole` | Ruoli logici della task. |
 | `initiatingMessage`, `returnMessage` | Messaggi della task di coreografia. |
 
-`setRoles` aggiorna la mappa ruolo-indirizzo; `setNodes` scrive nodi completi. Alla riscrittura del nodo, ingressi, uscite e condizioni sono sostituiti integralmente. Perciò un delta che cambia un arco deve includere lo stato finale completo di entrambi gli endpoint.
+`setRoles` aggiorna la mappa ruolo → participant asset; `setNodes` scrive nodi completi. Alla riscrittura del nodo, ingressi, uscite e condizioni sono sostituiti integralmente. Perciò un delta che cambia un arco deve includere lo stato finale completo di entrambi gli endpoint.
 
 Oltre al controllo combinato creator/holder, `setNodes` invoca `evaluateNodeUpdate` della creator policy. La `CreatorSmartPolicy` della coreografia consente modifiche solo all'holder e può imporre:
 
@@ -87,23 +87,28 @@ Oltre al controllo combinato creator/holder, `setNodes` invoca `evaluateNodeUpda
 - coerenza dei flow: B compare in `A.outgoing` se e solo se A compare in `B.incoming`, nel modello risultante;
 - nodi protetti che non possono essere modificati né collegati o scollegati tramite i nodi vicini.
 
-Allo stesso modo `setRoles` invoca `evaluateRoleUpdate`, che rifiuta nomi vuoti o duplicati e i ruoli protetti con `setProtectedRole`.
+Allo stesso modo `setRoles` invoca `evaluateRoleUpdate`, che rifiuta nomi vuoti o duplicati, i ruoli protetti con `setProtectedRole` e qualsiasi indirizzo che non sia vuoto o un `ParticipantMutableAsset` (si veda sotto). Questo vincolo è sempre attivo.
 
-Questi vincoli sono illimitati o disattivati per default. `initializeChoreography` è chiamabile solo dal NMT ed è il percorso interno di `mintWithInitialModel`, che la invoca una volta su un asset appena creato. Il modello iniziale è considerato fidato: lo fornisce un creator autorizzato dalla master policy e non passa per `evaluateNodeUpdate`.
+Questi vincoli sono illimitati o disattivati per default. `initializeChoreography` è chiamabile solo dal NMT ed è il percorso interno di `mintWithInitialModel`, che la invoca una volta su un asset appena creato. Il modello iniziale è considerato fidato: lo fornisce un creator autorizzato dalla master policy e non passa per `evaluateNodeUpdate`. Contiene solo i nomi dei ruoli: i ruoli nascono senza partecipanti.
 
 `setCreatorSmartPolicy` è valutato solo dalla creator policy corrente, non dall'holder: la `CreatorSmartPolicy` della coreografia lo consente soltanto al suo `administrator`, quindi l'holder non può rimuovere i vincoli a cui è sottoposto.
 
 ### Identità dei partecipanti
 
-Oggi i nodi usano nomi di ruolo come identità logica, non indirizzi di `ParticipantMutableAsset`:
+I nodi riferiscono i partecipanti per nome di ruolo; ogni ruolo è associato a un `ParticipantMutableAsset` oppure è ancora vuoto:
 
 ```text
-roles["Buyer"] = 0x...          // tipicamente un indirizzo EOA
-node.initiatorRole = "Buyer"
+roles["Buyer"]    = 0x0000…0000     // ruolo non ancora assegnato
+roles["Supplier"] = 0xParticipant…  // indirizzo di un ParticipantMutableAsset
+node.initiatorRole   = "Buyer"
 node.participantRole = "Supplier"
 ```
 
-Il renderer costruisce i partecipanti BPMN da questi nomi. L'evoluzione verso gli indirizzi dei participant asset come identità tecnica, con nomi come label, è solo una proposta: non è implementata. Si veda [Contract hierarchy](contract-hierarchy.md#target-design-participantmutableasset-address-as-identity).
+Una coreografia nasce senza partecipanti: l'import e `mintWithInitialModel` creano i ruoli con indirizzo vuoto. Associare un partecipante fa parte dell'evoluzione della coreografia ed è una `setRoles` dell'holder, sottoposta a creator e holder policy. Lo stesso vale per riassegnarlo o riportarlo a vuoto; i ruoli protetti restano bloccati.
+
+La `CreatorSmartPolicy` accetta sempre solo l'indirizzo zero oppure un participant asset coniato dal `ParticipantNMT` fidato, configurato dall'administrator con `setParticipantNmt`. Il controllo usa il fatto che il token ID di un participant asset è il suo indirizzo: `ownerOf(uint160(indirizzo))` sul `ParticipantNMT` fidato deve esistere. Gli indirizzi EOA e i contratti non coniati da quel NMT sono rifiutati; senza `ParticipantNMT` configurato è ammesso solo l'indirizzo vuoto.
+
+Il renderer costruisce i partecipanti BPMN dai nomi dei ruoli; l'indirizzo del participant asset è esportato come metadato. Si veda [Contract hierarchy](contract-hierarchy.md#current-choreography-identity-model).
 
 ## Asset participant
 

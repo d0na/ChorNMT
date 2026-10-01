@@ -39,7 +39,6 @@ contract ChoreographyMutableAsset is MutableAsset {
 
     struct InitialModel {
         string[] roleNames;
-        address[] roleAddresses;
         string[] names;
         NodeType[] nodeTypes;
         string[][] incoming;
@@ -234,8 +233,10 @@ contract ChoreographyMutableAsset is MutableAsset {
         emit NodesChanged(names);
     }
 
+    // Roles start without participants: binding a ParticipantMutableAsset to a
+    // role is a later setRoles update, subject to the Creator and Holder policies.
     function initializeChoreography(InitialModel memory model) public onlyNMT {
-        _setRoles(model.roleNames, model.roleAddresses);
+        _setRoles(model.roleNames, new address[](model.roleNames.length));
         _setNodes(
             model.names,
             model.nodeTypes,

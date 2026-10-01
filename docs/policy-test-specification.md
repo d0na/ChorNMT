@@ -75,6 +75,7 @@ the maximum unsigned value until configured.
 | Consistent flows | `setConsistentFlowsEnabled(bool)` | When enabled, the post-update model must declare every sequence flow on both endpoints: B is in A's `outgoing` if and only if A is in B's `incoming`. Adding or removing a flow therefore requires updating both nodes. |
 | Protected node | `setProtectedNode(name, bool)` | A protected node cannot be changed by `setNodes`, and no other node may add or remove a sequence flow to or from it. |
 | Protected role | `setProtectedRole(name, bool)` | Evaluated on `setRoles`: a protected role cannot be reassigned. |
+| Role participants | `setParticipantNmt(address)` | Always evaluated on `setRoles`: every address must be zero (role not assigned) or a `ParticipantMutableAsset` minted by the trusted `ParticipantNMT`. Without a configured `ParticipantNMT`, only the zero address is accepted. |
 
 The implementation also rejects duplicate node names in the same submitted
 delta. Counts are computed over the effective post-update model: existing node

@@ -5,7 +5,7 @@ This document describes:
 - the current contract hierarchy in the repository
 - the target design for participant integration where choreography participants are identified by `ParticipantMutableAsset` addresses
 
-The participant-address integration described here is only a design target for now. It is not implemented yet.
+The role → `ParticipantMutableAsset` binding is implemented; using participant-asset addresses as the primary identity in nodes and BPMN export is still a design target.
 
 ## Current Hierarchy
 
@@ -117,12 +117,14 @@ flowchart TD
 
 ## Current Choreography Identity Model
 
-Today the choreography model uses participant names as logical identifiers.
+Choreography nodes refer to participants by role name, and the asset keeps a role-name → `ParticipantMutableAsset` mapping on-chain (option 3 below).
 
 Example:
 
 ```text
 roles = ["Ale", "Fra"]
+getRole("Ale") = 0x0000…0000      // not assigned yet
+getRole("Fra") = 0xParticipantB   // a ParticipantMutableAsset
 
 node.initiatorRole   = "Ale"
 node.participantRole = "Fra"
@@ -130,9 +132,10 @@ node.participantRole = "Fra"
 
 This means:
 
-- on-chain choreography nodes refer to participants by role-name string
-- exported BPMN participants are keyed first by role/name
-- participant smart-contract addresses are not yet the primary identity of choreography participants
+- a choreography is created without participants: import and `mintWithInitialModel` create every role with the zero address;
+- binding, rebinding, or clearing a participant is a holder `setRoles` update, approved by both Creator and Holder policies; protected roles cannot change;
+- the choreography `CreatorSmartPolicy` always accepts only the zero address or an asset minted by the trusted `ParticipantNMT` (`setParticipantNmt`), checked with `ownerOf(uint160(address))`;
+- on-chain nodes and exported BPMN participants are still keyed by role name; the participant-asset address is exported as metadata.
 
 ## Target Design: ParticipantMutableAsset Address As Identity
 
@@ -240,13 +243,10 @@ And message flows / choreography tasks should resolve participants by the asset 
 
 ## Impacted Areas When Implemented
 
-When this design is implemented, these areas will need to change:
+Making participant-asset addresses the primary identity would change these areas:
 
 - `contracts/choreography/ChoreographyMutableAsset.sol`
   The node descriptor must carry participant-asset identity explicitly or be able to derive it safely.
-
-- `scripts/populate-local.js`
-  It currently assigns EOA addresses to roles. It would need to mint or resolve `ParticipantMutableAsset` contracts and use those addresses instead.
 
 - `bpmn-builder-js/scripts/web3.js`
   It currently exports participant identity primarily from role names and only attaches addresses as metadata.

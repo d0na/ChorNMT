@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import hre from "hardhat";
+import { ZeroAddress } from "ethers";
 import { importBpmnToNmt } from "../../bpmn-builder-js/scripts/import-bpmn.js";
 import { resolveEthUsdPrice, scenarioUsd, summarizeNodes, writeMetrics } from "./metrics.js";
 
@@ -50,14 +51,9 @@ function markdownTable(results, ethUsdPrice) {
   ];
 }
 
-function toModel(dataset, signers) {
-  if (dataset.roles.length > signers.length) {
-    throw new Error(`The BPMN model needs ${dataset.roles.length} role addresses, but only ${signers.length} signers are available.`);
-  }
-
+function toModel(dataset) {
   return {
     roleNames: dataset.roles,
-    roleAddresses: dataset.roles.map((_, index) => signers[index].address),
     names: dataset.nodes.map((node) => node.name),
     nodeTypes: dataset.nodes.map((node) => node.nodeType),
     incoming: dataset.nodes.map((node) => node.incoming),
@@ -135,7 +131,7 @@ async function main() {
   const creatorPolicyAddress = await creatorPolicy.getAddress();
   const holderPolicyAddress = await holderPolicy.getAddress();
   const mintArguments = [administrator.address, creatorPolicyAddress, holderPolicyAddress];
-  const model = toModel(dataset, signers);
+  const model = toModel(dataset);
   const deltaUpdate = toNodeUpdate(delta.nodes);
   const evolvedNodes = mergeNodes(dataset.nodes, delta.nodes);
   const initialCounts = countNodes(dataset.nodes);
@@ -145,7 +141,7 @@ async function main() {
   const [emptyAssetAddress] = await nmt.mint.staticCall(...mintArguments);
   await allow(strategy, "mint empty asset", () => nmt.mint(...mintArguments));
   const emptyAsset = await ethers.getContractAt("ChoreographyMutableAsset", emptyAssetAddress);
-  await allow(strategy, "import roles into empty asset", () => emptyAsset.setRoles(model.roleNames, model.roleAddresses));
+  await allow(strategy, "import roles into empty asset", () => emptyAsset.setRoles(model.roleNames, model.roleNames.map(() => ZeroAddress)));
   await allow(
     strategy,
     "import nodes into empty asset",

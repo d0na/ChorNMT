@@ -38,7 +38,7 @@ Only the first `bpmn:Choreography` of the file is imported; collaborations, proc
 
 | BPMN element | NMT representation |
 | --- | --- |
-| Participant | Role named after the participant `name` (or `id` when unnamed). Names must be unique. |
+| Participant | Role named after the participant `name` (or `id` when unnamed), stored without a participant (zero address). Names must be unique. |
 | Start/end event | Node type `0` / `1`. Event definitions are not kept. |
 | Choreography task | Node type `2`. |
 | Task initiator and other participant | `initiatorRole` = `initiatingParticipantRef`; `participantRole` = the first other `participantRef`. Further participants are ignored. |
@@ -62,6 +62,6 @@ A delta lists only changed or added nodes, but each listed node is a complete re
 
 - `nodes` is a non-empty array; every node has `name` (non-empty string), `nodeType` (integer `0`–`7`), `incoming`, `outgoing`, `conditions` (string arrays), and `initiatorRole`, `participantRole`, `initiatingMessage`, `returnMessage` (strings, empty when unused);
 - `render` contains `choreographyId`, `choreographyName`, `definitionsId`, `targetNamespace`, and `outputBaseName`;
-- optional `roles` maps role names to Ethereum addresses. Each entry is sent with `setRoles`, adding new roles and overwriting the address of existing ones.
+- optional `roles` maps role names to the zero address (role not assigned) or to a `ParticipantMutableAsset` address. Each entry is sent with `setRoles`, adding new roles and binding, rebinding, or clearing the participant of existing ones; the Creator policy rejects any other address.
 
 The contract supports adding and replacing nodes. It does not currently remove a node name from the stored list, so use a fresh asset when a clean model replacement is required.

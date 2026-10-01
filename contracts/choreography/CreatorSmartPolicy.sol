@@ -16,6 +16,10 @@ interface IChoreographyAssetView {
     ) external view returns (uint8, string[] memory, string[] memory);
 }
 
+interface IParticipantRegistry {
+    function ownerOf(uint256 tokenId) external view returns (address);
+}
+
 contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     bytes4 private constant SET_ROLES = bytes4(keccak256("setRoles(string[],address[])"));
     bytes4 private constant SET_NODES = bytes4(keccak256("setNodes(string[],uint8[],string[][],string[][],string[][],string[],string[],string[],string[])"));
@@ -35,6 +39,7 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     mapping(bytes32 => bool) public protectedNodes;
     uint256 public protectedNodeCount;
     mapping(bytes32 => bool) public protectedRoles;
+    address public participantNmt;
 
     modifier onlyAdministrator() {
         require(msg.sender == administrator, "Caller is not the policy administrator");
@@ -80,6 +85,10 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
         } else {
             protectedNodeCount--;
         }
+    }
+
+    function setParticipantNmt(address participantNmtAddress) external onlyAdministrator {
+        participantNmt = participantNmtAddress;
     }
 
     function setProtectedRole(string calldata name, bool protectedRole) external onlyAdministrator {
@@ -264,12 +273,30 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
             if (
                 bytes(roleNames[i]).length == 0 ||
                 protectedRoles[keccak256(bytes(roleNames[i]))] ||
-                _isDuplicate(roleNames, i)
+                _isDuplicate(roleNames, i) ||
+                !_isEmptyOrParticipant(addresses[i])
             ) {
                 return false;
             }
         }
         return true;
+    }
+
+    // A role is either unassigned (zero address) or bound to a
+    // ParticipantMutableAsset minted by the trusted ParticipantNMT, whose token
+    // ID is the asset address.
+    function _isEmptyOrParticipant(address participant) private view returns (bool) {
+        if (participant == address(0)) {
+            return true;
+        }
+        if (participantNmt == address(0)) {
+            return false;
+        }
+        try IParticipantRegistry(participantNmt).ownerOf(uint160(participant)) returns (address owner) {
+            return owner != address(0);
+        } catch {
+            return false;
+        }
     }
 
     function _currentCounts(

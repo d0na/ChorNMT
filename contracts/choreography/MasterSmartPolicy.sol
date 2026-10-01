@@ -6,7 +6,7 @@ import "../base/SmartPolicy.sol";
 
 contract MasterSmartPolicy is SmartPolicy {
     bytes4 private constant MINT = bytes4(keccak256("mint(address,address,address)"));
-    bytes4 private constant MINT_WITH_INITIAL_MODEL = bytes4(keccak256("mintWithInitialModel(address,address,address,(string[],address[],string[],uint8[],string[][],string[][],string[][],string[],string[],string[],string[]))"));
+    bytes4 private constant MINT_WITH_INITIAL_MODEL = bytes4(keccak256("mintWithInitialModel(address,address,address,(string[],string[],uint8[],string[][],string[][],string[][],string[],string[],string[],string[]))"));
     bytes4 private constant TRANSFER = bytes4(keccak256("transferFrom(address,address)"));
 
     address public immutable administrator;

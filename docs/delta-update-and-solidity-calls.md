@@ -135,13 +135,13 @@ If the roles used by the new task do not already exist on-chain, call `setRoles(
 IChoreographyMutableAsset(assetAddress).setRoles(
     toStringArray2("Ale", "Fra"),
     toAddressArray2(
-        0x1111111111111111111111111111111111111111,
-        0x2222222222222222222222222222222222222222
+        address(0),             // Ale: no participant yet
+        participantAssetFra     // a ParticipantMutableAsset address
     )
 );
 ```
 
-If `Ale` and `Fra` already exist, this call is not needed.
+Each address must be the zero address or a `ParticipantMutableAsset` minted by the `ParticipantNMT` configured in the Creator policy; any other address is rejected. If `Ale` and `Fra` already exist with the intended participants, this call is not needed.
 
 ## Solidity Example: Delta Update
 

@@ -4,7 +4,7 @@ File di appunti versionato per riprendere il lavoro da qualsiasi computer. Aggio
 
 Ultima revisione completa: 2026-10-01 (commit di partenza `a2f2b68`).
 
-Commit di questa sessione: `8446524` docs, `a77719a` import, `0bc664d` render, `6ba8bc9` policy, più il commit con D14/D28/D29/D30.
+Commit di questa sessione: `8446524` docs, `a77719a` import, `0bc664d` render, `6ba8bc9` policy, `9f04b20` evaluation, `d663ccb` rimozione versioning, più il commit sui partecipanti dei ruoli (senza trailer di attribuzione).
 
 ## Prossimi passi
 
@@ -13,7 +13,8 @@ Commit di questa sessione: `8446524` docs, `a77719a` import, `0bc664d` render, `
 
 ## Stato verificato
 
-- `npm test`: 35 casi dopo la rimozione del versioning (5 casi di versioning tolti), nessun esito inatteso; motivi dei revert e storia eventi verificati. Valori di gas in [choreography-policies.md](choreography-policies.md#cost-benchmark) (3,756,566 / 3,664,451 / 92,115 / 424,441 / 143,123–187,732).
+- `npm test`: 40 casi (35 + 5 sui partecipanti: configurazione `ParticipantNMT`, associazione, diniego EOA, diniego contratto non participant, rimozione), nessun esito inatteso; motivi dei revert e storia eventi verificati. Valori di gas in [choreography-policies.md](choreography-policies.md#cost-benchmark) (3,719,237 / 3,624,234 / 95,003 (2.55%) / 424,620 / 143,546–188,155).
+- Dopo il cambio sui partecipanti: `ETH_USD_PRICE=3000 npm run evaluate:all` OK; i ruoli del `paper-example` sono esportati con indirizzo vuoto.
 - Workflow completo `deploy → import → render → modify → render` su nodo locale: OK; il BPMN finale reimportato coincide con import + delta.
 - `evaluate:policies`: OK.
 - `ETH_USD_PRICE=3000 npm run evaluate:all` (con nodo locale): OK; il report finale linka i CSV, il report lifecycle cita il flow limit, il caso `Order` protetto è una modifica reale.
@@ -31,6 +32,12 @@ Commit di questa sessione: `8446524` docs, `a77719a` import, `0bc664d` render, `
 - 2026-10-01 — Lato off-chain, il renderer (`normalize.js`) rifiuta **sempre** modelli con archi incoerenti o nodi sconosciuti, invece di produrre XML con `undefined`. `web3.js` e `nmt.js` emettono sempre `incoming`/`outgoing`, anche vuoti.
 - 2026-10-01 — Importer: gli archi derivano da `sequenceFlow sourceRef/targetRef`; l'ordine dei figli `<incoming>`/`<outgoing>`, se presenti, è mantenuto (output del `paper-example` invariato).
 - 2026-10-01 — Nome messaggio in import: `messageRef.name` → `flow.name` → `messageRef.id` → `flow.id`.
+- 2026-10-01 — **Partecipanti dei ruoli** (decisioni dell'utente):
+  - l'indirizzo di un ruolo è sempre o vuoto (`address(0)`, ruolo non assegnato) oppure un `ParticipantMutableAsset`; gli EOA non sono più ammessi;
+  - il vincolo è **sempre attivo** nella `CreatorSmartPolicy` (`evaluateRoleUpdate`); l'administrator configura il `ParticipantNMT` fidato con `setParticipantNmt`; la verifica è `ownerOf(uint160(indirizzo))` sul `ParticipantNMT` (token ID = indirizzo dell'asset). Senza `ParticipantNMT` configurato è ammesso solo l'indirizzo vuoto;
+  - la coreografia nasce **senza partecipanti**: `InitialModel` non ha più `roleAddresses` (firma di `mintWithInitialModel` cambiata anche nella master policy), l'import (`populate-local.js`) e la lifecycle evaluation usano indirizzi vuoti;
+  - associare un partecipante è evoluzione della coreografia e lo fa **solo l'holder** con `setRoles` (creator + holder policy); **riassegnare o tornare a vuoto** è consentito agli stessi autorizzati; i ruoli protetti restano bloccati. Nessun consenso richiesto al partecipante.
+- 2026-10-01 — Creato `CLAUDE.md`: i commit non devono contenere trailer `Co-Authored-By` né attribuzioni a Claude/Anthropic (i commit precedenti di questa sessione li contengono ancora).
 - 2026-10-01 — **Versioning rimosso** (richiesta dell'utente): eliminati `mintVersion`, `predecessorOf`, `versionOf` da `ChoreographyNMT` e `MINT_VERSION`, `versioningEnabled`, `setVersioningEnabled` da `MasterSmartPolicy`. La versione è mantenuta dalla blockchain: ogni modifica accettata è una transazione ed emette `ChoreographyInitialized` / `RolesChanged` / `NodesChanged`. I test di versioning sono stati sostituiti da un controllo che gli eventi `NodesChanged` riproducano la sequenza degli aggiornamenti. Gas di riferimento aggiornati: 3,756,566 / 3,664,451 / 92,115 (2.45%) / 424,441 / 143,123–187,732.
 - 2026-10-01 — `clean` rimuove anche gli `*.nmt.json` importati e i file temporanei di evaluation in `/tmp` (nessun file versionato coinvolto).
 - 2026-10-01 — I test di diniego verificano il motivo del revert; il caso "task limit" usa limiti (2, 4) per violare solo il limite sui task.
@@ -78,6 +85,13 @@ Commit di questa sessione: `8446524` docs, `a77719a` import, `0bc664d` render, `
 - [x] D30 Il caso "modifica di `Order` protetto" re-inviava `Order` invariato. _(risolto nel codice: ora cambia `initiatingMessage`)_
 - [x] D31 Prezzo ETH/USD condiviso tra i report solo se `ETH_USD_PRICE` è impostato; valore invalido/0 → fetch silenzioso.
 - [x] D32 `model-comparison.gp:11` etichetta "Parallel gateways" ma la colonna conta tutti i gateway.
+
+## P. Partecipanti (aperti)
+
+- [ ] P1 `deploy:asset` non deploya un `ParticipantNMT` né chiama `setParticipantNmt`: nel workflow locale si possono usare solo ruoli vuoti. Serve un comando per deployare il `ParticipantNMT`, configurarlo nella Creator policy e coniare participant asset.
+- [ ] P2 L'export BPMN usa ancora il nome del ruolo come identità; l'indirizzo del participant asset è solo metadato (`web3.js`) e non compare nell'XML. Valutare se esporlo (es. extension element o `participant` id).
+- [ ] P3 Nessun controllo che il ruolo referenziato da un task esista (vedi C2) né che sia assegnato prima di eseguire la coreografia.
+- [ ] P4 Un `ParticipantMutableAsset` non può essere distrutto: il caso "partecipante rimosso indipendentemente dalla coreografia" citato nella doc non è ancora modellato.
 
 ## C. Interventi sul codice (da discutere)
 

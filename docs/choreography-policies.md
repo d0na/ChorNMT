@@ -15,11 +15,11 @@ The table is the intended trust model with the default policies. Every change to
 | `mint` / `mintWithInitialModel` to an eligible holder | yes (registered as creator) | yes | no | no | no |
 | `transferFrom` to an eligible holder, when enabled | no | no | yes | no | no |
 | `setNodes` | no | no | yes, within the Creator BPMN constraints | no | no |
-| `setRoles` | no | no | yes, except protected roles | no | no |
+| `setRoles` (define roles, bind/rebind/clear participants) | no | no | yes, except protected roles; addresses must be empty or a `ParticipantMutableAsset` | no | no |
 | `setTokenURI`, `setLinked` | no | no | yes | no | no |
 | `setHolderSmartPolicy` | no | no | yes | no | no |
 | `setCreatorSmartPolicy` | no | no | **no** | yes | no |
-| Configure BPMN constraints (`setBpmnLimits`, allowlist, known endpoints, consistent flows, protected nodes and roles) | no | no | no | yes | no |
+| Configure BPMN constraints (`setBpmnLimits`, allowlist, known endpoints, consistent flows, protected nodes and roles, trusted `ParticipantNMT`) | no | no | no | yes | no |
 
 Design decisions behind the table:
 
@@ -27,6 +27,7 @@ Design decisions behind the table:
 - There is no application-level versioning. The model history is kept by the blockchain: every accepted change is a transaction on the asset and emits `ChoreographyInitialized`, `RolesChanged`, or `NodesChanged`.
 - The initial model passed to `mintWithInitialModel` is trusted: it comes from an authorized creator and is not checked by `evaluateNodeUpdate`. The constraints apply to every later `setNodes`.
 - A protected node is frozen together with its sequence flows: an update of another node cannot add or remove a link to it, in either `incoming` or `outgoing`, so a protected node cannot be disconnected through its neighbours.
+- A choreography starts without participants: imported and initial roles have the zero address. Binding a `ParticipantMutableAsset` to a role is part of the choreography evolution and is done by the Holder with `setRoles`; the same call rebinds a role or clears it back to the zero address. The Creator policy always accepts only the zero address or an asset minted by its trusted `ParticipantNMT`; externally owned accounts are rejected.
 - A protected role keeps its address: `setRoles` rejects any entry for it. Roles referenced by a protected task are not protected implicitly; protect them explicitly when their address must not change.
 - Nodes are never deleted: a node with the same name is overwritten. Roles are currently name-to-address entries that can be overwritten but not removed; the target design identifies participants by `ParticipantMutableAsset` NFTs, which can be destroyed independently of the choreography.
 - A transfer resets the Holder policy to zero. The new Holder must install a Holder policy with `setHolderSmartPolicy` before editing the model.
@@ -45,7 +46,7 @@ The policy administrator configures authorized creators and eligible holders wit
 
 `mintWithInitialModel(...)` receives the initial Holder, the two instance policies, and an `InitialModel` tuple:
 
-- `roleNames` and `roleAddresses`;
+- `roleNames` (roles start without participants);
 - node names and node types;
 - incoming and outgoing edges, conditions, roles, and messages for every node.
 
@@ -59,11 +60,11 @@ The Master policy authorizes the Creator and initial Holder but does not current
 
 | Route | Gas used |
 | --- | ---: |
-| `mint` + `setRoles` + `setNodes` | 3,756,566 |
-| `mintWithInitialModel` | 3,664,451 |
-| Saving | 92,115 (2.45%) |
+| `mint` + `setRoles` + `setNodes` | 3,719,237 |
+| `mintWithInitialModel` | 3,624,234 |
+| Saving | 95,003 (2.55%) |
 
-The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 424,441 gas and structural deny paths used 143,123--187,732 gas.
+The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 424,620 gas and structural deny paths used 143,546--188,155 gas.
 
 ## Instance policies
 
@@ -80,9 +81,10 @@ Replacing the Creator policy is not a Holder operation: only the Creator policy'
 - `setKnownFlowTargetsEnabled(...)`;
 - `setConsistentFlowsEnabled(...)`;
 - `setProtectedNode(...)`;
-- `setProtectedRole(...)`, evaluated by `evaluateRoleUpdate` on every `setRoles`.
+- `setProtectedRole(...)`, evaluated by `evaluateRoleUpdate` on every `setRoles`;
+- `setParticipantNmt(...)`, the trusted `ParticipantNMT` whose assets may be bound to roles.
 
-Before writing storage, the asset asks its Creator policy to evaluate the post-update task count and total outgoing sequence-flow count. The policy rejects duplicate names in a delta, protected-node updates, task names outside an enabled allowlist, incoming or outgoing flows whose endpoint does not already exist or appear in the same delta, flows declared on only one endpoint when consistent flows are enabled, and any change to the links of a protected node. `setRoles` is checked the same way for empty or duplicate names and protected roles.
+Before writing storage, the asset asks its Creator policy to evaluate the post-update task count and total outgoing sequence-flow count. The policy rejects duplicate names in a delta, protected-node updates, task names outside an enabled allowlist, incoming or outgoing flows whose endpoint does not already exist or appear in the same delta, flows declared on only one endpoint when consistent flows are enabled, and any change to the links of a protected node. `setRoles` is checked the same way for empty or duplicate names, protected roles, and addresses that are neither zero nor a `ParticipantMutableAsset` of the trusted `ParticipantNMT`.
 
 The Holder policy remains an independent second approval. A Holder can further restrict an instance by installing `DenyAllSmartPolicy`, without weakening the Creator-defined BPMN boundaries.
 

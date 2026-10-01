@@ -1,4 +1,4 @@
-import { Contract, JsonRpcProvider, Wallet } from "ethers";
+import { Contract, JsonRpcProvider, Wallet, ZeroAddress } from "ethers";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { PARALLEL_GATEWAY_EXAMPLE_CHOREOGRAPHY } from "./data/parallel-gateway-example.js";
@@ -45,14 +45,6 @@ const CHOREOGRAPHY_MUTABLE_ASSET_ABI = [
   }
 ];
 
-function buildRoleAddresses(accounts, roles) {
-  if (accounts.length < roles.length + 1) {
-    throw new Error("Not enough local accounts to assign choreography roles.");
-  }
-
-  return roles.map((_, index) => accounts[index + 1]);
-}
-
 function buildNodePayload(nodes) {
   return {
     names: nodes.map((node) => node.name),
@@ -89,10 +81,11 @@ export async function populateDataset(assetAddress, dataset, datasetName = "cust
   const provider = new JsonRpcProvider(RPC_URL);
   const signer = new Wallet(DEPLOYER_PRIVATE_KEY, provider);
   const contract = new Contract(assetAddress, CHOREOGRAPHY_MUTABLE_ASSET_ABI, signer);
-  const accounts = await provider.send("eth_accounts", []);
   let nonce = await provider.getTransactionCount(signer.address, "latest");
 
-  const roleAddresses = buildRoleAddresses(accounts, dataset.roles);
+  // Roles are imported without participants; binding a ParticipantMutableAsset
+  // to a role is a later setRoles update by the holder.
+  const roleAddresses = dataset.roles.map(() => ZeroAddress);
   const nodePayload = buildNodePayload(dataset.nodes);
 
   const setRolesTx = await contract.setRoles(dataset.roles, roleAddresses, {

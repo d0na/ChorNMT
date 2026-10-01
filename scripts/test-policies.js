@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import hre from "hardhat";
-import { AbiCoder } from "ethers";
+import { AbiCoder, ZeroAddress } from "ethers";
 import { resolveEthUsdPrice, scenarioUsd, writeMetrics } from "./evaluation/metrics.js";
 
 const GAS_LIMIT = 10_000_000n;
@@ -100,6 +100,27 @@ async function main() {
   ]);
 
   const nmtAddress = await nmt.getAddress();
+
+  const participantNmt = await (await ethers.getContractFactory("ParticipantNMT")).deploy();
+  const participantCreatorPolicy = await (await ethers.getContractFactory(
+    "contracts/participant/CreatorSmartPolicy.sol:CreatorSmartPolicy"
+  )).deploy();
+  const participantHolderPolicy = await (await ethers.getContractFactory(
+    "contracts/participant/HolderSmartPolicy.sol:HolderSmartPolicy"
+  )).deploy();
+  await Promise.all([
+    participantNmt.waitForDeployment(),
+    participantCreatorPolicy.waitForDeployment(),
+    participantHolderPolicy.waitForDeployment()
+  ]);
+  const mintParticipant = async (owner) => {
+    const participantArguments = [owner.address, participantCreatorPolicy.target, participantHolderPolicy.target];
+    const [participantAddress] = await participantNmt.mint.staticCall(...participantArguments);
+    await (await participantNmt.mint(...participantArguments)).wait();
+    return participantAddress;
+  };
+  const buyerParticipant = await mintParticipant(administrator);
+  const supplierParticipant = await mintParticipant(eligibleHolder);
   const creatorPolicyAddress = await creatorPolicy.getAddress();
   const holderPolicyAddress = await holderPolicy.getAddress();
 
@@ -119,10 +140,10 @@ async function main() {
 
   const asset = await ethers.getContractAt("ChoreographyMutableAsset", assetAddress);
   const roles = ["Buyer", "Supplier"];
-  const roleAddresses = [administrator.address, eligibleHolder.address];
+  // Roles start without participants (zero address).
+  const roleAddresses = [ZeroAddress, ZeroAddress];
   const initialModel = {
     roleNames: roles,
-    roleAddresses,
     names: ["Start", "Delivery", "End"],
     nodeTypes: [0, 2, 1],
     incoming: [[], ["Start"], ["Delivery"]],
@@ -133,6 +154,10 @@ async function main() {
     initiatingMessages: ["", "requestDelivery", ""],
     returnMessages: ["", "deliveryConfirmed", ""]
   };
+  report.push(await expectAllowed(
+    "creator configures trusted ParticipantNMT",
+    () => creatorPolicy.setParticipantNmt(participantNmt.target)
+  ));
   report.push(await expectAllowed("creator and holder update roles", () => asset.setRoles(roles, roleAddresses)));
   report.push(await expectAllowed(
     "creator and holder update nodes",
@@ -159,6 +184,36 @@ async function main() {
   ));
   const initializedAsset = await ethers.getContractAt("ChoreographyMutableAsset", initializedAssetAddress);
   assert.deepEqual(Array.from(await initializedAsset.getNodeNames()), initialModel.names);
+  assert.equal(await initializedAsset.getRole("Buyer"), ZeroAddress);
+
+  report.push(await expectAllowed(
+    "holder binds participant asset to role",
+    () => asset.setRoles(["Buyer"], [buyerParticipant])
+  ));
+  assert.equal(await asset.getRole("Buyer"), buyerParticipant);
+  report.push(await expectDenied(
+    "creator policy denies externally owned account as role participant",
+    administrator,
+    {
+      to: assetAddress,
+      data: asset.interface.encodeFunctionData("setRoles", [["Supplier"], [eligibleHolder.address]])
+    },
+    "Operation DENIED by CREATOR role policy"
+  ));
+  report.push(await expectDenied(
+    "creator policy denies contract outside ParticipantNMT as role participant",
+    administrator,
+    {
+      to: assetAddress,
+      data: asset.interface.encodeFunctionData("setRoles", [["Supplier"], [initializedAssetAddress]])
+    },
+    "Operation DENIED by CREATOR role policy"
+  ));
+  report.push(await expectAllowed(
+    "holder unbinds role participant",
+    () => asset.setRoles(["Buyer"], [ZeroAddress])
+  ));
+  assert.equal(await asset.getRole("Buyer"), ZeroAddress);
 
   const emptyThenImportGas =
     gasFor(report, "authorized creator mints eligible holder") +
@@ -308,18 +363,18 @@ async function main() {
   await (await creatorPolicy.setProtectedRole("Buyer", true)).wait();
   report.push(await expectAllowed(
     "creator policy allows unprotected role update",
-    () => constrainedAsset.setRoles(["Supplier"], [ineligibleHolder.address])
+    () => constrainedAsset.setRoles(["Supplier"], [supplierParticipant])
   ));
   report.push(await expectDenied(
     "creator policy denies protected role update",
     administrator,
     {
       to: constrainedAssetAddress,
-      data: constrainedAsset.interface.encodeFunctionData("setRoles", [["Buyer"], [ineligibleHolder.address]])
+      data: constrainedAsset.interface.encodeFunctionData("setRoles", [["Buyer"], [buyerParticipant]])
     },
     "Operation DENIED by CREATOR role policy"
   ));
-  assert.equal(await constrainedAsset.getRole("Buyer"), administrator.address);
+  assert.equal(await constrainedAsset.getRole("Buyer"), ZeroAddress);
   await (await creatorPolicy.setProtectedRole("Buyer", false)).wait();
 
   // A dedicated Creator policy, so the single-node updates above stay valid.
