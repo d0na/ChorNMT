@@ -30,6 +30,7 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     uint256 public maxSequenceFlowCount = type(uint256).max;
     bool public enforceTaskNameAllowlist;
     bool public enforceKnownFlowTargets;
+    bool public enforceConsistentFlows;
     mapping(bytes32 => bool) public allowedTaskNames;
     mapping(bytes32 => bool) public protectedNodes;
     uint256 public protectedNodeCount;
@@ -58,6 +59,10 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
 
     function setKnownFlowTargetsEnabled(bool enabled) external onlyAdministrator {
         enforceKnownFlowTargets = enabled;
+    }
+
+    function setConsistentFlowsEnabled(bool enabled) external onlyAdministrator {
+        enforceConsistentFlows = enabled;
     }
 
     function setAllowedTaskName(string calldata name, bool allowed) external onlyAdministrator {
@@ -162,7 +167,88 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
             }
         }
 
+        if (enforceConsistentFlows && !_hasConsistentFlows(choreography, names, incoming, outgoing)) {
+            return false;
+        }
+
         return taskCount <= maxTaskCount && sequenceFlowCount <= maxSequenceFlowCount;
+    }
+
+    // Every sequence flow of the post-update model must be declared on both
+    // endpoints: B in A.outgoing if and only if A in B.incoming.
+    function _hasConsistentFlows(
+        IChoreographyAssetView choreography,
+        string[] memory names,
+        string[][] memory incoming,
+        string[][] memory outgoing
+    ) private view returns (bool) {
+        for (uint256 i = 0; i < names.length; i++) {
+            for (uint256 j = 0; j < outgoing[i].length; j++) {
+                (string[] memory targetIncoming, ) = _finalEdges(choreography, names, incoming, outgoing, outgoing[i][j]);
+                if (!_containsName(targetIncoming, names[i])) {
+                    return false;
+                }
+            }
+            for (uint256 j = 0; j < incoming[i].length; j++) {
+                (, string[] memory sourceOutgoing) = _finalEdges(choreography, names, incoming, outgoing, incoming[i][j]);
+                if (!_containsName(sourceOutgoing, names[i])) {
+                    return false;
+                }
+            }
+            if (choreography.hasNode(names[i]) && !_keepsUnchangedNeighbours(choreography, names, incoming[i], outgoing[i], i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // A previous neighbour outside the update still references this node, so
+    // the update must keep the matching reference.
+    function _keepsUnchangedNeighbours(
+        IChoreographyAssetView choreography,
+        string[] memory names,
+        string[] memory nextIncoming,
+        string[] memory nextOutgoing,
+        uint256 index
+    ) private view returns (bool) {
+        (, string[] memory currentIncoming, string[] memory currentOutgoing) = choreography.getNodeTypeAndEdges(names[index]);
+        for (uint256 j = 0; j < currentOutgoing.length; j++) {
+            if (!_containsName(names, currentOutgoing[j]) && !_containsName(nextOutgoing, currentOutgoing[j])) {
+                (, string[] memory targetIncoming, ) = choreography.getNodeTypeAndEdges(currentOutgoing[j]);
+                if (_containsName(targetIncoming, names[index])) {
+                    return false;
+                }
+            }
+        }
+        for (uint256 j = 0; j < currentIncoming.length; j++) {
+            if (!_containsName(names, currentIncoming[j]) && !_containsName(nextIncoming, currentIncoming[j])) {
+                (, , string[] memory sourceOutgoing) = choreography.getNodeTypeAndEdges(currentIncoming[j]);
+                if (_containsName(sourceOutgoing, names[index])) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function _finalEdges(
+        IChoreographyAssetView choreography,
+        string[] memory names,
+        string[][] memory incoming,
+        string[][] memory outgoing,
+        string memory name
+    ) private view returns (string[] memory, string[] memory) {
+        bytes32 nameHash = keccak256(bytes(name));
+        for (uint256 i = 0; i < names.length; i++) {
+            if (keccak256(bytes(names[i])) == nameHash) {
+                return (incoming[i], outgoing[i]);
+            }
+        }
+        if (choreography.hasNode(name)) {
+            (, string[] memory currentIncoming, string[] memory currentOutgoing) = choreography.getNodeTypeAndEdges(name);
+            return (currentIncoming, currentOutgoing);
+        }
+        return (new string[](0), new string[](0));
     }
 
     function evaluateRoleUpdate(

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import hre from "hardhat";
+import { AbiCoder } from "ethers";
 import { resolveEthUsdPrice, scenarioUsd, writeMetrics } from "./evaluation/metrics.js";
 
 const GAS_LIMIT = 10_000_000n;
@@ -20,7 +21,26 @@ async function expectAllowed(label, send) {
   return { label, outcome: "allowed", ...formatCost(receipt) };
 }
 
-async function expectDenied(label, signer, transaction) {
+const ERROR_STRING_SELECTOR = "0x08c379a0";
+
+async function revertReason(signer, transaction) {
+  try {
+    await signer.call(transaction);
+  } catch (error) {
+    if (typeof error.data === "string" && error.data.startsWith(ERROR_STRING_SELECTOR)) {
+      return AbiCoder.defaultAbiCoder().decode(["string"], `0x${error.data.slice(10)}`)[0];
+    }
+    return error.reason ?? `unrecognized revert data ${error.data}`;
+  }
+  return null;
+}
+
+async function expectDenied(label, signer, transaction, expectedReason) {
+  assert.equal(
+    await revertReason(signer, transaction),
+    expectedReason,
+    `${label} should be denied with "${expectedReason}"`
+  );
   let receipt;
   try {
     const response = await signer.sendTransaction({ ...transaction, gasLimit: GAS_LIMIT });
@@ -151,7 +171,7 @@ async function main() {
 
   report.push(await expectAllowed(
     "creator configures BPMN structural limits",
-    () => creatorPolicy.setBpmnLimits(2, 3)
+    () => creatorPolicy.setBpmnLimits(2, 4)
   ));
   await (await creatorPolicy.setTaskNameAllowlistEnabled(true)).wait();
   await (await creatorPolicy.setKnownFlowTargetsEnabled(true)).wait();
@@ -192,7 +212,8 @@ async function main() {
     {
       to: constrainedAssetAddress,
       data: constrainedAsset.interface.encodeFunctionData("setNodes", packingUpdate)
-    }
+    },
+    "Operation DENIED by CREATOR BPMN policy"
   ));
 
   await (await creatorPolicy.setBpmnLimits(3, 3)).wait();
@@ -202,7 +223,8 @@ async function main() {
     {
       to: constrainedAssetAddress,
       data: constrainedAsset.interface.encodeFunctionData("setNodes", packingUpdate)
-    }
+    },
+    "Operation DENIED by CREATOR BPMN policy"
   ));
 
   await (await creatorPolicy.setBpmnLimits(3, 4)).wait();
@@ -219,7 +241,8 @@ async function main() {
     {
       to: constrainedAssetAddress,
       data: constrainedAsset.interface.encodeFunctionData("setNodes", unapprovedUpdate)
-    }
+    },
+    "Operation DENIED by CREATOR BPMN policy"
   ));
 
   const unknownTargetUpdate = nodeUpdate("Inspection", 2, ["Delivery"], ["Unknown"]);
@@ -229,7 +252,8 @@ async function main() {
     {
       to: constrainedAssetAddress,
       data: constrainedAsset.interface.encodeFunctionData("setNodes", unknownTargetUpdate)
-    }
+    },
+    "Operation DENIED by CREATOR BPMN policy"
   ));
 
   const protectedStartUpdate = nodeUpdate("Start", 0, [], ["Delivery"]);
@@ -239,7 +263,8 @@ async function main() {
     {
       to: constrainedAssetAddress,
       data: constrainedAsset.interface.encodeFunctionData("setNodes", protectedStartUpdate)
-    }
+    },
+    "Operation DENIED by CREATOR BPMN policy"
   ));
 
   const unknownSourceUpdate = nodeUpdate("Inspection", 2, ["Unknown"], ["End"]);
@@ -249,7 +274,8 @@ async function main() {
     {
       to: constrainedAssetAddress,
       data: constrainedAsset.interface.encodeFunctionData("setNodes", unknownSourceUpdate)
-    }
+    },
+    "Operation DENIED by CREATOR BPMN policy"
   ));
 
   await (await creatorPolicy.setAllowedTaskName("Delivery", true)).wait();
@@ -263,7 +289,8 @@ async function main() {
     {
       to: constrainedAssetAddress,
       data: constrainedAsset.interface.encodeFunctionData("setNodes", nodeUpdate("Delivery", 2, [], ["End"]))
-    }
+    },
+    "Operation DENIED by CREATOR BPMN policy"
   ));
   report.push(await expectDenied(
     "creator policy denies new link to protected node",
@@ -274,7 +301,8 @@ async function main() {
         "setNodes",
         nodeUpdate("Inspection", 2, ["Delivery", "Start"], ["End"])
       )
-    }
+    },
+    "Operation DENIED by CREATOR BPMN policy"
   ));
 
   await (await creatorPolicy.setProtectedRole("Buyer", true)).wait();
@@ -288,10 +316,60 @@ async function main() {
     {
       to: constrainedAssetAddress,
       data: constrainedAsset.interface.encodeFunctionData("setRoles", [["Buyer"], [ineligibleHolder.address]])
-    }
+    },
+    "Operation DENIED by CREATOR role policy"
   ));
   assert.equal(await constrainedAsset.getRole("Buyer"), administrator.address);
   await (await creatorPolicy.setProtectedRole("Buyer", false)).wait();
+
+  // A dedicated Creator policy, so the single-node updates above stay valid.
+  const consistentPolicy = await creatorFactory.deploy();
+  await consistentPolicy.waitForDeployment();
+  report.push(await expectAllowed(
+    "creator enables consistent sequence flows",
+    () => consistentPolicy.setConsistentFlowsEnabled(true)
+  ));
+  const consistentMintArguments = [administrator.address, await consistentPolicy.getAddress(), holderPolicyAddress];
+  const [consistentAssetAddress] = await nmt.mintWithInitialModel.staticCall(...consistentMintArguments, initialModel);
+  await (await nmt.mintWithInitialModel(...consistentMintArguments, initialModel)).wait();
+  const consistentAsset = await ethers.getContractAt("ChoreographyMutableAsset", consistentAssetAddress);
+  const nodesUpdate = (nodes) => {
+    const updates = nodes.map(([name, nodeType, incoming, outgoing]) => nodeUpdate(name, nodeType, incoming, outgoing));
+    return updates[0].map((_, field) => updates.map((update) => update[field][0]));
+  };
+  const deniedConsistency = (label, nodes) => expectDenied(
+    label,
+    administrator,
+    {
+      to: consistentAssetAddress,
+      data: consistentAsset.interface.encodeFunctionData("setNodes", nodesUpdate(nodes))
+    },
+    "Operation DENIED by CREATOR BPMN policy"
+  );
+  report.push(await expectAllowed(
+    "creator policy allows task insertion declared on both endpoints",
+    () => consistentAsset.setNodes(...nodesUpdate([
+      ["Delivery", 2, ["Start"], ["Inspection"]],
+      ["Inspection", 2, ["Delivery"], ["End"]],
+      ["End", 1, ["Inspection"], []]
+    ]))
+  ));
+  report.push(await deniedConsistency(
+    "creator policy denies flow missing from target incoming",
+    [["Delivery", 2, ["Start"], ["Inspection", "End"]]]
+  ));
+  report.push(await deniedConsistency(
+    "creator policy denies flow missing from source outgoing",
+    [["End", 1, ["Inspection", "Start"], []]]
+  ));
+  report.push(await deniedConsistency(
+    "creator policy denies flow removed from one endpoint only",
+    [["Inspection", 2, ["Delivery"], []]]
+  ));
+  assert.deepEqual(
+    Array.from((await consistentAsset.getNodeTypeAndEdges("End"))[1]),
+    ["Inspection"]
+  );
 
   report.push(await expectDenied(
     "unauthorized creator cannot mint",
@@ -303,7 +381,8 @@ async function main() {
         creatorPolicyAddress,
         holderPolicyAddress
       ])
-    }
+    },
+    "Operation DENIED by MASTER policy"
   ));
 
   report.push(await expectDenied(
@@ -316,7 +395,8 @@ async function main() {
         creatorPolicyAddress,
         holderPolicyAddress
       ])
-    }
+    },
+    "Operation DENIED by MASTER policy"
   ));
 
   report.push(await expectDenied(
@@ -325,7 +405,8 @@ async function main() {
     {
       to: assetAddress,
       data: asset.interface.encodeFunctionData("setRoles", [roles, roleAddresses])
-    }
+    },
+    "Operation DENIED by CREATOR policy"
   ));
 
   const [versionAddress, versionTokenId] = await nmt.mintVersion.staticCall(
@@ -359,7 +440,8 @@ async function main() {
         holderPolicyAddress,
         BigInt(assetAddress)
       ])
-    }
+    },
+    "Operation DENIED by MASTER policy"
   ));
 
   report.push(await expectAllowed("master enables transfer to eligible holder", () => master.setTransfersEnabled(true)));
@@ -380,7 +462,8 @@ async function main() {
         administrator.address,
         BigInt(assetAddress)
       ])
-    }
+    },
+    "Operation DENIED by MASTER policy"
   ));
 
   const denyAllPolicy = await denyAllFactory.deploy();
@@ -396,7 +479,8 @@ async function main() {
     {
       to: holderAssetAddress,
       data: holderAsset.interface.encodeFunctionData("setCreatorSmartPolicy", [holderPolicyAddress])
-    }
+    },
+    "Operation DENIED by CREATOR policy"
   ));
   assert.equal(await holderAsset.creatorSmartPolicy(), creatorPolicyAddress);
   report.push(await expectAllowed(
@@ -416,7 +500,8 @@ async function main() {
         holderPolicyAddress,
         BigInt(holderAssetAddress)
       ])
-    }
+    },
+    "Operation DENIED by MASTER policy"
   ));
   report.push(await expectAllowed(
     "holder mints version keeping creator policy",
@@ -440,7 +525,8 @@ async function main() {
     {
       to: secondMint[0],
       data: restrictedAsset.interface.encodeFunctionData("setRoles", [roles, roleAddresses])
-    }
+    },
+    "Operation DENIED by HOLDER policy"
   ));
 
   printReport(report);

@@ -20,7 +20,7 @@ The table is the intended trust model with the default policies. Every change to
 | `setTokenURI`, `setLinked` | no | no | yes | no | no |
 | `setHolderSmartPolicy` | no | no | yes | no | no |
 | `setCreatorSmartPolicy` | no | no | **no** | yes | no |
-| Configure BPMN constraints (`setBpmnLimits`, allowlist, known endpoints, protected nodes and roles) | no | no | no | yes | no |
+| Configure BPMN constraints (`setBpmnLimits`, allowlist, known endpoints, consistent flows, protected nodes and roles) | no | no | no | yes | no |
 
 Design decisions behind the table:
 
@@ -61,11 +61,11 @@ The Master policy authorizes the Creator and initial Holder but does not current
 
 | Route | Gas used |
 | --- | ---: |
-| `mint` + `setRoles` + `setNodes` | 3,756,233 |
+| `mint` + `setRoles` + `setNodes` | 3,756,456 |
 | `mintWithInitialModel` | 3,664,473 |
-| Saving | 91,760 (2.44%) |
+| Saving | 91,983 (2.45%) |
 
-The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 424,218 gas and structural deny paths used 143,057--187,666 gas.
+The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 424,397 gas and structural deny paths used 143,079--187,688 gas.
 
 ## Instance policies
 
@@ -80,10 +80,11 @@ Replacing the Creator policy is not a Holder operation: only the Creator policy'
 - `setBpmnLimits(maxTasks, maxSequenceFlows)`;
 - `setTaskNameAllowlistEnabled(...)` and `setAllowedTaskName(...)`;
 - `setKnownFlowTargetsEnabled(...)`;
+- `setConsistentFlowsEnabled(...)`;
 - `setProtectedNode(...)`;
 - `setProtectedRole(...)`, evaluated by `evaluateRoleUpdate` on every `setRoles`.
 
-Before writing storage, the asset asks its Creator policy to evaluate the post-update task count and total outgoing sequence-flow count. The policy rejects duplicate names in a delta, protected-node updates, task names outside an enabled allowlist, incoming or outgoing flows whose endpoint does not already exist or appear in the same delta, and any change to the links of a protected node. `setRoles` is checked the same way for empty or duplicate names and protected roles.
+Before writing storage, the asset asks its Creator policy to evaluate the post-update task count and total outgoing sequence-flow count. The policy rejects duplicate names in a delta, protected-node updates, task names outside an enabled allowlist, incoming or outgoing flows whose endpoint does not already exist or appear in the same delta, flows declared on only one endpoint when consistent flows are enabled, and any change to the links of a protected node. `setRoles` is checked the same way for empty or duplicate names and protected roles.
 
 The Holder policy remains an independent second approval. A Holder can further restrict an instance by installing `DenyAllSmartPolicy`, without weakening the Creator-defined BPMN boundaries.
 

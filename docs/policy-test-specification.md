@@ -73,6 +73,7 @@ the maximum unsigned value until configured.
 | Flow limit | `setBpmnLimits(maxTasks, maxSequenceFlows)` | The post-update model cannot contain more outgoing sequence flows than `maxSequenceFlows`. |
 | Task-name allowlist | `setTaskNameAllowlistEnabled(bool)`, `setAllowedTaskName(name, bool)` | When enabled, every changed task name must be approved. |
 | Known flow endpoint | `setKnownFlowTargetsEnabled(bool)` | When enabled, each `incoming` source and `outgoing` target must exist already or be present in the same update. |
+| Consistent flows | `setConsistentFlowsEnabled(bool)` | When enabled, the post-update model must declare every sequence flow on both endpoints: B is in A's `outgoing` if and only if A is in B's `incoming`. Adding or removing a flow therefore requires updating both nodes. |
 | Protected node | `setProtectedNode(name, bool)` | A protected node cannot be changed by `setNodes`, and no other node may add or remove a sequence flow to or from it. |
 | Protected role | `setProtectedRole(name, bool)` | Evaluated on `setRoles`: a protected role cannot be reassigned. |
 
