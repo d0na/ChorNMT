@@ -166,8 +166,8 @@ function buildRawOutput(manifest, roles, nodes) {
           type: typeInfo.type,
           contractNodeType: typeInfo.contractNodeType,
           contractName: node.name,
-          ...(node.incoming.length > 0 ? { incoming: node.incoming.map((name) => `${name}->${node.name}`) } : {}),
-          ...(node.outgoing.length > 0 ? { outgoing: node.outgoing.map((name) => `${node.name}->${name}`) } : {}),
+          incoming: node.incoming.map((name) => `${name}->${node.name}`),
+          outgoing: node.outgoing.map((name) => `${node.name}->${name}`),
           ...(typeInfo.gatewayKind ? { gatewayKind: typeInfo.gatewayKind } : {}),
           ...(node.initiatorRole ? { initiatingParticipant: node.initiatorRole } : {}),
           ...((node.initiatorRole || node.participantRole)

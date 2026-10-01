@@ -92,12 +92,8 @@ export function nmtDatasetToBpmnInput(dataset, options = {}) {
       name: node.name,
       contractName: node.name,
       type,
-      ...(Array.isArray(node.incoming) && node.incoming.length > 0
-        ? { incoming: node.incoming.map((source) => `${source}->${node.name}`) }
-        : {}),
-      ...(Array.isArray(node.outgoing) && node.outgoing.length > 0
-        ? { outgoing: node.outgoing.map((target) => `${node.name}->${target}`) }
-        : {}),
+      incoming: (node.incoming || []).map((source) => `${source}->${node.name}`),
+      outgoing: (node.outgoing || []).map((target) => `${node.name}->${target}`),
       ...(node.initiatorRole ? { initiatingParticipant: node.initiatorRole } : {}),
       ...((node.initiatorRole || node.participantRole)
         ? { participants: [node.initiatorRole, node.participantRole].filter(Boolean) }
