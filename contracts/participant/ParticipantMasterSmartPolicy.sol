@@ -9,6 +9,7 @@ import "./IParticipantAsset.sol";
 contract ParticipantMasterSmartPolicy is SmartPolicy {
     bytes4 private constant MINT = bytes4(keccak256("mint(address,address,address)"));
     bytes4 private constant TRANSFER = bytes4(keccak256("transferFrom(address,address)"));
+    bytes4 private constant SET_MASTER_SMART_POLICY = bytes4(keccak256("setMasterSmartPolicy(address)"));
 
     address public immutable administrator;
     bool public transfersEnabled = true;
@@ -73,6 +74,11 @@ contract ParticipantMasterSmartPolicy is SmartPolicy {
         address resource
     ) public view override returns (bool) {
         bytes4 signature = decodeSignature(action);
+
+        // Only the administrator replaces this policy on the token it guards.
+        if (signature == SET_MASTER_SMART_POLICY) {
+            return subject == administrator;
+        }
 
         if (signature == MINT) {
             return authorizedIssuers[subject];

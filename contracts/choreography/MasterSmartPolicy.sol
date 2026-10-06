@@ -9,6 +9,7 @@ contract MasterSmartPolicy is SmartPolicy {
     bytes4 private constant MINT_WITH_INITIAL_MODEL = bytes4(keccak256("mintWithInitialModel(address,address,address,(string[],address[],string[],uint8[],string[][],string[][],string[][],string[],string[],string[],string[]))"));
     bytes4 private constant TRANSFER = bytes4(keccak256("transferFrom(address,address)"));
     bytes4 private constant MINT_VERSION = bytes4(keccak256("mintVersion(address,address,address,uint256)"));
+    bytes4 private constant SET_MASTER_SMART_POLICY = bytes4(keccak256("setMasterSmartPolicy(address)"));
 
     address public immutable administrator;
     bool public transfersEnabled = true;
@@ -61,6 +62,11 @@ contract MasterSmartPolicy is SmartPolicy {
         address resource
     ) public view override returns (bool) {
         bytes4 signature = decodeSignature(action);
+
+        // Only the administrator replaces this policy on the token it guards.
+        if (signature == SET_MASTER_SMART_POLICY) {
+            return subject == administrator;
+        }
 
         if (signature == MINT || signature == MINT_WITH_INITIAL_MODEL) {
             address holder = _addressAt(action, 4);

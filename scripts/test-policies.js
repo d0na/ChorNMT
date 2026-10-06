@@ -670,6 +670,63 @@ async function main() {
     }
   ));
 
+  // A Master policy is replaced only with its own approval, and the replacement governs every later action.
+  const replacementMaster = await masterFactory.deploy(administrator.address);
+  await replacementMaster.waitForDeployment();
+  report.push(await expectDenied(
+    "holder cannot replace master policy",
+    eligibleHolder,
+    {
+      to: nmtAddress,
+      data: nmt.interface.encodeFunctionData("setMasterSmartPolicy", [replacementMaster.target])
+    }
+  ));
+  report.push(await expectDenied(
+    "master administrator cannot remove master policy",
+    administrator,
+    {
+      to: nmtAddress,
+      data: nmt.interface.encodeFunctionData("setMasterSmartPolicy", [ethers.ZeroAddress])
+    }
+  ));
+  report.push(await expectAllowed(
+    "master administrator replaces master policy",
+    () => nmt.setMasterSmartPolicy(replacementMaster.target)
+  ));
+  assert.equal(await nmt.masterSmartPolicy(), replacementMaster.target);
+  report.push(await expectDenied(
+    "replaced master policy governs minting",
+    administrator,
+    {
+      to: nmtAddress,
+      data: nmt.interface.encodeFunctionData("mint", holderMintArguments)
+    }
+  ));
+
+  const replacementParticipantMaster = await (await ethers.getContractFactory("ParticipantMasterSmartPolicy"))
+    .deploy(administrator.address);
+  await replacementParticipantMaster.waitForDeployment();
+  report.push(await expectDenied(
+    "license holder cannot replace participant master policy",
+    carrierB,
+    {
+      to: participantNmt.target,
+      data: participantNmt.interface.encodeFunctionData("setMasterSmartPolicy", [replacementParticipantMaster.target])
+    }
+  ));
+  report.push(await expectAllowed(
+    "participant master administrator replaces participant master policy",
+    () => participantNmt.setMasterSmartPolicy(replacementParticipantMaster.target)
+  ));
+  report.push(await expectDenied(
+    "replaced participant master policy governs sales",
+    carrierB,
+    {
+      to: participantNmt.target,
+      data: participantNmt.interface.encodeFunctionData("transferFrom", [carrierB.address, carrierA.address, BigInt(carrierLicense.target)])
+    }
+  ));
+
   printReport(report);
   const summary = {
     allowedGas: totalGas(report, "allowed").toString(),

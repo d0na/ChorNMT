@@ -49,6 +49,13 @@ two lifecycle switches.
 | Eligible Holder | `setEligibleHolder(address, bool)` | mint, transfer, version mint | An instance can only be assigned to an approved Holder. |
 | Transfer switch | `setTransfersEnabled(bool)` | `transferFrom` | Disables ownership transfer without deleting the instance. |
 | Version switch | `setVersioningEnabled(bool)` | `mintVersion` | Prevents creation of additional versions while retaining history. |
+| Master replacement | `setMasterSmartPolicy(address)` on the NMT, allowed by the current Master to its administrator | every later NMT action | The new Master governs every later mint, version, and transfer; the zero address is rejected. |
+
+Both NMTs inherit the Master policy from the base `NMT`. The tests check that a
+Holder cannot replace it, that the administrator cannot remove it, and that
+after a replacement the new Master decides: a mint the old Master allowed is
+denied, and so is a license sale to a buyer qualified only under the old
+participant Master.
 
 `ChoreographyNMT` records version lineage through `predecessorOf(tokenId)` and
 `versionOf(tokenId)`. A version may be created by an authorized Creator or by
@@ -168,7 +175,7 @@ than assuming a universal saving.
 
 | Command | Model | Evidence produced |
 | --- | --- | --- |
-| `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, versioning, attempts to bypass the Creator policy, and receipt gas/wei. The script exits with an error if any case has an unexpected outcome. |
+| `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, versioning, Master policy replacement, attempts to bypass the Creator policy, and receipt gas/wei. The script exits with an error if any case has an unexpected outcome. |
 | `npm run evaluate:policies` | Imported `paper-example` plus real delta | Empty versus populated mint, paper-model structural allow/deny cases, the Special Carrier license sale allow/deny cases, and scenario costs. |
 | `npm run evaluate:paper` | Imported `paper-example` plus real delta | Import/render/delta/full-population measurements, chor-js BPMN images, and gnuplot charts. |
 | `npm run evaluate:all` | All of the above | Rebuilds the canonical final report. |

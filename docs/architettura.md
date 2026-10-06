@@ -169,13 +169,13 @@ tokenId = uint160(address(asset))        asset = address(uint160(tokenId))
 
 ### `ChoreographyNMT`
 
-**A cosa serve:** conia i token di coreografia, crea un `ChoreographyMutableAsset` per ciascuno, fa passare mint, versioni e trasferimenti dalla Master policy ed espone `tokenURI`.
+**A cosa serve:** conia i token di coreografia, crea un `ChoreographyMutableAsset` per ciascuno, fa passare mint, versioni e trasferimenti dalla Master policy ed espone `tokenURI`. Master policy, `evaluatedByMaster`, `mint`, `transferFrom` e `setMasterSmartPolicy` stanno nel base `NMT`, condiviso con `ParticipantNMT`.
 
 **Struttura interna:**
 
 | Stato | Tipo | Significato |
 | --- | --- | --- |
-| `masterSmartPolicy` | `address immutable` | Policy consultata da `evaluatedByMaster` su ogni operazione dell'NMT. |
+| `masterSmartPolicy` | `address` (nel base `NMT`) | Policy consultata da `evaluatedByMaster` su ogni operazione dell'NMT. Si sostituisce con `setMasterSmartPolicy`, solo se la Master corrente lo consente (al suo `administrator`). |
 | `tokenURIRenderer` | `address immutable` | Contratto che genera i metadati. Si passa al costruttore. |
 | `predecessorOf` | `mapping(uint256 => uint256)` | Per una versione: il token da cui deriva. |
 | `versionOf` | `mapping(uint256 => uint256)` | Numero di versione: 0 per un asset originale, predecessore + 1 per una versione. |
@@ -186,11 +186,12 @@ tokenId = uint160(address(asset))        asset = address(uint160(tokenId))
 | `mintWithInitialModel(to, creator, holder, model)` | creator autorizzato, `to` idoneo | Crea l'asset e lo inizializza con `initializeChoreography(model)` nella stessa transazione. |
 | `mintVersion(to, creator, holder, predecessorId)` | versioning attivo, `to` idoneo, chiamante creator autorizzato **oppure** holder del predecessore che mantiene la sua Creator policy | Crea un asset **vuoto** e registra `predecessorOf` e `versionOf`. Il modello non viene copiato. |
 | `transferFrom(from, to, tokenId)` | trasferimenti attivi, `subject == from == holder`, `to` idoneo | Poi l'asset valuta la Creator policy e il token viene trasferito. |
+| `setMasterSmartPolicy(policy)` | chiamante `administrator` della Master corrente; `policy` diversa da zero | Sostituisce la Master: da quel momento decide lei mint, versioni e trasferimenti. |
 | `tokenURI(tokenId)` | — (lettura) | Verifica che il token esista e restituisce `renderer.tokenURI(asset)`. |
 
 Il mint usa `ERC721._mint` e non `_safeMint`: nessuna callback raggiunge il destinatario prima che l'asset sia inizializzato e la sua versione registrata.
 
-**Vincolo di dimensione:** l'NMT contiene il bytecode dell'asset, perché lo crea con `new`. Occupa 22.075 byte su un limite di 24.576. Per questo la generazione del JSON sta in un contratto separato.
+**Vincolo di dimensione:** l'NMT contiene il bytecode dell'asset, perché lo crea con `new`. Occupa 22.336 byte su un limite di 24.576. Per questo la generazione del JSON sta in un contratto separato.
 
 ### `ChoreographyMutableAsset`
 
@@ -307,7 +308,7 @@ Un `ParticipantMutableAsset` è la **licenza di un ruolo**. La coreografia colle
 
 | Contratto | Ruolo |
 | --- | --- |
-| `ParticipantMasterSmartPolicy` | Valuta mint e transfer del `ParticipantNMT`. Solo gli `authorizedIssuers` emettono licenze. Una licenza si vende solo a un'organizzazione qualificata per il suo tipo e per tutte le sue caratteristiche (`setQualification`). `isHolderQualified(licenza)` ricontrolla l'holder attuale. |
+| `ParticipantMasterSmartPolicy` | Valuta mint, transfer e sostituzione della Master (`setMasterSmartPolicy`, solo al suo `administrator`) del `ParticipantNMT`. Solo gli `authorizedIssuers` emettono licenze. Una licenza si vende solo a un'organizzazione qualificata per il suo tipo e per tutte le sue caratteristiche (`setQualification`). `isHolderQualified(licenza)` ricontrolla l'holder attuale. |
 | `CreatorSmartPolicy` (participant) | Il suo `administrator` è il certificatore: solo lui scrive tipo e caratteristiche della licenza (`setParticipantType`, `setCapabilities`) e sostituisce la Creator policy. All'holder consente solo le azioni elencate (`setName`, `setDescriptor`, `setBpmn`, `setMessages`, `setTokenURI`, `setLinked`, `transferFrom`); ogni altra azione è negata. |
 | `HolderSmartPolicy` (participant) | Seconda approvazione: consente all'holder le stesse azioni sui propri dati, e nega tutto il resto. |
 

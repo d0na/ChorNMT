@@ -3,58 +3,23 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../base/NMT.sol";
-import "../base/SmartPolicy.sol";
 import "./ChoreographyMutableAsset.sol";
 import "./ChoreographyTokenURIRenderer.sol";
 
 contract ChoreographyNMT is NMT {
-    address public immutable masterSmartPolicy;
     address public immutable tokenURIRenderer;
     mapping(uint256 => uint256) public predecessorOf;
     mapping(uint256 => uint256) public versionOf;
-
-    modifier evaluatedByMaster(
-        bytes memory action,
-        address resource
-    ) {
-        require(
-            SmartPolicy(masterSmartPolicy).evaluate(msg.sender, action, resource),
-            "Operation DENIED by MASTER policy"
-        );
-        _;
-    }
 
     constructor(address masterSmartPolicyAddress, address tokenURIRendererAddress)
         ERC721(
             "Mutable Choreography for a PUB Decentraland UniPi Project",
             "PUBMNTCHOREO"
         )
+        NMT(masterSmartPolicyAddress)
     {
-        require(masterSmartPolicyAddress != address(0), "Invalid master policy");
         require(tokenURIRendererAddress != address(0), "Invalid tokenURI renderer");
-        masterSmartPolicy = masterSmartPolicyAddress;
         tokenURIRenderer = tokenURIRendererAddress;
-    }
-
-    function mint(
-        address to,
-        address creatorSmartPolicy,
-        address holderSmartPolicy
-    )
-        public
-        override
-        evaluatedByMaster(
-            abi.encodeWithSignature(
-                "mint(address,address,address)",
-                to,
-                creatorSmartPolicy,
-                holderSmartPolicy
-            ),
-            address(this)
-        )
-        returns (address, uint256)
-    {
-        return super.mint(to, creatorSmartPolicy, holderSmartPolicy);
     }
 
     function mintVersion(
@@ -116,21 +81,6 @@ contract ChoreographyNMT is NMT {
         ChoreographyMutableAsset(assetAddress).initializeChoreography(model);
 
         return (assetAddress, tokenId);
-    }
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    )
-        public
-        override
-        evaluatedByMaster(
-            abi.encodeWithSignature("transferFrom(address,address)", from, to),
-            getMutableAssetAddress(tokenId)
-        )
-    {
-        super.transferFrom(from, to, tokenId);
     }
 
     function _mint(

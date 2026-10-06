@@ -12,6 +12,7 @@ The table is the intended trust model with the default policies. Every change to
 | Action | Master administrator | Authorized creator | Holder | Creator policy administrator | Anyone else |
 | --- | --- | --- | --- | --- | --- |
 | Configure creators, holders, transfer and versioning switches | yes | no | no | no | no |
+| Replace the Master policy of the NMT (`setMasterSmartPolicy`) | yes | no | no | no | no |
 | `mint` / `mintWithInitialModel` to an eligible holder | yes (registered as creator) | yes | no | no | no |
 | `mintVersion` | yes (registered as creator) | yes, with any policies | yes, only keeping the predecessor's Creator policy | no | no |
 | `transferFrom` to an eligible holder, when enabled | no | no | yes | no | no |
@@ -25,6 +26,7 @@ The table is the intended trust model with the default policies. Every change to
 
 Design decisions behind the table:
 
+- Every policy is replaceable only with the approval of the policy it replaces: the Master by the current Master (its `administrator`), the Creator by the current Creator, the Holder by the holder. A replacement Master governs every later mint, version, and transfer of the NMT; it cannot be the zero address.
 - The Creator policy is a constraint the Holder cannot remove. `setCreatorSmartPolicy` is evaluated by the current Creator policy only, and the choreography `CreatorSmartPolicy` allows it only to its `administrator`.
 - A new version starts from an empty model; it does not copy nodes or roles from its predecessor. A Holder who is not an authorized creator must reuse the predecessor's Creator policy, so versioning cannot be used to escape the Creator constraints.
 - The initial model passed to `mintWithInitialModel` is trusted: it comes from an authorized creator and is not checked by `evaluateNodeUpdate`. The constraints apply to every later `setNodes`.
@@ -103,6 +105,7 @@ A role is played by a license: a `ParticipantMutableAsset` minted by `Participan
 | --- | --- | --- | --- | --- | --- |
 | Mint a license | yes, and authorized issuers | no | no | no | no |
 | Set organization qualifications (`setQualification`) | yes | no | no | no | no |
+| Replace the participant Master policy (`setMasterSmartPolicy` on `ParticipantNMT`) | yes | no | no | no | no |
 | Set license type and capabilities | no | yes | no | no | no |
 | Sell the license (`transferFrom`) to an organization qualified for its type and capabilities | no | no | yes | no | no |
 | Update the license data (`setName`, `setDescriptor`, `setBpmn`, `setMessages`, `setTokenURI`, `setLinked`) | no | no | yes, after installing a Holder policy | no | no |

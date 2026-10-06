@@ -62,15 +62,15 @@ The order follows the Solidity style guide:
 
 **State**
 
-- `address public immutable masterSmartPolicy` — required, non-zero, checked in the constructor.
+- `address public masterSmartPolicy`, declared in the base `NMT` — required, non-zero, checked in the base constructor (`NMT(masterSmartPolicyAddress)`). It is storage, not `immutable`, because it is replaceable: `setMasterSmartPolicy(address)` is `evaluatedByMaster` with the current Master, rejects the zero address, and emits `MasterSmartPolicyChanged`. Concrete Tokens do not redeclare it.
 - Other immutables for stateless collaborators (e.g. `tokenURIRenderer`), non-zero.
 - Token-level bookkeeping only (e.g. `predecessorOf`, `versionOf`). Never domain data: that lives in the asset.
 
 **Public functions**
 
-- `mint(to, creatorSmartPolicy, holderSmartPolicy)` overrides `NMT.mint` and is `evaluatedByMaster(abi.encodeWithSignature("mint(address,address,address)", ...), address(this))`.
+- `mint(to, creatorSmartPolicy, holderSmartPolicy)` is defined once in the base `NMT`, `evaluatedByMaster(abi.encodeWithSignature("mint(address,address,address)", ...), address(this))`.
 - Every other minting entry point (`mintVersion`, `mintWith…`) is `evaluatedByMaster` with its exact signature, then calls the internal `_mint`.
-- `transferFrom(from, to, tokenId)` is `evaluatedByMaster(abi.encodeWithSignature("transferFrom(address,address)", from, to), getMutableAssetAddress(tokenId))`, then `super.transferFrom` (which also runs the asset's Creator check).
+- `transferFrom(from, to, tokenId)` is defined once in the base `NMT`: `evaluatedByMaster(abi.encodeWithSignature("transferFrom(address,address)", from, to), getMutableAssetAddress(tokenId))`, then the asset's Creator check, then the ERC-721 transfer.
 - `tokenURI(tokenId)` calls `_requireOwned(tokenId)`, then delegates: to the renderer, or to the asset.
 
 **Internal functions**
@@ -79,7 +79,7 @@ The order follows the Solidity style guide:
 
 **Modifier**
 
-- `evaluatedByMaster(bytes action, address resource)`: reverts with `OperationDenied(MASTER)` unless `SmartPolicy(masterSmartPolicy).evaluate(msg.sender, action, resource)`. The resource is `address(this)` for token-wide actions and the asset address for actions on one token.
+- `evaluatedByMaster(bytes action, address resource)`, declared in the base `NMT`: reverts with `OperationDenied(MASTER)` unless `SmartPolicy(masterSmartPolicy).evaluate(msg.sender, action, resource)`. The resource is `address(this)` for token-wide actions and the asset address for actions on one token.
 
 **Size and cost budget**: a Token embeds the full Asset bytecode, and every mint pays to deploy it. Keep Token and Asset logic minimal; run `npm run check:size`, and see candidate G1 in [Gas](#gas).
 
@@ -160,6 +160,7 @@ function _evaluateThingUpdate(T calldata value) private view {
   3. `return false;` at the end — **default deny** for unrecognized actions.
 - Domain evaluations (`evaluateNodeUpdate`, `evaluateRoleUpdate`) are `view`, declared in a domain interface, return `false` instead of reverting, and never write state. **Both** the Creator and the Holder policy of a domain implement the domain interface (a permissive Holder returns `true`; `DenyAllSmartPolicy` returns `false`), since the asset asks both.
 - Views exposing derived decisions: `is<Condition>` (e.g. `isQualifiedFor`).
+- Master policies recognize `setMasterSmartPolicy(address)` and decide who may replace them (the default policies: their `administrator`).
 
 **Private functions**: calldata decoding (`_addressAt(action, offset)`, which reverts on malformed input) and rule helpers (`_isDuplicate`, `_containsName`, …).
 
@@ -232,7 +233,7 @@ Resolved: 7 (shared asset interfaces) and 10 (default-deny participant policies)
 | 2 | `ParticipantMutableAsset` | `participantDescriptor` is `public` and also has `getParticipantDescriptor()`; `participantType` is public outside the descriptor. | Asset: domain state private, explicit views only. |
 | 3 | `ParticipantMutableAsset` | Mutators write storage inline; no `_set…` private setters; `StateChanged` names no field. | Asset: one private setter per thing, one `<Thing>Changed` event. |
 | 4 | `ParticipantNMT` | `tokenURI` does not call `_requireOwned`. | Token: `_requireOwned` before delegating. |
-| 5 | `MutableAsset`, `NMT` | Modifiers declared after the functions. | Layout: modifiers before the constructor. |
+| 5 | `MutableAsset` | Modifiers declared after the functions. | Layout: modifiers before the constructor. |
 | 6 | `CreatorSmartPolicy` (choreography) | `struct RoleRequirement` declared after state variables; `uint8 private constant TASK = 2` duplicates the asset's `NodeType` enum. | Layout: types first; one source for node types. |
 | 8 | `MasterSmartPolicy`, `ParticipantMasterSmartPolicy` | `_addressAt` and `onlyAdministrator` are duplicated. | Candidate for a shared base policy. |
 | 9 | `CreatorSmartPolicy` (choreography) | Switches named `enforce<Feature>` next to Master's `<feature>Enabled`. | Naming: `<feature>Enabled`. |

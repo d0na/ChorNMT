@@ -23,6 +23,9 @@ MutableAsset
   - enforces smart-policy evaluation on mutable operations
 
 NMT (ERC721Enumerable)
+  - stores masterSmartPolicy, replaceable with setMasterSmartPolicy
+    when the current Master policy allows it
+  - evaluates mint and transfer with the Master policy
   - mints a MutableAsset-derived contract
   - uses the mutable-asset address encoded as tokenId
   - delegates transfer checks back to the mutable asset
@@ -32,7 +35,7 @@ NMT (ERC721Enumerable)
 
 ```text
 ChoreographyNMT : NMT
-  - evaluates mint, transfer, and version actions with MasterSmartPolicy
+  - evaluates version and initial-model mints with MasterSmartPolicy
   - deploys ChoreographyMutableAsset on mint
   - can initialize an asset atomically with mintWithInitialModel
 
@@ -54,7 +57,7 @@ HolderSmartPolicy  : SmartPolicy
 
 ```text
 ParticipantNMT : NMT
-  -> evaluates mint and transfer with ParticipantMasterSmartPolicy
+  -> uses ParticipantMasterSmartPolicy as its Master policy
   -> deploys ParticipantMutableAsset on mint
 
 ParticipantMutableAsset : MutableAsset
