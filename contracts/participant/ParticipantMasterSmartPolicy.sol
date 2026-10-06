@@ -4,69 +4,28 @@ pragma solidity ^0.8.20;
 import "../base/SmartPolicy.sol";
 import "./IParticipantAsset.sol";
 
-// A participant asset is a role license. Its holder may sell it only to an organization
-// qualified for the license type and for every capability the license carries.
+// The authority's policy over role licenses. It stands for a policy translated from XACML:
+// license types, their issuers, and the organizations qualified for each type are written
+// here, not set at runtime. Change them by deploying a new policy and installing it with
+// setMasterSmartPolicy. Accounts are the default Hardhat accounts used by the test and
+// evaluation scenarios.
 contract ParticipantMasterSmartPolicy is SmartPolicy {
-    bytes4 private constant MINT = bytes4(keccak256("mint(address,address,address)"));
+    bytes4 private constant MINT_WITH_PARTICIPANT_TYPE = bytes4(keccak256("mintWithParticipantType(address,address,address,bytes32)"));
     bytes4 private constant TRANSFER = bytes4(keccak256("transferFrom(address,address)"));
     bytes4 private constant SET_MASTER_SMART_POLICY = bytes4(keccak256("setMasterSmartPolicy(address)"));
 
-    address public immutable administrator;
-    bool public transfersEnabled = true;
-    mapping(address => bool) public authorizedIssuers;
-    mapping(address => mapping(bytes32 => bool)) public qualifications;
+    bytes32 private constant SPECIAL_CARRIER = "SpecialCarrier";
+    bytes32 private constant CARRIER = "Carrier";
+    bytes32 private constant SUPPLIER = "Supplier";
 
-    modifier onlyAdministrator() {
-        require(msg.sender == administrator, "Caller is not the policy administrator");
-        _;
-    }
+    address private constant CARRIER_A = 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc; // account 5
+    address private constant CARRIER_B = 0x976EA74026E726554dB657fA54763abd0C3a0aa9; // account 6
+    address private constant CARRIER_C = 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955; // account 7
+    address private constant SUPPLIER_COMPANY = 0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f; // account 8
+    address private constant AUTHORITY = 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720; // account 9
 
-    constructor(address administratorAddress) {
-        require(administratorAddress != address(0), "Invalid administrator");
-        administrator = administratorAddress;
-        authorizedIssuers[administratorAddress] = true;
-    }
-
-    function setAuthorizedIssuer(address account, bool allowed) external onlyAdministrator {
-        authorizedIssuers[account] = allowed;
-    }
-
-    function setQualification(
-        address account,
-        bytes32 qualification,
-        bool qualified
-    ) external onlyAdministrator {
-        qualifications[account][qualification] = qualified;
-    }
-
-    function setTransfersEnabled(bool enabled) external onlyAdministrator {
-        transfersEnabled = enabled;
-    }
-
-    function isQualifiedFor(address account, address license) public view returns (bool) {
-        IParticipantAsset participant = IParticipantAsset(license);
-        if (!qualifications[account][participant.participantType()]) {
-            return false;
-        }
-        bytes32[] memory capabilities = participant.getCapabilities();
-        for (uint256 i = 0; i < capabilities.length; i++) {
-            if (!qualifications[account][capabilities[i]]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    function isHolderQualified(address license) external view returns (bool) {
-        return isQualifiedFor(IParticipantAsset(license).getHolder(), license);
-    }
-
-    function _addressAt(bytes memory action, uint256 offset) private pure returns (address value) {
-        require(action.length >= offset + 32, "Malformed policy action");
-        assembly {
-            value := mload(add(add(action, 32), offset))
-        }
-    }
+    // The authority: issues every license type and is the only one who replaces this policy.
+    address public constant administrator = AUTHORITY;
 
     function evaluate(
         address subject,
@@ -75,25 +34,50 @@ contract ParticipantMasterSmartPolicy is SmartPolicy {
     ) public view override returns (bool) {
         bytes4 signature = decodeSignature(action);
 
-        // Only the administrator replaces this policy on the token it guards.
-        if (signature == SET_MASTER_SMART_POLICY) {
-            return subject == administrator;
-        }
-
-        if (signature == MINT) {
-            return authorizedIssuers[subject];
+        if (signature == MINT_WITH_PARTICIPANT_TYPE) {
+            return isIssuerOf(subject, _wordAt(action, 100));
         }
 
         if (signature == TRANSFER) {
-            address from = _addressAt(action, 4);
-            address to = _addressAt(action, 36);
+            address from = address(uint160(uint256(_wordAt(action, 4))));
+            address to = address(uint160(uint256(_wordAt(action, 36))));
+            IParticipantAsset license = IParticipantAsset(resource);
             return
-                transfersEnabled &&
                 subject == from &&
-                IParticipantAsset(resource).getHolder() == from &&
-                isQualifiedFor(to, resource);
+                license.getHolder() == from &&
+                isQualifiedFor(to, license.participantType());
+        }
+
+        if (signature == SET_MASTER_SMART_POLICY) {
+            return subject == AUTHORITY;
         }
 
         return false;
+    }
+
+    function isIssuerOf(address account, bytes32 participantType) public pure returns (bool) {
+        return
+            account == AUTHORITY &&
+            (participantType == SPECIAL_CARRIER || participantType == CARRIER || participantType == SUPPLIER);
+    }
+
+    function isQualifiedFor(address account, bytes32 participantType) public pure returns (bool) {
+        if (participantType == SPECIAL_CARRIER) {
+            return account == CARRIER_A || account == CARRIER_B;
+        }
+        if (participantType == CARRIER) {
+            return account == CARRIER_A || account == CARRIER_B || account == CARRIER_C;
+        }
+        if (participantType == SUPPLIER) {
+            return account == SUPPLIER_COMPANY;
+        }
+        return false;
+    }
+
+    function _wordAt(bytes memory action, uint256 offset) private pure returns (bytes32 value) {
+        require(action.length >= offset + 32, "Malformed policy action");
+        assembly {
+            value := mload(add(add(action, 32), offset))
+        }
     }
 }

@@ -55,7 +55,7 @@ The order follows the Solidity style guide:
 | Setter parameter that shadows a state variable | `<name>Value` | `participantTypeValue` |
 | Event | `<Thing>Changed`, or a past-tense verb for one-off facts | `NodesChanged`, `ChoreographyInitialized` |
 | View | `get<Thing>`, `get<Thing>Names`, `has<Thing>`, `is<Condition>` | `getRole`, `hasNode`, `isQualifiedFor` |
-| Policy switch | `<feature>Enabled`, set by `set<Feature>Enabled(bool)` | `transfersEnabled` |
+| Policy switch | `<FEATURE>_ENABLED` hardcoded constant (runtime `set<Feature>Enabled` setters are deviation 14) | `TRANSFERS_ENABLED` |
 | Policy modifier | `evaluatedBy<Layer>` / `only<Actor>` | `evaluatedByMaster`, `onlyHolder` |
 
 ## Token (`NMT`)
@@ -124,7 +124,7 @@ function _evaluateThingUpdate(T calldata value) private view {
   2. the domain check (e.g. BPMN structure, role constraints): Creator `evaluate<Thing>Update` AND Holder `evaluate<Thing>Update`, through the same domain interface.
   The Creator sets the outer bounds the holder cannot remove; the Holder can only restrict further. Neither approval can override a denial by the other.
 - Single-layer checks are exceptions, allowed only where the trust table in `docs/choreography-policies.md` requires them, and each must be listed there:
-  - `evaluatedByCreator` only: `setCreatorSmartPolicy` (the holder must not escape the Creator constraint), certified data the holder must not set (`setParticipantType`, `setCapabilities`), and the asset side of `transferFrom` (the Holder policy is reset by the transfer);
+  - `evaluatedByCreator` only: `setCreatorSmartPolicy` (the holder must not escape the Creator constraint) and the asset side of `transferFrom` (the Holder policy is reset by the transfer). Certified data the holder must not change is not a mutator at all: it is an `immutable` set at mint (e.g. `participantType`);
   - `onlyHolder` only: `setHolderSmartPolicy`.
 - The action passed to the policies is `msg.data` (see [Gas](#gas)). The policies' selector constants use the exact canonical signature, with enums as `uint8` and structs as tuples. Until G2 is applied, existing mutators re-encode with `abi.encodeWithSignature` and the same signature string.
 - No logic between the policy check and the private setter, except the domain check.
@@ -148,23 +148,20 @@ function _evaluateThingUpdate(T calldata value) private view {
 **State**
 
 - Selector constants: `bytes4 private constant NAME = bytes4(keccak256("<canonical signature>"))`, one per action the policy recognizes.
-- `address public immutable administrator` for configurable policies; set from the constructor (Master policies take it as a parameter, Creator policies use `msg.sender`).
-- Configuration as `public` state: switches (`<feature>Enabled`), allow-lists (`mapping(address => bool)` or `mapping(bytes32 => bool)` keyed by `keccak256(bytes(name))`), limits. Structured configuration is `private` with an explicit `get…` view.
+- **Configuration is hardcoded.** A policy stands for a policy translated from XACML, so its rules and their data (accounts, types, allowed values, limits, switches) are `private constant`s and literal conditions in the source, edited by hand when the scenarios change. There is one policy per role, tuned to the current test and evaluation scenarios. Changing a rule means deploying a new policy and installing it through the policy it replaces (`setMasterSmartPolicy`, `setCreatorSmartPolicy`), never a runtime setter. Literals are also the cheapest form: no storage at deploy, no `SLOAD` at evaluation.
+- `administrator`: the account that may replace the policy, hardcoded as a `constant` (Master policies) or the deployer stored as an `immutable` (Creator policies, whose deployer is the certifier).
 
 **Public functions**
 
-- Configuration setters: `external onlyAdministrator`, one concern each.
 - `evaluate(subject, action, resource) public view override returns (bool)`:
   1. `bytes4 signature = decodeSignature(action);`
   2. one `if (signature == X)` branch per recognized action, returning the decision;
   3. `return false;` at the end — **default deny** for unrecognized actions.
 - Domain evaluations (`evaluateNodeUpdate`, `evaluateRoleUpdate`) are `view`, declared in a domain interface, return `false` instead of reverting, and never write state. **Both** the Creator and the Holder policy of a domain implement the domain interface (a permissive Holder returns `true`; `DenyAllSmartPolicy` returns `false`), since the asset asks both.
-- Views exposing derived decisions: `is<Condition>` (e.g. `isQualifiedFor`).
+- Views exposing derived decisions: `is<Condition>` (e.g. `isQualifiedFor`, `isIssuerOf`, `isAllowedMessage`), `pure` when they read only hardcoded rules.
 - Master policies recognize `setMasterSmartPolicy(address)` and decide who may replace them (the default policies: their `administrator`).
 
-**Private functions**: calldata decoding (`_addressAt(action, offset)`, which reverts on malformed input) and rule helpers (`_isDuplicate`, `_containsName`, …).
-
-**Modifier**: `onlyAdministrator`, reverting with `CallerNotAdministrator()`.
+**Private functions**: calldata decoding (`_addressAt(action, offset)` / `_wordAt(action, offset)`, which revert on malformed input) and rule helpers (`_isDuplicate`, `_containsName`, …).
 
 ## Renderer
 
@@ -178,10 +175,10 @@ function _evaluateThingUpdate(T calldata value) private view {
 - Each asset kind declares the views other contracts may use in one shared interface, and the asset declares `is` that interface so the compiler checks that views and interface agree:
   - `base/IMutableAsset.sol`: `nmt`, `linked`, `creatorSmartPolicy`, `holderSmartPolicy`, `getHolder`; implemented by `MutableAsset`;
   - `choreography/IChoreographyAsset.sol`: node and role views and `tokenURI`, plus the `NodeType` enum; implemented by `ChoreographyMutableAsset`;
-  - `participant/IParticipantAsset.sol`: `participantType`, `getCapabilities`, `hasCapability`, `getMessages`; implemented by `ParticipantMutableAsset`.
+  - `participant/IParticipantAsset.sol`: `participantType`, `getName`, `getProfile`, `getMessages`, `getMessagesWriter`, `tokenURI`; implemented by `ParticipantMutableAsset`.
 - Policies and renderers type their calls with these interfaces (`IMutableAsset(resource).getHolder()`), not with the concrete asset contracts. A view a policy needs is added to the interface first.
 - Shared enums used across contracts live in the interface (e.g. `IChoreographyAsset.NodeType`).
-- Domain policy extensions live in their own file and are layer-neutral, because both Creator and Holder implement them (target: rename `IChoreographyCreatorPolicy` to `IChoreographyPolicy`).
+- Domain policy extensions live in their own file and are layer-neutral, because both Creator and Holder implement them: `participant/IParticipantPolicy.sol` (`evaluateMessagesUpdate`); target for the choreography: rename `IChoreographyCreatorPolicy` to `IChoreographyPolicy`.
 
 ## Errors and checks
 
@@ -225,18 +222,15 @@ The cost of the whole flow is measured, not estimated: `npm test` and `npm run e
 
 ## Known deviations
 
-Resolved: 7 (shared asset interfaces) and 10 (default-deny participant policies). The current code differs from the rules above in these places. Fix them in dedicated changes, with tests and `check:size`:
+Resolved: 1–4 (participant asset and token, rewritten as a role license), 7 (shared asset interfaces) and 10 (default-deny participant policies). The current code differs from the rules above in these places. Fix them in dedicated changes, with tests and `check:size`:
 
 | # | Contract | Deviation | Rule |
 | --- | --- | --- | --- |
-| 1 | `ParticipantMutableAsset` | `string public tokenURI` is stored and set by `setTokenURI`. | Asset: metadata computed via `NMT(nmt).tokenURI(...)`. |
-| 2 | `ParticipantMutableAsset` | `participantDescriptor` is `public` and also has `getParticipantDescriptor()`; `participantType` is public outside the descriptor. | Asset: domain state private, explicit views only. |
-| 3 | `ParticipantMutableAsset` | Mutators write storage inline; no `_set…` private setters; `StateChanged` names no field. | Asset: one private setter per thing, one `<Thing>Changed` event. |
-| 4 | `ParticipantNMT` | `tokenURI` does not call `_requireOwned`. | Token: `_requireOwned` before delegating. |
 | 5 | `MutableAsset` | Modifiers declared after the functions. | Layout: modifiers before the constructor. |
 | 6 | `CreatorSmartPolicy` (choreography) | `struct RoleRequirement` declared after state variables; `uint8 private constant TASK = 2` duplicates the asset's `NodeType` enum. | Layout: types first; one source for node types. |
-| 8 | `MasterSmartPolicy`, `ParticipantMasterSmartPolicy` | `_addressAt` and `onlyAdministrator` are duplicated. | Candidate for a shared base policy. |
+| 8 | `MasterSmartPolicy`, `ParticipantMasterSmartPolicy` | Action decoding is duplicated (`_addressAt`, `_wordAt`). | Candidate for a shared base policy. |
 | 9 | `CreatorSmartPolicy` (choreography) | Switches named `enforce<Feature>` next to Master's `<feature>Enabled`. | Naming: `<feature>Enabled`. |
 | 11 | All contracts | `require` with string messages. | Errors: custom errors (G4). |
-| 12 | Both Assets | Mutators are `public` with `memory` parameters and re-encode arguments for the policies. | Gas: `external` + `calldata`, `msg.data` as action (G2, G3). |
+| 12 | `ChoreographyMutableAsset`, `MutableAsset` | Mutators are `public` with `memory` parameters and re-encode arguments for the policies. | Gas: `external` + `calldata`, `msg.data` as action (G2, G3). |
 | 13 | `ChoreographyMutableAsset`, `HolderSmartPolicy`, `IChoreographyCreatorPolicy` | The domain checks (`evaluateNodeUpdate`, `evaluateRoleUpdate`) are asked of the Creator policy only; the Holder policy does not implement the domain interface, whose name is Creator-specific. | Asset: domain check is Creator AND Holder; layer-neutral `IChoreographyPolicy`. |
+| 14 | `MasterSmartPolicy`, `CreatorSmartPolicy` (choreography) | Configuration is runtime state changed by `onlyAdministrator` setters (`setAuthorizedCreator`, `setEligibleHolder`, `set…Enabled`, `setBpmnLimits`, `setRoleRequirement`, …), with `administrator` passed to the constructor. | Policies: configuration hardcoded; changes by replacing the policy. Converting them requires reorganizing `test-policies.js`, whose cases use different configurations of one policy. |

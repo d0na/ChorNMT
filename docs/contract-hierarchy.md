@@ -62,17 +62,17 @@ ParticipantNMT : NMT
 
 ParticipantMutableAsset : MutableAsset
   - a role license
-  - stores participant descriptor:
-    - name
-    - bpmn
-    - descriptor
-    - messages
-  - stores participantType and capabilities, set by the certifier
+  - participantType: immutable, set at mint
+  - holder data: name and profile (cleared on sale),
+    messages with the address of the holder who wrote them
+  - tokenURI computed by ParticipantTokenURIRenderer
 
 ParticipantMasterSmartPolicy : SmartPolicy
-  - authorizes issuers and sells licenses only to qualified organizations
+  - hardcoded issuers and qualified organizations per license type
+  - sells licenses only to organizations qualified for their type
 CreatorSmartPolicy : SmartPolicy
   - its administrator is the certifier
+  - hardcoded messages allowed per license type
 HolderSmartPolicy  : SmartPolicy
 ```
 

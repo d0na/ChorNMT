@@ -74,7 +74,7 @@ function totalGas(report, outcome) {
 async function main() {
   const ethUsdPrice = await resolveEthUsdPrice();
   const { ethers } = await hre.network.connect();
-  const [administrator, eligibleHolder, unauthorizedCreator, ineligibleHolder, carrierA, carrierB, carrierC] =
+  const [administrator, eligibleHolder, unauthorizedCreator, ineligibleHolder, , carrierA, carrierB, carrierC, , authority] =
     await ethers.getSigners();
 
   const masterFactory = await ethers.getContractFactory("MasterSmartPolicy");
@@ -332,15 +332,20 @@ async function main() {
   assert.equal(await constrainedAsset.getRole("Buyer"), administrator.address);
   await (await creatorPolicy.setProtectedRole("Buyer", false)).wait();
 
+  // Participant licenses. The participant policies hardcode their configuration (license types,
+  // issuers, qualified organizations, allowed messages) for default Hardhat accounts 5-9.
+  const SPECIAL_CARRIER = ethers.encodeBytes32String("SpecialCarrier");
   const CARRIER = ethers.encodeBytes32String("Carrier");
-  const SPECIAL_TRANSPORT = ethers.encodeBytes32String("SpecialTransport");
-  const participantMaster = await (await ethers.getContractFactory("ParticipantMasterSmartPolicy")).deploy(administrator.address);
-  await participantMaster.waitForDeployment();
-  const participantNmt = await (await ethers.getContractFactory("ParticipantNMT")).deploy(participantMaster.target);
+  const specialCarrierMessages = ["Message_0dai5by", "Message_10n229k"].map(ethers.encodeBytes32String);
+  const participantMaster = await (await ethers.getContractFactory("ParticipantMasterSmartPolicy")).deploy();
+  const participantRenderer = await (await ethers.getContractFactory("ParticipantTokenURIRenderer")).deploy();
+  await Promise.all([participantMaster.waitForDeployment(), participantRenderer.waitForDeployment()]);
+  const participantNmt = await (await ethers.getContractFactory("ParticipantNMT"))
+    .deploy(participantMaster.target, participantRenderer.target);
   const participantCreatorFactory = await ethers.getContractFactory(
     "contracts/participant/CreatorSmartPolicy.sol:CreatorSmartPolicy"
   );
-  const participantCertifier = await participantCreatorFactory.deploy();
+  const participantCertifier = await participantCreatorFactory.connect(authority).deploy();
   const participantHolderPolicy = await (await ethers.getContractFactory(
     "contracts/participant/HolderSmartPolicy.sol:HolderSmartPolicy"
   )).deploy();
@@ -351,48 +356,61 @@ async function main() {
     participantHolderPolicy.waitForDeployment(),
     selfCertifier.waitForDeployment()
   ]);
-  for (const [organization, qualificationList] of [
-    [carrierA, [CARRIER, SPECIAL_TRANSPORT]],
-    [carrierB, [CARRIER, SPECIAL_TRANSPORT]],
-    [carrierC, [CARRIER]]
-  ]) {
-    for (const qualification of qualificationList) {
-      await (await participantMaster.setQualification(organization.address, qualification, true)).wait();
-    }
-  }
-  const mintLicense = async (holder, certifierPolicy, certifier, capabilities) => {
-    const licenseArguments = [holder.address, certifierPolicy.target, participantHolderPolicy.target];
-    const [licenseAddress] = await participantNmt.mint.staticCall(...licenseArguments);
-    await (await participantNmt.mint(...licenseArguments)).wait();
-    const license = await ethers.getContractAt("ParticipantMutableAsset", licenseAddress, certifier);
-    await (await license.setParticipantType(CARRIER)).wait();
-    await (await license.setCapabilities(capabilities)).wait();
-    return license;
+  const mintLicense = async (holder, certifierPolicy, participantType) => {
+    const licenseArguments = [holder.address, certifierPolicy.target, participantHolderPolicy.target, participantType];
+    const [licenseAddress] = await participantNmt.connect(authority).mintWithParticipantType.staticCall(...licenseArguments);
+    await (await participantNmt.connect(authority).mintWithParticipantType(...licenseArguments)).wait();
+    return ethers.getContractAt("ParticipantMutableAsset", licenseAddress, holder);
   };
-  const carrierLicense = await mintLicense(carrierA, participantCertifier, administrator, [SPECIAL_TRANSPORT]);
-  const plainCarrierLicense = await mintLicense(carrierC, participantCertifier, administrator, []);
-  const selfCertifiedLicense = await mintLicense(carrierC, selfCertifier, carrierC, [SPECIAL_TRANSPORT]);
+  const licenseMetadata = async (license) =>
+    JSON.parse(Buffer.from((await license.tokenURI()).split(",")[1], "base64").toString("utf8")).participant;
+  const carrierLicense = await mintLicense(carrierA, participantCertifier, SPECIAL_CARRIER);
+  const plainCarrierLicense = await mintLicense(carrierC, participantCertifier, CARRIER);
+  const selfCertifiedLicense = await mintLicense(carrierC, selfCertifier, SPECIAL_CARRIER);
+  assert.equal(await carrierLicense.participantType(), SPECIAL_CARRIER);
 
   report.push(await expectDenied(
     "unauthorized issuer cannot mint a participant license",
     carrierC,
     {
       to: participantNmt.target,
-      data: participantNmt.interface.encodeFunctionData("mint", [
+      data: participantNmt.interface.encodeFunctionData("mintWithParticipantType", [
         carrierC.address,
+        participantCertifier.target,
+        participantHolderPolicy.target,
+        SPECIAL_CARRIER
+      ])
+    }
+  ));
+  report.push(await expectDenied(
+    "participant license cannot be minted without a type",
+    authority,
+    {
+      to: participantNmt.target,
+      data: participantNmt.interface.encodeFunctionData("mint", [
+        carrierA.address,
         participantCertifier.target,
         participantHolderPolicy.target
       ])
     }
   ));
+  report.push(await expectAllowed(
+    "license holder declares messages allowed for its type",
+    () => carrierLicense.setMessages(specialCarrierMessages)
+  ));
   report.push(await expectDenied(
-    "license holder cannot change its capabilities",
-    carrierA,
+    "creator policy denies a message not allowed for the license type",
+    carrierC,
     {
-      to: carrierLicense.target,
-      data: carrierLicense.interface.encodeFunctionData("setCapabilities", [[]])
+      to: plainCarrierLicense.target,
+      data: plainCarrierLicense.interface.encodeFunctionData("setMessages", [[ethers.encodeBytes32String("Message_10n229k")]])
     }
   ));
+  report.push(await expectAllowed(
+    "license holder updates its organization data",
+    () => carrierLicense.setName(ethers.encodeBytes32String("Carrier A"))
+  ));
+  await (await carrierLicense.setProfile(ethers.id("Carrier A organization profile"))).wait();
 
   const carrierModel = {
     ...initialModel,
@@ -404,8 +422,8 @@ async function main() {
   await (await nmt.mintWithInitialModel(...mintArguments, carrierModel)).wait();
   const carrierAsset = await ethers.getContractAt("ChoreographyMutableAsset", carrierAssetAddress);
   report.push(await expectAllowed(
-    "creator requires a Carrier license with SpecialTransport",
-    () => creatorPolicy.setRoleRequirement("Carrier", CARRIER, [SPECIAL_TRANSPORT])
+    "creator requires a SpecialCarrier license",
+    () => creatorPolicy.setRoleRequirement("Carrier", SPECIAL_CARRIER)
   ));
   await (await creatorPolicy.setParticipantRegistry(participantNmt.target, participantCertifier.target)).wait();
   await (await creatorPolicy.setKnownRolesEnabled(true)).wait();
@@ -421,7 +439,7 @@ async function main() {
     setRoleTransaction("Carrier", carrierA.address)
   ));
   report.push(await expectDenied(
-    "creator policy denies a license missing a required capability",
+    "creator policy denies a license of another type",
     administrator,
     setRoleTransaction("Carrier", plainCarrierLicense.target)
   ));
@@ -470,6 +488,20 @@ async function main() {
     modelFromTokenURI(await nmt.tokenURI(BigInt(carrierAssetAddress))),
     { ...carrierModel, roleAddresses: [administrator.address, eligibleHolder.address, carrierLicense.target] }
   );
+  // The sale clears the seller's organization data and keeps the messages, marked with their writer.
+  assert.equal(await carrierLicense.getName(), ethers.ZeroHash);
+  assert.equal(await carrierLicense.getProfile(), ethers.ZeroHash);
+  assert.deepEqual([...await carrierLicense.getMessages()], specialCarrierMessages);
+  assert.deepEqual(await licenseMetadata(carrierLicense), {
+    schemaVersion: "1.0",
+    participantType: "SpecialCarrier",
+    holder: carrierB.address,
+    name: "",
+    profile: ethers.ZeroHash,
+    messages: ["Message_0dai5by", "Message_10n229k"],
+    messagesWriter: carrierA.address,
+    messagesWrittenByHolder: false
+  });
   assert.equal(await carrierLicense.holderSmartPolicy(), ethers.ZeroAddress);
   await (await carrierLicense.connect(carrierB).setHolderSmartPolicy(participantHolderPolicy.target)).wait();
   report.push(await expectDenied(
@@ -484,13 +516,21 @@ async function main() {
     "new license holder updates its data",
     () => carrierLicense.connect(carrierB).setName(ethers.encodeBytes32String("Carrier B"))
   ));
+  report.push(await expectAllowed(
+    "new license holder rewrites the messages",
+    () => carrierLicense.connect(carrierB).setMessages(specialCarrierMessages)
+  ));
+  const licenseAfterRewrite = await licenseMetadata(carrierLicense);
+  assert.equal(licenseAfterRewrite.name, "Carrier B");
+  assert.equal(licenseAfterRewrite.messagesWriter, carrierB.address);
+  assert.equal(licenseAfterRewrite.messagesWrittenByHolder, true);
 
   // Participant policies deny by default: an action they do not recognize is refused even to the holder,
   // and every license mutator has an explicit decision, so a new mutator cannot become holder-editable by omission.
   const unrecognizedAction = ethers.id("setCertificationExpiry(uint256)").slice(0, 10);
   assert.equal(await participantCertifier.evaluate(carrierB.address, unrecognizedAction, carrierLicense.target), false);
   assert.equal(await participantHolderPolicy.evaluate(carrierB.address, unrecognizedAction, carrierLicense.target), false);
-  const certifiedActions = ["setCreatorSmartPolicy", "setParticipantType", "setCapabilities"];
+  const certifiedActions = ["setCreatorSmartPolicy"];
   const policyFreeActions = ["setHolderSmartPolicy"];
   const creatorOnlyActions = ["transferFrom"];
   const licenseDecisions = [];
@@ -501,7 +541,7 @@ async function main() {
     const holderAllowed = !certifiedActions.includes(fragment.name);
     licenseDecisions.push(Promise.all([
       participantCertifier.evaluate(carrierB.address, fragment.selector, carrierLicense.target),
-      participantCertifier.evaluate(administrator.address, fragment.selector, carrierLicense.target),
+      participantCertifier.evaluate(authority.address, fragment.selector, carrierLicense.target),
       participantHolderPolicy.evaluate(carrierB.address, fragment.selector, carrierLicense.target)
     ]).then(([creatorForHolder, creatorForCertifier, holderForHolder]) => {
       assert.equal(creatorForHolder, holderAllowed, `participant Creator policy decision for holder on ${fragment.name}`);
@@ -514,8 +554,6 @@ async function main() {
     }));
   });
   await Promise.all(licenseDecisions);
-  await (await participantMaster.setQualification(carrierB.address, SPECIAL_TRANSPORT, false)).wait();
-  assert.equal(await participantMaster.isHolderQualified(carrierLicense.target), false);
   await (await creatorPolicy.clearRoleRequirement("Carrier")).wait();
   await (await creatorPolicy.setKnownRolesEnabled(false)).wait();
   await (await creatorPolicy.setDistinctRoleAccountsEnabled(false)).wait();
@@ -703,20 +741,18 @@ async function main() {
     }
   ));
 
-  const replacementParticipantMaster = await (await ethers.getContractFactory("ParticipantMasterSmartPolicy"))
-    .deploy(administrator.address);
-  await replacementParticipantMaster.waitForDeployment();
+  // The participant Master is hardcoded, so the replacement is a different policy: one that denies everything.
   report.push(await expectDenied(
     "license holder cannot replace participant master policy",
     carrierB,
     {
       to: participantNmt.target,
-      data: participantNmt.interface.encodeFunctionData("setMasterSmartPolicy", [replacementParticipantMaster.target])
+      data: participantNmt.interface.encodeFunctionData("setMasterSmartPolicy", [denyAllPolicy.target])
     }
   ));
   report.push(await expectAllowed(
     "participant master administrator replaces participant master policy",
-    () => participantNmt.setMasterSmartPolicy(replacementParticipantMaster.target)
+    () => participantNmt.connect(authority).setMasterSmartPolicy(denyAllPolicy.target)
   ));
   report.push(await expectDenied(
     "replaced participant master policy governs sales",

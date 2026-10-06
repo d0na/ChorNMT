@@ -104,6 +104,26 @@ Output reale di `metadata(asset)` per un modello di tre nodi:
 
 Ruoli e nodi escono sempre nell'ordine di inserimento, e un nodo sovrascritto mantiene la sua posizione. Per lo stesso stato l'output è identico byte per byte.
 
+### Metadati delle licenze participant
+
+Le licenze di ruolo seguono lo stesso schema: `ParticipantNMT.tokenURI` delega a `ParticipantTokenURIRenderer`, fissato nel costruttore dell'NMT, che legge la licenza tramite `IParticipantAsset`. Niente è salvato: chi compra una licenza vede il tipo certificato e l'holder attuale, non una dichiarazione del venditore.
+
+```json
+{
+  "name": "ChorNMT participant license 0x…",
+  "description": "Role license stored in a ChorNMT participant asset.",
+  "participant": {
+    "schemaVersion": "1.0",
+    "participantType": "SpecialCarrier",
+    "holder": "0x…", "name": "Carrier B", "profile": "0x…",
+    "messages": ["Message_0dai5by", "Message_10n229k"],
+    "messagesWriter": "0x…", "messagesWrittenByHolder": true
+  }
+}
+```
+
+`participantType`, `name` e i messaggi sono `bytes32` mostrati come testo (gli zeri finali sono padding); `profile` è l'hash o il CID del profilo off-chain, in esadecimale. `messagesWrittenByHolder` è `false` dopo una vendita, finché il nuovo holder non riscrive i messaggi.
+
 ## La pipeline off-chain
 
 Il comando `npm run render:asset -- <asset> <delta-o-dataset.json>` esegue `scripts/render-asset.js`. Il secondo argomento serve solo per i metadati del BPMN da generare (ID della coreografia, nome, namespace, nome dei file), non per il contenuto: il contenuto viene sempre dall'asset.

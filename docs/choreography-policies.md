@@ -31,7 +31,7 @@ Design decisions behind the table:
 - A new version starts from an empty model; it does not copy nodes or roles from its predecessor. A Holder who is not an authorized creator must reuse the predecessor's Creator policy, so versioning cannot be used to escape the Creator constraints.
 - The initial model passed to `mintWithInitialModel` is trusted: it comes from an authorized creator and is not checked by `evaluateNodeUpdate`. The constraints apply to every later `setNodes`.
 - A protected node is frozen together with its sequence flows: an update of another node cannot add or remove a link to it, in either `incoming` or `outgoing`, so a protected node cannot be disconnected through its neighbours.
-- A protected role keeps its address: `setRoles` rejects any entry for it. A role with a requirement can be linked only to a participant license (`ParticipantMutableAsset`) of the required type and capabilities. The organization behind the role changes when the license is sold, not through `setRoles`: see [Role licenses](#role-licenses). Roles referenced by a protected task are not protected implicitly; protect them explicitly when their address must not change.
+- A protected role keeps its address: `setRoles` rejects any entry for it. A role with a requirement can be linked only to a participant license (`ParticipantMutableAsset`) of the required type. The organization behind the role changes when the license is sold, not through `setRoles`: see [Role licenses](#role-licenses). Roles referenced by a protected task are not protected implicitly; protect them explicitly when their address must not change.
 - Nodes are never deleted: a node with the same name is overwritten. Roles are currently name-to-address entries that can be overwritten but not removed; the target design identifies participants by `ParticipantMutableAsset` NFTs, which can be destroyed independently of the choreography.
 - A transfer resets the Holder policy to zero. The new Holder must install a Holder policy with `setHolderSmartPolicy` before editing the model.
 - NMT tokens are minted with `_mint`, not `_safeMint`, so no receiver callback runs before an asset is initialized and its version lineage is recorded.
@@ -85,7 +85,7 @@ Replacing the Creator policy is not a Holder operation: only the Creator policy'
 - `setKnownFlowTargetsEnabled(...)`;
 - `setProtectedNode(...)`;
 - `setProtectedRole(...)`, evaluated by `evaluateRoleUpdate` on every `setRoles`;
-- `setParticipantRegistry(participantNmt, certifier)` and `setRoleRequirement(role, type, capabilities)`: the role can be linked only to a license minted by `participantNmt`, certified by the `certifier` participant Creator policy, with the required type and every required capability;
+- `setParticipantRegistry(participantNmt, certifier)` and `setRoleRequirement(role, type)`: the role can be linked only to a license minted by `participantNmt`, certified by the `certifier` participant Creator policy, of the required type;
 - `setKnownRolesEnabled(...)`: `setRoles` can reassign existing roles but not create new ones;
 - `setDistinctRoleAccountsEnabled(...)`: after the update, no account plays two roles.
 
@@ -101,15 +101,19 @@ Run `npm run test:policies` to execute allowed and denied paths for each policy 
 
 A role is played by a license: a `ParticipantMutableAsset` minted by `ParticipantNMT`. The choreography links the role to the license once. The organization that plays the role is the license holder; it changes when the holder sells the license.
 
-| Action | Participant Master administrator | Certifier (participant Creator policy administrator) | License holder | Buyer | Anyone else |
+The participant policies stand for policies translated from XACML: their configuration is hardcoded, not set at runtime. The participant Master writes, for every license type (`SpecialCarrier`, `Carrier`, `Supplier`), its issuers and the organizations qualified to hold it; the certifier's Creator policy writes the messages each type may declare. Changing a rule means deploying a new policy and installing it (`setMasterSmartPolicy`, `setCreatorSmartPolicy`). The design is in [Participant license design](participant-license-design.md).
+
+| Action | Authority (participant Master administrator, issuer) | Certifier (participant Creator policy administrator) | License holder | Buyer | Anyone else |
 | --- | --- | --- | --- | --- | --- |
-| Mint a license | yes, and authorized issuers | no | no | no | no |
-| Set organization qualifications (`setQualification`) | yes | no | no | no | no |
+| Mint a license of a type (`mintWithParticipantType`) | yes, for the types it issues | no | no | no | no |
+| Mint a license without a type (`mint`) | no | no | no | no | no |
 | Replace the participant Master policy (`setMasterSmartPolicy` on `ParticipantNMT`) | yes | no | no | no | no |
-| Set license type and capabilities | no | yes | no | no | no |
-| Sell the license (`transferFrom`) to an organization qualified for its type and capabilities | no | no | yes | no | no |
-| Update the license data (`setName`, `setDescriptor`, `setBpmn`, `setMessages`, `setTokenURI`, `setLinked`) | no | no | yes, after installing a Holder policy | no | no |
+| Replace the license Creator policy (`setCreatorSmartPolicy`) | no | yes | no | no | no |
+| Change the license type | no | no | no | no | no |
+| Sell the license (`transferFrom`) to an organization qualified for its type | no | no | yes | no | no |
+| Update the organization data (`setName`, `setProfile`, `setLinked`) | no | no | yes, after installing a Holder policy | no | no |
+| Declare messages (`setMessages`) allowed for the license type | no | no | yes, after installing a Holder policy | no | no |
 | Any other action on the license | no | no | no | no | no |
 
-Both participant policies deny by default: they allow only the actions listed above, so a new license function stays blocked until a policy assigns it explicitly; `test:policies` checks that every license mutator has an explicit decision. A sale resets the license Holder policy. The new holder installs one and then updates or links its own data; the former holder loses every right on the license. Qualifications are checked at the sale: `isHolderQualified` reports whether the current holder is still qualified after a revocation.
+Both participant policies deny by default: they allow only the actions listed above, so a new license function stays blocked until a policy assigns it explicitly; `test:policies` checks that every license mutator has an explicit decision. The type is an `immutable` of the license, set at mint, so a choreography that checked it when linking a role can rely on it forever. `setMessages` is a Creator AND Holder decision at both levels: the action check, and the domain check `evaluateMessagesUpdate`, where the certifier's policy rejects a message outside the vocabulary of the license type. A sale resets the license Holder policy and clears the seller's name and profile; the messages stay, with the address of the holder who wrote them. The new holder installs a Holder policy and then updates its own data; the former holder loses every right on the license. Qualifications are checked at the sale.
 

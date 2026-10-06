@@ -32,7 +32,6 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     struct RoleRequirement {
         bool enabled;
         bytes32 participantType;
-        bytes32[] capabilities;
     }
 
     mapping(bytes32 => RoleRequirement) private roleRequirements;
@@ -92,7 +91,7 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     }
 
     // Participants must be minted by participantNmt and certified by participantCertifier,
-    // the Creator policy whose administrator sets participant types and capabilities.
+    // the participant Creator policy of the license.
     function setParticipantRegistry(
         address participantNmtAddress,
         address participantCertifierAddress
@@ -103,10 +102,9 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
 
     function setRoleRequirement(
         string calldata name,
-        bytes32 participantTypeValue,
-        bytes32[] calldata capabilities
+        bytes32 participantTypeValue
     ) external onlyAdministrator {
-        roleRequirements[keccak256(bytes(name))] = RoleRequirement(true, participantTypeValue, capabilities);
+        roleRequirements[keccak256(bytes(name))] = RoleRequirement(true, participantTypeValue);
     }
 
     function clearRoleRequirement(string calldata name) external onlyAdministrator {
@@ -115,9 +113,9 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
 
     function getRoleRequirement(
         string calldata name
-    ) external view returns (bool, bytes32, bytes32[] memory) {
+    ) external view returns (bool, bytes32) {
         RoleRequirement storage requirement = roleRequirements[keccak256(bytes(name))];
-        return (requirement.enabled, requirement.participantType, requirement.capabilities);
+        return (requirement.enabled, requirement.participantType);
     }
 
     function isRoleRequirementSatisfied(
@@ -250,18 +248,9 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
         }
 
         IParticipantAsset candidate = IParticipantAsset(participant);
-        if (
-            candidate.creatorSmartPolicy() != participantCertifier ||
-            candidate.participantType() != requirement.participantType
-        ) {
-            return false;
-        }
-        for (uint256 i = 0; i < requirement.capabilities.length; i++) {
-            if (!candidate.hasCapability(requirement.capabilities[i])) {
-                return false;
-            }
-        }
-        return true;
+        return
+            candidate.creatorSmartPolicy() == participantCertifier &&
+            candidate.participantType() == requirement.participantType;
     }
 
     // A participant asset is genuine when participantNmt has minted its token: the token id

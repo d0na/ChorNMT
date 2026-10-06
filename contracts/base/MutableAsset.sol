@@ -6,10 +6,16 @@ import "./NMT.sol";
 import "./SmartPolicy.sol";
 
 abstract contract MutableAsset is IMutableAsset {
+    // Policy layers reported by OperationDenied.
+    uint8 internal constant CREATOR = 0;
+    uint8 internal constant HOLDER = 1;
+
     address public immutable nmt;
     address public linked;
     address public holderSmartPolicy;
     address public creatorSmartPolicy;
+
+    error OperationDenied(uint8 layer);
 
     constructor(
         address nmtAddress,

@@ -308,26 +308,27 @@ Un `ParticipantMutableAsset` è la **licenza di un ruolo**. La coreografia colle
 
 | Contratto | Ruolo |
 | --- | --- |
-| `ParticipantMasterSmartPolicy` | Valuta mint, transfer e sostituzione della Master (`setMasterSmartPolicy`, solo al suo `administrator`) del `ParticipantNMT`. Solo gli `authorizedIssuers` emettono licenze. Una licenza si vende solo a un'organizzazione qualificata per il suo tipo e per tutte le sue caratteristiche (`setQualification`). `isHolderQualified(licenza)` ricontrolla l'holder attuale. |
-| `CreatorSmartPolicy` (participant) | Il suo `administrator` è il certificatore: solo lui scrive tipo e caratteristiche della licenza (`setParticipantType`, `setCapabilities`) e sostituisce la Creator policy. All'holder consente solo le azioni elencate (`setName`, `setDescriptor`, `setBpmn`, `setMessages`, `setTokenURI`, `setLinked`, `transferFrom`); ogni altra azione è negata. |
-| `HolderSmartPolicy` (participant) | Seconda approvazione: consente all'holder le stesse azioni sui propri dati, e nega tutto il resto. |
+| `ParticipantNMT` | Conia le licenze con `mintWithParticipantType(to, creator, holder, tipo)`: il tipo è obbligatorio, e il `mint` senza tipo fallisce. Espone `tokenURI` tramite un `ParticipantTokenURIRenderer` fissato nel costruttore. |
+| `ParticipantMasterSmartPolicy` | Valuta mint, transfer e sostituzione della Master (`setMasterSmartPolicy`, solo all'autorità) del `ParticipantNMT`. È **hardcoded**, come una policy tradotta da XACML: per ogni tipo (`SpecialCarrier`, `Carrier`, `Supplier`) scrive nel codice chi lo emette e quali organizzazioni sono qualificate. Una licenza si vende solo a un'organizzazione qualificata per il suo tipo. |
+| `CreatorSmartPolicy` (participant) | Il suo `administrator` è il certificatore: solo lui sostituisce la Creator policy. All'holder consente solo le azioni elencate (`setName`, `setProfile`, `setMessages`, `setLinked`, `transferFrom`); ogni altra azione è negata. Con `evaluateMessagesUpdate` ammette solo i messaggi previsti per il tipo della licenza, scritti nel codice. |
+| `HolderSmartPolicy` (participant) | Seconda approvazione: consente all'holder le stesse azioni sui propri dati, e nega tutto il resto. Su `evaluateMessagesUpdate` non aggiunge vincoli. |
+| `ParticipantTokenURIRenderer` | Genera i metadati della licenza dallo stato: tipo, holder, nome, profilo, messaggi, chi li ha scritti e se è l'holder attuale. |
 
 Le due policy negano per default: una funzione nuova della licenza resta bloccata finché non le si assegna esplicitamente un selettore. `test:policies` controlla che ogni funzione che modifica la licenza abbia una decisione esplicita.
 
-Un transfer azzera la Holder policy della licenza: il nuovo holder ne installa una con `setHolderSmartPolicy`, poi aggiorna i propri dati. Il vecchio holder perde ogni diritto sulla licenza. Le qualifiche contano al momento della vendita: se l'autorità ne revoca una, la licenza resta all'holder e `isHolderQualified` restituisce `false`.
+Un transfer azzera la Holder policy della licenza e cancella nome e profilo del venditore; i messaggi restano, con l'indirizzo dell'holder che li ha scritti. Il nuovo holder installa una Holder policy con `setHolderSmartPolicy`, poi aggiorna i propri dati. Il vecchio holder perde ogni diritto sulla licenza. Le qualifiche contano al momento della vendita. Il design completo è in [Participant license design](participant-license-design.md).
 
 Gli script di import e popolamento assegnano ancora ai ruoli gli account del nodo locale. Le licenze le usano per ora `test:policies` e `evaluate:policies`.
 
 ```solidity
-struct ParticipantDescriptor {
-    bytes32   name;        // nome compatto
-    string    bpmn;        // frammento BPMN del partecipante
-    bytes32   descriptor;  // descrittore applicativo
-    bytes32[] messages;    // identificatori dei messaggi
-}
+bytes32 public immutable participantType; // tipo del ruolo, fissato al mint
+bytes32 private name;                     // nome dell'organizzazione holder
+bytes32 private profile;                  // hash o CID del profilo off-chain
+address private messagesWriter;           // holder che ha scritto i messaggi
+bytes32[] private messages;               // messaggi dichiarati
 ```
 
-Ogni campo ha il suo setter (`setName`, `setBpmn`, `setDescriptor`, `setMessages`), che richiede entrambe le policy ed emette `StateChanged`. A differenza delle coreografie, il participant ha un `tokenURI` salvato e modificabile con `setTokenURI`. Tipo (`participantType`) e caratteristiche (`getCapabilities`, `hasCapability`) stanno fuori dal descrittore, e li scrive solo il certificatore.
+Ogni campo modificabile ha il suo setter (`setName`, `setProfile`, `setMessages`), che richiede entrambe le policy ed emette un evento dedicato (`NameChanged`, `ProfileChanged`, `MessagesChanged`). `setMessages` passa anche dal controllo di dominio `evaluateMessagesUpdate` di Creator e Holder. Come per le coreografie, il `tokenURI` è calcolato e mai salvato.
 
 I nodi continuano a riferirsi ai ruoli per nome. Il ruolo si risolve nell'indirizzo della licenza:
 

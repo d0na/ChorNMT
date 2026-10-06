@@ -82,7 +82,7 @@ the maximum unsigned value until configured.
 | Known flow endpoint | `setKnownFlowTargetsEnabled(bool)` | When enabled, each `incoming` source and `outgoing` target must exist already or be present in the same update. |
 | Protected node | `setProtectedNode(name, bool)` | A protected node cannot be changed by `setNodes`, and no other node may add or remove a sequence flow to or from it. |
 | Protected role | `setProtectedRole(name, bool)` | Evaluated on `setRoles`: a protected role cannot be reassigned. |
-| Role license requirement | `setParticipantRegistry(nmt, certifier)`, `setRoleRequirement(name, type, capabilities)` | Evaluated on `setRoles`: the role can be linked only to a participant license from `nmt`, certified by `certifier`, with the required type and capabilities. |
+| Role license requirement | `setParticipantRegistry(nmt, certifier)`, `setRoleRequirement(name, type)` | Evaluated on `setRoles`: the role can be linked only to a participant license from `nmt`, certified by `certifier`, with the required type and capabilities. |
 | Known roles | `setKnownRolesEnabled(bool)` | Evaluated on `setRoles`: only existing roles can be reassigned; new roles are rejected. |
 | Distinct role accounts | `setDistinctRoleAccountsEnabled(bool)` | Evaluated on `setRoles`: after the update, no account plays two roles. |
 
@@ -116,34 +116,43 @@ choreography links the role to the license once, and the organization changes
 when Carrier A sells the license to Carrier B. The role, its tasks, and every
 node stay unchanged.
 
-The authority is the participant Master administrator and the certifier. It
-qualifies Carrier A and Carrier B for `Carrier` and `SpecialTransport`,
-Carrier C for `Carrier` only, and the Supplier company for `Supplier`. It
-mints the `Special Carrier` license to Carrier A with type `Carrier` and
-capability `SpecialTransport`.
+The authority is the participant Master administrator, the issuer of every
+license type, and the certifier. The participant policies are hardcoded, as
+policies translated from XACML would be: Carrier A and Carrier B (Hardhat
+accounts 5 and 6) are qualified for `SpecialCarrier` and `Carrier`, Carrier C
+(account 7) for `Carrier` only, and the Supplier company (account 8) for
+`Supplier`; the authority is account 9. The authority mints the `Special
+Carrier` license to Carrier A with type `SpecialCarrier`, fixed at mint. The
+certifier's policy allows a `SpecialCarrier` license to declare the messages
+of the Special Carrier tasks of the paper example, including the one added by
+the delta.
 
 | Case | Expected outcome | Rule |
 | --- | --- | --- |
 | Link the role to a plain account | denied | The role requires a license. |
-| Link the role to a `Carrier` license without `SpecialTransport` | denied | The license lacks a required capability. |
+| Link the role to a `Carrier` license | denied | Wrong license type. |
 | Link the role to a `Supplier` license | denied | Wrong license type. |
 | Link the role to the Special Carrier license | allowed | The license meets the requirement. |
 | Create a `Backup Carrier` role | denied | Only existing roles can be reassigned. |
-| Carrier A changes the license capabilities | denied | Only the certifier sets them. |
-| Sell the license to Carrier C | denied | Carrier C is not qualified for `SpecialTransport`. |
-| Sell the license to the Supplier company | denied | Not qualified for `Carrier`. |
+| Carrier A declares the Special Carrier messages | allowed | Every message is allowed for `SpecialCarrier`. |
+| Carrier A declares a message of another role | denied | The certifier's policy rejects it (`evaluateMessagesUpdate`). |
+| Sell the license to Carrier C | denied | Carrier C is not qualified for `SpecialCarrier`. |
+| Sell the license to the Supplier company | denied | Not qualified for `SpecialCarrier`. |
 | Carrier B takes the license by itself | denied | Only the holder sells. |
-| Carrier A sells the license to Carrier B | allowed | Carrier B is qualified. |
+| Carrier A sells the license to Carrier B | allowed | Carrier B is qualified; the sale clears name and profile and keeps the messages, written by Carrier A. |
 | Carrier B updates the license before installing a Holder policy | denied | The sale reset the Holder policy. |
-| Carrier B installs its Holder policy, then updates and links its data | allowed | Carrier B is the holder. |
+| Carrier B installs its Holder policy, then updates its name and profile | allowed | Carrier B is the holder. |
 | Carrier A updates the license after the sale | denied | Carrier A is no longer the holder. |
-| The authority revokes `SpecialTransport` from Carrier B | allowed | `isHolderQualified` then returns `false`. |
+| Carrier B confirms the messages | allowed | The messages are now written by the current holder. |
 
 After the sale the evaluation checks that the license belongs to Carrier B,
-that `getRole("Special Carrier")` still returns the license, and that every
-task of the role still references it. `npm run test:policies` covers the same
-rules on the small fixture, plus an unauthorized issuer, a license certified
-by an untrusted policy, and an account playing two roles.
+that `getRole("Special Carrier")` still returns the license, that every task
+of the role still references it, and that the messages survived the sale with
+Carrier A as writer. `npm run test:policies` covers the same rules on the
+small fixture, plus an unauthorized issuer, a mint without a type, a license
+certified by an untrusted policy, an account playing two roles, the computed
+license `tokenURI` before and after the sale, and the replacement of the
+participant Master policy.
 
 ## Holder Policy Restrictions
 

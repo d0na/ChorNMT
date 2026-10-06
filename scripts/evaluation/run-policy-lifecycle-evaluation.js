@@ -235,14 +235,17 @@ async function main() {
   });
 
   const carrierRole = "Special Carrier";
+  const SPECIAL_CARRIER = ethers.encodeBytes32String("SpecialCarrier");
   const CARRIER = ethers.encodeBytes32String("Carrier");
   const SUPPLIER = ethers.encodeBytes32String("Supplier");
-  const SPECIAL_TRANSPORT = ethers.encodeBytes32String("SpecialTransport");
-  const [carrierA, carrierB, carrierC, supplierCompany, authority] =
-    signers.slice(model.roleNames.length, model.roleNames.length + 5);
-  const participantMaster = await (await ethers.getContractFactory("ParticipantMasterSmartPolicy")).deploy(authority.address);
-  await participantMaster.waitForDeployment();
-  const participantNmt = await (await ethers.getContractFactory("ParticipantNMT")).deploy(participantMaster.target);
+  // The participant policies hardcode these organizations as default Hardhat accounts 5-9.
+  assert.ok(model.roleNames.length <= 5, "role accounts would overlap the hardcoded license organizations");
+  const [carrierA, carrierB, carrierC, supplierCompany, authority] = signers.slice(5, 10);
+  const participantMaster = await (await ethers.getContractFactory("ParticipantMasterSmartPolicy")).deploy();
+  const participantRenderer = await (await ethers.getContractFactory("ParticipantTokenURIRenderer")).deploy();
+  await Promise.all([participantMaster.waitForDeployment(), participantRenderer.waitForDeployment()]);
+  const participantNmt = await (await ethers.getContractFactory("ParticipantNMT"))
+    .deploy(participantMaster.target, participantRenderer.target);
   const participantCertifier = await (await ethers.getContractFactory(
     "contracts/participant/CreatorSmartPolicy.sol:CreatorSmartPolicy"
   )).connect(authority).deploy();
@@ -254,29 +257,15 @@ async function main() {
     participantCertifier.waitForDeployment(),
     participantHolderPolicy.waitForDeployment()
   ]);
-  const qualifications = [
-    [carrierA, [CARRIER, SPECIAL_TRANSPORT]],
-    [carrierB, [CARRIER, SPECIAL_TRANSPORT]],
-    [carrierC, [CARRIER]],
-    [supplierCompany, [SUPPLIER]]
-  ];
-  for (const [organization, qualificationList] of qualifications) {
-    for (const qualification of qualificationList) {
-      await (await participantMaster.connect(authority).setQualification(organization.address, qualification, true)).wait();
-    }
-  }
-  const mintLicense = async (holder, participantType, capabilities) => {
-    const licenseArguments = [holder.address, participantCertifier.target, participantHolderPolicy.target];
-    const [licenseAddress] = await participantNmt.connect(authority).mint.staticCall(...licenseArguments);
-    await (await participantNmt.connect(authority).mint(...licenseArguments)).wait();
-    const license = await ethers.getContractAt("ParticipantMutableAsset", licenseAddress, authority);
-    await (await license.setParticipantType(participantType)).wait();
-    await (await license.setCapabilities(capabilities)).wait();
-    return license;
+  const mintLicense = async (holder, participantType) => {
+    const licenseArguments = [holder.address, participantCertifier.target, participantHolderPolicy.target, participantType];
+    const [licenseAddress] = await participantNmt.connect(authority).mintWithParticipantType.staticCall(...licenseArguments);
+    await (await participantNmt.connect(authority).mintWithParticipantType(...licenseArguments)).wait();
+    return ethers.getContractAt("ParticipantMutableAsset", licenseAddress, holder);
   };
-  const specialCarrierLicense = await mintLicense(carrierA, CARRIER, [SPECIAL_TRANSPORT]);
-  const plainCarrierLicense = await mintLicense(carrierC, CARRIER, []);
-  const supplierLicense = await mintLicense(supplierCompany, SUPPLIER, []);
+  const specialCarrierLicense = await mintLicense(carrierA, SPECIAL_CARRIER);
+  const plainCarrierLicense = await mintLicense(carrierC, CARRIER);
+  const supplierLicense = await mintLicense(supplierCompany, SUPPLIER);
   const linkCarrier = (account) => ({
     to: populatedAssetAddress,
     data: populatedAsset.interface.encodeFunctionData("setRoles", [[carrierRole], [account]])
@@ -290,12 +279,20 @@ async function main() {
     to: specialCarrierLicense.target,
     data: specialCarrierLicense.interface.encodeFunctionData("setName", [ethers.encodeBytes32String(name)])
   });
+  const carrierTaskNodes = evolvedNodes
+    .filter((node) => node.initiatorRole === carrierRole || node.participantRole === carrierRole);
+  const carrierMessages = [...new Set(carrierTaskNodes.flatMap((node) => [node.initiatingMessage, node.returnMessage]))]
+    .filter(Boolean)
+    .map(ethers.encodeBytes32String);
+  const otherRoleMessage = evolvedNodes
+    .flatMap((node) => [node.initiatingMessage, node.returnMessage])
+    .find((message) => message && !carrierMessages.includes(ethers.encodeBytes32String(message)));
 
-  await allow(policyResults, "creator requires Special Carrier to be a Carrier license with SpecialTransport", () => creatorPolicy.setRoleRequirement(carrierRole, CARRIER, [SPECIAL_TRANSPORT]));
+  await allow(policyResults, "creator requires Special Carrier to be a SpecialCarrier license", () => creatorPolicy.setRoleRequirement(carrierRole, SPECIAL_CARRIER));
   await (await creatorPolicy.setParticipantRegistry(participantNmt.target, participantCertifier.target)).wait();
   await (await creatorPolicy.setKnownRolesEnabled(true)).wait();
   await deny(policyResults, "creator denies linking Special Carrier to a plain account", administrator, linkCarrier(carrierA.address));
-  await deny(policyResults, "creator denies linking a Carrier license without SpecialTransport", administrator, linkCarrier(plainCarrierLicense.target));
+  await deny(policyResults, "creator denies linking a Carrier license", administrator, linkCarrier(plainCarrierLicense.target));
   await deny(policyResults, "creator denies linking a Supplier license", administrator, linkCarrier(supplierLicense.target));
   await allow(policyResults, "holder links Special Carrier to the license held by Carrier A", () => populatedAsset.setRoles([carrierRole], [specialCarrierLicense.target]));
   await deny(policyResults, "creator denies a new Backup Carrier role", administrator, {
@@ -303,17 +300,15 @@ async function main() {
     data: populatedAsset.interface.encodeFunctionData("setRoles", [["Backup Carrier"], [specialCarrierLicense.target]])
   });
   await allow(policyResults, "Carrier A updates its license data", () => licenseAs(carrierA).setName(ethers.encodeBytes32String("Carrier A")));
-
-  await deny(policyResults, "Carrier A cannot change the license capabilities", carrierA, {
+  await allow(policyResults, "Carrier A declares the Special Carrier messages on its license", () => licenseAs(carrierA).setMessages(carrierMessages));
+  await deny(policyResults, "certifier denies a license message of another role", carrierA, {
     to: specialCarrierLicense.target,
-    data: specialCarrierLicense.interface.encodeFunctionData("setCapabilities", [[]])
+    data: specialCarrierLicense.interface.encodeFunctionData("setMessages", [[ethers.encodeBytes32String(otherRoleMessage)]])
   });
-  await deny(policyResults, "participant master denies selling the license to Carrier C without SpecialTransport", carrierA, sellLicense(carrierA, carrierC));
+  await deny(policyResults, "participant master denies selling the license to Carrier C, not qualified for SpecialCarrier", carrierA, sellLicense(carrierA, carrierC));
   await deny(policyResults, "participant master denies selling the license to the Supplier company", carrierA, sellLicense(carrierA, supplierCompany));
   await deny(policyResults, "Carrier B cannot take the license without the seller", carrierB, sellLicense(carrierA, carrierB));
-  const carrierTasks = evolvedNodes
-    .filter((node) => node.initiatorRole === carrierRole || node.participantRole === carrierRole)
-    .map((node) => node.name);
+  const carrierTasks = carrierTaskNodes.map((node) => node.name);
   await allow(policyResults, "Carrier A sells the Special Carrier license to Carrier B", () => participantNmt.connect(carrierA).transferFrom(carrierA.address, carrierB.address, BigInt(specialCarrierLicense.target)));
   assert.equal(await participantNmt.ownerOf(BigInt(specialCarrierLicense.target)), carrierB.address);
   assert.equal(await populatedAsset.getRole(carrierRole), specialCarrierLicense.target);
@@ -322,26 +317,26 @@ async function main() {
     assert.ok(initiatorRole === carrierRole || participantRole === carrierRole, `${name} lost the ${carrierRole} role`);
   }
   assert.equal(await creatorPolicy.isRoleRequirementSatisfied(populatedAssetAddress, carrierRole), true);
+  assert.equal(await specialCarrierLicense.getName(), ethers.ZeroHash);
+  assert.deepEqual([...await specialCarrierLicense.getMessages()], carrierMessages);
+  assert.equal(await specialCarrierLicense.getMessagesWriter(), carrierA.address);
 
   await deny(policyResults, "Carrier B cannot update the license before installing a Holder policy", carrierB, updateLicenseName("Carrier B"));
   await allow(policyResults, "Carrier B installs its Holder policy on the license", () => licenseAs(carrierB).setHolderSmartPolicy(participantHolderPolicy.target));
   await deny(policyResults, "Carrier A can no longer update the license", carrierA, updateLicenseName("Carrier A"));
   await allow(policyResults, "Carrier B updates the license name", () => licenseAs(carrierB).setName(ethers.encodeBytes32String("Carrier B")));
-  const carrierBDescriptor = ethers.id("Carrier B organization profile");
-  await allow(policyResults, "Carrier B links its organization data", () => licenseAs(carrierB).setDescriptor(carrierBDescriptor));
-  assert.equal((await specialCarrierLicense.getParticipantDescriptor()).descriptor, carrierBDescriptor);
-
-  assert.equal(await participantMaster.isHolderQualified(specialCarrierLicense.target), true);
-  await allow(policyResults, "authority revokes SpecialTransport from Carrier B", () => participantMaster.connect(authority).setQualification(carrierB.address, SPECIAL_TRANSPORT, false));
-  const holderQualifiedAfterRevocation = await participantMaster.isHolderQualified(specialCarrierLicense.target);
-  assert.equal(holderQualifiedAfterRevocation, false);
+  const carrierBProfile = ethers.id("Carrier B organization profile");
+  await allow(policyResults, "Carrier B links its organization profile", () => licenseAs(carrierB).setProfile(carrierBProfile));
+  assert.equal(await specialCarrierLicense.getProfile(), carrierBProfile);
+  await allow(policyResults, "Carrier B confirms the Special Carrier messages", () => licenseAs(carrierB).setMessages(carrierMessages));
+  assert.equal(await specialCarrierLicense.getMessagesWriter(), carrierB.address);
   const roleHandover = {
     role: carrierRole,
     license: specialCarrierLicense.target,
     seller: carrierA.address,
     buyer: carrierB.address,
     rejectedBuyers: [carrierC.address, supplierCompany.address],
-    holderQualifiedAfterRevocation,
+    messages: carrierMessages.map((message) => ethers.decodeBytes32String(message)),
     tasks: carrierTasks
   };
 
@@ -394,8 +389,8 @@ async function main() {
     "## Policy model",
     "",
     "- **Master policy** authorizes Creators, eligible initial Holders, transfers, and version evolution.",
-    "- **Creator policy** defines BPMN update constraints: task and sequence-flow limits, task-name allowlist, known flow targets, and protected nodes. It also decides which license can play a role: a role can require a participant license of a given type with given capabilities.",
-    "- **Participant Master policy** governs role licenses: only qualified organizations can buy a license.",
+    "- **Creator policy** defines BPMN update constraints: task and sequence-flow limits, task-name allowlist, known flow targets, and protected nodes. It also decides which license can play a role: a role can require a participant license of a given type.",
+    "- **Participant Master policy** governs role licenses: only the issuer of a type mints it, and only organizations qualified for the type can buy it.",
     "- **Holder policy** is the second authorization layer and can further restrict an instance by installing a deny-all policy.",
     "",
     "## Model",
@@ -412,13 +407,14 @@ async function main() {
     "",
     "## Role handover: Special Carrier",
     "",
-    `The role \`${roleHandover.role}\` is played by a license, a \`ParticipantMutableAsset\` minted by \`ParticipantNMT\`. The choreography links the role to the license once; the organization behind the role changes when the license is sold. The participant certifier sets the license type (\`Carrier\`) and capabilities (\`SpecialTransport\`); the choreography Creator policy accepts only such a license for the role; the participant Master policy lets the holder sell the license only to an organization qualified for its type and capabilities.`,
+    `The role \`${roleHandover.role}\` is played by a license, a \`ParticipantMutableAsset\` minted by \`ParticipantNMT\`. The choreography links the role to the license once; the organization behind the role changes when the license is sold. The license type (\`SpecialCarrier\`) is fixed when the authority mints it; the choreography Creator policy accepts only a license of that type for the role; the participant Master policy lets the holder sell the license only to an organization qualified for its type; the certifier's policy lets the holder declare only messages allowed for the type. The participant policies are hardcoded, as policies translated from XACML would be.`,
     "",
     `- License: \`${roleHandover.license}\``,
     `- Seller, Carrier A: \`${roleHandover.seller}\``,
     `- Buyer, Carrier B: \`${roleHandover.buyer}\``,
     `- Rejected buyers, Carrier C and the Supplier company: ${roleHandover.rejectedBuyers.map((address) => `\`${address}\``).join(", ")}`,
     `- Tasks played by the role, unchanged by the sale: ${roleHandover.tasks.map((name) => `\`${name}\``).join(", ")}`,
+    `- Messages declared on the license: ${roleHandover.messages.map((message) => `\`${message}\``).join(", ")}`,
     "",
     "| Case | Outcome | Gas |",
     "| --- | --- | ---: |",
@@ -426,7 +422,7 @@ async function main() {
       .filter((result) => /Carrier|license|authority/i.test(result.label))
       .map((result) => `| ${result.label} | ${result.outcome} | ${result.gasUsed} |`),
     "",
-    `The sale resets the license Holder policy, so Carrier B installs its own before updating the license data, and Carrier A loses every right on it. Qualifications are checked at the sale: after the authority revokes \`SpecialTransport\` from Carrier B, \`isHolderQualified\` returns \`${roleHandover.holderQualifiedAfterRevocation}\` but the license stays with Carrier B.`,
+    `The sale resets the license Holder policy and clears the seller's name and profile, so Carrier B installs its own policy before updating the license data, and Carrier A loses every right on it. The messages stay on the license, marked as written by Carrier A, until Carrier B confirms them.`,
     "",
     "## Mint strategy comparison",
     "",
