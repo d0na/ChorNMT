@@ -15,8 +15,6 @@ import "./IChoreographyParticipantAM.sol";
 // exist and not be protected, a role with a required type must be linked to a certified
 // license of that type, and, when the scenario asks for it, no account plays two roles.
 abstract contract ConstrainedCreatorSmartPolicy is CreatorSmartPolicy {
-    error InvalidAddress();
-
     uint8 private constant TASK = uint8(IChoreographyAsset.NodeType.TASK);
 
     IChoreographyParticipantAM private immutable participants;

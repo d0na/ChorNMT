@@ -69,14 +69,15 @@ contract ChoreographyMutableAsset is MutableAsset, IChoreographyAsset {
             address(this)
         )
     {
-        require(
-            IChoreographyCreatorPolicy(creatorSmartPolicy).evaluateRoleUpdate(
+        if (
+            !IChoreographyCreatorPolicy(creatorSmartPolicy).evaluateRoleUpdate(
                 address(this),
                 roleNames,
                 addresses
-            ),
-            "Operation DENIED by CREATOR role policy"
-        );
+            )
+        ) {
+            revert OperationDenied(CREATOR);
+        }
         _setRoles(roleNames, addresses);
     }
 
@@ -84,10 +85,10 @@ contract ChoreographyMutableAsset is MutableAsset, IChoreographyAsset {
         string[] memory roleNames,
         address[] memory addresses
     ) private {
-        require(roleNames.length == addresses.length, "Array size mismatch");
+        if (roleNames.length != addresses.length) revert ArraySizeMismatch();
 
         for (uint256 i = 0; i < roleNames.length; i++) {
-            require(bytes(roleNames[i]).length > 0, "Role name required");
+            if (bytes(roleNames[i]).length == 0) revert NameRequired();
 
             if (!descriptor.hasRole[roleNames[i]]) {
                 descriptor.hasRole[roleNames[i]] = true;
@@ -154,16 +155,17 @@ contract ChoreographyMutableAsset is MutableAsset, IChoreographyAsset {
             types[i] = uint8(nodeTypes[i]);
         }
 
-        require(
-            IChoreographyCreatorPolicy(creatorSmartPolicy).evaluateNodeUpdate(
+        if (
+            !IChoreographyCreatorPolicy(creatorSmartPolicy).evaluateNodeUpdate(
                 address(this),
                 names,
                 types,
                 incoming,
                 outgoing
-            ),
-            "Operation DENIED by CREATOR BPMN policy"
-        );
+            )
+        ) {
+            revert OperationDenied(CREATOR);
+        }
     }
 
     function _setNodes(
@@ -177,20 +179,21 @@ contract ChoreographyMutableAsset is MutableAsset, IChoreographyAsset {
         string[] memory initiatingMessages,
         string[] memory returnMessages
     ) private {
-        require(
-            names.length == nodeTypes.length &&
-                names.length == incoming.length &&
-                names.length == outgoing.length &&
-                names.length == conditions.length &&
-                names.length == initiatorRoles.length &&
-                names.length == participantRoles.length &&
-                names.length == initiatingMessages.length &&
-                names.length == returnMessages.length,
-            "Array size mismatch"
-        );
+        if (
+            names.length != nodeTypes.length ||
+            names.length != incoming.length ||
+            names.length != outgoing.length ||
+            names.length != conditions.length ||
+            names.length != initiatorRoles.length ||
+            names.length != participantRoles.length ||
+            names.length != initiatingMessages.length ||
+            names.length != returnMessages.length
+        ) {
+            revert ArraySizeMismatch();
+        }
 
         for (uint256 i = 0; i < names.length; i++) {
-            require(bytes(names[i]).length > 0, "Node name required");
+            if (bytes(names[i]).length == 0) revert NameRequired();
 
             if (!descriptor.hasNode[names[i]]) {
                 descriptor.hasNode[names[i]] = true;

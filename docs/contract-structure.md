@@ -186,8 +186,8 @@ function _evaluateThingUpdate(T calldata value) private view {
 
 ## Errors and checks
 
-- New code uses **custom errors** (`error OperationDenied(uint8 layer);`, `error CallerNotHolder();`, `error InvalidAddress();`, `error ArraySizeMismatch();`, `error NameRequired();`) with `if (!condition) revert Error();`. They are cheaper to deploy and to revert than `require` strings, and the Token embeds the Asset bytecode, so every string counts twice.
-- Errors shared by a kind are declared once in its base (`MutableAsset`, `NMT`, `SmartPolicy`).
+- Every contract uses **custom errors**, never `require` strings: `if (!condition) revert Error();`. A policy denial reverts with `OperationDenied(layer)` in the asset (`CREATOR` = 0, `HOLDER` = 1, also for the domain checks) and `MasterDenied()` in the Token; the other errors name the failed check (`CallerNotHolder`, `CallerNotNMT`, `HolderPolicyDisabled`, `InvalidAddress`, `ArraySizeMismatch`, `NameRequired`, `TransferDenied`, `UnknownPredecessor`, `MalformedAction`). They are cheaper to deploy and to revert than `require` strings, and the Token embeds the Asset bytecode, so every string counts twice.
+- Errors shared by a kind are declared once in its base (`MutableAsset`, `NMT`, `SmartPolicy`); an error used by one contract only is declared there (`UnknownPredecessor` in `ChoreographyNMT`, `ParticipantTypeRequired` in `ParticipantNMT`).
 - Constructors reject the zero address for every required collaborator.
 - Every allow and deny path of a public mutator is covered in `scripts/test-policies.js`. The tests check revert status, not revert messages, so switching to custom errors does not change them.
 
@@ -211,6 +211,8 @@ The cost of the whole flow is measured, not estimated: `npm test` and `npm run e
 - `view` functions used only off-chain (render) may be expensive; functions called during a transaction (policy checks, setters) may not.
 - The Creator AND Holder domain check costs a second external call per mutator. Keep it cheap: a Holder domain evaluation with no configured constraint must return without reading the asset. Never skip the call to save gas.
 
+**Applied**: G4 (custom errors instead of `require` strings: `ChoreographyNMT` deploy −201,733 gas, every mint −107,926, every denied case −52 to −99; `ChoreographyNMT` runtime 22,336 → 21,407 bytes).
+
 **Optimization candidates** (not yet applied; each needs a measured before/after):
 
 | # | Change | Affected cost | Expected effect |
@@ -218,7 +220,6 @@ The cost of the whole flow is measured, not estimated: `npm test` and `npm run e
 | G1 | Deploy assets as EIP-1167 minimal-proxy clones of one implementation, with an `initialize` guarded by `onlyNMT`, instead of `new`. | Every mint; Token size. | Mint drops from a full asset deployment to a clone plus initialization; the Token no longer embeds the Asset bytecode, which removes the 24 KB constraint. Requires replacing `immutable nmt` and the constructor with initializer state. |
 | G2 | Use `msg.data` as the policy action in asset mutators. | `setNodes`, `setRoles`. | Removes re-encoding of every array argument on each call. Safe only while the policies read the selector or fixed-offset static arguments: a caller can send non-canonical ABI encoding, so a policy that decodes dynamic arguments from the action must use `abi.decode`, not offsets. |
 | G3 | `external` + `calldata` for `setNodes`, `setRoles`, `mint…`. | Same. | Avoids copying arguments to memory. |
-| G4 | Custom errors instead of `require` strings. | Deploy of Token/Asset, every revert. | Smaller bytecode; cheaper denied cases. |
 | G5 | Keep task and sequence-flow counters in the asset, updated by `_setNodes`, and expose them to the Creator policy. | `setNodes` with a configured Creator policy. | Replaces the O(N) `_currentCounts` scan of external calls. |
 | G6 | Copy `incoming`/`outgoing`/`conditions` arrays with a single assignment where the compiler supports it, instead of `delete` + `push` loops. | `setNodes`, import. | Fewer storage-length writes; measure first. |
 | G7 | Emit `NodesChanged`/`RolesChanged` with counts or hashes instead of full name arrays. | `setNodes`, `setRoles`. | Smaller log data cost. Check off-chain consumers first. |
@@ -226,10 +227,9 @@ The cost of the whole flow is measured, not estimated: `npm test` and `npm run e
 
 ## Known deviations
 
-Resolved: 1–4 (participant asset and token, rewritten as a role license), 5 (`MutableAsset` modifiers moved before the constructor), 6 and 9 (choreography Creator layout and switch naming, removed with its runtime configuration), 7 (shared asset interfaces), 8 (action decoding shared in `SmartPolicy`), 10 (default-deny participant policies) and 14 (hardcoded choreography Master and Creator policies). The current code differs from the rules above in these places. Fix them in dedicated changes, with tests and `check:size`:
+Resolved: 1–4 (participant asset and token, rewritten as a role license), 5 (`MutableAsset` modifiers moved before the constructor), 6 and 9 (choreography Creator layout and switch naming, removed with its runtime configuration), 7 (shared asset interfaces), 8 (action decoding shared in `SmartPolicy`), 11 (custom errors everywhere, G4), 10 (default-deny participant policies) and 14 (hardcoded choreography Master and Creator policies). The current code differs from the rules above in these places. Fix them in dedicated changes, with tests and `check:size`:
 
 | # | Contract | Deviation | Rule |
 | --- | --- | --- | --- |
-| 11 | All contracts | `require` with string messages. | Errors: custom errors (G4). |
 | 12 | `ChoreographyMutableAsset`, `MutableAsset` | Mutators are `public` with `memory` parameters and re-encode arguments for the policies. | Gas: `external` + `calldata`, `msg.data` as action (G2, G3). |
 | 13 | `ChoreographyMutableAsset`, `HolderSmartPolicy`, `IChoreographyCreatorPolicy` | The domain checks (`evaluateNodeUpdate`, `evaluateRoleUpdate`) are asked of the Creator policy only; the Holder policy does not implement the domain interface, whose name is Creator-specific. | Asset: domain check is Creator AND Holder; layer-neutral `IChoreographyPolicy`. |

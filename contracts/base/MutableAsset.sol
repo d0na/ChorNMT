@@ -16,16 +16,21 @@ abstract contract MutableAsset is IMutableAsset {
     address public creatorSmartPolicy;
 
     error OperationDenied(uint8 layer);
+    error HolderPolicyDisabled();
+    error CallerNotHolder();
+    error CallerNotNMT();
+    error InvalidAddress();
+    error ArraySizeMismatch();
+    error NameRequired();
 
     modifier evaluatedByHolder(
         address subject,
         bytes memory action,
         address resource
     ) {
-        require(
-            SmartPolicy(holderSmartPolicy).evaluate(subject, action, resource),
-            "Operation DENIED by HOLDER policy"
-        );
+        if (!SmartPolicy(holderSmartPolicy).evaluate(subject, action, resource)) {
+            revert OperationDenied(HOLDER);
+        }
         _;
     }
 
@@ -34,10 +39,9 @@ abstract contract MutableAsset is IMutableAsset {
         bytes memory action,
         address resource
     ) {
-        require(
-            SmartPolicy(creatorSmartPolicy).evaluate(subject, action, resource),
-            "Operation DENIED by CREATOR policy"
-        );
+        if (!SmartPolicy(creatorSmartPolicy).evaluate(subject, action, resource)) {
+            revert OperationDenied(CREATOR);
+        }
         _;
     }
 
@@ -46,25 +50,23 @@ abstract contract MutableAsset is IMutableAsset {
         bytes memory action,
         address resource
     ) {
-        require(
-            SmartPolicy(creatorSmartPolicy).evaluate(subject, action, resource),
-            "Operation DENIED by CREATOR policy"
-        );
-        require(holderSmartPolicy != address(0), "Holder policy disabled");
-        require(
-            SmartPolicy(holderSmartPolicy).evaluate(subject, action, resource),
-            "Operation DENIED by HOLDER policy"
-        );
+        if (!SmartPolicy(creatorSmartPolicy).evaluate(subject, action, resource)) {
+            revert OperationDenied(CREATOR);
+        }
+        if (holderSmartPolicy == address(0)) revert HolderPolicyDisabled();
+        if (!SmartPolicy(holderSmartPolicy).evaluate(subject, action, resource)) {
+            revert OperationDenied(HOLDER);
+        }
         _;
     }
 
     modifier onlyHolder() {
-        require(msg.sender == getHolder(), "Caller is not the holder");
+        if (msg.sender != getHolder()) revert CallerNotHolder();
         _;
     }
 
     modifier onlyNMT() {
-        require(msg.sender == nmt, "Caller should be NMT");
+        if (msg.sender != nmt) revert CallerNotNMT();
         _;
     }
 
@@ -73,15 +75,13 @@ abstract contract MutableAsset is IMutableAsset {
         address creatorSmartPolicyAddress,
         address holderSmartPolicyAddress
     ) {
-        require(nmtAddress != address(0), "Invalid NMT address");
-        require(
-            creatorSmartPolicyAddress != address(0),
-            "Invalid creatorSmartPolicy address"
-        );
-        require(
-            holderSmartPolicyAddress != address(0),
-            "Invalid holderSmartPolicy address"
-        );
+        if (
+            nmtAddress == address(0) ||
+            creatorSmartPolicyAddress == address(0) ||
+            holderSmartPolicyAddress == address(0)
+        ) {
+            revert InvalidAddress();
+        }
 
         nmt = nmtAddress;
         creatorSmartPolicy = creatorSmartPolicyAddress;

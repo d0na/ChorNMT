@@ -159,7 +159,7 @@ tokenId = uint160(address(asset))        asset = address(uint160(tokenId))
 
 | Modifier | Regola |
 | --- | --- |
-| `evaluatedBySmartPolicies` | Devono approvare sia la Creator sia la Holder policy. Se la Holder policy è `address(0)` l'operazione fallisce con `"Holder policy disabled"`. |
+| `evaluatedBySmartPolicies` | Devono approvare sia la Creator sia la Holder policy. Se la Holder policy è `address(0)` l'operazione fallisce con `HolderPolicyDisabled()`; un diniego fallisce con `OperationDenied(layer)` (`0` Creator, `1` Holder). |
 | `evaluatedByCreator` | Decide solo la Creator policy. Si usa per `transferFrom` e `setCreatorSmartPolicy`. |
 | `evaluatedByHolder` | Decide solo la Holder policy. Oggi non è usato. |
 | `onlyHolder` | `msg.sender` deve essere il proprietario del token. |
@@ -199,7 +199,7 @@ tokenId = uint160(address(asset))        asset = address(uint160(tokenId))
 
 Il mint usa `ERC721._mint` e non `_safeMint`: nessuna callback raggiunge il destinatario prima che l'asset sia inizializzato e la sua versione registrata.
 
-**Vincolo di dimensione:** l'NMT contiene il bytecode dell'asset, perché lo crea con `new`. Occupa 22.336 byte su un limite di 24.576. Per questo la generazione del JSON sta in un contratto separato.
+**Vincolo di dimensione:** l'NMT contiene il bytecode dell'asset, perché lo crea con `new`. Occupa 21.407 byte su un limite di 24.576. Per questo la generazione del JSON sta in un contratto separato.
 
 ### `ChoreographyMutableAsset`
 

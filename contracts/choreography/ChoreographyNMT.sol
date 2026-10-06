@@ -11,6 +11,8 @@ contract ChoreographyNMT is NMT {
     mapping(uint256 => uint256) public predecessorOf;
     mapping(uint256 => uint256) public versionOf;
 
+    error UnknownPredecessor();
+
     constructor(address masterSmartPolicyAddress, address tokenURIRendererAddress)
         ERC721(
             "Mutable Choreography for a PUB Decentraland UniPi Project",
@@ -18,7 +20,7 @@ contract ChoreographyNMT is NMT {
         )
         NMT(masterSmartPolicyAddress)
     {
-        require(tokenURIRendererAddress != address(0), "Invalid tokenURI renderer");
+        if (tokenURIRendererAddress == address(0)) revert InvalidAddress();
         tokenURIRenderer = tokenURIRendererAddress;
     }
 
@@ -41,7 +43,7 @@ contract ChoreographyNMT is NMT {
         )
         returns (address, uint256)
     {
-        require(_ownerOf(predecessorTokenId) != address(0), "Unknown predecessor");
+        if (_ownerOf(predecessorTokenId) == address(0)) revert UnknownPredecessor();
 
         (address assetAddress, uint256 tokenId) = _mint(
             to,

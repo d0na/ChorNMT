@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 abstract contract SmartPolicy {
     error MalformedAction();
+    error InvalidAddress();
 
     function decodeSignature(
         bytes memory payload

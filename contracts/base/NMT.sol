@@ -13,15 +13,16 @@ abstract contract NMT is ERC721Enumerable {
     event MasterSmartPolicyChanged(address masterSmartPolicy);
 
     error InvalidAddress();
+    error MasterDenied();
+    error TransferDenied();
 
     modifier evaluatedByMaster(
         bytes memory action,
         address resource
     ) {
-        require(
-            SmartPolicy(masterSmartPolicy).evaluate(msg.sender, action, resource),
-            "Operation DENIED by MASTER policy"
-        );
+        if (!SmartPolicy(masterSmartPolicy).evaluate(msg.sender, action, resource)) {
+            revert MasterDenied();
+        }
         _;
     }
 
@@ -30,13 +31,9 @@ abstract contract NMT is ERC721Enumerable {
         address to,
         uint256 tokenId
     ) {
-        require(
-            MutableAsset(getMutableAssetAddress(tokenId)).transferFrom(
-                from,
-                to
-            ),
-            "TransferFrom evaluation failed"
-        );
+        if (!MutableAsset(getMutableAssetAddress(tokenId)).transferFrom(from, to)) {
+            revert TransferDenied();
+        }
         _;
     }
 
@@ -62,7 +59,7 @@ abstract contract NMT is ERC721Enumerable {
         )
         returns (address, uint256)
     {
-        require(to != address(0), "Invalid address");
+        if (to == address(0)) revert InvalidAddress();
         return _mint(to, creatorSmartPolicy, holderSmartPolicy);
     }
 
