@@ -1,0 +1,20 @@
+' Shared style of the ChorNMT UML diagrams.
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 12
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F4F8FB
+  BorderColor #3A6EA5
+}
+skinparam sequence {
+  ParticipantBackgroundColor #F4F8FB
+  ParticipantBorderColor #3A6EA5
+  LifeLineBorderColor #8AA9C8
+  ArrowColor #2F4F6F
+}
+skinparam note {
+  BackgroundColor #FFF8DC
+  BorderColor #C9A227
+}

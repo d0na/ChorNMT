@@ -1,0 +1,46 @@
+@startuml use-case-participant-license
+!include style.iuml
+title ChorNMT - participant license use cases
+left to right direction
+
+actor "Authority\n(account 9)\nissuer and certifier" as Authority
+actor "License holder\n(Carrier A, B, C)" as LicenseHolder
+actor "Buyer organization" as Buyer
+actor "Choreography holder" as ChoreoHolder
+
+rectangle "ParticipantNMT + ParticipantMutableAsset" {
+  usecase "Mint a typed license\n(mintWithParticipantType)" as UC_Mint
+  usecase "Replace the participant\nMaster policy" as UC_Master
+  usecase "Replace the certifier policy\n(setCreatorSmartPolicy)" as UC_Certifier
+  usecase "Declare the messages\nallowed for the type" as UC_Messages
+  usecase "Update organization data\n(name, profile)" as UC_Data
+  usecase "Sell the license" as UC_Sell
+  usecase "Check the buyer is\nqualified for the type" as UC_Qualified
+  usecase "Install a Holder policy\nafter the purchase" as UC_Holder
+}
+
+rectangle "Choreography" {
+  usecase "Link a role to the license" as UC_Link
+  usecase "Check the license type\n(ChoreographyParticipantAM)" as UC_Type
+}
+
+Authority --> UC_Mint
+Authority --> UC_Master
+Authority --> UC_Certifier
+LicenseHolder --> UC_Messages
+LicenseHolder --> UC_Data
+LicenseHolder --> UC_Sell
+UC_Sell ..> UC_Qualified : <<include>>
+Buyer --> UC_Holder
+Buyer --> UC_Sell : receives
+ChoreoHolder --> UC_Link
+UC_Link ..> UC_Type : <<include>>
+
+note bottom of UC_Sell
+  The sale clears name and profile and
+  resets the Holder policy; the messages
+  stay, marked with their writer. The
+  choreography role keeps pointing at
+  the license.
+end note
+@enduml

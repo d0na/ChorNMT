@@ -1,0 +1,38 @@
+@startuml sequence-import-and-render
+!include style.iuml
+title Import a BPMN model and render it back (import:asset, render:asset)
+
+actor "Holder" as Holder
+participant "import-bpmn-asset.js" as Import
+participant "bpmn-builder-js\nimporter" as Importer
+participant "ChoreographyMutableAsset" as Asset
+participant "ChoreographyNMT" as NMT
+participant "ChoreographyTokenURIRenderer" as Renderer
+participant "web3.js\n(readChoreography)" as Web3
+participant "bpmn-builder-js\npipeline" as Pipeline
+
+== Import ==
+Holder -> Import : import:asset <asset> paper-example.bpmn
+Import -> Importer : BPMN XML to NMT dataset (roles, nodes by name)
+Importer --> Import : dataset
+Import -> Asset : setRoles(names, accounts)
+Import -> Asset : setNodes(...)
+note right of Asset : policy checks as in sequence-apply-delta
+
+== Render ==
+Holder -> Web3 : render:asset <asset>
+Web3 -> Asset : tokenURI()  (one eth_call)
+Asset -> NMT : tokenURI(tokenId)
+NMT -> Renderer : tokenURI(asset)
+Renderer -> Asset : getRoleNames, getRole,\ngetNodeNames, getNode
+Renderer --> Web3 : data:application/json;base64,...
+Web3 -> Web3 : decodeTokenURI, buildRawOutput
+Web3 -> Pipeline : raw JSON
+Pipeline -> Pipeline : normalize, validation,\nprocess-mapper, moddle-generator
+Pipeline --> Holder : *.generated.bpmn.xml
+
+note over Renderer
+  The JSON is computed on every call and never
+  stored: the BPMN XML is a view of the asset.
+end note
+@enduml

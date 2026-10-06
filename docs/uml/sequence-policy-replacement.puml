@@ -1,0 +1,41 @@
+@startuml sequence-policy-replacement
+!include style.iuml
+title Replace hardcoded policies (a rule change is a new policy)
+
+actor "Authority\n(account 0)" as Authority
+actor "Holder" as Holder
+participant "ChoreographyNMT" as NMT
+participant "MasterSmartPolicy" as Master
+participant "MasterSmartPolicyFrozen" as Frozen
+participant "ChoreographyMutableAsset" as Asset
+participant "CreatorSmartPolicy" as Creator
+participant "CreatorSmartPolicyPaperScenario" as Paper
+
+== Freeze transfers and versions ==
+Authority -> Frozen ** : deploy
+Authority -> NMT : setMasterSmartPolicy(frozen)
+NMT -> Master : evaluate(authority, action, nmt)
+Master --> NMT : subject == administrator
+NMT -> NMT : masterSmartPolicy = frozen,\nemit MasterSmartPolicyChanged
+Holder -> NMT : transferFrom(holder, partner, tokenId)
+NMT -> Frozen : evaluate(holder, action, asset)
+Frozen --> NMT : false
+NMT --> Holder : revert MasterDenied()
+
+== Install BPMN constraints on an asset ==
+Authority -> Paper ** : deploy(participantAM)
+Authority -> Asset : setCreatorSmartPolicy(paper)
+Asset -> Creator : evaluate(authority, msg.data, asset)
+Creator --> Asset : subject == administrator
+Asset -> Asset : creatorSmartPolicy = paper
+Holder -> Asset : setCreatorSmartPolicy(other)
+Asset -> Paper : evaluate(holder, msg.data, asset)
+Paper --> Asset : false
+Asset --> Holder : revert OperationDenied(0)
+
+note over Master, Paper
+  No policy has runtime setters: rules are literals,
+  as in a policy translated from XACML. Each policy
+  is replaced only with the approval of the current one.
+end note
+@enduml

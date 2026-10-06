@@ -1,0 +1,44 @@
+@startuml sequence-deploy-and-mint
+!include style.iuml
+title Deploy and mint with an initial model (deploy:asset, mintWithInitialModel)
+
+actor "Authority\n(account 0)" as Authority
+participant "MasterSmartPolicy" as Master
+participant "CreatorSmartPolicy" as Creator
+participant "HolderSmartPolicy" as HolderPolicy
+participant "ChoreographyTokenURIRenderer" as Renderer
+participant "ChoreographyNMT" as NMT
+participant "ChoreographyMutableAsset" as Asset
+
+== Deploy (once) ==
+Authority -> Master ** : deploy
+Authority -> Creator ** : deploy
+Authority -> HolderPolicy ** : deploy
+Authority -> Renderer ** : deploy
+Authority -> NMT ** : deploy(master, renderer)
+
+== Mint ==
+Authority -> NMT : mintWithInitialModel(to, creator, holder, model)
+activate NMT
+NMT -> Master : evaluate(authority, action, nmt)
+Master --> NMT : authorized creator AND eligible holder
+alt denied
+  NMT --> Authority : revert MasterDenied()
+else allowed
+  NMT -> Asset ** : new ChoreographyMutableAsset(nmt, creator, holder)
+  NMT -> NMT : _mint(to, tokenId = asset address)
+  NMT -> Asset : initializeChoreography(model)\n[onlyNMT]
+  activate Asset
+  Asset -> Asset : _setRoles, _setNodes
+  Asset -> Asset : emit ChoreographyInitialized
+  deactivate Asset
+  NMT --> Authority : (asset, tokenId)
+end
+deactivate NMT
+
+note over Asset
+  The initial model comes from an authorized
+  creator and is not checked by evaluateNodeUpdate;
+  every later setNodes / setRoles is.
+end note
+@enduml

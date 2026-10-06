@@ -14,6 +14,8 @@ These are the only commands intended for the normal `paper-example` workflow.
 | `npm run render:asset -- <asset-address> <nmt-or-delta.json>` | Exports the asset and generates BPMN XML. | Asset address plus imported NMT or delta file. | Raw JSON, normalized JSON, and BPMN XML. |
 | `npm run modify:asset -- <asset-address> <delta.json> [--no-render]` | Applies a delta to existing asset nodes. | Asset address and delta JSON. | Updated asset; also rendered artifacts unless `--no-render` is used. |
 | `npm run check:size` | Checks every compiled contract against the EIP-170 runtime limit (24,576 bytes) and the EIP-3860 init-code limit (49,152 bytes); warns within `CONTRACT_SIZE_WARNING_MARGIN` bytes (default 1,024) and fails above the limit. The GitHub Actions workflow runs it after `compile`. | Compiled artifacts (`npm run compile`). | Size table; non-zero exit if a contract is too large. |
+| `npm run docs:uml` | Renders the UML diagrams `docs/uml/*.puml` to SVG next to their source, with PlantUML 1.2024.7 (downloaded once into `.cache/plantuml/`, checksum verified) and Graphviz. | Java and Graphviz (`dot`). | `docs/uml/*.svg`, shown in `docs/uml.md`. |
+| `npm run check:uml` | Fails if an SVG is missing or was rendered from another version of its source (a source hash is stored in the SVG). The GitHub Actions workflow runs it. | None; no Java needed. | Non-zero exit on a stale diagram. |
 | `npm run test:policies` (alias `npm test`) | Runs policy allow/deny integration tests, fails on any unexpected outcome, and prints receipt-derived gas costs. The GitHub Actions workflow runs it on every push. | None. | Policy matrix and atomic-mint benchmark on an ephemeral Hardhat network. |
 | `npm run evaluate:policies` | Runs the lifecycle cost evaluation for a new BPMN model. | None. | JSON and Markdown reports with mint-strategy and policy-operation totals. |
 | `npm run evaluate:summary` | Collects generated experiment reports in one overview. | Existing evaluation reports. | `evaluation/summary.generated.md`. |
@@ -42,7 +44,7 @@ The commands print measured transaction costs after every on-chain write. Each l
 | `deploy:asset` | Deploys Master, Creator, and Holder policies and `ChoreographyTokenURIRenderer`, deploys `ChoreographyNMT`, and mints the asset. | Six transactions; typically the highest setup cost. |
 | `import:asset` | Calls `setRoles(...)` and `setNodes(...)`. | Two transactions; grows with roles, nodes, messages, and graph edges. |
 | `mintWithInitialModel(...)` | Mints and initializes a trusted model with its Creator/Holder policies and an `InitialModel` struct in one NMT transaction. | One transaction; replaces the mint plus two import transactions for fixed templates. |
-| `modify:asset` | Calls `setNodes(...)`; calls `setRoles(...)` for every role in the delta `roles` map, adding new roles and overwriting the address of existing ones. | One or two transactions; a configured Creator policy also evaluates BPMN structural constraints. |
+| `modify:asset` | Calls `setNodes(...)`; calls `setRoles(...)` for every role in the delta `roles` map, adding new roles and overwriting the address of existing ones. | One or two transactions; a constrained Creator policy (e.g. `CreatorSmartPolicyPaperScenario`) also evaluates BPMN structural constraints. |
 | `render:asset` | Reads the asset with one `tokenURI()` call and writes local files. | No blockchain transaction and no gas cost; the call executes about 1.7M gas for the evolved paper example, within the `eth_call` limits of common RPC providers. |
 | `start:operations` and `clean` | Local operations only. | No gas cost. |
 
@@ -65,6 +67,7 @@ These scripts are used by public commands and are not intended as separate user-
 | `render-local-support.js` | `render:asset`, `modify:asset` | Writes manifest and JSON artifacts, normalizes data, and generates BPMN XML. |
 | `apply-asset-delta.js` | `modify:asset` | Validates and applies delta roles and nodes. |
 | `check-contract-size.js` | `check:size` | Reads `artifacts/contracts/` and enforces the contract size limits. |
+| `render-uml.js` | `docs:uml`, `check:uml` | Renders `docs/uml/*.puml` to SVG with a pinned PlantUML and stamps each SVG with the hash of its source; `--check` compares the hashes. |
 | `test-policies.js` | `test:policies` | Exercises policy allow/deny paths and compares initial-population gas. |
 | `evaluation/run-policy-lifecycle-evaluation.js` | `evaluate:policies` | Measures deployment, empty versus populated mint, and Master/Creator/Holder allow-deny operations. |
 

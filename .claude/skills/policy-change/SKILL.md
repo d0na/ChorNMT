@@ -16,7 +16,7 @@ The trust model lives in three places that must agree after every change:
 1. Read the relevant contract(s) in `contracts/choreography/` (or `contracts/participant/`) and the three files above. Identify which table rows the change affects.
 2. Change the contract. Prefer putting logic in a policy contract: `ChoreographyNMT` embeds the asset bytecode and is close to the 24,576-byte limit.
 3. Add or update test cases: for each new rule, at least one allowed and one denied case, including the bypass attempt (e.g. through versioning, a neighbour node edit, a transfer, or replacing the policy). Denials must revert, not run out of gas — `expectDenied` asserts that.
-4. Update the table and the specification in the same change.
+4. Update the table and the specification in the same change, and the UML diagrams that show the changed rule (`uml-diagrams` skill).
 5. Verify:
 
 ```bash

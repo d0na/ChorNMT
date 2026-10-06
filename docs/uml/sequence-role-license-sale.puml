@@ -1,0 +1,49 @@
+@startuml sequence-role-license-sale
+!include style.iuml
+title Link a role to a participant license and sell the license
+
+actor "Authority\n(account 9)" as Authority
+actor "Choreography holder" as ChoreoHolder
+actor "Carrier A\n(seller)" as CarrierA
+participant "ParticipantNMT" as PNMT
+participant "ParticipantMasterSmartPolicy" as PMaster
+participant "License\n(ParticipantMutableAsset)" as License
+participant "Certifier policy\n(participant CreatorSmartPolicy)" as Certifier
+participant "ChoreographyMutableAsset" as Asset
+participant "CreatorSmartPolicyPaperScenario" as Creator
+participant "ChoreographyParticipantAM" as AM
+
+== Mint the license ==
+Authority -> PNMT : mintWithParticipantType(carrierA, certifier, holderPolicy, SpecialCarrier)
+PNMT -> PMaster : evaluate(authority, msg.data, nmt)
+PMaster --> PNMT : isIssuerOf(authority, SpecialCarrier)
+PNMT -> License ** : new ParticipantMutableAsset(..., SpecialCarrier)
+
+== Link the role ==
+ChoreoHolder -> Asset : setRoles(["Special Carrier"], [license])
+Asset -> Creator : evaluate (action check, with the Holder policy)
+Asset -> Creator : staticcall evaluateRoleUpdate
+Creator -> Asset : hasRole("Special Carrier")
+Creator -> AM : participantTypeOf(license)
+AM -> PNMT : ownerOf(license) (genuine license)
+AM -> License : creatorSmartPolicy() == certifier ?
+AM -> License : participantType()
+AM --> Creator : SpecialCarrier
+Creator --> Asset : required type matches
+Asset -> Asset : Holder policy evaluateRoleUpdate, then _setRoles
+
+== Sell the license ==
+CarrierA -> PNMT : transferFrom(carrierA, carrierB, license)
+PNMT -> PMaster : evaluate(carrierA, transferFrom(from, to), license)
+PMaster --> PNMT : seller is the holder AND\nbuyer qualified for SpecialCarrier
+PNMT -> License : transferFrom(from, to) [onlyNMT]
+License -> Certifier : evaluate(from, msg.data, license)
+License -> License : reset Holder policy,\nclear name and profile
+PNMT -> PNMT : ERC-721 transfer to Carrier B
+
+note over Asset
+  The role still points at the license:
+  the organization behind it changed with the sale,
+  no choreography update was needed.
+end note
+@enduml

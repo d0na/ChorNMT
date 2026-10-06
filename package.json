@@ -8,6 +8,8 @@
   "scripts": {
     "compile": "hardhat compile",
     "check:size": "node scripts/check-contract-size.js",
+    "docs:uml": "node scripts/render-uml.js",
+    "check:uml": "node scripts/render-uml.js --check",
     "start:operations": "hardhat compile && hardhat node",
     "deploy:asset": "node scripts/deploy-local.js",
     "render:asset": "node scripts/render-asset.js",
