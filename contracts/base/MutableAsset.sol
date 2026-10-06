@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "./IMutableAsset.sol";
 import "./NMT.sol";
 import "./SmartPolicy.sol";
 
-abstract contract MutableAsset {
+abstract contract MutableAsset is IMutableAsset {
     address public immutable nmt;
     address public linked;
     address public holderSmartPolicy;

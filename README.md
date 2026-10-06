@@ -6,7 +6,7 @@ The main path uses `paper-example`: a logistics choreography involving a buyer, 
 
 ## Prerequisites
 
-- Node.js 20 or later
+- Node.js 22 (see `.nvmrc`; run `nvm use`)
 - npm
 
 Install both sets of dependencies:
@@ -112,6 +112,7 @@ Files with a `.generated.*` suffix are local artifacts ignored by Git and can be
 
 - [Evaluation quick start](evaluation/README.md#complete-evaluation-run): commands for the complete paper and policy evaluation suite.
 - [BPMN to NMT workflow](docs/bpmn-to-nmt-workflow.md): NMT format, import, and delta rules.
+- [Contract structure](docs/contract-structure.md): the standard internal structure of Token, Asset, Policy, and Renderer contracts, gas rules, and known deviations.
 - [Architecture](docs/architettura.md): components, responsibilities, and internal structure of the NMT, asset, policy, and renderer contracts and of the JavaScript tooling.
 - [Rendering](docs/rendering.md): on-chain `tokenURI` metadata and the off-chain pipeline that regenerates BPMN from it, with costs and limits.
 - [Delta updates and Solidity calls](docs/delta-update-and-solidity-calls.md): `setNodes(...)` and `setRoles(...)` details.

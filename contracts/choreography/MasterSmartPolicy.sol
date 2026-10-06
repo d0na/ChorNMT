@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../base/MutableAsset.sol";
+import "../base/IMutableAsset.sol";
 import "../base/SmartPolicy.sol";
 
 contract MasterSmartPolicy is SmartPolicy {
@@ -74,13 +74,13 @@ contract MasterSmartPolicy is SmartPolicy {
                 transfersEnabled &&
                 subject == from &&
                 eligibleHolders[to] &&
-                MutableAsset(resource).getHolder() == from;
+                IMutableAsset(resource).getHolder() == from;
         }
 
         if (signature == MINT_VERSION) {
             address holder = _addressAt(action, 4);
             address creatorPolicy = _addressAt(action, 36);
-            MutableAsset predecessor = MutableAsset(resource);
+            IMutableAsset predecessor = IMutableAsset(resource);
             bool holderKeepsCreatorPolicy =
                 predecessor.getHolder() == subject &&
                 predecessor.creatorSmartPolicy() == creatorPolicy;

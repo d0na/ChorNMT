@@ -1,30 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../base/MutableAsset.sol";
 import "../base/SmartPolicy.sol";
+import "../participant/IParticipantAsset.sol";
+import "./IChoreographyAsset.sol";
 import "./IChoreographyCreatorPolicy.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-
-interface IChoreographyAssetView {
-    function hasNode(string memory name) external view returns (bool);
-    function getNodeNames() external view returns (string[] memory);
-    function getNodeTypeAndOutgoing(
-        string memory name
-    ) external view returns (uint8, string[] memory);
-    function getNodeTypeAndEdges(
-        string memory name
-    ) external view returns (uint8, string[] memory, string[] memory);
-    function hasRole(string memory role) external view returns (bool);
-    function getRole(string memory role) external view returns (address);
-    function getRoleNames() external view returns (string[] memory);
-}
-
-interface IParticipantView {
-    function creatorSmartPolicy() external view returns (address);
-    function participantType() external view returns (bytes32);
-    function hasCapability(bytes32 capability) external view returns (bool);
-}
 
 contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     bytes4 private constant SET_ROLES = bytes4(keccak256("setRoles(string[],address[])"));
@@ -145,7 +126,7 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     ) external view returns (bool) {
         return _satisfiesRoleRequirement(
             roleRequirements[keccak256(bytes(name))],
-            IChoreographyAssetView(asset).getRole(name)
+            IChoreographyAsset(asset).getRole(name)
         );
     }
 
@@ -159,7 +140,7 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
             return subject == administrator;
         }
 
-        if (MutableAsset(resource).getHolder() != subject) {
+        if (IMutableAsset(resource).getHolder() != subject) {
             return false;
         }
 
@@ -185,7 +166,7 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
             return false;
         }
 
-        IChoreographyAssetView choreography = IChoreographyAssetView(asset);
+        IChoreographyAsset choreography = IChoreographyAsset(asset);
         (uint256 taskCount, uint256 sequenceFlowCount) = _currentCounts(choreography);
 
         for (uint256 i = 0; i < names.length; i++) {
@@ -241,7 +222,7 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
             return false;
         }
 
-        IChoreographyAssetView choreography = IChoreographyAssetView(asset);
+        IChoreographyAsset choreography = IChoreographyAsset(asset);
         for (uint256 i = 0; i < roleNames.length; i++) {
             bytes32 nameHash = keccak256(bytes(roleNames[i]));
             if (
@@ -268,7 +249,7 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
             return false;
         }
 
-        IParticipantView candidate = IParticipantView(participant);
+        IParticipantAsset candidate = IParticipantAsset(participant);
         if (
             candidate.creatorSmartPolicy() != participantCertifier ||
             candidate.participantType() != requirement.participantType
@@ -297,7 +278,7 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     }
 
     function _hasDistinctRoleAccounts(
-        IChoreographyAssetView choreography,
+        IChoreographyAsset choreography,
         string[] memory roleNames,
         address[] memory addresses
     ) private view returns (bool) {
@@ -325,7 +306,7 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     }
 
     function _currentCounts(
-        IChoreographyAssetView choreography
+        IChoreographyAsset choreography
     ) private view returns (uint256 taskCount, uint256 sequenceFlowCount) {
         string[] memory names = choreography.getNodeNames();
         for (uint256 i = 0; i < names.length; i++) {
@@ -361,7 +342,7 @@ contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
     }
 
     function _hasKnownFlowTargets(
-        IChoreographyAssetView choreography,
+        IChoreographyAsset choreography,
         string[] memory targets,
         string[] memory pendingNames
     ) private view returns (bool) {

@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../base/MutableAsset.sol";
 import "../base/SmartPolicy.sol";
-import "./ParticipantMutableAsset.sol";
+import "./IParticipantAsset.sol";
 
 // A participant asset is a role license. Its holder may sell it only to an organization
 // qualified for the license type and for every capability the license carries.
@@ -44,7 +43,7 @@ contract ParticipantMasterSmartPolicy is SmartPolicy {
     }
 
     function isQualifiedFor(address account, address license) public view returns (bool) {
-        ParticipantMutableAsset participant = ParticipantMutableAsset(license);
+        IParticipantAsset participant = IParticipantAsset(license);
         if (!qualifications[account][participant.participantType()]) {
             return false;
         }
@@ -58,7 +57,7 @@ contract ParticipantMasterSmartPolicy is SmartPolicy {
     }
 
     function isHolderQualified(address license) external view returns (bool) {
-        return isQualifiedFor(MutableAsset(license).getHolder(), license);
+        return isQualifiedFor(IParticipantAsset(license).getHolder(), license);
     }
 
     function _addressAt(bytes memory action, uint256 offset) private pure returns (address value) {
@@ -85,7 +84,7 @@ contract ParticipantMasterSmartPolicy is SmartPolicy {
             return
                 transfersEnabled &&
                 subject == from &&
-                MutableAsset(resource).getHolder() == from &&
+                IParticipantAsset(resource).getHolder() == from &&
                 isQualifiedFor(to, resource);
         }
 

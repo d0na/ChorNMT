@@ -105,7 +105,8 @@ A role is played by a license: a `ParticipantMutableAsset` minted by `Participan
 | Set organization qualifications (`setQualification`) | yes | no | no | no | no |
 | Set license type and capabilities | no | yes | no | no | no |
 | Sell the license (`transferFrom`) to an organization qualified for its type and capabilities | no | no | yes | no | no |
-| Update the license data (`setName`, `setDescriptor`, `setBpmn`, `setMessages`, `setLinked`) | no | no | yes, after installing a Holder policy | no | no |
+| Update the license data (`setName`, `setDescriptor`, `setBpmn`, `setMessages`, `setTokenURI`, `setLinked`) | no | no | yes, after installing a Holder policy | no | no |
+| Any other action on the license | no | no | no | no | no |
 
-A sale resets the license Holder policy. The new holder installs one and then updates or links its own data; the former holder loses every right on the license. Qualifications are checked at the sale: `isHolderQualified` reports whether the current holder is still qualified after a revocation.
+Both participant policies deny by default: they allow only the actions listed above, so a new license function stays blocked until a policy assigns it explicitly; `test:policies` checks that every license mutator has an explicit decision. A sale resets the license Holder policy. The new holder installs one and then updates or links its own data; the former holder loses every right on the license. Qualifications are checked at the sale: `isHolderQualified` reports whether the current holder is still qualified after a revocation.
 

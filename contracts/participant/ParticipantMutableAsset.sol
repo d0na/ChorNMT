@@ -2,8 +2,9 @@
 pragma solidity ^0.8.20;
 
 import "../base/MutableAsset.sol";
+import "./IParticipantAsset.sol";
 
-contract ParticipantMutableAsset is MutableAsset {
+contract ParticipantMutableAsset is MutableAsset, IParticipantAsset {
     struct ParticipantDescriptor {
         bytes32 name;
         string bpmn;

@@ -44,15 +44,13 @@ flowchart LR
 
 ## Il renderer on-chain
 
-`contracts/choreography/ChoreographyTokenURIRenderer.sol` è un contratto **senza stato**. Legge l'asset solo tramite le sue funzioni pubbliche di lettura, dichiarate nell'interfaccia `IChoreographyAssetReader`:
+`contracts/choreography/ChoreographyTokenURIRenderer.sol` è un contratto **senza stato**. Legge l'asset solo tramite le sue funzioni pubbliche di lettura, dichiarate nell'interfaccia condivisa `IChoreographyAsset` (`contracts/choreography/IChoreographyAsset.sol`). L'asset la implementa (`is IChoreographyAsset`), quindi il compilatore garantisce che le firme usate dal renderer siano quelle dell'asset. Il renderer usa:
 
 ```solidity
-interface IChoreographyAssetReader {
-    function getRoleNames() external view returns (string[] memory);
-    function getRole(string memory role) external view returns (address);
-    function getNodeNames() external view returns (string[] memory);
-    function getNode(string memory name) external view returns (/* tutti i campi di Node */);
-}
+function getRoleNames() external view returns (string[] memory);
+function getRole(string memory role) external view returns (address);
+function getNodeNames() external view returns (string[] memory);
+function getNode(string memory name) external view returns (/* tutti i campi di Node */);
 ```
 
 L'asset quindi non contiene codice di serializzazione, e il renderer non ha privilegi: vede esattamente quello che vede chiunque.

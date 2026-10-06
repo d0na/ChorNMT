@@ -3,28 +3,7 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-
-interface IChoreographyAssetReader {
-    function getRoleNames() external view returns (string[] memory);
-    function getRole(string memory role) external view returns (address);
-    function getNodeNames() external view returns (string[] memory);
-    function getNode(
-        string memory name
-    )
-        external
-        view
-        returns (
-            string memory,
-            uint8,
-            string[] memory,
-            string[] memory,
-            string[] memory,
-            string memory,
-            string memory,
-            string memory,
-            string memory
-        );
-}
+import "./IChoreographyAsset.sol";
 
 /// Builds the ERC-721 metadata of a choreography asset from its on-chain state.
 /// The `choreography` field uses the same role and node shape as an NMT dataset.
@@ -37,7 +16,7 @@ contract ChoreographyTokenURIRenderer {
     }
 
     function metadata(address asset) public view returns (string memory) {
-        IChoreographyAssetReader reader = IChoreographyAssetReader(asset);
+        IChoreographyAsset reader = IChoreographyAsset(asset);
         return string.concat(
             '{"name":"ChorNMT choreography ',
             Strings.toChecksumHexString(asset),
@@ -49,7 +28,7 @@ contract ChoreographyTokenURIRenderer {
         );
     }
 
-    function _rolesJson(IChoreographyAssetReader reader) private view returns (string memory json) {
+    function _rolesJson(IChoreographyAsset reader) private view returns (string memory json) {
         string[] memory names = reader.getRoleNames();
         json = "[";
         for (uint256 i = 0; i < names.length; i++) {
@@ -66,7 +45,7 @@ contract ChoreographyTokenURIRenderer {
         json = string.concat(json, "]");
     }
 
-    function _nodesJson(IChoreographyAssetReader reader) private view returns (string memory json) {
+    function _nodesJson(IChoreographyAsset reader) private view returns (string memory json) {
         string[] memory names = reader.getNodeNames();
         json = "[";
         for (uint256 i = 0; i < names.length; i++) {
@@ -76,12 +55,12 @@ contract ChoreographyTokenURIRenderer {
     }
 
     function _nodeJson(
-        IChoreographyAssetReader reader,
+        IChoreographyAsset reader,
         string memory name
     ) private view returns (string memory) {
         (
             ,
-            uint8 nodeType,
+            IChoreographyAsset.NodeType nodeType,
             string[] memory incoming,
             string[] memory outgoing,
             string[] memory conditions,
@@ -113,7 +92,7 @@ contract ChoreographyTokenURIRenderer {
             '{"name":',
             _jsonString(name),
             ',"nodeType":',
-            Strings.toString(nodeType),
+            Strings.toString(uint8(nodeType)),
             edges,
             participants,
             "}"

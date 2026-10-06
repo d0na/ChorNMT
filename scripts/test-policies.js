@@ -484,6 +484,36 @@ async function main() {
     "new license holder updates its data",
     () => carrierLicense.connect(carrierB).setName(ethers.encodeBytes32String("Carrier B"))
   ));
+
+  // Participant policies deny by default: an action they do not recognize is refused even to the holder,
+  // and every license mutator has an explicit decision, so a new mutator cannot become holder-editable by omission.
+  const unrecognizedAction = ethers.id("setCertificationExpiry(uint256)").slice(0, 10);
+  assert.equal(await participantCertifier.evaluate(carrierB.address, unrecognizedAction, carrierLicense.target), false);
+  assert.equal(await participantHolderPolicy.evaluate(carrierB.address, unrecognizedAction, carrierLicense.target), false);
+  const certifiedActions = ["setCreatorSmartPolicy", "setParticipantType", "setCapabilities"];
+  const policyFreeActions = ["setHolderSmartPolicy"];
+  const creatorOnlyActions = ["transferFrom"];
+  const licenseDecisions = [];
+  carrierLicense.interface.forEachFunction((fragment) => {
+    if (fragment.constant || policyFreeActions.includes(fragment.name)) {
+      return;
+    }
+    const holderAllowed = !certifiedActions.includes(fragment.name);
+    licenseDecisions.push(Promise.all([
+      participantCertifier.evaluate(carrierB.address, fragment.selector, carrierLicense.target),
+      participantCertifier.evaluate(administrator.address, fragment.selector, carrierLicense.target),
+      participantHolderPolicy.evaluate(carrierB.address, fragment.selector, carrierLicense.target)
+    ]).then(([creatorForHolder, creatorForCertifier, holderForHolder]) => {
+      assert.equal(creatorForHolder, holderAllowed, `participant Creator policy decision for holder on ${fragment.name}`);
+      assert.equal(creatorForCertifier, !holderAllowed, `participant Creator policy decision for certifier on ${fragment.name}`);
+      assert.equal(
+        holderForHolder,
+        holderAllowed && !creatorOnlyActions.includes(fragment.name),
+        `participant Holder policy decision on ${fragment.name}`
+      );
+    }));
+  });
+  await Promise.all(licenseDecisions);
   await (await participantMaster.setQualification(carrierB.address, SPECIAL_TRANSPORT, false)).wait();
   assert.equal(await participantMaster.isHolderQualified(carrierLicense.target), false);
   await (await creatorPolicy.clearRoleRequirement("Carrier")).wait();

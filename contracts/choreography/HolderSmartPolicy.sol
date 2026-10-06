@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../base/MutableAsset.sol";
+import "../base/IMutableAsset.sol";
 import "../base/SmartPolicy.sol";
 
 contract HolderSmartPolicy is SmartPolicy {
@@ -14,7 +14,7 @@ contract HolderSmartPolicy is SmartPolicy {
         bytes memory action,
         address resource
     ) public view override returns (bool) {
-        if (MutableAsset(resource).getHolder() != subject) {
+        if (IMutableAsset(resource).getHolder() != subject) {
             return false;
         }
 

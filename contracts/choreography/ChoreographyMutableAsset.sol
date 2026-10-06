@@ -2,20 +2,10 @@
 pragma solidity ^0.8.20;
 
 import "../base/MutableAsset.sol";
+import "./IChoreographyAsset.sol";
 import "./IChoreographyCreatorPolicy.sol";
 
-contract ChoreographyMutableAsset is MutableAsset {
-    enum NodeType {
-        START_EVENT,
-        END_EVENT,
-        TASK,
-        EXCLUSIVE_SPLIT,
-        EXCLUSIVE_JOIN,
-        PARALLEL_SPLIT,
-        PARALLEL_JOIN,
-        EVENT_BASED_GATEWAY
-    }
-
+contract ChoreographyMutableAsset is MutableAsset, IChoreographyAsset {
     struct Node {
         string name;
         NodeType nodeType;

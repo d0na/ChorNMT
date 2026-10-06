@@ -2,8 +2,12 @@
   "name": "chornmt",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "compile": "hardhat compile",
+    "check:size": "node scripts/check-contract-size.js",
     "start:operations": "hardhat compile && hardhat node",
     "deploy:asset": "node scripts/deploy-local.js",
     "render:asset": "node scripts/render-asset.js",

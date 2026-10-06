@@ -44,6 +44,7 @@ contracts/
 ├── base/
 │   ├── NMT.sol                  abstract  ERC721Enumerable: mint, trasferimento con consenso dell'asset
 │   ├── MutableAsset.sol         abstract  riferimenti a NMT e policy, modifier di autorizzazione
+│   ├── IMutableAsset.sol        interface viste comuni a ogni asset (holder, policy, NMT)
 │   └── SmartPolicy.sol          abstract  evaluate(subject, action, resource)
 ├── choreography/
 │   ├── ChoreographyNMT.sol               NMT delle coreografie, master policy, versioni, tokenURI
@@ -53,8 +54,10 @@ contracts/
 │   ├── CreatorSmartPolicy.sol            chi modifica e vincoli strutturali BPMN
 │   ├── HolderSmartPolicy.sol             seconda approvazione dell'holder
 │   ├── DenyAllSmartPolicy.sol            policy che nega tutto (per bloccare un asset)
+│   ├── IChoreographyAsset.sol            viste dell'asset usate da policy e renderer; l'asset la implementa
 │   └── IChoreographyCreatorPolicy.sol    interfaccia dei controlli su nodi e ruoli
 └── participant/                          livello participant, non usato dagli script (vedi sotto)
+    └── IParticipantAsset.sol             viste della licenza usate dalle policy; la licenza la implementa
 ```
 
 ```mermaid
@@ -305,8 +308,10 @@ Un `ParticipantMutableAsset` è la **licenza di un ruolo**. La coreografia colle
 | Contratto | Ruolo |
 | --- | --- |
 | `ParticipantMasterSmartPolicy` | Valuta mint e transfer del `ParticipantNMT`. Solo gli `authorizedIssuers` emettono licenze. Una licenza si vende solo a un'organizzazione qualificata per il suo tipo e per tutte le sue caratteristiche (`setQualification`). `isHolderQualified(licenza)` ricontrolla l'holder attuale. |
-| `CreatorSmartPolicy` (participant) | Il suo `administrator` è il certificatore: solo lui scrive tipo e caratteristiche della licenza (`setParticipantType`, `setCapabilities`) e sostituisce la Creator policy. Il resto è dell'holder. |
-| `HolderSmartPolicy` (participant) | Seconda approvazione: consente tutto all'holder. |
+| `CreatorSmartPolicy` (participant) | Il suo `administrator` è il certificatore: solo lui scrive tipo e caratteristiche della licenza (`setParticipantType`, `setCapabilities`) e sostituisce la Creator policy. All'holder consente solo le azioni elencate (`setName`, `setDescriptor`, `setBpmn`, `setMessages`, `setTokenURI`, `setLinked`, `transferFrom`); ogni altra azione è negata. |
+| `HolderSmartPolicy` (participant) | Seconda approvazione: consente all'holder le stesse azioni sui propri dati, e nega tutto il resto. |
+
+Le due policy negano per default: una funzione nuova della licenza resta bloccata finché non le si assegna esplicitamente un selettore. `test:policies` controlla che ogni funzione che modifica la licenza abbia una decisione esplicita.
 
 Un transfer azzera la Holder policy della licenza: il nuovo holder ne installa una con `setHolderSmartPolicy`, poi aggiorna i propri dati. Il vecchio holder perde ogni diritto sulla licenza. Le qualifiche contano al momento della vendita: se l'autorità ne revoca una, la licenza resta all'holder e `isHolderQualified` restituisce `false`.
 
