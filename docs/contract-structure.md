@@ -126,7 +126,7 @@ function _evaluateThingUpdate(T calldata value) private view {
 - Single-layer checks are exceptions, allowed only where the trust table in `docs/choreography-policies.md` requires them, and each must be listed there:
   - `evaluatedByCreator` only: `setCreatorSmartPolicy` (the holder must not escape the Creator constraint) and the asset side of `transferFrom` (the Holder policy is reset by the transfer). Certified data the holder must not change is not a mutator at all: it is an `immutable` set at mint (e.g. `participantType`);
   - `onlyHolder` only: `setHolderSmartPolicy`.
-- The action passed to the policies is `msg.data` (see [Gas](#gas)). The policies' selector constants use the exact canonical signature, with enums as `uint8` and structs as tuples. Until G2 is applied, existing mutators re-encode with `abi.encodeWithSignature` and the same signature string.
+- The action passed to the policies is `msg.data` (see [Gas](#gas)). The policies' selector constants use the exact canonical signature, with enums as `uint8` and structs as tuples. The asset mutators pass `msg.data`; the NMT mutators still re-encode with `abi.encodeWithSignature` and the same signature string (remaining part of G2).
 - No logic between the policy check and the private setter, except the domain check.
 - One-shot initialization by the Token is a separate function guarded by `onlyNMT` that calls the same private setters (trusted path; no policy evaluation).
 
@@ -201,7 +201,7 @@ The cost of the whole flow is measured, not estimated: `npm test` and `npm run e
 
 **Structural rules**
 
-- Public mutators that only the outside world calls are `external` with `calldata` parameters; `memory` only where the function is also called internally.
+- Public mutators that only the outside world calls are `external` with `calldata` parameters; `memory` only where the function is also called internally, or where calldata arrays exceed the stack: `setNodes` (nine dynamic arrays, two stack slots each in calldata) and, sharing `_setRoles` with `initializeChoreography`, `setRoles` keep `memory`.
 - Pass `msg.data` to the policies as the action instead of re-encoding the arguments with `abi.encodeWithSignature`: for an external call they are byte-identical, and re-encoding large arrays (e.g. in `setNodes`) is paid on every call. The selector constants in the policies stay the contract between asset and policy.
 - Policy `evaluate` and domain evaluations read only what they need: the selector and, at fixed offsets, the static arguments. Do not decode dynamic arrays a decision does not use.
 - Keep loops over storage in the contract that owns the storage; avoid one external call per element (e.g. counting all nodes from a policy on every update). Prefer counters maintained by the private setters when a policy needs totals.
@@ -211,15 +211,15 @@ The cost of the whole flow is measured, not estimated: `npm test` and `npm run e
 - `view` functions used only off-chain (render) may be expensive; functions called during a transaction (policy checks, setters) may not.
 - The Creator AND Holder domain check costs a second external call per mutator. Keep it cheap: a Holder domain evaluation with no configured constraint must return without reading the asset. Never skip the call to save gas.
 
-**Applied**: G4 (custom errors instead of `require` strings: `ChoreographyNMT` deploy −201,733 gas, every mint −107,926, every denied case −52 to −99; `ChoreographyNMT` runtime 22,336 → 21,407 bytes).
+**Applied**: G4 (custom errors instead of `require` strings: `ChoreographyNMT` deploy −201,733 gas, every mint −107,926, every denied case −52 to −99; `ChoreographyNMT` runtime 22,336 → 21,407 bytes). G2 and G3 for the asset mutators (`msg.data` as the action, `external`: `ChoreographyNMT` deploy −73,968, every mint −68,788, paper import −32,133, paper delta −20,620; runtime 21,407 → 21,064 bytes). The policies read only the selector of these actions, so non-canonical encodings cannot change a decision.
 
 **Optimization candidates** (not yet applied; each needs a measured before/after):
 
 | # | Change | Affected cost | Expected effect |
 | --- | --- | --- | --- |
 | G1 | Deploy assets as EIP-1167 minimal-proxy clones of one implementation, with an `initialize` guarded by `onlyNMT`, instead of `new`. | Every mint; Token size. | Mint drops from a full asset deployment to a clone plus initialization; the Token no longer embeds the Asset bytecode, which removes the 24 KB constraint. Requires replacing `immutable nmt` and the constructor with initializer state. |
-| G2 | Use `msg.data` as the policy action in asset mutators. | `setNodes`, `setRoles`. | Removes re-encoding of every array argument on each call. Safe only while the policies read the selector or fixed-offset static arguments: a caller can send non-canonical ABI encoding, so a policy that decodes dynamic arguments from the action must use `abi.decode`, not offsets. |
-| G3 | `external` + `calldata` for `setNodes`, `setRoles`, `mint…`. | Same. | Avoids copying arguments to memory. |
+| G2 | Use `msg.data` as the policy action in the NMT mutators (`mint`, `mintVersion`, `mintWithInitialModel`, `transferFrom`, `setMasterSmartPolicy`); done for the asset mutators. | Every NMT call. | Removes re-encoding of every array argument on each call. Safe only while the policies read the selector or fixed-offset static arguments: a caller can send non-canonical ABI encoding, so a policy that decodes dynamic arguments from the action must use `abi.decode`, not offsets. |
+| G3 | `external` + `calldata` for the NMT `mint…` functions; the asset mutators are `external` (see the stack note above). | NMT calls. | Avoids copying arguments to memory. |
 | G5 | Keep task and sequence-flow counters in the asset, updated by `_setNodes`, and expose them to the Creator policy. | `setNodes` with a configured Creator policy. | Replaces the O(N) `_currentCounts` scan of external calls. |
 | G6 | Copy `incoming`/`outgoing`/`conditions` arrays with a single assignment where the compiler supports it, instead of `delete` + `push` loops. | `setNodes`, import. | Fewer storage-length writes; measure first. |
 | G7 | Emit `NodesChanged`/`RolesChanged` with counts or hashes instead of full name arrays. | `setNodes`, `setRoles`. | Smaller log data cost. Check off-chain consumers first. |
@@ -227,9 +227,8 @@ The cost of the whole flow is measured, not estimated: `npm test` and `npm run e
 
 ## Known deviations
 
-Resolved: 1–4 (participant asset and token, rewritten as a role license), 5 (`MutableAsset` modifiers moved before the constructor), 6 and 9 (choreography Creator layout and switch naming, removed with its runtime configuration), 7 (shared asset interfaces), 8 (action decoding shared in `SmartPolicy`), 11 (custom errors everywhere, G4), 10 (default-deny participant policies) and 14 (hardcoded choreography Master and Creator policies). The current code differs from the rules above in these places. Fix them in dedicated changes, with tests and `check:size`:
+Resolved: 1–4 (participant asset and token, rewritten as a role license), 5 (`MutableAsset` modifiers moved before the constructor), 6 and 9 (choreography Creator layout and switch naming, removed with its runtime configuration), 7 (shared asset interfaces), 8 (action decoding shared in `SmartPolicy`), 11 (custom errors everywhere, G4), 12 (asset mutators `external` with `msg.data` as the action, G2 and G3 for the assets), 10 (default-deny participant policies) and 14 (hardcoded choreography Master and Creator policies). The current code differs from the rules above in these places. Fix them in dedicated changes, with tests and `check:size`:
 
 | # | Contract | Deviation | Rule |
 | --- | --- | --- | --- |
-| 12 | `ChoreographyMutableAsset`, `MutableAsset` | Mutators are `public` with `memory` parameters and re-encode arguments for the policies. | Gas: `external` + `calldata`, `msg.data` as action (G2, G3). |
 | 13 | `ChoreographyMutableAsset`, `HolderSmartPolicy`, `IChoreographyCreatorPolicy` | The domain checks (`evaluateNodeUpdate`, `evaluateRoleUpdate`) are asked of the Creator policy only; the Holder policy does not implement the domain interface, whose name is Creator-specific. | Asset: domain check is Creator AND Holder; layer-neutral `IChoreographyPolicy`. |

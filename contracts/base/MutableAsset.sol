@@ -92,57 +92,32 @@ abstract contract MutableAsset is IMutableAsset {
         return NMT(nmt).ownerOf(uint160(address(this)));
     }
 
+    // Mutators pass msg.data to the policies as the action: for an external call it is the
+    // canonical ABI encoding the policies' selector constants refer to.
     function setLinked(
         address linkedNmt
-    )
-        public
-        virtual
-        evaluatedBySmartPolicies(
-            msg.sender,
-            abi.encodeWithSignature("setLinked(address)", linkedNmt),
-            address(this)
-        )
-    {
+    ) external evaluatedBySmartPolicies(msg.sender, msg.data, address(this)) {
         linked = linkedNmt;
     }
 
     function setHolderSmartPolicy(
         address holderSmartPolicyAddress
-    ) public virtual onlyHolder {
+    ) external onlyHolder {
         holderSmartPolicy = holderSmartPolicyAddress;
     }
 
     function setCreatorSmartPolicy(
         address creatorSmartPolicyAddress
-    )
-        public
-        virtual
-        evaluatedByCreator(
-            msg.sender,
-            abi.encodeWithSignature(
-                "setCreatorSmartPolicy(address)",
-                creatorSmartPolicyAddress
-            ),
-            address(this)
-        )
-    {
+    ) external evaluatedByCreator(msg.sender, msg.data, address(this)) {
         creatorSmartPolicy = creatorSmartPolicyAddress;
     }
 
+    // Public and virtual so that an asset can extend the sale (ParticipantMutableAsset); the
+    // NMT calls it externally, so msg.data is transferFrom(from, to).
     function transferFrom(
         address from,
         address to
-    )
-        public
-        virtual
-        onlyNMT
-        evaluatedByCreator(
-            from,
-            abi.encodeWithSignature("transferFrom(address,address)", from, to),
-            address(this)
-        )
-        returns (bool)
-    {
+    ) public virtual onlyNMT evaluatedByCreator(from, msg.data, address(this)) returns (bool) {
         holderSmartPolicy = address(0);
         return true;
     }

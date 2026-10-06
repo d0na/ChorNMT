@@ -61,14 +61,7 @@ contract ChoreographyMutableAsset is MutableAsset, IChoreographyAsset {
     function setRoles(
         string[] memory roleNames,
         address[] memory addresses
-    )
-        public
-        evaluatedBySmartPolicies(
-            msg.sender,
-            abi.encodeWithSignature("setRoles(string[],address[])", roleNames, addresses),
-            address(this)
-        )
-    {
+    ) external evaluatedBySmartPolicies(msg.sender, msg.data, address(this)) {
         if (
             !IChoreographyCreatorPolicy(creatorSmartPolicy).evaluateRoleUpdate(
                 address(this),
@@ -111,25 +104,7 @@ contract ChoreographyMutableAsset is MutableAsset, IChoreographyAsset {
         string[] memory participantRoles,
         string[] memory initiatingMessages,
         string[] memory returnMessages
-    )
-        public
-        evaluatedBySmartPolicies(
-            msg.sender,
-            abi.encodeWithSignature(
-                "setNodes(string[],uint8[],string[][],string[][],string[][],string[],string[],string[],string[])",
-                names,
-                nodeTypes,
-                incoming,
-                outgoing,
-                conditions,
-                initiatorRoles,
-                participantRoles,
-                initiatingMessages,
-                returnMessages
-            ),
-            address(this)
-        )
-    {
+    ) external evaluatedBySmartPolicies(msg.sender, msg.data, address(this)) {
         _evaluateCreatorNodePolicy(names, nodeTypes, incoming, outgoing);
         _setNodes(
             names,
@@ -227,7 +202,7 @@ contract ChoreographyMutableAsset is MutableAsset, IChoreographyAsset {
         emit NodesChanged(names);
     }
 
-    function initializeChoreography(InitialModel memory model) public onlyNMT {
+    function initializeChoreography(InitialModel memory model) external onlyNMT {
         _setRoles(model.roleNames, model.roleAddresses);
         _setNodes(
             model.names,

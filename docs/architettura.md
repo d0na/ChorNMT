@@ -126,7 +126,7 @@ function evaluate(address subject, bytes memory action, address resource) public
 | `action` | La chiamata codificata ABI: selector (4 byte) seguito dagli argomenti. |
 | `resource` | Il contratto interessato: l'asset, oppure l'NMT per i mint. |
 
-`decodeSignature(action)` estrae il selector, e le policy confrontano quel valore con costanti come `bytes4(keccak256("setNodes(...)"))`. Una policy può anche leggere gli argomenti dentro `action`, come fa `MasterSmartPolicy` con `_addressAt(action, offset)` per ricavare holder e Creator policy. `_addressAt` e `_wordAt` stanno nel base `SmartPolicy`, condivisi da tutte le policy, e su un'azione troppo corta falliscono con `MalformedAction()`.
+I mutator dell'asset passano alle policy `msg.data` come `action`, senza ricodificare gli argomenti. `decodeSignature(action)` estrae il selector, e le policy confrontano quel valore con costanti come `bytes4(keccak256("setNodes(...)"))`. Una policy può anche leggere gli argomenti dentro `action`, come fa `MasterSmartPolicy` con `_addressAt(action, offset)` per ricavare holder e Creator policy. `_addressAt` e `_wordAt` stanno nel base `SmartPolicy`, condivisi da tutte le policy, e su un'azione troppo corta falliscono con `MalformedAction()`.
 
 ### `NMT`
 
@@ -199,7 +199,7 @@ tokenId = uint160(address(asset))        asset = address(uint160(tokenId))
 
 Il mint usa `ERC721._mint` e non `_safeMint`: nessuna callback raggiunge il destinatario prima che l'asset sia inizializzato e la sua versione registrata.
 
-**Vincolo di dimensione:** l'NMT contiene il bytecode dell'asset, perché lo crea con `new`. Occupa 21.407 byte su un limite di 24.576. Per questo la generazione del JSON sta in un contratto separato.
+**Vincolo di dimensione:** l'NMT contiene il bytecode dell'asset, perché lo crea con `new`. Occupa 21.064 byte su un limite di 24.576. Per questo la generazione del JSON sta in un contratto separato.
 
 ### `ChoreographyMutableAsset`
 
