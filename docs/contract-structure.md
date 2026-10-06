@@ -163,7 +163,9 @@ function _evaluateThingUpdate(T calldata value) private view {
 - Views exposing derived decisions: `is<Condition>` (e.g. `isQualifiedFor`, `isIssuerOf`, `isAllowedMessage`), `pure` when they read only hardcoded rules.
 - Master policies recognize `setMasterSmartPolicy(address)` and decide who may replace them (the default policies: their `administrator`).
 
-**Private functions**: calldata decoding (`_addressAt(action, offset)` / `_wordAt(action, offset)`, which revert on malformed input) and rule helpers (`_isDuplicate`, `_containsName`, …).
+**Shared decoding**: `_addressAt(action, offset)` and `_wordAt(action, offset)` are `internal` in the base `SmartPolicy`, revert with `MalformedAction()` on a short action, and are the only way policies read static arguments; never copy them into a policy.
+
+**Private functions**: rule helpers (`_isDuplicate`, `_containsName`, …).
 
 ## Renderer
 
@@ -224,11 +226,10 @@ The cost of the whole flow is measured, not estimated: `npm test` and `npm run e
 
 ## Known deviations
 
-Resolved: 1–4 (participant asset and token, rewritten as a role license), 5 (`MutableAsset` modifiers moved before the constructor), 6 and 9 (choreography Creator layout and switch naming, removed with its runtime configuration), 7 (shared asset interfaces), 10 (default-deny participant policies) and 14 (hardcoded choreography Master and Creator policies). The current code differs from the rules above in these places. Fix them in dedicated changes, with tests and `check:size`:
+Resolved: 1–4 (participant asset and token, rewritten as a role license), 5 (`MutableAsset` modifiers moved before the constructor), 6 and 9 (choreography Creator layout and switch naming, removed with its runtime configuration), 7 (shared asset interfaces), 8 (action decoding shared in `SmartPolicy`), 10 (default-deny participant policies) and 14 (hardcoded choreography Master and Creator policies). The current code differs from the rules above in these places. Fix them in dedicated changes, with tests and `check:size`:
 
 | # | Contract | Deviation | Rule |
 | --- | --- | --- | --- |
-| 8 | `MasterSmartPolicy`, `ParticipantMasterSmartPolicy` | Action decoding is duplicated (`_addressAt`, `_wordAt`). | Candidate for a shared base policy. |
 | 11 | All contracts | `require` with string messages. | Errors: custom errors (G4). |
 | 12 | `ChoreographyMutableAsset`, `MutableAsset` | Mutators are `public` with `memory` parameters and re-encode arguments for the policies. | Gas: `external` + `calldata`, `msg.data` as action (G2, G3). |
 | 13 | `ChoreographyMutableAsset`, `HolderSmartPolicy`, `IChoreographyCreatorPolicy` | The domain checks (`evaluateNodeUpdate`, `evaluateRoleUpdate`) are asked of the Creator policy only; the Holder policy does not implement the domain interface, whose name is Creator-specific. | Asset: domain check is Creator AND Holder; layer-neutral `IChoreographyPolicy`. |

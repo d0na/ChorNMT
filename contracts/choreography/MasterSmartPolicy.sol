@@ -68,13 +68,4 @@ contract MasterSmartPolicy is SmartPolicy {
     function _isEligibleHolder(address account) private pure returns (bool) {
         return account == AUTHORITY || account == PARTNER;
     }
-
-    function _addressAt(bytes memory action, uint256 offset) private pure returns (address) {
-        require(action.length >= offset + 32, "Malformed policy action");
-        bytes32 value;
-        assembly {
-            value := mload(add(add(action, 32), offset))
-        }
-        return address(uint160(uint256(value)));
-    }
 }

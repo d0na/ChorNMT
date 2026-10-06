@@ -39,8 +39,8 @@ contract ParticipantMasterSmartPolicy is SmartPolicy {
         }
 
         if (signature == TRANSFER) {
-            address from = address(uint160(uint256(_wordAt(action, 4))));
-            address to = address(uint160(uint256(_wordAt(action, 36))));
+            address from = _addressAt(action, 4);
+            address to = _addressAt(action, 36);
             IParticipantAsset license = IParticipantAsset(resource);
             return
                 subject == from &&
@@ -72,12 +72,5 @@ contract ParticipantMasterSmartPolicy is SmartPolicy {
             return account == SUPPLIER_COMPANY;
         }
         return false;
-    }
-
-    function _wordAt(bytes memory action, uint256 offset) private pure returns (bytes32 value) {
-        require(action.length >= offset + 32, "Malformed policy action");
-        assembly {
-            value := mload(add(add(action, 32), offset))
-        }
     }
 }

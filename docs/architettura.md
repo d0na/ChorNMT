@@ -45,7 +45,7 @@ contracts/
 │   ├── NMT.sol                  abstract  ERC721Enumerable: mint, trasferimento con consenso dell'asset
 │   ├── MutableAsset.sol         abstract  riferimenti a NMT e policy, modifier di autorizzazione
 │   ├── IMutableAsset.sol        interface viste comuni a ogni asset (holder, policy, NMT)
-│   └── SmartPolicy.sol          abstract  evaluate(subject, action, resource)
+│   └── SmartPolicy.sol          abstract  evaluate(subject, action, resource), decodifica degli argomenti
 ├── choreography/
 │   ├── ChoreographyNMT.sol               NMT delle coreografie, master policy, versioni, tokenURI
 │   ├── ChoreographyMutableAsset.sol      modello della coreografia (ruoli e nodi)
@@ -126,7 +126,7 @@ function evaluate(address subject, bytes memory action, address resource) public
 | `action` | La chiamata codificata ABI: selector (4 byte) seguito dagli argomenti. |
 | `resource` | Il contratto interessato: l'asset, oppure l'NMT per i mint. |
 
-`decodeSignature(action)` estrae il selector, e le policy confrontano quel valore con costanti come `bytes4(keccak256("setNodes(...)"))`. Una policy può anche leggere gli argomenti dentro `action`, come fa `MasterSmartPolicy` con `_addressAt(action, offset)` per ricavare holder e Creator policy.
+`decodeSignature(action)` estrae il selector, e le policy confrontano quel valore con costanti come `bytes4(keccak256("setNodes(...)"))`. Una policy può anche leggere gli argomenti dentro `action`, come fa `MasterSmartPolicy` con `_addressAt(action, offset)` per ricavare holder e Creator policy. `_addressAt` e `_wordAt` stanno nel base `SmartPolicy`, condivisi da tutte le policy, e su un'azione troppo corta falliscono con `MalformedAction()`.
 
 ### `NMT`
 
