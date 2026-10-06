@@ -17,6 +17,57 @@ abstract contract MutableAsset is IMutableAsset {
 
     error OperationDenied(uint8 layer);
 
+    modifier evaluatedByHolder(
+        address subject,
+        bytes memory action,
+        address resource
+    ) {
+        require(
+            SmartPolicy(holderSmartPolicy).evaluate(subject, action, resource),
+            "Operation DENIED by HOLDER policy"
+        );
+        _;
+    }
+
+    modifier evaluatedByCreator(
+        address subject,
+        bytes memory action,
+        address resource
+    ) {
+        require(
+            SmartPolicy(creatorSmartPolicy).evaluate(subject, action, resource),
+            "Operation DENIED by CREATOR policy"
+        );
+        _;
+    }
+
+    modifier evaluatedBySmartPolicies(
+        address subject,
+        bytes memory action,
+        address resource
+    ) {
+        require(
+            SmartPolicy(creatorSmartPolicy).evaluate(subject, action, resource),
+            "Operation DENIED by CREATOR policy"
+        );
+        require(holderSmartPolicy != address(0), "Holder policy disabled");
+        require(
+            SmartPolicy(holderSmartPolicy).evaluate(subject, action, resource),
+            "Operation DENIED by HOLDER policy"
+        );
+        _;
+    }
+
+    modifier onlyHolder() {
+        require(msg.sender == getHolder(), "Caller is not the holder");
+        _;
+    }
+
+    modifier onlyNMT() {
+        require(msg.sender == nmt, "Caller should be NMT");
+        _;
+    }
+
     constructor(
         address nmtAddress,
         address creatorSmartPolicyAddress,
@@ -94,56 +145,5 @@ abstract contract MutableAsset is IMutableAsset {
     {
         holderSmartPolicy = address(0);
         return true;
-    }
-
-    modifier evaluatedByHolder(
-        address subject,
-        bytes memory action,
-        address resource
-    ) {
-        require(
-            SmartPolicy(holderSmartPolicy).evaluate(subject, action, resource),
-            "Operation DENIED by HOLDER policy"
-        );
-        _;
-    }
-
-    modifier evaluatedByCreator(
-        address subject,
-        bytes memory action,
-        address resource
-    ) {
-        require(
-            SmartPolicy(creatorSmartPolicy).evaluate(subject, action, resource),
-            "Operation DENIED by CREATOR policy"
-        );
-        _;
-    }
-
-    modifier evaluatedBySmartPolicies(
-        address subject,
-        bytes memory action,
-        address resource
-    ) {
-        require(
-            SmartPolicy(creatorSmartPolicy).evaluate(subject, action, resource),
-            "Operation DENIED by CREATOR policy"
-        );
-        require(holderSmartPolicy != address(0), "Holder policy disabled");
-        require(
-            SmartPolicy(holderSmartPolicy).evaluate(subject, action, resource),
-            "Operation DENIED by HOLDER policy"
-        );
-        _;
-    }
-
-    modifier onlyHolder() {
-        require(msg.sender == getHolder(), "Caller is not the holder");
-        _;
-    }
-
-    modifier onlyNMT() {
-        require(msg.sender == nmt, "Caller should be NMT");
-        _;
     }
 }
