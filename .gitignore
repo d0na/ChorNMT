@@ -8,3 +8,4 @@ evaluation/figures/*.png
 evaluation/figures/*.svg
 evaluation/*.generated.md
 evaluation/*.generated.csv
+.claude/*.local.md
