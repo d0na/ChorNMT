@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "../base/MutableAsset.sol";
 import "./IChoreographyAsset.sol";
-import "./IChoreographyCreatorPolicy.sol";
+import "./IChoreographyPolicy.sol";
 
 contract ChoreographyMutableAsset is MutableAsset, IChoreographyAsset {
     struct Node {
@@ -62,16 +62,17 @@ contract ChoreographyMutableAsset is MutableAsset, IChoreographyAsset {
         string[] memory roleNames,
         address[] memory addresses
     ) external evaluatedBySmartPolicies(msg.sender, msg.data, address(this)) {
-        if (
-            !IChoreographyCreatorPolicy(creatorSmartPolicy).evaluateRoleUpdate(
-                address(this),
-                roleNames,
-                addresses
-            )
-        ) {
-            revert OperationDenied(CREATOR);
-        }
+        _evaluateRoleUpdate(roleNames, addresses);
         _setRoles(roleNames, addresses);
+    }
+
+    function _evaluateRoleUpdate(
+        string[] memory roleNames,
+        address[] memory addresses
+    ) private view {
+        _evaluateDomainUpdate(
+            abi.encodeCall(IChoreographyPolicy.evaluateRoleUpdate, (address(this), roleNames, addresses))
+        );
     }
 
     function _setRoles(
@@ -105,7 +106,7 @@ contract ChoreographyMutableAsset is MutableAsset, IChoreographyAsset {
         string[] memory initiatingMessages,
         string[] memory returnMessages
     ) external evaluatedBySmartPolicies(msg.sender, msg.data, address(this)) {
-        _evaluateCreatorNodePolicy(names, nodeTypes, incoming, outgoing);
+        _evaluateNodeUpdate(names, nodeTypes, incoming, outgoing);
         _setNodes(
             names,
             nodeTypes,
@@ -119,7 +120,7 @@ contract ChoreographyMutableAsset is MutableAsset, IChoreographyAsset {
         );
     }
 
-    function _evaluateCreatorNodePolicy(
+    function _evaluateNodeUpdate(
         string[] memory names,
         NodeType[] memory nodeTypes,
         string[][] memory incoming,
@@ -130,17 +131,21 @@ contract ChoreographyMutableAsset is MutableAsset, IChoreographyAsset {
             types[i] = uint8(nodeTypes[i]);
         }
 
-        if (
-            !IChoreographyCreatorPolicy(creatorSmartPolicy).evaluateNodeUpdate(
-                address(this),
-                names,
-                types,
-                incoming,
-                outgoing
-            )
-        ) {
-            revert OperationDenied(CREATOR);
-        }
+        _evaluateDomainUpdate(
+            abi.encodeCall(IChoreographyPolicy.evaluateNodeUpdate, (address(this), names, types, incoming, outgoing))
+        );
+    }
+
+    // Domain check: Creator AND Holder, with the call encoded once. A policy that reverts or
+    // does not answer true denies.
+    function _evaluateDomainUpdate(bytes memory domainCall) private view {
+        if (!_approves(creatorSmartPolicy, domainCall)) revert OperationDenied(CREATOR);
+        if (!_approves(holderSmartPolicy, domainCall)) revert OperationDenied(HOLDER);
+    }
+
+    function _approves(address policy, bytes memory domainCall) private view returns (bool) {
+        (bool success, bytes memory result) = policy.staticcall(domainCall);
+        return success && result.length == 32 && abi.decode(result, (bool));
     }
 
     function _setNodes(

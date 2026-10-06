@@ -45,7 +45,7 @@ ChoreographyMutableAsset : MutableAsset
     - nodes
   - messages embedded in node fields
   - currently identifies participants in nodes by role name strings
-  - asks CreatorSmartPolicy to validate every node update
+  - asks its Creator AND Holder policy (IChoreographyPolicy) to validate every node and role update
 
 MasterSmartPolicy  : SmartPolicy
   - hardcoded creators and holders; MasterSmartPolicyFrozen also denies transfers and versions

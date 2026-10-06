@@ -31,8 +31,10 @@ For `setNodes(...)`, `ChoreographyMutableAsset` performs the following checks
 in order:
 
 1. The regular Creator and Holder policy evaluations must permit the action.
-2. The current Creator policy evaluates the submitted BPMN node update against
-   its structural configuration.
+2. The current Creator policy and then the current Holder policy evaluate the
+   submitted BPMN node update (`evaluateNodeUpdate` of `IChoreographyPolicy`);
+   `setRoles(...)` does the same with `evaluateRoleUpdate`. The default Holder
+   policy adds no constraint; `DenyAllSmartPolicy` denies.
 3. Only then are the changed node records written to contract storage.
 
 A rejected transaction reverts. It still consumes gas because the authorization

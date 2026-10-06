@@ -61,7 +61,7 @@ contracts/
 │   ├── HolderSmartPolicy.sol             seconda approvazione dell'holder
 │   ├── DenyAllSmartPolicy.sol            policy che nega tutto (per bloccare un asset)
 │   ├── IChoreographyAsset.sol            viste dell'asset usate da policy e renderer; l'asset la implementa
-│   └── IChoreographyCreatorPolicy.sol    interfaccia dei controlli su nodi e ruoli
+│   └── IChoreographyPolicy.sol           interfaccia dei controlli su nodi e ruoli, implementata da Creator e Holder
 └── participant/                          livello participant, non usato dagli script (vedi sotto)
     └── IParticipantAsset.sol             viste della licenza usate dalle policy; la licenza la implementa
 ```
@@ -199,7 +199,7 @@ tokenId = uint160(address(asset))        asset = address(uint160(tokenId))
 
 Il mint usa `ERC721._mint` e non `_safeMint`: nessuna callback raggiunge il destinatario prima che l'asset sia inizializzato e la sua versione registrata.
 
-**Vincolo di dimensione:** l'NMT contiene il bytecode dell'asset, perché lo crea con `new`. Occupa 21.064 byte su un limite di 24.576. Per questo la generazione del JSON sta in un contratto separato.
+**Vincolo di dimensione:** l'NMT contiene il bytecode dell'asset, perché lo crea con `new`. Occupa 21.177 byte su un limite di 24.576. Per questo la generazione del JSON sta in un contratto separato.
 
 ### `ChoreographyMutableAsset`
 
@@ -262,13 +262,14 @@ sequenceDiagram
   A->>P: evaluate(holder, action, asset)
   A->>C: evaluateNodeUpdate(asset, names, types, incoming, outgoing)
   C-->>A: legge lo stato corrente (getNodeNames, getNodeTypeAndEdges, ...)
+  A->>P: evaluateNodeUpdate(stessa chiamata)
   A->>A: _setNodes: sovrascrive i nodi, emette NodesChanged
 ```
 
 | Funzione | Controlli | Effetto |
 | --- | --- | --- |
-| `setRoles(names, addresses)` | Creator e Holder, poi `evaluateRoleUpdate` | Aggiunge o sovrascrive ruoli. Emette `RolesChanged`. |
-| `setNodes(...)` (9 array paralleli) | Creator e Holder, poi `evaluateNodeUpdate` | Aggiunge o sovrascrive nodi completi. Emette `NodesChanged`. |
+| `setRoles(names, addresses)` | Creator e Holder, poi `evaluateRoleUpdate` di Creator e Holder | Aggiunge o sovrascrive ruoli. Emette `RolesChanged`. |
+| `setNodes(...)` (9 array paralleli) | Creator e Holder, poi `evaluateNodeUpdate` di Creator e Holder | Aggiunge o sovrascrive nodi completi. Emette `NodesChanged`. |
 | `initializeChoreography(model)` | `onlyNMT` | Scrive ruoli e nodi del modello iniziale senza controlli strutturali: il modello è fidato. Emette `ChoreographyInitialized`. |
 | `tokenURI()` | — | Restituisce `NMT.tokenURI(tokenId)`, lo stesso valore letto dall'NMT. |
 
@@ -287,8 +288,8 @@ sequenceDiagram
 | `CreatorSmartPolicy` | nessuno: regole **hardcoded** (`administrator` = account 0) | Modifiche dell'holder e propria sostituzione (solo `administrator`). Nessun vincolo BPMN: rifiuta solo aggiornamenti malformati (array di lunghezze diverse, nomi vuoti o duplicati). |
 | `ConstrainedCreatorSmartPolicy` (abstract) | `participants`: l'attribute manager, `immutable` dal costruttore | Le regole dei vincoli strutturali e dei ruoli. I dati (limiti, task ammessi, nodi e ruoli protetti, tipi richiesti) sono letterali scritti da ogni scenario: `CreatorSmartPolicyTestScenario` (fixture dei test) e `CreatorSmartPolicyPaperScenario` (paper example). |
 | `ChoreographyParticipantAM` | `participantNmt`, `participantCertifier` (`immutable`) | Non è una policy ma un attribute manager: restituisce il tipo di una licenza emessa dal participant NMT e certificata dalla participant Creator policy, zero per ogni altro indirizzo. |
-| `HolderSmartPolicy` | nessuno | Seconda approvazione: consente all'holder `setRoles`, `setNodes` e `setLinked`. |
-| `DenyAllSmartPolicy` | nessuno | Nega tutto. Installata come Holder policy, blocca l'asset finché l'holder non la sostituisce. |
+| `HolderSmartPolicy` | nessuno | Seconda approvazione: consente all'holder `setRoles`, `setNodes` e `setLinked`. Implementa `IChoreographyPolicy` senza vincoli: `evaluateNodeUpdate` ed `evaluateRoleUpdate` rispondono `true` senza leggere l'asset. |
+| `DenyAllSmartPolicy` | nessuno | Nega tutto, anche i controlli di dominio (`IChoreographyPolicy`). Installata come Holder policy, blocca l'asset finché l'holder non la sostituisce. |
 
 Come ogni policy, la Creator rappresenta una policy tradotta da XACML: le regole non si configurano a runtime, e un insieme diverso di vincoli è un'altra policy, installata con `setCreatorSmartPolicy` o passata al mint. Nelle policy vincolate `evaluateNodeUpdate` calcola il modello **dopo** l'aggiornamento: parte dai conteggi correnti e sostituisce i nodi con lo stesso nome. Rifiuta l'aggiornamento se:
 

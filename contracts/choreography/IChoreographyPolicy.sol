@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-interface IChoreographyCreatorPolicy {
+/// Domain checks of a choreography update. The asset asks both its Creator and its Holder
+/// policy; a policy without constraints returns true without reading the asset.
+interface IChoreographyPolicy {
     function evaluateNodeUpdate(
         address asset,
         string[] memory names,

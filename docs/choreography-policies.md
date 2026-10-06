@@ -85,7 +85,7 @@ The Creator policy also defines the structural boundaries for `setNodes(...)`; i
 
 Before writing storage, the asset asks its Creator policy to evaluate the update. A constrained policy computes the post-update task count and total outgoing sequence-flow count, and rejects protected-node updates, task names outside the allowlist, incoming or outgoing flows whose endpoint does not already exist or appear in the same delta, and any change to the links of a protected node. `setRoles` is checked for protected roles, new roles (only existing roles can be reassigned), addresses that are not a suitable license for a role with a requirement, and, when the scenario requires it, accounts that would play two roles.
 
-The Holder policy remains an independent second approval. A Holder can further restrict an instance by installing `DenyAllSmartPolicy`, without weakening the Creator-defined BPMN boundaries.
+The Holder policy remains an independent second approval, also for these domain checks: the asset asks `evaluateNodeUpdate` and `evaluateRoleUpdate` of the Creator AND the Holder policy (`IChoreographyPolicy`). A Holder can further restrict an instance by installing `DenyAllSmartPolicy`, without weakening the Creator-defined BPMN boundaries.
 
 The Master policy is deployed before `ChoreographyNMT`. Its rules are hardcoded for Hardhat account 0 (authorized creator, administrator, and the default deployer of `deploy:asset`) and account 1 (eligible holder); another organization needs a different Master policy, installed with `setMasterSmartPolicy`.
 

@@ -18,7 +18,7 @@ Every contract belongs to exactly one kind:
 | Creator policy | `SmartPolicy` | `CreatorSmartPolicy` | `participant/CreatorSmartPolicy` | Constraint the holder cannot remove; domain rules. |
 | Holder policy | `SmartPolicy` | `HolderSmartPolicy` | `participant/HolderSmartPolicy` | Second approval chosen by the holder. |
 | Renderer | none | `ChoreographyTokenURIRenderer` | — | Stateless; builds `tokenURI` from asset views. |
-| Interface | none | `IChoreographyCreatorPolicy` | — | Cross-contract calls only go through interfaces. |
+| Interface | none | `IChoreographyPolicy` | — | Cross-contract calls only go through interfaces. |
 
 A domain is complete when it has one Token, one Asset, and the three policies. Helpers that do not fit a kind (e.g. `DenyAllSmartPolicy`) are policies.
 
@@ -182,7 +182,7 @@ function _evaluateThingUpdate(T calldata value) private view {
   - `participant/IParticipantAsset.sol`: `participantType`, `getName`, `getProfile`, `getMessages`, `getMessagesWriter`, `tokenURI`; implemented by `ParticipantMutableAsset`.
 - Policies and renderers type their calls with these interfaces (`IMutableAsset(resource).getHolder()`), not with the concrete asset contracts. A view a policy needs is added to the interface first.
 - Shared enums used across contracts live in the interface (e.g. `IChoreographyAsset.NodeType`).
-- Domain policy extensions live in their own file and are layer-neutral, because both Creator and Holder implement them: `participant/IParticipantPolicy.sol` (`evaluateMessagesUpdate`); target for the choreography: rename `IChoreographyCreatorPolicy` to `IChoreographyPolicy`.
+- Domain policy extensions live in their own file and are layer-neutral, because both Creator and Holder implement them: `participant/IParticipantPolicy.sol` (`evaluateMessagesUpdate`) and `choreography/IChoreographyPolicy.sol` (`evaluateNodeUpdate`, `evaluateRoleUpdate`). A permissive implementation takes `calldata` parameters it does not name, so it decodes nothing.
 
 ## Errors and checks
 
@@ -209,7 +209,7 @@ The cost of the whole flow is measured, not estimated: `npm test` and `npm run e
 - Pack related small fields (`bool`, `uint8`, `address`) next to each other so they share a slot.
 - Emit events with the minimum data an off-chain reader needs; do not emit full arrays already readable through views.
 - `view` functions used only off-chain (render) may be expensive; functions called during a transaction (policy checks, setters) may not.
-- The Creator AND Holder domain check costs a second external call per mutator. Keep it cheap: a Holder domain evaluation with no configured constraint must return without reading the asset. Never skip the call to save gas.
+- The Creator AND Holder domain check costs a second external call per mutator. `ChoreographyMutableAsset` encodes the domain call once (`abi.encodeCall`) and sends the same bytes to both policies with `staticcall`; a policy that reverts or does not return `true` denies. Measured cost of the rule on the paper flow: +169,552 gas (Holder policy deploy +108,940, `ChoreographyNMT` deploy +24,429, every mint +22,668, import +7,771, delta +5,744). Keep it cheap: a Holder domain evaluation with no configured constraint must return without reading the asset. Never skip the call to save gas.
 
 **Applied**: G4 (custom errors instead of `require` strings: `ChoreographyNMT` deploy −201,733 gas, every mint −107,926, every denied case −52 to −99; `ChoreographyNMT` runtime 22,336 → 21,407 bytes). G2 and G3 for the asset mutators (`msg.data` as the action, `external`: `ChoreographyNMT` deploy −73,968, every mint −68,788, paper import −32,133, paper delta −20,620; runtime 21,407 → 21,064 bytes). The policies read only the selector of these actions, so non-canonical encodings cannot change a decision.
 
@@ -227,8 +227,6 @@ The cost of the whole flow is measured, not estimated: `npm test` and `npm run e
 
 ## Known deviations
 
-Resolved: 1–4 (participant asset and token, rewritten as a role license), 5 (`MutableAsset` modifiers moved before the constructor), 6 and 9 (choreography Creator layout and switch naming, removed with its runtime configuration), 7 (shared asset interfaces), 8 (action decoding shared in `SmartPolicy`), 11 (custom errors everywhere, G4), 12 (asset mutators `external` with `msg.data` as the action, G2 and G3 for the assets), 10 (default-deny participant policies) and 14 (hardcoded choreography Master and Creator policies). The current code differs from the rules above in these places. Fix them in dedicated changes, with tests and `check:size`:
+Resolved: 1–4 (participant asset and token, rewritten as a role license), 5 (`MutableAsset` modifiers moved before the constructor), 6 and 9 (choreography Creator layout and switch naming, removed with its runtime configuration), 7 (shared asset interfaces), 8 (action decoding shared in `SmartPolicy`), 10 (default-deny participant policies), 11 (custom errors everywhere, G4), 12 (asset mutators `external` with `msg.data` as the action, G2 and G3 for the assets), 13 (choreography domain checks asked of Creator AND Holder through `IChoreographyPolicy`) and 14 (hardcoded choreography Master and Creator policies).
 
-| # | Contract | Deviation | Rule |
-| --- | --- | --- | --- |
-| 13 | `ChoreographyMutableAsset`, `HolderSmartPolicy`, `IChoreographyCreatorPolicy` | The domain checks (`evaluateNodeUpdate`, `evaluateRoleUpdate`) are asked of the Creator policy only; the Holder policy does not implement the domain interface, whose name is Creator-specific. | Asset: domain check is Creator AND Holder; layer-neutral `IChoreographyPolicy`. |
+There are no known deviations: the code follows the rules above. When a change has to break a rule, add a row here (`| # | Contract | Deviation | Rule |`, numbered from 15) and fix it in a dedicated change, with tests and `check:size`.

@@ -3,13 +3,13 @@ pragma solidity ^0.8.20;
 
 import "../base/IMutableAsset.sol";
 import "../base/SmartPolicy.sol";
-import "./IChoreographyCreatorPolicy.sol";
+import "./IChoreographyPolicy.sol";
 
 // The default choreography Creator policy. It stands for a policy translated from XACML: the
 // holder edits the model with no BPMN constraint beyond well-formed updates, and only the
 // administrator (Hardhat account 0) replaces the policy. Constraints are a different policy
 // (ConstrainedCreatorSmartPolicy and its scenarios), installed with setCreatorSmartPolicy.
-contract CreatorSmartPolicy is SmartPolicy, IChoreographyCreatorPolicy {
+contract CreatorSmartPolicy is SmartPolicy, IChoreographyPolicy {
     bytes4 private constant SET_ROLES = bytes4(keccak256("setRoles(string[],address[])"));
     bytes4 private constant SET_NODES = bytes4(keccak256("setNodes(string[],uint8[],string[][],string[][],string[][],string[],string[],string[],string[])"));
     bytes4 private constant SET_LINKED = bytes4(keccak256("setLinked(address)"));
