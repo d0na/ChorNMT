@@ -105,6 +105,7 @@ It imports `references/paper-example.bpmn` into a fresh instance and applies the
 - deployment gas for Master, Creator, Holder, `ChoreographyTokenURIRenderer`, and `ChoreographyNMT`;
 - `mint` followed by roles/nodes import versus `mintWithInitialModel`;
 - Master allow/deny cases for authorized Creators and eligible Holders;
+- the cost of changing the Creator rules: deploying `ChoreographyParticipantAM` and `CreatorSmartPolicyPaperScenario` and installing it with `setCreatorSmartPolicy`;
 - Creator allow/deny cases for compliant updates, task limits, task-name allowlist, known flow targets, and protected nodes;
 - Holder installation of a restrictive policy and a denied model update.
 

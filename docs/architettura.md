@@ -52,7 +52,12 @@ contracts/
 │   ├── ChoreographyTokenURIRenderer.sol  genera i metadati JSON dallo stato dell'asset
 │   ├── MasterSmartPolicy.sol             chi crea, chi può possedere, trasferimenti e versioning (hardcoded)
 │   ├── MasterSmartPolicyFrozen.sol       variante della Master che nega trasferimenti e versioni
-│   ├── CreatorSmartPolicy.sol            chi modifica e vincoli strutturali BPMN
+│   ├── CreatorSmartPolicy.sol            chi modifica; nessun vincolo BPMN (hardcoded)
+│   ├── ConstrainedCreatorSmartPolicy.sol abstract  regole dei vincoli strutturali BPMN e dei ruoli
+│   ├── CreatorSmartPolicyTestScenario.sol  vincoli dello scenario dei test (letterali)
+│   ├── CreatorSmartPolicyPaperScenario.sol vincoli dello scenario paper (letterali)
+│   ├── ChoreographyParticipantAM.sol     attribute manager: tipo della licenza che interpreta un ruolo
+│   ├── IChoreographyParticipantAM.sol    interfaccia dell'attribute manager
 │   ├── HolderSmartPolicy.sol             seconda approvazione dell'holder
 │   ├── DenyAllSmartPolicy.sol            policy che nega tutto (per bloccare un asset)
 │   ├── IChoreographyAsset.sol            viste dell'asset usate da policy e renderer; l'asset la implementa
@@ -93,7 +98,9 @@ classDiagram
   MutableAsset <|-- ChoreographyMutableAsset
   MutableAsset <|-- ParticipantMutableAsset
   SmartPolicy <|-- MasterSmartPolicy
+  MasterSmartPolicy <|-- MasterSmartPolicyFrozen
   SmartPolicy <|-- CreatorSmartPolicy
+  CreatorSmartPolicy <|-- ConstrainedCreatorSmartPolicy
   SmartPolicy <|-- HolderSmartPolicy
   SmartPolicy <|-- DenyAllSmartPolicy
   ChoreographyNMT ..> ChoreographyMutableAsset : crea
@@ -185,8 +192,8 @@ tokenId = uint160(address(asset))        asset = address(uint160(tokenId))
 | --- | --- | --- |
 | `mint(to, creator, holder)` | creator autorizzato, `to` idoneo | Crea un asset vuoto e il suo token. |
 | `mintWithInitialModel(to, creator, holder, model)` | creator autorizzato, `to` idoneo | Crea l'asset e lo inizializza con `initializeChoreography(model)` nella stessa transazione. |
-| `mintVersion(to, creator, holder, predecessorId)` | versioning attivo, `to` idoneo, chiamante creator autorizzato **oppure** holder del predecessore che mantiene la sua Creator policy | Crea un asset **vuoto** e registra `predecessorOf` e `versionOf`. Il modello non viene copiato. |
-| `transferFrom(from, to, tokenId)` | trasferimenti attivi, `subject == from == holder`, `to` idoneo | Poi l'asset valuta la Creator policy e il token viene trasferito. |
+| `mintVersion(to, creator, holder, predecessorId)` | Master non congelata (`MasterSmartPolicyFrozen` le nega), `to` idoneo, chiamante creator autorizzato **oppure** holder del predecessore che mantiene la sua Creator policy | Crea un asset **vuoto** e registra `predecessorOf` e `versionOf`. Il modello non viene copiato. |
+| `transferFrom(from, to, tokenId)` | Master non congelata, `subject == from == holder`, `to` idoneo | Poi l'asset valuta la Creator policy e il token viene trasferito. |
 | `setMasterSmartPolicy(policy)` | chiamante `administrator` della Master corrente; `policy` diversa da zero | Sostituisce la Master: da quel momento decide lei mint, versioni e trasferimenti. |
 | `tokenURI(tokenId)` | — (lettura) | Verifica che il token esista e restituisce `renderer.tokenURI(asset)`. |
 
@@ -277,26 +284,28 @@ sequenceDiagram
 | --- | --- | --- |
 | `MasterSmartPolicy` | nessuno: regole **hardcoded**, come una policy tradotta da XACML (`administrator` e unico creator autorizzato = account 0, holder ammessi = account 0 e 1) | Operazioni dell'NMT: mint, mint con modello, versioni, trasferimenti, propria sostituzione (solo `administrator`). |
 | `MasterSmartPolicyFrozen` | nessuno | Come la Master, ma nega trasferimenti e versioni. Si installa con `setMasterSmartPolicy` per congelare le coreografie. |
-| `CreatorSmartPolicy` | `administrator` (il deployer), `maxTaskCount`, `maxSequenceFlowCount`, `enforceTaskNameAllowlist`, `enforceKnownFlowTargets`, `allowedTaskNames`, `protectedNodes` e `protectedNodeCount`, `protectedRoles`, `enforceKnownRoles`, `enforceDistinctRoleAccounts`, `participantNmt`, `participantCertifier`, requisiti per ruolo | Modifiche dell'holder e vincoli strutturali, più la propria sostituzione (solo `administrator`). |
+| `CreatorSmartPolicy` | nessuno: regole **hardcoded** (`administrator` = account 0) | Modifiche dell'holder e propria sostituzione (solo `administrator`). Nessun vincolo BPMN: rifiuta solo aggiornamenti malformati (array di lunghezze diverse, nomi vuoti o duplicati). |
+| `ConstrainedCreatorSmartPolicy` (abstract) | `participants`: l'attribute manager, `immutable` dal costruttore | Le regole dei vincoli strutturali e dei ruoli. I dati (limiti, task ammessi, nodi e ruoli protetti, tipi richiesti) sono letterali scritti da ogni scenario: `CreatorSmartPolicyTestScenario` (fixture dei test) e `CreatorSmartPolicyPaperScenario` (paper example). |
+| `ChoreographyParticipantAM` | `participantNmt`, `participantCertifier` (`immutable`) | Non è una policy ma un attribute manager: restituisce il tipo di una licenza emessa dal participant NMT e certificata dalla participant Creator policy, zero per ogni altro indirizzo. |
 | `HolderSmartPolicy` | nessuno | Seconda approvazione: consente all'holder `setRoles`, `setNodes` e `setLinked`. |
 | `DenyAllSmartPolicy` | nessuno | Nega tutto. Installata come Holder policy, blocca l'asset finché l'holder non la sostituisce. |
 
-I vincoli della `CreatorSmartPolicy` sono tutti disattivati per default. `evaluateNodeUpdate` calcola il modello **dopo** l'aggiornamento: parte dai conteggi correnti e sostituisce i nodi con lo stesso nome. Rifiuta l'aggiornamento se:
+Come ogni policy, la Creator rappresenta una policy tradotta da XACML: le regole non si configurano a runtime, e un insieme diverso di vincoli è un'altra policy, installata con `setCreatorSmartPolicy` o passata al mint. Nelle policy vincolate `evaluateNodeUpdate` calcola il modello **dopo** l'aggiornamento: parte dai conteggi correnti e sostituisce i nodi con lo stesso nome. Rifiuta l'aggiornamento se:
 
 - supera il numero massimo di task o di sequence flow;
-- contiene nomi vuoti o duplicati;
-- contiene un task fuori dall'allowlist, quando attiva;
-- ha un estremo di `incoming` o `outgoing` sconosciuto, quando il controllo sugli estremi è attivo;
+- contiene nomi vuoti o duplicati (questo controllo lo fa anche la `CreatorSmartPolicy` di default);
+- contiene un task fuori dall'allowlist;
+- ha un estremo di `incoming` o `outgoing` sconosciuto;
 - modifica un nodo protetto, oppure aggiunge o toglie un collegamento verso di esso.
 
 `evaluateRoleUpdate` controlla chi può interpretare un ruolo. Rifiuta l'aggiornamento se:
 
 - contiene nomi vuoti o duplicati, o un ruolo protetto;
-- crea un ruolo nuovo, quando `enforceKnownRoles` è attivo: si possono solo riassegnare i ruoli esistenti;
-- collega un ruolo con requisito (`setRoleRequirement`) a qualcosa che non è una licenza adatta: l'indirizzo deve essere un `ParticipantMutableAsset` emesso da `participantNmt`, certificato da `participantCertifier`, con il tipo e tutte le caratteristiche richieste;
-- fa interpretare due ruoli allo stesso account, quando `enforceDistinctRoleAccounts` è attivo. Il controllo usa i ruoli dopo l'aggiornamento.
+- crea un ruolo nuovo: si possono solo riassegnare i ruoli esistenti;
+- collega un ruolo con requisito a qualcosa che non è una licenza adatta: `ChoreographyParticipantAM` deve restituire per quell'indirizzo il tipo richiesto, cioè l'indirizzo deve essere un `ParticipantMutableAsset` emesso da `participantNmt` e certificato da `participantCertifier`;
+- fa interpretare due ruoli allo stesso account, quando lo scenario lo richiede. Il controllo usa i ruoli dopo l'aggiornamento.
 
-Il requisito si verifica quando il ruolo viene collegato. `isRoleRequirementSatisfied(asset, ruolo)` lo ricontrolla in sola lettura. Le chiavi di allowlist e protezioni sono `keccak256(nome)`.
+Il requisito si verifica quando il ruolo viene collegato; per ricontrollarlo basta simulare (`staticCall`) un `setRoles` che ricollega la stessa licenza. Allowlist e protezioni confrontano `keccak256(nome)` con costanti dello scenario.
 
 La tabella completa di chi può fare cosa è in [Choreography policies](choreography-policies.md#who-can-do-what). La semantica dei vincoli e la corrispondenza con i test sono in [Policy test specification](policy-test-specification.md).
 

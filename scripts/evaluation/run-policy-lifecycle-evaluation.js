@@ -181,59 +181,6 @@ async function main() {
     data: nmt.interface.encodeFunctionData("mint", [ineligibleHolder.address, creatorPolicyAddress, holderPolicyAddress])
   });
 
-  await allow(policyResults, "creator configures BPMN limits", () => creatorPolicy.setBpmnLimits(evolvedCounts.tasks, evolvedCounts.flows));
-  await (await creatorPolicy.setTaskNameAllowlistEnabled(true)).wait();
-  await (await creatorPolicy.setKnownFlowTargetsEnabled(true)).wait();
-  for (const node of evolvedNodes.filter((node) => node.nodeType === 2)) {
-    await (await creatorPolicy.setAllowedTaskName(node.name, true)).wait();
-  }
-  await (await creatorPolicy.setProtectedNode("Order", true)).wait();
-
-  await allow(policyResults, "creator permits paper-example BPMN delta", () => populatedAsset.setNodes(...deltaUpdate));
-  const optionalTask = {
-    name: "Optional Customs Inspection",
-    nodeType: 2,
-    incoming: ["Arrival Intermediate"],
-    outgoing: ["Delivery of Product"],
-    conditions: [""],
-    initiatorRole: "Middleman",
-    participantRole: "Special Carrier",
-    initiatingMessage: "Optional customs inspection",
-    returnMessage: ""
-  };
-  await (await creatorPolicy.setAllowedTaskName(optionalTask.name, true)).wait();
-  await deny(policyResults, "creator denies paper-example task limit breach", administrator, {
-    to: populatedAssetAddress,
-    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([optionalTask]))
-  });
-
-  const waybillWithAdditionalFlow = delta.nodes.find((node) => node.name === "Waybill for Intermediate");
-  await deny(policyResults, "creator denies paper-example flow limit breach", administrator, {
-    to: populatedAssetAddress,
-    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([{
-      ...waybillWithAdditionalFlow,
-      outgoing: [...waybillWithAdditionalFlow.outgoing, "Delivery of Product"],
-      conditions: [...waybillWithAdditionalFlow.conditions, ""]
-    }]))
-  });
-
-  await (await creatorPolicy.setBpmnLimits(evolvedCounts.tasks + 1, evolvedCounts.flows + 1)).wait();
-  await deny(policyResults, "creator denies paper-example task-name policy breach", administrator, {
-    to: populatedAssetAddress,
-    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([{ ...optionalTask, name: "Unapproved Customs Task" }]))
-  });
-  const unknownFlowUpdate = delta.nodes.find((node) => node.name === "Waybill for Intermediate");
-  await deny(policyResults, "creator denies paper-example unknown flow target", administrator, {
-    to: populatedAssetAddress,
-    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([{ ...unknownFlowUpdate, outgoing: ["Unknown BPMN node"] }]))
-  });
-  const protectedOrder = dataset.nodes.find((node) => node.name === "Order");
-  await deny(policyResults, "creator denies paper-example protected node update", administrator, {
-    to: populatedAssetAddress,
-    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([{ ...protectedOrder, outgoing: ["Order Intermediate"] }]))
-  });
-
-  const carrierRole = "Special Carrier";
   const SPECIAL_CARRIER = ethers.encodeBytes32String("SpecialCarrier");
   const CARRIER = ethers.encodeBytes32String("Carrier");
   const SUPPLIER = ethers.encodeBytes32String("Supplier");
@@ -256,6 +203,66 @@ async function main() {
     participantCertifier.waitForDeployment(),
     participantHolderPolicy.waitForDeployment()
   ]);
+
+  // Creator constraints are hardcoded in the paper-scenario policy: changing the rules of an
+  // instance costs a deploy and an install instead of runtime configuration.
+  const participantAM = await (await ethers.getContractFactory("ChoreographyParticipantAM"))
+    .deploy(participantNmt.target, participantCertifier.target);
+  await allow(policyResults, "deploy participant attribute manager", () => participantAM.deploymentTransaction());
+  const paperCreatorPolicy = await (await ethers.getContractFactory("CreatorSmartPolicyPaperScenario"))
+    .deploy(participantAM.target);
+  await allow(policyResults, "deploy paper-scenario creator policy", () => paperCreatorPolicy.deploymentTransaction());
+  await allow(policyResults, "creator administrator installs paper-scenario creator policy", () => populatedAsset.setCreatorSmartPolicy(paperCreatorPolicy.target));
+  assert.equal(evolvedCounts.tasks + 1, 11, "CreatorSmartPolicyPaperScenario hardcodes 11 tasks");
+  assert.equal(evolvedCounts.flows + 1, 15, "CreatorSmartPolicyPaperScenario hardcodes 15 sequence flows");
+
+  await allow(policyResults, "creator permits paper-example BPMN delta", () => populatedAsset.setNodes(...deltaUpdate));
+  const optionalTask = {
+    name: "Optional Customs Inspection",
+    nodeType: 2,
+    incoming: ["Arrival Intermediate"],
+    outgoing: ["Delivery of Product"],
+    conditions: [""],
+    initiatorRole: "Middleman",
+    participantRole: "Special Carrier",
+    initiatingMessage: "Optional customs inspection",
+    returnMessage: ""
+  };
+  // Two approved optional tasks, one of them without outgoing flows: 12 tasks, 15 flows.
+  await deny(policyResults, "creator denies paper-example task limit breach", administrator, {
+    to: populatedAssetAddress,
+    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([
+      optionalTask,
+      { ...optionalTask, name: "Optional Quality Inspection", outgoing: [], conditions: [] }
+    ]))
+  });
+
+  const waybillWithAdditionalFlow = delta.nodes.find((node) => node.name === "Waybill for Intermediate");
+  await deny(policyResults, "creator denies paper-example flow limit breach", administrator, {
+    to: populatedAssetAddress,
+    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([{
+      ...waybillWithAdditionalFlow,
+      outgoing: [...waybillWithAdditionalFlow.outgoing, "Delivery of Product", "Order Intermediate"],
+      conditions: [...waybillWithAdditionalFlow.conditions, "", ""]
+    }]))
+  });
+
+  await deny(policyResults, "creator denies paper-example task-name policy breach", administrator, {
+    to: populatedAssetAddress,
+    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([{ ...optionalTask, name: "Unapproved Customs Task" }]))
+  });
+  const unknownFlowUpdate = delta.nodes.find((node) => node.name === "Waybill for Intermediate");
+  await deny(policyResults, "creator denies paper-example unknown flow target", administrator, {
+    to: populatedAssetAddress,
+    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([{ ...unknownFlowUpdate, outgoing: ["Unknown BPMN node"] }]))
+  });
+  const protectedOrder = dataset.nodes.find((node) => node.name === "Order");
+  await deny(policyResults, "creator denies paper-example protected node update", administrator, {
+    to: populatedAssetAddress,
+    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([{ ...protectedOrder, outgoing: ["Order Intermediate"] }]))
+  });
+
+  const carrierRole = "Special Carrier";
   const mintLicense = async (holder, participantType) => {
     const licenseArguments = [holder.address, participantCertifier.target, participantHolderPolicy.target, participantType];
     const [licenseAddress] = await participantNmt.connect(authority).mintWithParticipantType.staticCall(...licenseArguments);
@@ -287,9 +294,6 @@ async function main() {
     .flatMap((node) => [node.initiatingMessage, node.returnMessage])
     .find((message) => message && !carrierMessages.includes(ethers.encodeBytes32String(message)));
 
-  await allow(policyResults, "creator requires Special Carrier to be a SpecialCarrier license", () => creatorPolicy.setRoleRequirement(carrierRole, SPECIAL_CARRIER));
-  await (await creatorPolicy.setParticipantRegistry(participantNmt.target, participantCertifier.target)).wait();
-  await (await creatorPolicy.setKnownRolesEnabled(true)).wait();
   await deny(policyResults, "creator denies linking Special Carrier to a plain account", administrator, linkCarrier(carrierA.address));
   await deny(policyResults, "creator denies linking a Carrier license", administrator, linkCarrier(plainCarrierLicense.target));
   await deny(policyResults, "creator denies linking a Supplier license", administrator, linkCarrier(supplierLicense.target));
@@ -315,7 +319,8 @@ async function main() {
     const [, , , , , initiatorRole, participantRole] = await populatedAsset.getNode(name);
     assert.ok(initiatorRole === carrierRole || participantRole === carrierRole, `${name} lost the ${carrierRole} role`);
   }
-  assert.equal(await creatorPolicy.isRoleRequirementSatisfied(populatedAssetAddress, carrierRole), true);
+  // The sold license still meets the role requirement: relinking it is allowed.
+  await populatedAsset.setRoles.staticCall([carrierRole], [specialCarrierLicense.target]);
   assert.equal(await specialCarrierLicense.getName(), ethers.ZeroHash);
   assert.deepEqual([...await specialCarrierLicense.getMessages()], carrierMessages);
   assert.equal(await specialCarrierLicense.getMessagesWriter(), carrierA.address);
@@ -388,7 +393,7 @@ async function main() {
     "## Policy model",
     "",
     "- **Master policy** authorizes Creators, eligible initial Holders, transfers, and version evolution.",
-    "- **Creator policy** defines BPMN update constraints: task and sequence-flow limits, task-name allowlist, known flow targets, and protected nodes. It also decides which license can play a role: a role can require a participant license of a given type.",
+    "- **Creator policy** is hardcoded, as a policy translated from XACML: changing its rules means deploying another policy and installing it. The constrained policy defines BPMN update constraints: task and sequence-flow limits, task-name allowlist, known flow targets, and protected nodes. It also decides which license can play a role: a role can require a participant license of a given type.",
     "- **Participant Master policy** governs role licenses: only the issuer of a type mints it, and only organizations qualified for the type can buy it.",
     "- **Holder policy** is the second authorization layer and can further restrict an instance by installing a deny-all policy.",
     "",
@@ -399,7 +404,7 @@ async function main() {
     `- Tasks: ${summary.model.tasks}`,
     `- Sequence flows: ${summary.model.sequenceEdges}`,
     "",
-    `The instance is initialized from [\`${path.relative(process.cwd(), paperExamplePath)}\`](../${path.relative(process.cwd(), paperExamplePath)}) and applies the real choreography delta: ${delta.description} The permitted update adds \`Prepare Transport Documentation\` and the split/join gateways; denied updates exceed the evolved task limit, use an unapproved task name, target an unknown BPMN node, or modify protected \`Order\`.`,
+    `The instance is initialized from [\`${path.relative(process.cwd(), paperExamplePath)}\`](../${path.relative(process.cwd(), paperExamplePath)}) and applies the real choreography delta: ${delta.description} The permitted update adds \`Prepare Transport Documentation\` and the split/join gateways; its rules are those of the hardcoded \`CreatorSmartPolicyPaperScenario\`, installed with \`setCreatorSmartPolicy\`; denied updates exceed the task or the sequence-flow limit, use an unapproved task name, target an unknown BPMN node, or modify protected \`Order\`.`,
     "",
     `- Initial model: ${summary.initialTaskCount} tasks and ${summary.initialFlowCount} sequence flows.`,
     `- Model after the permitted delta: ${summary.evolvedTaskCount} tasks and ${summary.evolvedFlowCount} sequence flows.`,

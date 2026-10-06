@@ -48,14 +48,14 @@ The order follows the Solidity style guide:
 | Element | Rule | Example |
 | --- | --- | --- |
 | Internal/private function | `_camelCase` | `_setNodes`, `_addressAt` |
-| State variable (any visibility) | `camelCase`, no underscore | `descriptor`, `roleRequirements` |
+| State variable (any visibility) | `camelCase`, no underscore | `descriptor`, `participantType` |
 | Constant | `UPPER_SNAKE_CASE` | `SET_NODES`, `RUNTIME_LIMIT` |
 | Selector constant | the function name in `UPPER_SNAKE_CASE` | `MINT_VERSION` for `mintVersion(...)` |
 | Constructor parameter | `<name>Address` for addresses | `masterSmartPolicyAddress` |
 | Setter parameter that shadows a state variable | `<name>Value` | `participantTypeValue` |
 | Event | `<Thing>Changed`, or a past-tense verb for one-off facts | `NodesChanged`, `ChoreographyInitialized` |
 | View | `get<Thing>`, `get<Thing>Names`, `has<Thing>`, `is<Condition>` | `getRole`, `hasNode`, `isQualifiedFor` |
-| Policy switch | `<FEATURE>_ENABLED` hardcoded constant (runtime `set<Feature>Enabled` setters are deviation 14) | `TRANSFERS_ENABLED` |
+| Policy rule variant | a separate policy contract named `<Policy><Variant>` (no runtime switch) | `MasterSmartPolicyFrozen`, `CreatorSmartPolicyPaperScenario` |
 | Policy modifier | `evaluatedBy<Layer>` / `only<Actor>` | `evaluatedByMaster`, `onlyHolder` |
 
 ## Token (`NMT`)
@@ -149,7 +149,9 @@ function _evaluateThingUpdate(T calldata value) private view {
 
 - Selector constants: `bytes4 private constant NAME = bytes4(keccak256("<canonical signature>"))`, one per action the policy recognizes.
 - **Configuration is hardcoded.** A policy stands for a policy translated from XACML, so its rules and their data (accounts, types, allowed values, limits, switches) are `private constant`s and literal conditions in the source, edited by hand when the scenarios change. There is one policy per role, tuned to the current test and evaluation scenarios. Changing a rule means deploying a new policy and installing it through the policy it replaces (`setMasterSmartPolicy`, `setCreatorSmartPolicy`), never a runtime setter. Literals are also the cheapest form: no storage at deploy, no `SLOAD` at evaluation.
-- `administrator`: the account that may replace the policy, hardcoded as a `constant` (Master policies) or the deployer stored as an `immutable` (Creator policies, whose deployer is the certifier).
+- `administrator`: the account that may replace the policy, hardcoded as a `constant` (Master policies and the choreography Creator policies) or the deployer stored as an `immutable` (participant Creator policies, whose deployer is the certifier).
+- **Rule variants are policies.** A variant of a rule (e.g. transfers closed) is a separate contract, named `<Policy><Variant>`, that may extend the policy it varies and override `evaluate`. When several policies share rules and differ only in data, the rules live in an abstract policy with `internal pure virtual` hooks, and each scenario policy implements the hooks with literals (`ConstrainedCreatorSmartPolicy` → `CreatorSmartPolicyTestScenario`, `CreatorSmartPolicyPaperScenario`).
+- **Attributes of other contracts come from an attribute manager.** When a rule needs an attribute held by contracts deployed at runtime (e.g. the type of a role license), the policy reads it through an attribute manager (`ChoreographyParticipantAM`), bound as an `immutable` constructor argument. The attribute manager only answers about attributes; which value a rule requires stays in the policy. Deploy-time bindings of contract addresses are not runtime configuration.
 
 **Public functions**
 
@@ -222,15 +224,12 @@ The cost of the whole flow is measured, not estimated: `npm test` and `npm run e
 
 ## Known deviations
 
-Resolved: 1–4 (participant asset and token, rewritten as a role license), 7 (shared asset interfaces) and 10 (default-deny participant policies). The current code differs from the rules above in these places. Fix them in dedicated changes, with tests and `check:size`:
+Resolved: 1–4 (participant asset and token, rewritten as a role license), 6 and 9 (choreography Creator layout and switch naming, removed with its runtime configuration), 7 (shared asset interfaces), 10 (default-deny participant policies) and 14 (hardcoded choreography Master and Creator policies). The current code differs from the rules above in these places. Fix them in dedicated changes, with tests and `check:size`:
 
 | # | Contract | Deviation | Rule |
 | --- | --- | --- | --- |
 | 5 | `MutableAsset` | Modifiers declared after the functions. | Layout: modifiers before the constructor. |
-| 6 | `CreatorSmartPolicy` (choreography) | `struct RoleRequirement` declared after state variables; `uint8 private constant TASK = 2` duplicates the asset's `NodeType` enum. | Layout: types first; one source for node types. |
 | 8 | `MasterSmartPolicy`, `ParticipantMasterSmartPolicy` | Action decoding is duplicated (`_addressAt`, `_wordAt`). | Candidate for a shared base policy. |
-| 9 | `CreatorSmartPolicy` (choreography) | Switches named `enforce<Feature>` next to Master's `<feature>Enabled`. | Naming: `<feature>Enabled`. |
 | 11 | All contracts | `require` with string messages. | Errors: custom errors (G4). |
 | 12 | `ChoreographyMutableAsset`, `MutableAsset` | Mutators are `public` with `memory` parameters and re-encode arguments for the policies. | Gas: `external` + `calldata`, `msg.data` as action (G2, G3). |
 | 13 | `ChoreographyMutableAsset`, `HolderSmartPolicy`, `IChoreographyCreatorPolicy` | The domain checks (`evaluateNodeUpdate`, `evaluateRoleUpdate`) are asked of the Creator policy only; the Holder policy does not implement the domain interface, whose name is Creator-specific. | Asset: domain check is Creator AND Holder; layer-neutral `IChoreographyPolicy`. |
-| 14 | `CreatorSmartPolicy` (choreography) | Configuration is runtime state changed by `onlyAdministrator` setters (`setBpmnLimits`, `setRoleRequirement`, …), with the deployer as `administrator`. | Policies: configuration hardcoded; changes by replacing the policy. Converting them requires reorganizing `test-policies.js`, whose cases use different configurations of one policy. |

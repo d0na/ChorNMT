@@ -50,7 +50,11 @@ ChoreographyMutableAsset : MutableAsset
 MasterSmartPolicy  : SmartPolicy
   - hardcoded creators and holders; MasterSmartPolicyFrozen also denies transfers and versions
 CreatorSmartPolicy : SmartPolicy
-  - authorizes editors and defines BPMN structural limits
+  - authorizes editors; no BPMN constraint (hardcoded, administrator = account 0)
+ConstrainedCreatorSmartPolicy : CreatorSmartPolicy (abstract)
+  - BPMN structural and role rules; scenario policies write the data as literals
+  - CreatorSmartPolicyTestScenario, CreatorSmartPolicyPaperScenario
+  - reads license types from ChoreographyParticipantAM (attribute manager)
 HolderSmartPolicy  : SmartPolicy
 ```
 

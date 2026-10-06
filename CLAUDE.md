@@ -22,7 +22,7 @@ Read the human docs before non-trivial work; they are the source of truth and mu
 ## Layout
 
 - `contracts/base/` — generic `NMT`, `MutableAsset`, `SmartPolicy`.
-- `contracts/choreography/` — `ChoreographyNMT`, `ChoreographyMutableAsset`, `ChoreographyTokenURIRenderer`, Master/Creator/Holder policies, `DenyAllSmartPolicy`.
+- `contracts/choreography/` — `ChoreographyNMT`, `ChoreographyMutableAsset`, `ChoreographyTokenURIRenderer`, Master/Creator/Holder policies and their variants, `ChoreographyParticipantAM`, `DenyAllSmartPolicy`.
 - `contracts/participant/` — participant licenses (`ParticipantNMT`, `ParticipantMutableAsset`, `ParticipantTokenURIRenderer`) that choreography roles can be linked to.
 - `scripts/` — npm-command implementations (ESM, ethers v6); `scripts/evaluation/` metrics and reports; `scripts/data/` versioned deltas and legacy datasets.
 - `bpmn-builder-js/` — separate npm package: BPMN→NMT importer, tokenURI reader (`scripts/web3.js`), `normalize` → `validation` → `process-mapper` → `moddle-generator`.
@@ -48,7 +48,8 @@ CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `npm test`, and 
 ## Invariants and gotchas
 
 - **Contract structure.** Every Token, Asset, Policy, and Renderer follows `docs/contract-structure.md` (layout order, naming, private domain state, mutator shape, Creator AND Holder at both the action and the domain check, default-deny policies, custom errors). New code follows the rules, not the listed deviations; when you touch a contract, fix its deviations only if asked.
-- **Policies are hardcoded.** Policies stand for XACML translations: rules and configuration are literals in the policy source, tuned to the current test/evaluation scenarios (participant ones use default Hardhat accounts 5–9). No runtime configuration setters; a rule change is a new policy installed with `setMasterSmartPolicy` / `setCreatorSmartPolicy`. The choreography Master uses Hardhat accounts 0–1 (`MasterSmartPolicyFrozen` is its variant without transfers and versions); the choreography Creator still has setters (deviation 14 in `docs/contract-structure.md`).
+- **Policies are hardcoded.** Policies stand for XACML translations: rules and configuration are literals in the policy source, tuned to the current test/evaluation scenarios (participant ones use default Hardhat accounts 5–9). No runtime configuration setters; a rule change is a new policy installed with `setMasterSmartPolicy` / `setCreatorSmartPolicy`. The choreography policies use Hardhat accounts 0–1: `MasterSmartPolicyFrozen` is the Master variant without transfers and versions; `CreatorSmartPolicy` has no BPMN constraint, and the constraints are scenario policies (`CreatorSmartPolicyTestScenario`, `CreatorSmartPolicyPaperScenario`) extending `ConstrainedCreatorSmartPolicy`, which read license types from the `ChoreographyParticipantAM` attribute manager.
+- **Docs at every level.** Every change is reflected in the documentation at every level it touches, in the same commit: `CLAUDE.md`, the docs in the table above (contract structure and deviations, architecture, rendering, trust table, test specification, hierarchy, commands), `evaluation/README.md`, the generated-report text in `scripts/evaluation/`, code comments, and the project skills in `.claude/skills/`. Grep for every renamed or removed name before committing.
 - **Gas.** Report before/after gas for every contract change (see the `gas-optimization` skill). Never change an allow/deny outcome to save gas.
 
 - **Trust table ↔ tests ↔ code.** Any policy change must keep the table in `docs/choreography-policies.md`, the cases in `scripts/test-policies.js` (`expectAllowed`/`expectDenied`), and `docs/policy-test-specification.md` in agreement.

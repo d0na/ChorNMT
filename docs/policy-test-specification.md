@@ -68,25 +68,28 @@ policy. A new version starts from an empty model.
 ## Creator Policy
 
 The Creator policy has two responsibilities: ordinary edit authorization and
-optional BPMN structural governance. Its administrator configures the latter
-and is the only party allowed to replace the Creator policy of an instance;
-the Holder cannot remove the constraints it is subject to.
-All structural controls are opt-in by default, except that limits are set to
-the maximum unsigned value until configured.
+optional BPMN structural governance. Its rules are hardcoded, as a policy
+translated from XACML would be. The default `CreatorSmartPolicy` has no
+structural constraint beyond well-formed updates; the constraints live in
+`ConstrainedCreatorSmartPolicy`, whose scenario policies
+(`CreatorSmartPolicyTestScenario`, `CreatorSmartPolicyPaperScenario`) write
+the data as literals. The administrator (Hardhat account 0) is the only party
+allowed to replace the Creator policy of an instance; the Holder cannot remove
+the constraints it is subject to.
 
 ### Structural Controls
 
-| Control | Configuration method | Rule evaluated for a `setNodes` update |
-| --- | --- | --- |
-| Task limit | `setBpmnLimits(maxTasks, maxSequenceFlows)` | The post-update model cannot contain more task nodes than `maxTasks`. |
-| Flow limit | `setBpmnLimits(maxTasks, maxSequenceFlows)` | The post-update model cannot contain more outgoing sequence flows than `maxSequenceFlows`. |
-| Task-name allowlist | `setTaskNameAllowlistEnabled(bool)`, `setAllowedTaskName(name, bool)` | When enabled, every changed task name must be approved. |
-| Known flow endpoint | `setKnownFlowTargetsEnabled(bool)` | When enabled, each `incoming` source and `outgoing` target must exist already or be present in the same update. |
-| Protected node | `setProtectedNode(name, bool)` | A protected node cannot be changed by `setNodes`, and no other node may add or remove a sequence flow to or from it. |
-| Protected role | `setProtectedRole(name, bool)` | Evaluated on `setRoles`: a protected role cannot be reassigned. |
-| Role license requirement | `setParticipantRegistry(nmt, certifier)`, `setRoleRequirement(name, type)` | Evaluated on `setRoles`: the role can be linked only to a participant license from `nmt`, certified by `certifier`, with the required type and capabilities. |
-| Known roles | `setKnownRolesEnabled(bool)` | Evaluated on `setRoles`: only existing roles can be reassigned; new roles are rejected. |
-| Distinct role accounts | `setDistinctRoleAccountsEnabled(bool)` | Evaluated on `setRoles`: after the update, no account plays two roles. |
+| Control | Test scenario | Paper scenario | Rule evaluated |
+| --- | --- | --- | --- |
+| Task limit | 4 | 11 | `setNodes`: the post-update model cannot contain more task nodes. |
+| Flow limit | 5 | 15 | `setNodes`: the post-update model cannot contain more outgoing sequence flows. |
+| Task-name allowlist | `Delivery`, `Inspection`, `Packing`, `Labeling`, `Shipping` | the 10 evolved paper tasks, `Optional Customs Inspection`, `Optional Quality Inspection` | `setNodes`: every changed task name must be approved. |
+| Known flow endpoint | always | always | `setNodes`: each `incoming` source and `outgoing` target must exist already or be present in the same update. |
+| Protected node | `Start` | `Order` | `setNodes`: a protected node cannot be changed, and no other node may add or remove a sequence flow to or from it. |
+| Protected role | `Buyer` | none | `setRoles`: a protected role cannot be reassigned. |
+| Role license requirement | `Carrier` → `SpecialCarrier` | `Special Carrier` → `SpecialCarrier` | `setRoles`: the role can be linked only to a license whose type, read from `ChoreographyParticipantAM`, is the required one: minted by the participant NMT and certified by the participant Creator policy bound to the attribute manager. |
+| Known roles | always | always | `setRoles`: only existing roles can be reassigned; new roles are rejected. |
+| Distinct role accounts | yes | no | `setRoles`: after the update, no account plays two roles. |
 
 The implementation also rejects duplicate node names in the same submitted
 delta. Counts are computed over the effective post-update model: existing node
@@ -98,14 +101,16 @@ or add new records.
 The policy lifecycle evaluation imports `references/paper-example.bpmn` and
 uses `paper-example-parallel-transport-preparation.delta.json`. The permitted
 delta adds the `Prepare Transport Documentation` task and introduces a parallel
-split/join before the waybill. The evaluation configures limits for the evolved
-model, allowlists its task names, enables known-target validation, and protects
-`Order`.
+split/join before the waybill. The evaluation deploys
+`CreatorSmartPolicyPaperScenario` and installs it on the populated instance
+with `setCreatorSmartPolicy`: the delta is checked against limits one above the
+evolved model, the allowlist of its task names, known targets, and the
+protected `Order`.
 
 The permitted delta is followed by denials for:
 
-- a new task exceeding the evolved task limit;
-- an extra sequence flow exceeding the evolved flow limit;
+- two new approved tasks exceeding the task limit;
+- two extra sequence flows exceeding the flow limit;
 - a task outside the name allowlist;
 - a flow pointing to an unknown BPMN node; and
 - a modification of the protected `Order` node.

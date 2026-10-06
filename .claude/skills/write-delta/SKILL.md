@@ -35,7 +35,7 @@ Never edit generated BPMN XML: it is a view of the asset. Changes are JSON delta
 - Gateways have empty role and message fields; tasks need `initiatorRole`, `participantRole`, and `initiatingMessage`.
 - Every role referenced must exist on the asset or be added in `roles`.
 - Nodes cannot be removed — disconnect them instead, and say so to the user.
-- A configured `CreatorSmartPolicy` may reject the update (task/flow limits, allowlist, protected nodes and roles, role license requirements); see `docs/choreography-policies.md`.
+- A constrained Creator policy (`CreatorSmartPolicyTestScenario`, `CreatorSmartPolicyPaperScenario`) may reject the update (task/flow limits, allowlist, protected nodes and roles, role license requirements); see `docs/choreography-policies.md`.
 
 ## Apply
 

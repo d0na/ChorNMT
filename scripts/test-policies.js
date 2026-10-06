@@ -186,21 +186,43 @@ async function main() {
     `Initial model gas: mint then import=${emptyThenImportGas}, mintWithInitialModel=${initializedMintGas}, saving=${emptyThenImportGas - initializedMintGas}`
   );
 
-  report.push(await expectAllowed(
-    "creator configures BPMN structural limits",
-    () => creatorPolicy.setBpmnLimits(2, 3)
-  ));
-  await (await creatorPolicy.setTaskNameAllowlistEnabled(true)).wait();
-  await (await creatorPolicy.setKnownFlowTargetsEnabled(true)).wait();
-  await (await creatorPolicy.setAllowedTaskName("Inspection", true)).wait();
-  await (await creatorPolicy.setAllowedTaskName("Packing", true)).wait();
-  await (await creatorPolicy.setProtectedNode("Start", true)).wait();
+  // Creator constraints are hardcoded: the constrained assets are minted with the test-scenario
+  // Creator policy, which reads role licenses through the participant attribute manager.
+  const participantMaster = await (await ethers.getContractFactory("ParticipantMasterSmartPolicy")).deploy();
+  const participantRenderer = await (await ethers.getContractFactory("ParticipantTokenURIRenderer")).deploy();
+  await Promise.all([participantMaster.waitForDeployment(), participantRenderer.waitForDeployment()]);
+  const participantNmt = await (await ethers.getContractFactory("ParticipantNMT"))
+    .deploy(participantMaster.target, participantRenderer.target);
+  const participantCreatorFactory = await ethers.getContractFactory(
+    "contracts/participant/CreatorSmartPolicy.sol:CreatorSmartPolicy"
+  );
+  const participantCertifier = await participantCreatorFactory.connect(authority).deploy();
+  const participantHolderPolicy = await (await ethers.getContractFactory(
+    "contracts/participant/HolderSmartPolicy.sol:HolderSmartPolicy"
+  )).deploy();
+  const selfCertifier = await participantCreatorFactory.connect(carrierC).deploy();
+  await Promise.all([
+    participantNmt.waitForDeployment(),
+    participantCertifier.waitForDeployment(),
+    participantHolderPolicy.waitForDeployment(),
+    selfCertifier.waitForDeployment()
+  ]);
+  const participantAM = await (await ethers.getContractFactory("ChoreographyParticipantAM"))
+    .deploy(participantNmt.target, participantCertifier.target);
+  await participantAM.waitForDeployment();
+  const scenarioCreatorPolicy = await (await ethers.getContractFactory("CreatorSmartPolicyTestScenario"))
+    .deploy(participantAM.target);
+  await scenarioCreatorPolicy.waitForDeployment();
+  const constrainedMintArguments = [administrator.address, scenarioCreatorPolicy.target, holderPolicyAddress];
 
   const [constrainedAssetAddress] = await nmt.mintWithInitialModel.staticCall(
-    ...mintArguments,
+    ...constrainedMintArguments,
     initialModel
   );
-  await (await nmt.mintWithInitialModel(...mintArguments, initialModel)).wait();
+  report.push(await expectAllowed(
+    "authorized creator mints with the test-scenario creator policy",
+    () => nmt.mintWithInitialModel(...constrainedMintArguments, initialModel)
+  ));
   const constrainedAsset = await ethers.getContractAt(
     "ChoreographyMutableAsset",
     constrainedAssetAddress
@@ -222,33 +244,40 @@ async function main() {
     () => constrainedAsset.setNodes(...inspectionUpdate)
   ));
 
+  // The test scenario allows 4 tasks and 5 sequence flows; the model now has 2 and 3.
   const packingUpdate = nodeUpdate("Packing", 2, ["Inspection"], ["End"]);
+  report.push(await expectAllowed(
+    "creator policy allows second approved task within limits",
+    () => constrainedAsset.setNodes(...packingUpdate)
+  ));
+
+  // Two approved tasks without outgoing flows: 5 tasks, 4 flows.
+  const twoTasksUpdate = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((field) => [
+    ...nodeUpdate("Labeling", 2, ["Packing"], [])[field],
+    ...nodeUpdate("Shipping", 2, ["Packing"], [])[field]
+  ]);
   report.push(await expectDenied(
     "creator policy denies task count above limit",
     administrator,
     {
       to: constrainedAssetAddress,
-      data: constrainedAsset.interface.encodeFunctionData("setNodes", packingUpdate)
+      data: constrainedAsset.interface.encodeFunctionData("setNodes", twoTasksUpdate)
     }
   ));
 
-  await (await creatorPolicy.setBpmnLimits(3, 3)).wait();
+  // Inspection gains two outgoing flows: 3 tasks, 6 flows.
   report.push(await expectDenied(
     "creator policy denies sequence flow count above limit",
     administrator,
     {
       to: constrainedAssetAddress,
-      data: constrainedAsset.interface.encodeFunctionData("setNodes", packingUpdate)
+      data: constrainedAsset.interface.encodeFunctionData(
+        "setNodes",
+        nodeUpdate("Inspection", 2, ["Delivery"], ["End", "Packing", "Delivery"])
+      )
     }
   ));
 
-  await (await creatorPolicy.setBpmnLimits(3, 4)).wait();
-  report.push(await expectAllowed(
-    "creator policy allows whitelisted task after limit increase",
-    () => constrainedAsset.setNodes(...packingUpdate)
-  ));
-
-  await (await creatorPolicy.setBpmnLimits(4, 5)).wait();
   const unapprovedUpdate = nodeUpdate("Unapproved", 2, ["Packing"], ["End"]);
   report.push(await expectDenied(
     "creator policy denies task outside name allowlist",
@@ -289,7 +318,6 @@ async function main() {
     }
   ));
 
-  await (await creatorPolicy.setAllowedTaskName("Delivery", true)).wait();
   report.push(await expectAllowed(
     "creator policy allows update keeping protected node links",
     () => constrainedAsset.setNodes(...nodeUpdate("Delivery", 2, ["Start"], ["End"]))
@@ -314,7 +342,6 @@ async function main() {
     }
   ));
 
-  await (await creatorPolicy.setProtectedRole("Buyer", true)).wait();
   report.push(await expectAllowed(
     "creator policy allows unprotected role update",
     () => constrainedAsset.setRoles(["Supplier"], [ineligibleHolder.address])
@@ -328,32 +355,12 @@ async function main() {
     }
   ));
   assert.equal(await constrainedAsset.getRole("Buyer"), administrator.address);
-  await (await creatorPolicy.setProtectedRole("Buyer", false)).wait();
 
   // Participant licenses. The participant policies hardcode their configuration (license types,
   // issuers, qualified organizations, allowed messages) for default Hardhat accounts 5-9.
   const SPECIAL_CARRIER = ethers.encodeBytes32String("SpecialCarrier");
   const CARRIER = ethers.encodeBytes32String("Carrier");
   const specialCarrierMessages = ["Message_0dai5by", "Message_10n229k"].map(ethers.encodeBytes32String);
-  const participantMaster = await (await ethers.getContractFactory("ParticipantMasterSmartPolicy")).deploy();
-  const participantRenderer = await (await ethers.getContractFactory("ParticipantTokenURIRenderer")).deploy();
-  await Promise.all([participantMaster.waitForDeployment(), participantRenderer.waitForDeployment()]);
-  const participantNmt = await (await ethers.getContractFactory("ParticipantNMT"))
-    .deploy(participantMaster.target, participantRenderer.target);
-  const participantCreatorFactory = await ethers.getContractFactory(
-    "contracts/participant/CreatorSmartPolicy.sol:CreatorSmartPolicy"
-  );
-  const participantCertifier = await participantCreatorFactory.connect(authority).deploy();
-  const participantHolderPolicy = await (await ethers.getContractFactory(
-    "contracts/participant/HolderSmartPolicy.sol:HolderSmartPolicy"
-  )).deploy();
-  const selfCertifier = await participantCreatorFactory.connect(carrierC).deploy();
-  await Promise.all([
-    participantNmt.waitForDeployment(),
-    participantCertifier.waitForDeployment(),
-    participantHolderPolicy.waitForDeployment(),
-    selfCertifier.waitForDeployment()
-  ]);
   const mintLicense = async (holder, certifierPolicy, participantType) => {
     const licenseArguments = [holder.address, certifierPolicy.target, participantHolderPolicy.target, participantType];
     const [licenseAddress] = await participantNmt.connect(authority).mintWithParticipantType.staticCall(...licenseArguments);
@@ -416,16 +423,12 @@ async function main() {
     roleAddresses: [administrator.address, eligibleHolder.address, ethers.ZeroAddress],
     participantRoles: ["", "Carrier", ""]
   };
-  const [carrierAssetAddress] = await nmt.mintWithInitialModel.staticCall(...mintArguments, carrierModel);
-  await (await nmt.mintWithInitialModel(...mintArguments, carrierModel)).wait();
-  const carrierAsset = await ethers.getContractAt("ChoreographyMutableAsset", carrierAssetAddress);
+  const [carrierAssetAddress] = await nmt.mintWithInitialModel.staticCall(...constrainedMintArguments, carrierModel);
   report.push(await expectAllowed(
-    "creator requires a SpecialCarrier license",
-    () => creatorPolicy.setRoleRequirement("Carrier", SPECIAL_CARRIER)
+    "authorized creator mints a model whose Carrier role requires a SpecialCarrier license",
+    () => nmt.mintWithInitialModel(...constrainedMintArguments, carrierModel)
   ));
-  await (await creatorPolicy.setParticipantRegistry(participantNmt.target, participantCertifier.target)).wait();
-  await (await creatorPolicy.setKnownRolesEnabled(true)).wait();
-  await (await creatorPolicy.setDistinctRoleAccountsEnabled(true)).wait();
+  const carrierAsset = await ethers.getContractAt("ChoreographyMutableAsset", carrierAssetAddress);
   const setRoleTransaction = (role, account) => ({
     to: carrierAssetAddress,
     data: carrierAsset.interface.encodeFunctionData("setRoles", [[role], [account]])
@@ -454,13 +457,12 @@ async function main() {
   report.push(await expectDenied(
     "creator policy denies account already holding another role",
     administrator,
-    setRoleTransaction("Buyer", eligibleHolder.address)
+    setRoleTransaction("Supplier", administrator.address)
   ));
   report.push(await expectAllowed(
     "holder links a role to a certified license",
     () => carrierAsset.setRoles(["Carrier"], [carrierLicense.target])
   ));
-  assert.equal(await creatorPolicy.isRoleRequirementSatisfied(carrierAssetAddress, "Carrier"), true);
 
   const sellLicense = (to) => ({
     to: participantNmt.target,
@@ -482,6 +484,8 @@ async function main() {
   ));
   assert.equal(await participantNmt.ownerOf(BigInt(carrierLicense.target)), carrierB.address);
   assert.equal(await carrierAsset.getRole("Carrier"), carrierLicense.target);
+  // The sold license still meets the role requirement: relinking it is allowed.
+  await carrierAsset.setRoles.staticCall(["Carrier"], [carrierLicense.target]);
   assert.deepEqual(
     modelFromTokenURI(await nmt.tokenURI(BigInt(carrierAssetAddress))),
     { ...carrierModel, roleAddresses: [administrator.address, eligibleHolder.address, carrierLicense.target] }
@@ -552,9 +556,6 @@ async function main() {
     }));
   });
   await Promise.all(licenseDecisions);
-  await (await creatorPolicy.clearRoleRequirement("Carrier")).wait();
-  await (await creatorPolicy.setKnownRolesEnabled(false)).wait();
-  await (await creatorPolicy.setDistinctRoleAccountsEnabled(false)).wait();
 
   report.push(await expectDenied(
     "unauthorized creator cannot mint",

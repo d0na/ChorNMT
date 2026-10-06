@@ -21,7 +21,7 @@ The table is the intended trust model with the default policies. Every change to
 | Read `tokenURI` (metadata generated from the asset state) | yes | yes | yes | yes | yes |
 | `setHolderSmartPolicy` | no | no | yes | no | no |
 | `setCreatorSmartPolicy` | no | no | **no** | yes | no |
-| Configure BPMN and role constraints (`setBpmnLimits`, allowlist, known endpoints, protected nodes and roles, role license requirements, known roles, distinct role accounts) | no | no | no | yes | no |
+| Install a constrained Creator policy (BPMN limits, task allowlist, known endpoints, protected nodes and roles, role license requirements, known roles, distinct role accounts) with `setCreatorSmartPolicy` | no | no | no | yes | no |
 
 Design decisions behind the table:
 
@@ -63,36 +63,31 @@ The Master policy authorizes the Creator and initial Holder but does not current
 
 | Route | Gas used |
 | --- | ---: |
-| `mint` + `setRoles` + `setNodes` | 3,756,233 |
-| `mintWithInitialModel` | 3,664,473 |
-| Saving | 91,760 (2.44%) |
+| `mint` + `setRoles` + `setNodes` | 3,670,781 |
+| `mintWithInitialModel` | 3,608,174 |
+| Saving | 62,607 (1.71%) |
 
-The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 424,218 gas and structural deny paths used 143,057--187,666 gas.
+The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 407,461 gas and structural deny paths used 141,405--179,611 gas.
 
 ## Instance policies
 
 The default Creator and Holder policies both allow the current holder to update roles, nodes, and links. Token metadata is not stored: `tokenURI` is always generated from the current model. Their intersection is required for every such operation, so a Holder can further restrict an instance by replacing its Holder policy; `DenyAllSmartPolicy` is used in tests to demonstrate this restriction.
 
-Replacing the Creator policy is not a Holder operation: only the Creator policy's administrator can do it.
+Replacing the Creator policy is not a Holder operation: only the Creator policy's administrator (Hardhat account 0) can do it.
 
 ## BPMN constraints in the Creator policy
 
-`CreatorSmartPolicy` also defines the structural boundaries for `setNodes(...)`; it is not a fourth policy type. Its administrator can configure:
+The Creator policy also defines the structural boundaries for `setNodes(...)`; it is not a fourth policy type. Like every policy it stands for a policy translated from XACML, so its rules are hardcoded, not set at runtime; a different set of constraints is a different policy, installed with `setCreatorSmartPolicy` or passed at mint.
 
-- `setBpmnLimits(maxTasks, maxSequenceFlows)`;
-- `setTaskNameAllowlistEnabled(...)` and `setAllowedTaskName(...)`;
-- `setKnownFlowTargetsEnabled(...)`;
-- `setProtectedNode(...)`;
-- `setProtectedRole(...)`, evaluated by `evaluateRoleUpdate` on every `setRoles`;
-- `setParticipantRegistry(participantNmt, certifier)` and `setRoleRequirement(role, type)`: the role can be linked only to a license minted by `participantNmt`, certified by the `certifier` participant Creator policy, of the required type;
-- `setKnownRolesEnabled(...)`: `setRoles` can reassign existing roles but not create new ones;
-- `setDistinctRoleAccountsEnabled(...)`: after the update, no account plays two roles.
+- `CreatorSmartPolicy`, the default, has no BPMN constraint: it rejects only malformed updates (array lengths that differ, empty or duplicate names).
+- `ConstrainedCreatorSmartPolicy` (abstract) holds the constraint rules. Each scenario extends it and writes the data as literals: `CreatorSmartPolicyTestScenario` for the fixture of `scripts/test-policies.js` (4 tasks, 5 flows, allowed tasks `Delivery`, `Inspection`, `Packing`, `Labeling`, `Shipping`, protected node `Start`, protected role `Buyer`, `Carrier` requires a `SpecialCarrier` license, distinct role accounts) and `CreatorSmartPolicyPaperScenario` for the paper example (11 tasks, 15 flows, the evolved paper tasks plus two optional inspections, protected node `Order`, `Special Carrier` requires a `SpecialCarrier` license).
+- `ChoreographyParticipantAM` is the attribute manager the constrained policies read role licenses from: it returns the type of a license minted by the participant NMT and certified by the participant Creator policy, both bound at its deploy, and zero for any other address. Which type a role requires stays in the Creator policy.
 
-Before writing storage, the asset asks its Creator policy to evaluate the post-update task count and total outgoing sequence-flow count. The policy rejects duplicate names in a delta, protected-node updates, task names outside an enabled allowlist, incoming or outgoing flows whose endpoint does not already exist or appear in the same delta, and any change to the links of a protected node. `setRoles` is checked the same way for empty or duplicate names, protected roles, new roles when known roles are enforced, addresses that are not a suitable license for a role with a requirement, and accounts that would play two roles.
+Before writing storage, the asset asks its Creator policy to evaluate the update. A constrained policy computes the post-update task count and total outgoing sequence-flow count, and rejects protected-node updates, task names outside the allowlist, incoming or outgoing flows whose endpoint does not already exist or appear in the same delta, and any change to the links of a protected node. `setRoles` is checked for protected roles, new roles (only existing roles can be reassigned), addresses that are not a suitable license for a role with a requirement, and, when the scenario requires it, accounts that would play two roles.
 
 The Holder policy remains an independent second approval. A Holder can further restrict an instance by installing `DenyAllSmartPolicy`, without weakening the Creator-defined BPMN boundaries.
 
-The Master policy is deployed before `ChoreographyNMT`; `deploy:asset` creates a default configuration in which the deployer is both an authorized creator and an eligible holder. Configure additional organizations on the deployed Master policy before minting or transferring assets to them.
+The Master policy is deployed before `ChoreographyNMT`. Its rules are hardcoded for Hardhat account 0 (authorized creator, administrator, and the default deployer of `deploy:asset`) and account 1 (eligible holder); another organization needs a different Master policy, installed with `setMasterSmartPolicy`.
 
 Run `npm run test:policies` to execute allowed and denied paths for each policy category. The test reports the gas used and wei cost for both outcomes, including reverted transactions.
 
