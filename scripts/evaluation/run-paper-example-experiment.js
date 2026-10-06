@@ -10,6 +10,7 @@ import { populateDataset } from "../populate-local.js";
 import { exportMetricsCsv } from "./export-metrics-csv.js";
 import { renderBpmnImages } from "./render-bpmn-images.js";
 import { resolveEthUsdPrice, scenarioUsd } from "./metrics.js";
+import { umlFigure } from "./uml.js";
 
 const execute = promisify(execFile);
 const root = process.cwd();
@@ -94,6 +95,13 @@ async function main() {
     `- Final render metrics: [${path.basename(finalRender.metricsPath)}](${relativeToSummary(finalRender.metricsPath)})`,
     `- Aggregated CSV: [${path.basename(csvPath)}](${relativeToSummary(csvPath)})`,
     "",
+    "## How the measured operations work",
+    "",
+    "The sequence diagrams show the transactions behind the measured phases: deployment and mint, the import (`setRoles`, `setNodes`), the delta modification with its policy checks, and the renders, which read the asset with one `tokenURI` call.",
+    "",
+    ...umlFigure("sequence-deploy-and-mint", summaryPath),
+    ...umlFigure("sequence-import-and-render", summaryPath),
+    ...umlFigure("sequence-apply-delta", summaryPath),
     "## Generated BPMN",
     "",
     `- Baseline BPMN from the asset: [${path.basename(baseline.xmlPath)}](${relativeToSummary(baseline.xmlPath)})`,

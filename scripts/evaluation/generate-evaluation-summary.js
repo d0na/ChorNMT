@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { umlReadingGuide } from "./uml.js";
 
 const evaluationDirectory = path.join(process.cwd(), "evaluation");
 const reports = [
@@ -79,6 +80,7 @@ async function main() {
     "npm run evaluate:summary",
     "```",
     "",
+    ...umlReadingGuide(finalReportPath),
     "## Generated artifacts",
     "",
     "The sections below embed the BPMN model PNGs and the gnuplot charts. This index gives direct access to every generated input/output artifact and receipt metric.",

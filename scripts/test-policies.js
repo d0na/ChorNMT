@@ -4,6 +4,7 @@ import path from "node:path";
 import hre from "hardhat";
 import { resolveEthUsdPrice, scenarioUsd, writeMetrics } from "./evaluation/metrics.js";
 import { decodeTokenURI } from "../bpmn-builder-js/scripts/web3.js";
+import { umlFigure } from "./evaluation/uml.js";
 
 const GAS_LIMIT = 10_000_000n;
 
@@ -786,6 +787,10 @@ async function main() {
     "- Allowed-operation gas total: " + summary.allowedGas,
     "- Denied-operation gas total: " + summary.deniedGas,
     "",
+    "The cases follow the use cases below: each row is one actor attempting one use case, allowed or denied by the policy layer that owns the decision. The sequence diagrams of every flow are in [UML diagrams](../docs/uml.md).",
+    "",
+    ...umlFigure("use-case-choreography", markdownPath),
+    ...umlFigure("use-case-participant-license", markdownPath),
     "| Case | Outcome | Gas | Cost (wei) | USD @10 gwei | USD @30 gwei | USD @100 gwei |",
     "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
     ...report.map((entry) => `| ${entry.label} | ${entry.outcome} | ${entry.gasUsed} | ${entry.costWei} | ${scenarioUsd(entry.gasUsed, ethUsdPrice).join(" | ")} |`),

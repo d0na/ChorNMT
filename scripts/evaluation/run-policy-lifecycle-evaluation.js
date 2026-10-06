@@ -4,6 +4,7 @@ import path from "node:path";
 import hre from "hardhat";
 import { importBpmnToNmt } from "../../bpmn-builder-js/scripts/import-bpmn.js";
 import { resolveEthUsdPrice, scenarioUsd, summarizeNodes, writeMetrics } from "./metrics.js";
+import { umlFigure } from "./uml.js";
 
 const GAS_LIMIT = 1_500_000n;
 
@@ -397,6 +398,7 @@ async function main() {
     "- **Participant Master policy** governs role licenses: only the issuer of a type mints it, and only organizations qualified for the type can buy it.",
     "- **Holder policy** is the second authorization layer and can further restrict an instance by installing a deny-all policy.",
     "",
+    ...umlFigure("use-case-choreography", markdownPath),
     "## Model",
     "",
     `- Roles: ${summary.model.roles}`,
@@ -420,6 +422,8 @@ async function main() {
     `- Tasks played by the role, unchanged by the sale: ${roleHandover.tasks.map((name) => `\`${name}\``).join(", ")}`,
     `- Messages declared on the license: ${roleHandover.messages.map((message) => `\`${message}\``).join(", ")}`,
     "",
+    ...umlFigure("use-case-participant-license", markdownPath),
+    ...umlFigure("sequence-role-license-sale", markdownPath),
     "| Case | Outcome | Gas |",
     "| --- | --- | ---: |",
     ...policyResults
@@ -430,6 +434,7 @@ async function main() {
     "",
     "## Mint strategy comparison",
     "",
+    ...umlFigure("sequence-deploy-and-mint", markdownPath),
     "| Strategy | Gas | USD @10 gwei | USD @30 gwei | USD @100 gwei |",
     "| --- | ---: | ---: | ---: | ---: |",
     `| Empty mint + import | ${summary.emptyMintAndImportGas} | ${scenarioUsd(summary.emptyMintAndImportGas, ethUsdPrice).join(" | ")} |`,
@@ -448,6 +453,10 @@ async function main() {
     "",
     "## Policy operations",
     "",
+    "The Creator rules are installed as a new policy (first diagram); every BPMN update row then goes through the action check and the domain check of the Creator AND the Holder policy (second diagram), and a denied row is the revert of one of those checks.",
+    "",
+    ...umlFigure("sequence-policy-replacement", markdownPath),
+    ...umlFigure("sequence-apply-delta", markdownPath),
     ...markdownTable(policyResults, ethUsdPrice),
     "",
     `- Allowed policy-operation gas total: ${summary.allowedPolicyGas}`,

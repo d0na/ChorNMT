@@ -111,6 +111,19 @@ It imports `references/paper-example.bpmn` into a fresh instance and applies the
 
 The command writes a timestamped JSON report under `metrics/` and `evaluation/policy-lifecycle.generated.md`. Both include individual gas and wei costs, plus aggregate gas totals for allowed and denied policy operations.
 
+## UML diagrams in the reports
+
+The generated reports embed the UML use case and sequence diagrams of [`docs/uml.md`](../docs/uml.md) next to the rows they explain, so a reader can follow each measured transaction through the contracts and policies that execute it:
+
+| Report | Diagrams | Explain |
+| --- | --- | --- |
+| `experiment-summary.generated.md` (paper workflow) | deploy and mint, import and render, apply a BPMN delta | the deployment, import, modification, and render phases |
+| `policy-lifecycle.generated.md` | choreography use cases, deploy and mint, participant license use cases, role license sale, policy replacement, apply a BPMN delta | the mint comparison, the Special Carrier handover, and every allowed and denied policy row |
+| `policy-tests.generated.md` | choreography and participant license use cases | the actor and use case behind each test case |
+| `final-report.generated.md` | reading guide: every diagram with the rows it explains | the whole report |
+
+The diagrams are versioned SVGs (`npm run docs:uml`), so the reports show them without rendering anything; the mapping between diagrams and report rows is in `scripts/evaluation/uml.js`.
+
 ## Unified overview
 
 After running either or both evaluations, generate one local entry point with:

@@ -2,6 +2,8 @@
 
 Use case and sequence diagrams of ChorNMT, written in [PlantUML](https://plantuml.com) and rendered to SVG. The sources (`docs/uml/*.puml`, shared style in `docs/uml/style.iuml`) are the reference; the SVGs next to them are generated and versioned, so they show up on GitHub and in the IDE without tools.
 
+The evaluation reports embed these diagrams next to the rows they explain (see [UML diagrams in the reports](../evaluation/README.md#uml-diagrams-in-the-reports); the mapping is `scripts/evaluation/uml.js`).
+
 Every change to a flow, an actor, a policy decision, or a function shown here updates the diagram in the same commit (see the `uml-diagrams` skill):
 
 ```bash

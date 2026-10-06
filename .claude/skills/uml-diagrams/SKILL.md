@@ -25,7 +25,8 @@ Use case and sequence diagrams are documentation: they follow the code in the sa
    - Use the real names: contract, function, and error names exactly as in the code (`OperationDenied(0)`, `evaluateNodeUpdate`), npm commands as in `package.json`.
    - Sequence diagrams show who calls whom and the decision each policy returns; group the Creator AND Holder checks; show the denial branch with its error.
    - Use case diagrams use actors with their Hardhat account when the policies hardcode it; `<<include>>` for a mandatory step, `<<extend>>` for an optional variant.
-   - A new flow worth explaining gets a new file `use-case-<topic>.puml` or `sequence-<topic>.puml`, a section in `docs/uml.md`, and a row in the table above.
+   - A new flow worth explaining gets a new file `use-case-<topic>.puml` or `sequence-<topic>.puml`, a section in `docs/uml.md`, a row in the table above, and an entry in `UML_DIAGRAMS` of `scripts/evaluation/uml.js` (title and the report rows it explains), embedded with `umlFigure` in the report section it explains.
+   - The evaluation reports embed the diagrams (`scripts/evaluation/uml.js`); when a diagram changes what it explains, update its `explains` text there and the table in `evaluation/README.md`.
 3. Render and check:
 
 ```bash
