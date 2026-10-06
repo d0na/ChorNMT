@@ -84,11 +84,13 @@ async function main() {
   const holderFactory = await ethers.getContractFactory(
     "contracts/choreography/HolderSmartPolicy.sol:HolderSmartPolicy"
   );
+  const frozenMasterFactory = await ethers.getContractFactory("MasterSmartPolicyFrozen");
   const denyAllFactory = await ethers.getContractFactory("DenyAllSmartPolicy");
   const rendererFactory = await ethers.getContractFactory("ChoreographyTokenURIRenderer");
   const nmtFactory = await ethers.getContractFactory("ChoreographyNMT");
 
-  const master = await masterFactory.deploy(administrator.address);
+  const master = await masterFactory.deploy();
+  const frozenMaster = await frozenMasterFactory.deploy();
   const creatorPolicy = await creatorFactory.deploy();
   const holderPolicy = await holderFactory.deploy();
   const renderer = await rendererFactory.deploy();
@@ -96,6 +98,7 @@ async function main() {
   const nmt = await nmtFactory.deploy(await master.getAddress(), await renderer.getAddress());
   await Promise.all([
     master.waitForDeployment(),
+    frozenMaster.waitForDeployment(),
     creatorPolicy.waitForDeployment(),
     holderPolicy.waitForDeployment(),
     nmt.waitForDeployment()
@@ -106,11 +109,6 @@ async function main() {
   const holderPolicyAddress = await holderPolicy.getAddress();
 
   const report = [];
-  report.push(await expectAllowed(
-    "master registers eligible holder",
-    () => master.setEligibleHolder(eligibleHolder.address, true)
-  ));
-
   const mintArguments = [
     administrator.address,
     creatorPolicyAddress,
@@ -612,7 +610,11 @@ async function main() {
   assert.equal(await nmt.versionOf(versionTokenId), 1n);
   assert.notEqual(versionAddress, ethers.ZeroAddress);
 
-  report.push(await expectAllowed("master disables versioning", () => master.setVersioningEnabled(false)));
+  // Master rules are hardcoded: closing versions or transfers means installing the frozen Master.
+  report.push(await expectAllowed(
+    "master administrator installs frozen master policy",
+    () => nmt.setMasterSmartPolicy(frozenMaster.target)
+  ));
   report.push(await expectDenied(
     "disabled versioning rejects new versions",
     administrator,
@@ -627,14 +629,17 @@ async function main() {
     }
   ));
 
-  report.push(await expectAllowed("master enables transfer to eligible holder", () => master.setTransfersEnabled(true)));
+  report.push(await expectAllowed(
+    "master administrator reinstalls master policy",
+    () => nmt.setMasterSmartPolicy(master.target)
+  ));
   report.push(await expectAllowed(
     "holder transfers to eligible holder",
     () => nmt.transferFrom(administrator.address, eligibleHolder.address, BigInt(assetAddress))
   ));
   assert.equal(await nmt.ownerOf(BigInt(assetAddress)), eligibleHolder.address);
 
-  report.push(await expectAllowed("master disables transfers", () => master.setTransfersEnabled(false)));
+  await (await nmt.setMasterSmartPolicy(frozenMaster.target)).wait();
   report.push(await expectDenied(
     "disabled transfer policy rejects ownership transfer",
     eligibleHolder,
@@ -669,7 +674,7 @@ async function main() {
     () => holderAsset.setCreatorSmartPolicy(creatorPolicyAddress)
   ));
 
-  await (await master.setVersioningEnabled(true)).wait();
+  await (await nmt.setMasterSmartPolicy(master.target)).wait();
   report.push(await expectDenied(
     "holder cannot mint version with another creator policy",
     eligibleHolder,
@@ -708,15 +713,14 @@ async function main() {
     }
   ));
 
-  // A Master policy is replaced only with its own approval, and the replacement governs every later action.
-  const replacementMaster = await masterFactory.deploy(administrator.address);
-  await replacementMaster.waitForDeployment();
+  // A Master policy is replaced only with its own approval, and the replacement governs every later action:
+  // here one that denies everything.
   report.push(await expectDenied(
     "holder cannot replace master policy",
     eligibleHolder,
     {
       to: nmtAddress,
-      data: nmt.interface.encodeFunctionData("setMasterSmartPolicy", [replacementMaster.target])
+      data: nmt.interface.encodeFunctionData("setMasterSmartPolicy", [denyAllPolicy.target])
     }
   ));
   report.push(await expectDenied(
@@ -729,9 +733,9 @@ async function main() {
   ));
   report.push(await expectAllowed(
     "master administrator replaces master policy",
-    () => nmt.setMasterSmartPolicy(replacementMaster.target)
+    () => nmt.setMasterSmartPolicy(denyAllPolicy.target)
   ));
-  assert.equal(await nmt.masterSmartPolicy(), replacementMaster.target);
+  assert.equal(await nmt.masterSmartPolicy(), denyAllPolicy.target);
   report.push(await expectDenied(
     "replaced master policy governs minting",
     administrator,

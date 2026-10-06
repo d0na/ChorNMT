@@ -101,7 +101,7 @@ async function main() {
   const ethUsdPrice = await resolveEthUsdPrice();
   const { ethers } = await hre.network.connect("hardhat");
   const signers = await ethers.getSigners();
-  const [administrator, eligibleHolder, unauthorizedCreator, ineligibleHolder] = signers;
+  const [administrator, , unauthorizedCreator, ineligibleHolder] = signers;
   const paperExamplePath = path.join(process.cwd(), "references", "paper-example.bpmn");
   const importedDatasetPath = path.join("/tmp", "chornmt-paper-example-policy-evaluation.nmt.json");
   const { dataset } = await importBpmnToNmt(paperExamplePath, importedDatasetPath);
@@ -119,7 +119,7 @@ async function main() {
   const nmtFactory = await ethers.getContractFactory("ChoreographyNMT");
 
   const deployment = [];
-  const master = await masterFactory.deploy(administrator.address);
+  const master = await masterFactory.deploy();
   await master.waitForDeployment();
   deployment.push({ label: "deploy MasterSmartPolicy", outcome: "allowed", ...receiptCost(await master.deploymentTransaction().wait()) });
   const creatorPolicy = await creatorFactory.deploy();
@@ -172,7 +172,6 @@ async function main() {
   assert.deepEqual(Array.from(await populatedAsset.getNodeNames()), model.names);
 
   const policyResults = [];
-  await allow(policyResults, "master registers eligible holder", () => master.setEligibleHolder(eligibleHolder.address, true));
   await deny(policyResults, "master denies unauthorized mint", unauthorizedCreator, {
     to: nmtAddress,
     data: nmt.interface.encodeFunctionData("mint", [unauthorizedCreator.address, creatorPolicyAddress, holderPolicyAddress])

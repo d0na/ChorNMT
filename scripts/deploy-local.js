@@ -113,7 +113,7 @@ export async function deployAsset() {
     signer
   );
 
-  const masterPolicy = await masterPolicyFactory.deploy(deployerAddress);
+  const masterPolicy = await masterPolicyFactory.deploy();
   await masterPolicy.waitForDeployment();
   const masterReceipt = await masterPolicy.deploymentTransaction().wait();
 

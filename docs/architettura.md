@@ -50,7 +50,8 @@ contracts/
 │   ├── ChoreographyNMT.sol               NMT delle coreografie, master policy, versioni, tokenURI
 │   ├── ChoreographyMutableAsset.sol      modello della coreografia (ruoli e nodi)
 │   ├── ChoreographyTokenURIRenderer.sol  genera i metadati JSON dallo stato dell'asset
-│   ├── MasterSmartPolicy.sol             chi crea, chi può possedere, trasferimenti e versioning
+│   ├── MasterSmartPolicy.sol             chi crea, chi può possedere, trasferimenti e versioning (hardcoded)
+│   ├── MasterSmartPolicyFrozen.sol       variante della Master che nega trasferimenti e versioni
 │   ├── CreatorSmartPolicy.sol            chi modifica e vincoli strutturali BPMN
 │   ├── HolderSmartPolicy.sol             seconda approvazione dell'holder
 │   ├── DenyAllSmartPolicy.sol            policy che nega tutto (per bloccare un asset)
@@ -274,7 +275,8 @@ sequenceDiagram
 
 | Policy | Stato interno | Decide |
 | --- | --- | --- |
-| `MasterSmartPolicy` | `administrator` (immutabile), `authorizedCreators`, `eligibleHolders`, `transfersEnabled`, `versioningEnabled` | Operazioni dell'NMT: mint, mint con modello, versioni, trasferimenti. |
+| `MasterSmartPolicy` | nessuno: regole **hardcoded**, come una policy tradotta da XACML (`administrator` e unico creator autorizzato = account 0, holder ammessi = account 0 e 1) | Operazioni dell'NMT: mint, mint con modello, versioni, trasferimenti, propria sostituzione (solo `administrator`). |
+| `MasterSmartPolicyFrozen` | nessuno | Come la Master, ma nega trasferimenti e versioni. Si installa con `setMasterSmartPolicy` per congelare le coreografie. |
 | `CreatorSmartPolicy` | `administrator` (il deployer), `maxTaskCount`, `maxSequenceFlowCount`, `enforceTaskNameAllowlist`, `enforceKnownFlowTargets`, `allowedTaskNames`, `protectedNodes` e `protectedNodeCount`, `protectedRoles`, `enforceKnownRoles`, `enforceDistinctRoleAccounts`, `participantNmt`, `participantCertifier`, requisiti per ruolo | Modifiche dell'holder e vincoli strutturali, più la propria sostituzione (solo `administrator`). |
 | `HolderSmartPolicy` | nessuno | Seconda approvazione: consente all'holder `setRoles`, `setNodes` e `setLinked`. |
 | `DenyAllSmartPolicy` | nessuno | Nega tutto. Installata come Holder policy, blocca l'asset finché l'holder non la sostituisce. |

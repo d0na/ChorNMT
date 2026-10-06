@@ -26,7 +26,7 @@ async function main() {
     deployer
   );
 
-  const masterPolicy = await masterPolicyFactory.deploy(deployerAddress);
+  const masterPolicy = await masterPolicyFactory.deploy();
   const creatorPolicy = await creatorPolicyFactory.deploy();
   const holderPolicy = await holderPolicyFactory.deploy();
   const renderer = await rendererFactory.deploy();

@@ -11,11 +11,10 @@ The table is the intended trust model with the default policies. Every change to
 
 | Action | Master administrator | Authorized creator | Holder | Creator policy administrator | Anyone else |
 | --- | --- | --- | --- | --- | --- |
-| Configure creators, holders, transfer and versioning switches | yes | no | no | no | no |
 | Replace the Master policy of the NMT (`setMasterSmartPolicy`) | yes | no | no | no | no |
-| `mint` / `mintWithInitialModel` to an eligible holder | yes (registered as creator) | yes | no | no | no |
-| `mintVersion` | yes (registered as creator) | yes, with any policies | yes, only keeping the predecessor's Creator policy | no | no |
-| `transferFrom` to an eligible holder, when enabled | no | no | yes | no | no |
+| `mint` / `mintWithInitialModel` to an eligible holder | yes (an authorized creator) | yes | no | no | no |
+| `mintVersion` | yes (an authorized creator) | yes, with any policies | yes, only keeping the predecessor's Creator policy | no | no |
+| `transferFrom` to an eligible holder, unless the frozen Master is installed | no | no | yes | no | no |
 | `setNodes` | no | no | yes, within the Creator BPMN constraints | no | no |
 | `setRoles` | no | no | yes, except protected roles and within the Creator role constraints | no | no |
 | `setLinked` | no | no | yes | no | no |
@@ -38,13 +37,13 @@ Design decisions behind the table:
 
 ## Master policy
 
-The policy administrator configures authorized creators and eligible holders with `setAuthorizedCreator` and `setEligibleHolder`.
+The Master stands for a policy translated from XACML, so its configuration is hardcoded, not set at runtime: the administrator and only authorized creator is the authority (Hardhat account 0), and the eligible holders are the authority and its partner (accounts 0 and 1). A different rule is a different policy, installed with `setMasterSmartPolicy`.
 
 - `mint(...)` requires an authorized creator and an eligible initial holder.
-- `transferFrom(...)` requires an enabled transfer policy, the current holder as caller, and an eligible receiving holder.
-- `mintVersion(...)` requires enabled versioning, an eligible holder for the new instance, and either an authorized creator or the holder of the predecessor instance. A holder who is not an authorized creator must pass the predecessor's Creator policy.
+- `transferFrom(...)` requires the current holder as caller and an eligible receiving holder.
+- `mintVersion(...)` requires an eligible holder for the new instance, and either an authorized creator or the holder of the predecessor instance. A holder who is not an authorized creator must pass the predecessor's Creator policy.
 
-`setTransfersEnabled(false)` disables ownership transfers. `setVersioningEnabled(false)` disables new versions without changing existing instances or their history. `predecessorOf` and `versionOf` on `ChoreographyNMT` expose that history.
+`MasterSmartPolicyFrozen` keeps the same rules but denies every transfer and every new version, without changing existing instances or their history. The administrator installs it to freeze the choreographies and reinstalls `MasterSmartPolicy` to reopen them. `predecessorOf` and `versionOf` on `ChoreographyNMT` expose that history.
 
 ## Atomic initialization
 

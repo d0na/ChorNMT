@@ -48,6 +48,7 @@ ChoreographyMutableAsset : MutableAsset
   - asks CreatorSmartPolicy to validate every node update
 
 MasterSmartPolicy  : SmartPolicy
+  - hardcoded creators and holders; MasterSmartPolicyFrozen also denies transfers and versions
 CreatorSmartPolicy : SmartPolicy
   - authorizes editors and defines BPMN structural limits
 HolderSmartPolicy  : SmartPolicy
