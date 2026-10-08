@@ -27,7 +27,7 @@ Use case and sequence diagrams are documentation: they follow the code in the sa
    - Use case diagrams use actors with their Hardhat account when the policies hardcode it; `<<include>>` for a mandatory step, `<<extend>>` for an optional variant.
    - A new flow worth explaining gets a new file `use-case-<topic>.puml` or `sequence-<topic>.puml`, a section in `docs/uml.md`, a row in the table above, and an entry in `UML_DIAGRAMS` of `scripts/evaluation/uml.js` (title and the report rows it explains), embedded with `umlFigure` in the report section it explains.
    - The evaluation reports embed the diagrams (`scripts/evaluation/uml.js`); when a diagram changes what it explains, update its `explains` text there and the table in `evaluation/README.md`.
-3. Render and check:
+3. Render and check. In a Claude Code session the `post-edit.sh` hook already renders after every `.puml` edit and `pre-commit.sh` refuses a commit with a stale SVG; run the commands yourself outside Claude Code:
 
 ```bash
 npm run docs:uml     # needs Java and Graphviz (dot); downloads PlantUML 1.2024.7 once into .cache/

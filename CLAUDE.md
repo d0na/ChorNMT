@@ -73,6 +73,19 @@ CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:uml`, `np
 - Commits: Conventional Commits (`feat:`, `fix:`, `perf:`, `docs:`, `refactor:`, `chore:`, `ci:`), imperative, lowercase.
 - Docs: `architettura.md` and `rendering.md` are in Italian, everything else in English; keep each file's language.
 
+## Hooks
+
+Project hooks in `.claude/settings.json`, scripts in `.claude/hooks/` (they load Node 22 through nvm themselves). They enforce mechanical rules; procedures that need judgment stay in the skills below, and CI stays the check for everyone.
+
+| Event | Hook | Effect |
+| --- | --- | --- |
+| `SessionStart` | `session-start.sh` | Reports whether Node 22 (`.nvmrc`) is available and how to load it. |
+| `PreToolUse` Edit/Write | `guard-generated.sh` | Denies edits to `*.generated.*`, `docs/uml/*.svg`, `artifacts/`, `cache/`, naming the source to change instead. |
+| `PostToolUse` Edit/Write | `post-edit.sh` | After a `docs/uml/*.puml`/`*.iuml` edit runs `npm run docs:uml`; after a `contracts/**/*.sol` edit runs `npm run compile` and `npm run check:size`; a failure is fed back to Claude. |
+| `PreToolUse` Bash | `pre-commit.sh` | Before `git commit`, runs `npm run check:uml` and, when `contracts/` has changes, `compile` and `check:size`; denies the commit if one fails. |
+
+Review or disable them with `/hooks`. Tests and evaluations are not hooks: they take minutes and run through the skills and CI.
+
 ## Skills
 
 Project skills in `.claude/skills/`: `local-flow` (run the end-to-end paper flow on a local node), `write-delta` (author and apply a BPMN delta), `policy-change` (change a policy contract safely), `evaluate` (regenerate the paper evaluation), `gas-optimization` (apply and measure a contract optimization), `uml-diagrams` (update and render the UML use case and sequence diagrams), `grill-me` (`/grill-me`: relentless interview to stress-test a plan or design before implementing it; installed from skills.sh with `npx skills add https://github.com/mattpocock/skills --skill grill-me --skill grilling -a claude-code --copy`, tracked in `skills-lock.json`; update with `npx skills update -p`).
