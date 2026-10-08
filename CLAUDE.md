@@ -2,23 +2,26 @@
 
 Research prototype: a BPMN **choreography** is stored in an on-chain mutable asset (`ChoreographyMutableAsset`), owned through an ERC-721 NMT (`ChoreographyNMT`), guarded by smart policies, and **regenerated as BPMN** from the on-chain state. The BPMN XML is always a view: changes go through the asset (JSON delta → `setNodes`/`setRoles`), never through the XML.
 
-Two goals constrain every contract change: no state change bypasses the Master/Creator/Holder policies, and the **total gas cost of the whole flow** (deploy, mint, import, modify) stays as low as possible. Optimize contracts whenever it is safe, and prove it with measured gas.
+What the prototype must demonstrate, and what it deliberately does not do, is in `docs/requirements.md`; why the design is what it is, and the questions still open, in `docs/decisions.md`. Read both before changing behavior, and do not implement a non-goal or settle an open question without the user.
 
-Read the human docs before non-trivial work; they are the source of truth and must stay in sync with the code:
+The docs are the source of truth and must stay in sync with the code:
 
 | Topic | Doc |
 | --- | --- |
-| **Contract structure standard: kinds, layout, state, public/private functions, gas rules** | `docs/contract-structure.md` |
+| Claims, acceptance criteria, non-goals | `docs/requirements.md` |
+| Design decisions and open questions | `docs/decisions.md` |
+| **Contract structure standard: kinds, layout, state, functions, gas rules, known deviations** | `docs/contract-structure.md` |
 | Components and internals (Italian) | `docs/architettura.md` |
 | tokenURI renderer + off-chain BPMN pipeline (Italian) | `docs/rendering.md` |
 | Trust model: who can do what | `docs/choreography-policies.md` |
 | Policy semantics ↔ test cases | `docs/policy-test-specification.md` |
 | NMT format, import, delta rules | `docs/bpmn-to-nmt-workflow.md` |
+| `setNodes`/`setRoles` call shape for a delta | `docs/delta-update-and-solidity-calls.md` |
 | npm commands and scripts | `docs/commands-and-scripts.md` |
 | Contract hierarchy and participant target design | `docs/contract-hierarchy.md` |
 | Participant license: fields, hardcoded policies, gas | `docs/participant-license-design.md` |
 | Evaluation | `evaluation/README.md` |
-| UML use case and sequence diagrams (PlantUML sources, rendered SVG) | `docs/uml.md`, `docs/uml/` |
+| UML use case and sequence diagrams | `docs/uml.md`, `docs/uml/` |
 
 ## Layout
 
@@ -50,21 +53,19 @@ CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:uml`, `np
 
 ## Invariants and gotchas
 
-- **Contract structure.** Every Token, Asset, Policy, and Renderer follows `docs/contract-structure.md` (layout order, naming, private domain state, mutator shape, Creator AND Holder at both the action and the domain check, default-deny policies, custom errors). There are no known deviations; a change that has to break a rule records it in the "Known deviations" table of that document.
-- **Policies are hardcoded.** Policies stand for XACML translations: rules and configuration are literals in the policy source, tuned to the current test/evaluation scenarios (participant ones use default Hardhat accounts 5–9). No runtime configuration setters; a rule change is a new policy installed with `setMasterSmartPolicy` / `setCreatorSmartPolicy`. The choreography policies use Hardhat accounts 0–1: `CreatorSmartPolicy` has no BPMN constraint, and the constraints are scenario policies (`CreatorSmartPolicyTestScenario`, `CreatorSmartPolicyPaperScenario`) extending `ConstrainedCreatorSmartPolicy`, which read license types from the `ChoreographyParticipantAM` attribute manager.
-- **Docs at every level.** Every change is reflected in the documentation at every level it touches, in the same commit: `CLAUDE.md`, the docs in the table above (contract structure and deviations, architecture, rendering, trust table, test specification, hierarchy, commands), `evaluation/README.md`, the generated-report text in `scripts/evaluation/`, code comments, the project skills in `.claude/skills/`, and the UML diagrams.
-- **UML diagrams.** `docs/uml/` holds use case and sequence diagrams (PlantUML sources and their rendered SVG, shown in `docs/uml.md`). The evaluation reports embed them next to the rows they explain (`scripts/evaluation/uml.js`). A change to a flow, actor, policy decision, or function they show updates the `.puml` and reruns `npm run docs:uml` in the same commit; a new flow worth explaining gets a new diagram. `npm run check:uml` (CI) fails on a stale SVG. Follow the `uml-diagrams` skill.
-- **Gas.** Report before/after gas for every contract change (see the `gas-optimization` skill). Never change an allow/deny outcome to save gas.
-
-- **Trust table ↔ tests ↔ code.** Any policy change must keep the table in `docs/choreography-policies.md`, the cases in `scripts/test-policies.js` (`expectAllowed`/`expectDenied`), and `docs/policy-test-specification.md` in agreement.
+- **Docs at every level.** Every change is reflected, in the same commit, in every doc it touches: `CLAUDE.md`, the docs above (including `decisions.md` for a design change), `evaluation/README.md`, the report text in `scripts/evaluation/`, code comments, `.claude/skills/`, and the UML diagrams (`uml-diagrams` skill; CI fails on a stale SVG).
+- **Contract structure.** Every contract follows `docs/contract-structure.md`; a change that has to break a rule records it in its "Known deviations" table.
+- **Policies are hardcoded** (XACML translations): rules are literals, no runtime setters; a rule change is a new policy. Choreography policies use Hardhat accounts 0–1, participant ones 5–9.
+- **Trust table ↔ tests ↔ spec.** A policy change keeps `docs/choreography-policies.md`, `scripts/test-policies.js` (`expectAllowed`/`expectDenied`), and `docs/policy-test-specification.md` in agreement (`policy-change` skill).
+- **Gas.** Report before/after gas for every contract change (`gas-optimization` skill). Never change an allow/deny outcome to save gas.
+- **Bytecode limit.** `ChoreographyNMT` embeds the asset bytecode (`new`) and is close to the 24,576-byte limit. Put new logic in the renderer or a policy, not in `ChoreographyMutableAsset` or `ChoreographyNMT`, and run `npm run check:size`.
 - **Identity by name.** Nodes and roles are keyed by name; BPMN IDs are not stored on-chain. Nodes are never deleted, only overwritten; an asset never clears its name lists — redeploy for a clean asset.
 - **Whole-node writes.** A delta contains only changed nodes, each in its complete final state; when an edge changes, both endpoints go in the delta.
 - **NodeType enum** (`ChoreographyMutableAsset.sol`): 0 START_EVENT, 1 END_EVENT, 2 TASK, 3 EXCLUSIVE_SPLIT, 4 EXCLUSIVE_JOIN, 5 PARALLEL_SPLIT, 6 PARALLEL_JOIN, 7 EVENT_BASED_GATEWAY.
-- **Bytecode limit.** `ChoreographyNMT` embeds the asset bytecode (`new`) and sits near the 24,576-byte limit. Adding code to `ChoreographyMutableAsset` or `ChoreographyNMT` can break deployment — put logic in the renderer or a policy instead, and run `npm run check:size` after compiling.
 - **tokenURI is computed**, never stored; render reads the whole model in one `tokenURI` call.
-- NMT mints with `_mint`, not `_safeMint` (no receiver callback before initialization) — keep it that way.
+- NMT mints with `_mint`, not `_safeMint` — keep it that way.
 - Generated files end in `.generated.*` and are git-ignored; reference BPMNs and deltas are versioned. `artifacts/`, `cache/` are build outputs.
-- Only the `paper-example` path is supported; `pizza-delivery`, `parallel-gateway-example` and the scripts listed as legacy in `docs/commands-and-scripts.md` are development references.
+- Only the `paper-example` path is supported; `pizza-delivery`, `parallel-gateway-example` and the legacy scripts in `docs/commands-and-scripts.md` are development references.
 
 ## Conventions
 
@@ -73,19 +74,6 @@ CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:uml`, `np
 - Commits: Conventional Commits (`feat:`, `fix:`, `perf:`, `docs:`, `refactor:`, `chore:`, `ci:`), imperative, lowercase.
 - Docs: `architettura.md` and `rendering.md` are in Italian, everything else in English; keep each file's language.
 
-## Hooks
+## Hooks and skills
 
-Project hooks in `.claude/settings.json`, scripts in `.claude/hooks/` (they load Node 22 through nvm themselves). They enforce mechanical rules; procedures that need judgment stay in the skills below, and CI stays the check for everyone.
-
-| Event | Hook | Effect |
-| --- | --- | --- |
-| `SessionStart` | `session-start.sh` | Reports whether Node 22 (`.nvmrc`) is available and how to load it. |
-| `PreToolUse` Edit/Write | `guard-generated.sh` | Denies edits to `*.generated.*`, `docs/uml/*.svg`, `artifacts/`, `cache/`, naming the source to change instead. |
-| `PostToolUse` Edit/Write | `post-edit.sh` | After a `docs/uml/*.puml`/`*.iuml` edit runs `npm run docs:uml`; after a `contracts/**/*.sol` edit runs `npm run compile` and `npm run check:size`; a failure is fed back to Claude. |
-| `PreToolUse` Bash | `pre-commit.sh` | Before `git commit`, runs `npm run check:uml` and, when `contracts/` has changes, `compile` and `check:size`; denies the commit if one fails. |
-
-Review or disable them with `/hooks`. Tests and evaluations are not hooks: they take minutes and run through the skills and CI.
-
-## Skills
-
-Project skills in `.claude/skills/`: `local-flow` (run the end-to-end paper flow on a local node), `write-delta` (author and apply a BPMN delta), `policy-change` (change a policy contract safely), `evaluate` (regenerate the paper evaluation), `gas-optimization` (apply and measure a contract optimization), `uml-diagrams` (update and render the UML use case and sequence diagrams), `grill-me` (`/grill-me`: relentless interview to stress-test a plan or design before implementing it; installed from skills.sh with `npx skills add https://github.com/mattpocock/skills --skill grill-me --skill grilling -a claude-code --copy`, tracked in `skills-lock.json`; update with `npx skills update -p`).
+Hooks (`.claude/settings.json`, `.claude/hooks/`) block edits to generated files and SVGs, rerun `docs:uml` after a `.puml` edit and `compile` + `check:size` after a `.sol` edit, and check UML, compile, and size before `git commit`. Tests and evaluations are not hooks: run them through the skills and CI. Project skills are in `.claude/skills/`; `grill-me` comes from skills.sh (see `README.md`).

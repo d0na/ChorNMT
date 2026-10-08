@@ -88,7 +88,7 @@ Node and role names are the contract reference keys. To import another BPMN or s
 
 For a trusted fixed template, `ChoreographyNMT.mintWithInitialModel(...)` creates and populates an instance atomically. It avoids the two post-mint import transactions; the policy test compares its gas cost with the empty-asset workflow.
 
-The `CreatorSmartPolicy` can optionally limit BPMN updates by task count, sequence-flow count, permitted task names, valid flow targets, and protected nodes. Existing import and delta workflows remain unchanged until these constraints are configured.
+The default `CreatorSmartPolicy` has no BPMN constraint. Constraints (task and sequence-flow limits, permitted task names, known flow targets, protected nodes and roles, role licenses) are hardcoded in scenario policies such as `CreatorSmartPolicyPaperScenario`, installed with `setCreatorSmartPolicy` or passed at mint.
 
 Run `npm run evaluate:policies` to measure a fresh model's empty-versus-populated mint cost and the allow/deny cost of Master, Creator, and Holder policy calls. It writes local JSON and Markdown evaluation reports.
 
@@ -110,6 +110,8 @@ Files with a `.generated.*` suffix are local artifacts ignored by Git and can be
 
 ## Technical documentation
 
+- [Requirements](docs/requirements.md): what the prototype demonstrates, acceptance criteria, and non-goals.
+- [Design decisions](docs/decisions.md): why the main choices were made, and the open questions.
 - [Evaluation quick start](evaluation/README.md#complete-evaluation-run): commands for the complete paper and policy evaluation suite.
 - [BPMN to NMT workflow](docs/bpmn-to-nmt-workflow.md): NMT format, import, and delta rules.
 - [Contract structure](docs/contract-structure.md): the standard internal structure of Token, Asset, Policy, and Renderer contracts, gas rules, and known deviations.
@@ -121,3 +123,12 @@ Files with a `.generated.*` suffix are local artifacts ignored by Git and can be
 - [Commands and scripts](docs/commands-and-scripts.md): public npm commands, implementation scripts, and legacy references.
 - [Evaluation toolkit](evaluation/README.md): measurement reports, CSV aggregation, and Gnuplot figure templates.
 - [bpmn-builder-js](bpmn-builder-js/README.md): BPMN renderer and intermediate JSON format.
+
+## Claude Code
+
+The repository ships project instructions (`CLAUDE.md`), hooks (`.claude/settings.json`, `.claude/hooks/`), and skills (`.claude/skills/`). The `grill-me` and `grilling` skills come from skills.sh and are tracked in `skills-lock.json`:
+
+```bash
+npx skills add https://github.com/mattpocock/skills --skill grill-me --skill grilling -a claude-code --copy
+npx skills update -p   # update them
+```

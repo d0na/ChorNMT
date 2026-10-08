@@ -56,7 +56,7 @@ Import, modification, and rendering write JSON reports under `metrics/` with tim
 
 ## Claude Code hooks
 
-`.claude/settings.json` runs the scripts in `.claude/hooks/` during Claude Code sessions (see `CLAUDE.md`, section Hooks): `session-start.sh` checks Node 22, `guard-generated.sh` blocks edits to generated files and build outputs, `post-edit.sh` runs `docs:uml` after a UML source edit and `compile` plus `check:size` after a contract edit, `pre-commit.sh` runs `check:uml` (and the contract checks when `contracts/` changed) before `git commit`. They do not apply outside Claude Code; CI runs the same checks for every push.
+`.claude/settings.json` runs the scripts in `.claude/hooks/` during Claude Code sessions (see `CLAUDE.md`, section "Hooks and skills"): `session-start.sh` checks Node 22, `guard-generated.sh` blocks edits to generated files and build outputs, `post-edit.sh` runs `docs:uml` after a UML source edit and `compile` plus `check:size` after a contract edit, `pre-commit.sh` runs `check:uml` (and the contract checks when `contracts/` changed) before `git commit`. They do not apply outside Claude Code; CI runs the same checks for every push.
 
 ## Implementation scripts
 
