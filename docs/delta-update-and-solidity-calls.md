@@ -1,27 +1,24 @@
 # Delta Update And Solidity Calls
 
-This document describes:
+This document describes, with a worked example:
 
-- what the legacy `scripts/augment-parallel-gateway-example-local.js` example does
-- which delta payload it sends
-- which Solidity methods must be called to reproduce the same update
+- which delta payload extends an instance of the `parallel-gateway-example` choreography type
+- which Solidity methods must be called to apply it
 
-## Script Purpose
+## Example Purpose
 
-The script [scripts/augment-parallel-gateway-example-local.js](../scripts/augment-parallel-gateway-example-local.js) is a local example of an external update applied to an already populated choreography asset.
+The example is an external update applied to an instance that is already populated: every `ChoreographyMutableAsset` is born with the model of its choreography type. Its steps are:
 
-It performs these steps:
-
-1. populate the target asset with the baseline `parallel-gateway-example` dataset
+1. deploy the `parallel-gateway-example` type and mint an instance (`npm run deploy:asset -- references/parallel-gateway-example.bpmn`), born with the baseline model
 2. render the baseline BPMN export
-3. apply an external `setNodes(...)` update with a delta only
+3. apply an external `setNodes(...)` update with a delta only (`npm run modify:asset`)
 4. render the updated BPMN export
 
-The update is delta-only in the sense that the `setNodes(...)` call does not resend the full `parallel-gateway-example` dataset.
+The update is delta-only in the sense that the `setNodes(...)` call does not resend the full `parallel-gateway-example` model.
 
 ## Delta Scope
 
-The script updates only these nodes:
+The delta updates only these nodes:
 
 - `Parallel Join`
 - `Activity4`
@@ -32,9 +29,9 @@ It also introduces these messages on the new task:
 - `msg5`
 - `msg6`
 
-## Delta Payload Used By The Script
+## Delta Payload
 
-The script builds this logical payload before calling `setNodes(...)`:
+This is the logical payload of the `setNodes(...)` call:
 
 ```js
 {
@@ -145,7 +142,7 @@ If `Ale` and `Fra` already exist, this call is not needed.
 
 ## Solidity Example: Delta Update
 
-To reproduce the same delta as the script, the Solidity-side call is conceptually:
+To apply the same delta, the Solidity-side call is conceptually:
 
 ```solidity
 IChoreographyMutableAsset(assetAddress).setNodes(
@@ -257,11 +254,11 @@ That means:
 - adding a node is supported
 - updating a node is supported
 - changing graph edges is supported by resending the touched nodes
-- true deletion is not currently modeled as a dedicated operation
+- true deletion is not currently modeled as a dedicated operation; a clean model is a new instance of the type
 
 ## Related Files
 
-- [scripts/augment-parallel-gateway-example-local.js](../scripts/augment-parallel-gateway-example-local.js)
-- [scripts/populate-local.js](../scripts/populate-local.js)
-- [scripts/run-local-flow.js](../scripts/run-local-flow.js)
+- [scripts/apply-asset-delta.js](../scripts/apply-asset-delta.js)
+- [scripts/deploy-local.js](../scripts/deploy-local.js)
+- [scripts/choreography-model.js](../scripts/choreography-model.js)
 - [docs/contract-hierarchy.md](contract-hierarchy.md)

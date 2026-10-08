@@ -12,7 +12,7 @@ import "./IChoreographyParticipantAM.sol";
 // On setNodes the post-update model must stay within the task and sequence-flow limits,
 // every changed task must have an allowed name, every flow endpoint must exist or be in the
 // update, and no protected node may change or gain or lose a link. On setRoles a role must
-// exist and not be protected, a role with a required type must be linked to a certified
+// exist, a protected role is assigned once (only while it has no account), a role with a required type must be linked to a certified
 // license of that type, and, when the scenario asks for it, no account plays two roles.
 abstract contract ConstrainedCreatorSmartPolicy is CreatorSmartPolicy {
     uint8 private constant TASK = uint8(IChoreographyAsset.NodeType.TASK);
@@ -84,7 +84,10 @@ abstract contract ConstrainedCreatorSmartPolicy is CreatorSmartPolicy {
         IChoreographyAsset choreography = IChoreographyAsset(asset);
         for (uint256 i = 0; i < roleNames.length; i++) {
             bytes32 nameHash = keccak256(bytes(roleNames[i]));
-            if (_isProtectedRole(nameHash) || !choreography.hasRole(roleNames[i])) {
+            if (!choreography.hasRole(roleNames[i])) {
+                return false;
+            }
+            if (_isProtectedRole(nameHash) && choreography.getRole(roleNames[i]) != address(0)) {
                 return false;
             }
             bytes32 requiredType = _requiredParticipantType(nameHash);

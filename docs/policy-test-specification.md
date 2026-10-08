@@ -50,7 +50,7 @@ accounts.
 | Control | Hardcoded rule | Enforced action | Expected effect |
 | --- | --- | --- | --- |
 | Administrator | account 0 | `setMasterSmartPolicy` | Only the authority replaces the Master. |
-| Authorized Creator | account 0 | `mint`, `mintWithInitialModel` | Only approved organizations can create instances. |
+| Authorized Creator | account 0 | `mint` | Only approved organizations can create instances. |
 | Eligible Holder | accounts 0 and 1 | mint, transfer | An instance can only be assigned to an approved Holder. |
 | Master replacement | `setMasterSmartPolicy(address)` on the NMT, allowed by the current Master to its administrator | every later NMT action | The new Master governs every later mint and transfer; the zero address is rejected. |
 
@@ -86,7 +86,7 @@ the constraints it is subject to.
 | Task-name allowlist | `Delivery`, `Inspection`, `Packing`, `Labeling`, `Shipping` | the 10 evolved paper tasks, `Optional Customs Inspection`, `Optional Quality Inspection` | `setNodes`: every changed task name must be approved. |
 | Known flow endpoint | always | always | `setNodes`: each `incoming` source and `outgoing` target must exist already or be present in the same update. |
 | Protected node | `Start` | `Order` | `setNodes`: a protected node cannot be changed, and no other node may add or remove a sequence flow to or from it. |
-| Protected role | `Buyer` | none | `setRoles`: a protected role cannot be reassigned. |
+| Protected role | `Buyer` | none | `setRoles`: a protected role is assigned once, while it has no account, and cannot be reassigned. |
 | Role license requirement | `Carrier` → `SpecialCarrier` | `Special Carrier` → `SpecialCarrier` | `setRoles`: the role can be linked only to a license whose type, read from `ChoreographyParticipantAM`, is the required one: minted by the participant NMT and certified by the participant Creator policy bound to the attribute manager. |
 | Known roles | always | always | `setRoles`: only existing roles can be reassigned; new roles are rejected. |
 | Distinct role accounts | yes | no | `setRoles`: after the update, no account plays two roles. |
@@ -98,8 +98,8 @@ or add new records.
 
 ### Example: Paper Example Delta
 
-The policy lifecycle evaluation imports `references/paper-example.bpmn` and
-uses `paper-example-parallel-transport-preparation.delta.json`. The permitted
+The policy lifecycle evaluation imports `references/paper-example.bpmn` into
+the model of a choreography type, mints an instance, and uses `paper-example-parallel-transport-preparation.delta.json`. The permitted
 delta adds the `Prepare Transport Documentation` task and introduces a parallel
 split/join before the waybill. The evaluation deploys
 `CreatorSmartPolicyPaperScenario` and installs it on the populated instance
@@ -174,26 +174,25 @@ that policy under the Holder's administrative authority. The tests demonstrate
 this behavior by installing `DenyAllSmartPolicy` and rejecting a later model
 update.
 
-## Atomic Initialization and Cost Comparison
+## Choreography Types and Instances
 
-Two initialization strategies are measured:
-
-1. `mint(...)`, followed by `setRoles(...)` and `setNodes(...)`.
-2. `mintWithInitialModel(...)`, which stores the same initial model inside the
-   mint transaction.
-
-Atomic initialization removes two post-mint transactions but does not remove
-the dominant storage writes. It is primarily an atomicity and operational
-simplicity improvement; the report records the measured gas difference rather
-than assuming a universal saving.
+A `ChoreographyNMT` is one choreography type: its model is fixed at deploy in a
+data-only contract (SSTORE2), and `mint(...)` creates an asset born with that
+model. The tests deploy one type per fixture model (the three-node fixture, a
+model with escaped names, and a model with a licensed `Carrier` role) and
+check that a minted instance returns the model of its type through `tokenURI`.
+Roles are born with no account: the tests link them with `setRoles` before the
+role constraints are exercised, and the first assignment of the protected
+`Buyer` is allowed while a later one is denied. The evaluation reports the
+cost of the model contract (once per type) and of each mint.
 
 ## Automated Evidence
 
 | Command | Model | Evidence produced |
 | --- | --- | --- |
 | `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, Master policy replacement, attempts to bypass the Creator policy, and receipt gas/wei. The script exits with an error if any case has an unexpected outcome. |
-| `npm run evaluate:policies` | Imported `paper-example` plus real delta | Empty versus populated mint, paper-model structural allow/deny cases, the Special Carrier license sale allow/deny cases, and scenario costs. |
-| `npm run evaluate:paper` | Imported `paper-example` plus real delta | Import/render/delta/full-population measurements, chor-js BPMN images, and gnuplot charts. |
+| `npm run evaluate:policies` | Imported `paper-example` plus real delta | Model contract and instance mint, paper-model structural allow/deny cases, the Special Carrier license sale allow/deny cases, and scenario costs. |
+| `npm run evaluate:paper` | Imported `paper-example` plus real delta | Import/deploy/mint/render/delta measurements, delta versus a new instance, chor-js BPMN images, and gnuplot charts. |
 | `npm run evaluate:all` | All of the above | Rebuilds the canonical final report. |
 
 The generated `evaluation/final-report.generated.md` embeds the paper workflow,

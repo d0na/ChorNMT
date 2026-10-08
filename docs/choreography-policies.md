@@ -12,10 +12,10 @@ The table is the intended trust model with the default policies. Every change to
 | Action | Master administrator | Authorized creator | Holder | Creator policy administrator | Anyone else |
 | --- | --- | --- | --- | --- | --- |
 | Replace the Master policy of the NMT (`setMasterSmartPolicy`) | yes | no | no | no | no |
-| `mint` / `mintWithInitialModel` to an eligible holder | yes (an authorized creator) | yes | no | no | no |
+| `mint` an instance of the choreography type to an eligible holder | yes (an authorized creator) | yes | no | no | no |
 | `transferFrom` to an eligible holder | no | no | yes | no | no |
 | `setNodes` | no | no | yes, within the Creator BPMN constraints | no | no |
-| `setRoles` | no | no | yes, except protected roles and within the Creator role constraints | no | no |
+| `setRoles` | no | no | yes, a protected role only once, and within the Creator role constraints | no | no |
 | `setLinked` | no | no | yes | no | no |
 | Read `tokenURI` (metadata generated from the asset state) | yes | yes | yes | yes | yes |
 | `setHolderSmartPolicy` | no | no | yes | no | no |
@@ -27,9 +27,9 @@ Design decisions behind the table:
 - Every policy is replaceable only with the approval of the policy it replaces: the Master by the current Master (its `administrator`), the Creator by the current Creator, the Holder by the holder. A replacement Master governs every later mint and transfer of the NMT; it cannot be the zero address.
 - The Creator policy is a constraint the Holder cannot remove. `setCreatorSmartPolicy` is evaluated by the current Creator policy only, and the choreography `CreatorSmartPolicy` allows it only to its `administrator`.
 - There is no version registry: the history of a choreography is the chain itself, the `setNodes`/`setRoles` transactions and the `NodesChanged`/`RolesChanged` events of its asset. Who governs transfers, whether the Creator policy stays replaceable, and how an instance is frozen are open questions (see [Design decisions](decisions.md#open-questions)).
-- The initial model passed to `mintWithInitialModel` is trusted: it comes from an authorized creator and is not checked by `evaluateNodeUpdate`. The constraints apply to every later `setNodes`.
+- A `ChoreographyNMT` is one choreography type: its model is fixed at deploy, and every instance is born with it. The model is part of the type, so it is not checked by `evaluateNodeUpdate`; the constraints apply to every later `setNodes` and `setRoles`.
 - A protected node is frozen together with its sequence flows: an update of another node cannot add or remove a link to it, in either `incoming` or `outgoing`, so a protected node cannot be disconnected through its neighbours.
-- A protected role keeps its address: `setRoles` rejects any entry for it. A role with a requirement can be linked only to a participant license (`ParticipantMutableAsset`) of the required type. The organization behind the role changes when the license is sold, not through `setRoles`: see [Role licenses](#role-licenses). Roles referenced by a protected task are not protected implicitly; protect them explicitly when their address must not change.
+- A protected role is assigned once: an instance is born with no account for it, and `setRoles` accepts an entry for it only while it has none. A role with a requirement can be linked only to a participant license (`ParticipantMutableAsset`) of the required type. The organization behind the role changes when the license is sold, not through `setRoles`: see [Role licenses](#role-licenses). Roles referenced by a protected task are not protected implicitly; protect them explicitly when their address must not change.
 - Nodes are never deleted: a node with the same name is overwritten. Roles are currently name-to-address entries that can be overwritten but not removed; the target design identifies participants by `ParticipantMutableAsset` NFTs, which can be destroyed independently of the choreography.
 - A transfer resets the Holder policy to zero. The new Holder must install a Holder policy with `setHolderSmartPolicy` before editing the model.
 - NMT tokens are minted with `_mint`, not `_safeMint`, so no receiver callback runs before an asset is initialized.
@@ -43,29 +43,24 @@ The Master stands for a policy translated from XACML, so its configuration is ha
 
 The Master works only at the NMT level: it never decides a change to the model of an asset, which is a Creator AND Holder decision.
 
-## Atomic initialization
+## Choreography type
 
-`mintWithInitialModel(...)` receives the initial Holder, the two instance policies, and an `InitialModel` tuple:
+A `ChoreographyNMT` stands for one choreography, not for a generic container: another choreography is another NMT. Its model is the ABI-encoded `InitialModel` tuple (roles, then node names, types, edges, conditions, roles, and messages for every node) stored as the code of a data-only contract (SSTORE2), whose address the NMT fixes as an `immutable` at deploy. `mint(...)` deploys a `ChoreographyMutableAsset` that decodes the model in its constructor, so every instance is born with the model of the type, in the mint transaction.
 
-- `roleNames` and `roleAddresses`;
-- node names and node types;
-- incoming and outgoing edges, conditions, roles, and messages for every node.
-
-The array-length validation is the same as `setRoles(...)` and `setNodes(...)`. Initialization is callable only by `ChoreographyNMT` and happens in the mint transaction. Subsequent mutations remain governed by the Creator and Holder policies.
-
-The Master policy authorizes the Creator and initial Holder but does not currently register or compare a BPMN/template hash. Use this route only when the authorized Creator is trusted to provide the selected model.
+The model keeps only the role names: every role is born with no account, and the holder links the accounts or licenses of its instance with `setRoles`, under the Creator AND Holder checks. Every later change is a delta through `setNodes` and `setRoles`; the model contract is never read again, and the instances of a type evolve independently. A different starting model is a different type: a new model contract and a new NMT. The encoded model must fit the contract size limit (24,576 bytes; the paper example takes 11,136).
 
 ## Cost benchmark
 
-`npm run test:policies` compares the same three-node model using both routes on Hardhat:
+`npm run test:policies` and `npm run evaluate:policies` measure the type and its instances on Hardhat:
 
-| Route | Gas used |
+| Operation | Gas used |
 | --- | ---: |
-| `mint` + `setRoles` + `setNodes` | 3,513,123 |
-| `mintWithInitialModel` | 3,454,689 |
-| Saving | 58,434 (1.66%) |
+| Deploy the paper-example model contract (once per type) | 2,343,146 |
+| Mint a paper-example instance, born with the model | 5,619,770 |
+| Link its five role accounts (`setRoles`) | 198,112 |
+| Mint a three-node test instance | 3,173,819 |
 
-The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 406,680 gas and structural deny paths used 138,463--176,285 gas.
+The values are reproducible local gas measurements, not public-network prices. Storage writes in the asset dominate the mint. In the same run, an allowed constrained update used 406,903 gas and structural deny paths used 138,930--176,730 gas.
 
 ## Instance policies
 
@@ -81,7 +76,7 @@ The Creator policy also defines the structural boundaries for `setNodes(...)`; i
 - `ConstrainedCreatorSmartPolicy` (abstract) holds the constraint rules. Each scenario extends it and writes the data as literals: `CreatorSmartPolicyTestScenario` for the fixture of `scripts/test-policies.js` (4 tasks, 5 flows, allowed tasks `Delivery`, `Inspection`, `Packing`, `Labeling`, `Shipping`, protected node `Start`, protected role `Buyer`, `Carrier` requires a `SpecialCarrier` license, distinct role accounts) and `CreatorSmartPolicyPaperScenario` for the paper example (11 tasks, 15 flows, the evolved paper tasks plus two optional inspections, protected node `Order`, `Special Carrier` requires a `SpecialCarrier` license).
 - `ChoreographyParticipantAM` is the attribute manager the constrained policies read role licenses from: it returns the type of a license minted by the participant NMT and certified by the participant Creator policy, both bound at its deploy, and zero for any other address. Which type a role requires stays in the Creator policy.
 
-Before writing storage, the asset asks its Creator policy to evaluate the update. A constrained policy computes the post-update task count and total outgoing sequence-flow count, and rejects protected-node updates, task names outside the allowlist, incoming or outgoing flows whose endpoint does not already exist or appear in the same delta, and any change to the links of a protected node. `setRoles` is checked for protected roles, new roles (only existing roles can be reassigned), addresses that are not a suitable license for a role with a requirement, and, when the scenario requires it, accounts that would play two roles.
+Before writing storage, the asset asks its Creator policy to evaluate the update. A constrained policy computes the post-update task count and total outgoing sequence-flow count, and rejects protected-node updates, task names outside the allowlist, incoming or outgoing flows whose endpoint does not already exist or appear in the same delta, and any change to the links of a protected node. `setRoles` is checked for protected roles that already have an account, new roles (only existing roles can be reassigned), addresses that are not a suitable license for a role with a requirement, and, when the scenario requires it, accounts that would play two roles.
 
 The Holder policy remains an independent second approval, also for these domain checks: the asset asks `evaluateNodeUpdate` and `evaluateRoleUpdate` of the Creator AND the Holder policy (`IChoreographyPolicy`). A Holder can further restrict an instance by installing `DenyAllSmartPolicy`, without weakening the Creator-defined BPMN boundaries.
 

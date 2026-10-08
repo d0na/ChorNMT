@@ -35,9 +35,9 @@ NMT (ERC721Enumerable)
 
 ```text
 ChoreographyNMT : NMT
-  - evaluates initial-model mints with MasterSmartPolicy
-  - deploys ChoreographyMutableAsset on mint
-  - can initialize an asset atomically with mintWithInitialModel
+  - one choreography type: the model contract (SSTORE2) is an immutable
+  - evaluates mints and transfers with MasterSmartPolicy
+  - deploys on mint a ChoreographyMutableAsset born with the model of the type
 
 ChoreographyMutableAsset : MutableAsset
   - stores choreography descriptor:
@@ -255,7 +255,7 @@ When this design is implemented, these areas will need to change:
 - `contracts/choreography/ChoreographyMutableAsset.sol`
   The node descriptor must carry participant-asset identity explicitly or be able to derive it safely.
 
-- `scripts/populate-local.js`
+- `scripts/deploy-local.js`
   It currently assigns EOA addresses to roles. It would need to mint or resolve `ParticipantMutableAsset` contracts and use those addresses instead.
 
 - `bpmn-builder-js/scripts/web3.js`

@@ -42,8 +42,7 @@ npm run docs:uml                                     # render docs/uml/*.puml to
 npm run check:uml                                    # fail if a UML SVG is missing or stale
 npm test                                             # = test:policies, ephemeral network, no node needed
 npm run start:operations                             # compile + hardhat node on :8545 (long-running)
-npm run deploy:asset                                 # needs the node; prints the asset address
-npm run import:asset -- <asset> references/paper-example.bpmn
+npm run deploy:asset -- references/paper-example.bpmn  # needs the node: deploy the type, mint, print the asset
 npm run render:asset -- <asset> <nmt-or-delta.json>
 npm run modify:asset -- <asset> <delta.json> [--no-render]
 npm run clean
@@ -59,7 +58,8 @@ CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:uml`, `np
 - **Trust table ↔ tests ↔ spec.** A policy change keeps `docs/choreography-policies.md`, `scripts/test-policies.js` (`expectAllowed`/`expectDenied`), and `docs/policy-test-specification.md` in agreement (`policy-change` skill).
 - **Gas.** Report before/after gas for every contract change (`gas-optimization` skill). Never change an allow/deny outcome to save gas.
 - **Bytecode limit.** `ChoreographyNMT` embeds the asset bytecode (`new`) and is close to the 24,576-byte limit. Put new logic in the renderer or a policy, not in `ChoreographyMutableAsset` or `ChoreographyNMT`, and run `npm run check:size`.
-- **Identity by name.** Nodes and roles are keyed by name; BPMN IDs are not stored on-chain. Nodes are never deleted, only overwritten; an asset never clears its name lists — redeploy for a clean asset.
+- **Identity by name.** Nodes and roles are keyed by name; BPMN IDs are not stored on-chain. Nodes are never deleted, only overwritten; an asset never clears its name lists — mint a new instance for a clean model.
+- **One NMT, one choreography type.** `ChoreographyNMT` fixes its model (ABI-encoded `InitialModel` as the code of an SSTORE2 contract, `scripts/choreography-model.js`); every asset decodes it in its constructor, roles born without accounts. Another model is another NMT.
 - **Whole-node writes.** A delta contains only changed nodes, each in its complete final state; when an edge changes, both endpoints go in the delta.
 - **NodeType enum** (`ChoreographyMutableAsset.sol`): 0 START_EVENT, 1 END_EVENT, 2 TASK, 3 EXCLUSIVE_SPLIT, 4 EXCLUSIVE_JOIN, 5 PARALLEL_SPLIT, 6 PARALLEL_JOIN, 7 EVENT_BASED_GATEWAY.
 - **tokenURI is computed**, never stored; render reads the whole model in one `tokenURI` call.

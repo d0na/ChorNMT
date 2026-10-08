@@ -1,10 +1,12 @@
 @startuml sequence-import-and-render
 !include style.iuml
-title Import a BPMN model and render it back (import:asset, render:asset)
+title Import a BPMN model into a choreography type and render it back (deploy:asset, render:asset)
 
-actor "Holder" as Holder
-participant "import-bpmn-asset.js" as Import
+actor "Authority" as Authority
+participant "deploy-local.js" as Deploy
 participant "bpmn-builder-js\nimporter" as Importer
+participant "choreography-model.js" as ModelCodec
+participant "Model contract\n(SSTORE2)" as Model
 participant "ChoreographyMutableAsset" as Asset
 participant "ChoreographyNMT" as NMT
 participant "ChoreographyTokenURIRenderer" as Renderer
@@ -12,15 +14,16 @@ participant "web3.js\n(readChoreography)" as Web3
 participant "bpmn-builder-js\npipeline" as Pipeline
 
 == Import ==
-Holder -> Import : import:asset <asset> paper-example.bpmn
-Import -> Importer : BPMN XML to NMT dataset (roles, nodes by name)
-Importer --> Import : dataset
-Import -> Asset : setRoles(names, accounts)
-Import -> Asset : setNodes(...)
-note right of Asset : policy checks as in sequence-apply-delta
+Authority -> Deploy : deploy:asset paper-example.bpmn
+Deploy -> Importer : BPMN XML to NMT dataset (roles, nodes by name)
+Importer --> Deploy : dataset
+Deploy -> ModelCodec : modelFromDataset, encodeModel
+ModelCodec --> Deploy : creation code
+Deploy -> Model ** : create
+note right of Deploy : then the NMT and a mint,\nas in sequence-deploy-and-mint
 
 == Render ==
-Holder -> Web3 : render:asset <asset>
+Authority -> Web3 : render:asset <asset>
 Web3 -> Asset : tokenURI()  (one eth_call)
 Asset -> NMT : tokenURI(tokenId)
 NMT -> Renderer : tokenURI(asset)
@@ -29,10 +32,11 @@ Renderer --> Web3 : data:application/json;base64,...
 Web3 -> Web3 : decodeTokenURI, buildRawOutput
 Web3 -> Pipeline : raw JSON
 Pipeline -> Pipeline : normalize, validation,\nprocess-mapper, moddle-generator
-Pipeline --> Holder : *.generated.bpmn.xml
+Pipeline --> Authority : *.generated.bpmn.xml
 
 note over Renderer
-  The JSON is computed on every call and never
-  stored: the BPMN XML is a view of the asset.
+  The JSON is computed from the asset on every call and
+  never stored: the BPMN XML is a view of the asset, and
+  the model contract is read only when an asset is born.
 end note
 @enduml

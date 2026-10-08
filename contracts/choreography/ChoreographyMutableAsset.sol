@@ -44,19 +44,38 @@ contract ChoreographyMutableAsset is MutableAsset, IChoreographyAsset {
     Descriptor private descriptor;
     event RolesChanged(string[] roleNames);
     event NodesChanged(string[] nodeNames);
-    event ChoreographyInitialized(string[] roleNames, string[] nodeNames);
+    event ChoreographyInitialized(address model);
 
+    // The asset is born with the model of its choreography type: the ABI-encoded InitialModel
+    // stored as the code of the model contract fixed in the NMT. Trusted path: the model is
+    // part of the type, so it is not evaluated by the policies.
     constructor(
         address nmtAddress,
         address creatorSmartPolicyAddress,
-        address holderSmartPolicyAddress
+        address holderSmartPolicyAddress,
+        address modelAddress
     )
         MutableAsset(
             nmtAddress,
             creatorSmartPolicyAddress,
             holderSmartPolicyAddress
         )
-    {}
+    {
+        InitialModel memory model = abi.decode(modelAddress.code, (InitialModel));
+        _setRoles(model.roleNames, model.roleAddresses);
+        _setNodes(
+            model.names,
+            model.nodeTypes,
+            model.incoming,
+            model.outgoing,
+            model.conditions,
+            model.initiatorRoles,
+            model.participantRoles,
+            model.initiatingMessages,
+            model.returnMessages
+        );
+        emit ChoreographyInitialized(modelAddress);
+    }
 
     function setRoles(
         string[] memory roleNames,
@@ -205,22 +224,6 @@ contract ChoreographyMutableAsset is MutableAsset, IChoreographyAsset {
         }
 
         emit NodesChanged(names);
-    }
-
-    function initializeChoreography(InitialModel memory model) external onlyNMT {
-        _setRoles(model.roleNames, model.roleAddresses);
-        _setNodes(
-            model.names,
-            model.nodeTypes,
-            model.incoming,
-            model.outgoing,
-            model.conditions,
-            model.initiatorRoles,
-            model.participantRoles,
-            model.initiatingMessages,
-            model.returnMessages
-        );
-        emit ChoreographyInitialized(model.roleNames, model.names);
     }
 
     function tokenURI() public view returns (string memory) {

@@ -24,4 +24,4 @@ Use a fixed `ETH_USD_PRICE` for reproducible numbers; omit it only when the user
 
 ## Report
 
-Point the user to `evaluation/final-report.generated.md` and summarize the headline figures (mint strategies, delta vs full population, allow/deny costs). All outputs are `.generated.*` and git-ignored; nothing to commit unless gnuplot templates or scripts changed.
+Point the user to `evaluation/final-report.generated.md` and summarize the headline figures (model contract and mint, delta vs a new instance, allow/deny costs). All outputs are `.generated.*` and git-ignored; nothing to commit unless gnuplot templates or scripts changed.

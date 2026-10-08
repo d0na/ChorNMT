@@ -9,8 +9,7 @@ actor "Partner\n(account 1)" as Partner
 actor "Anyone" as Anyone
 
 rectangle "ChoreographyNMT + ChoreographyMutableAsset" {
-  usecase "Mint a choreography" as UC_Mint
-  usecase "Mint with an initial\nBPMN model" as UC_MintModel
+  usecase "Mint an instance of the\nchoreography type" as UC_Mint
   usecase "Transfer the choreography\nto an eligible holder" as UC_Transfer
   usecase "Replace the Master policy\n(a new hardcoded Master)" as UC_Master
   usecase "Replace the Creator policy\n(install scenario constraints)" as UC_Creator
@@ -26,7 +25,6 @@ rectangle "ChoreographyNMT + ChoreographyMutableAsset" {
 Authority --> UC_Mint
 Authority --> UC_Master
 Authority --> UC_Creator
-UC_MintModel .> UC_Mint : <<extend>>
 
 Holder --> UC_Nodes
 Holder --> UC_Roles

@@ -1,6 +1,6 @@
 # Evaluation toolkit
 
-Each `import:asset`, `modify:asset`, and `render:asset` execution writes a JSON report under `metrics/`. The report records wall-clock duration and model/delta size: roles, nodes, tasks, gateways, sequence edges, and messages. On-chain commands also print receipt-derived gas and ETH cost in their console output.
+Each `deploy:asset` (import, choreography type, and mint), `modify:asset`, and `render:asset` execution writes a JSON report under `metrics/`. The report records wall-clock duration and model/delta size: roles, nodes, tasks, gateways, sequence edges, and messages. On-chain commands also print receipt-derived gas and ETH cost in their console output.
 
 ## Setup (once)
 
@@ -41,8 +41,8 @@ npm run evaluate:all
 
 Open `evaluation/final-report.generated.md`. It is the final report and contains:
 
-- paper workflow: BPMN import, baseline/final chor-js images, delta update, full population, and gnuplot charts;
-- policy lifecycle: empty versus populated mint and Master/Creator/Holder outcomes;
+- paper workflow: BPMN import, choreography type deployment and mint, baseline/final chor-js images, delta update versus a new instance, and gnuplot charts;
+- policy lifecycle: model contract and mint costs, and Master/Creator/Holder outcomes;
 - policy integration tests: complete allow/deny matrix with gas and wei costs;
 - direct links to generated BPMN XML, SVG/PNG, CSV, JSON metrics, and contract exports.
 
@@ -88,7 +88,7 @@ This intentionally deletes generated reports, BPMN images, graphs, metrics, and 
 
 ## Paper workflow details
 
-The command deploys its own asset, executes import → baseline render → delta modification → final render, clears only previous `metrics/*.generated.*` artifacts, creates the CSV and figures, and writes `evaluation/experiment-summary.generated.md`.
+The command deploys its own choreography type from `references/paper-example.bpmn` and mints an instance (import → deploy → mint), executes baseline render → delta modification → final render, clears only previous `metrics/*.generated.*` artifacts, creates the CSV and figures, and writes `evaluation/experiment-summary.generated.md`.
 
 The paper report links the baseline and final BPMN 2.0 XML generated from the on-chain asset and automatically produces SVG and PNG images using `chor-js` and local headless Chromium. `chor-js` renders BPMN choreography task bands, gateways, and sequence flows. SVG preserves vector quality for publication; PNG is embedded directly in the report.
 
@@ -100,10 +100,10 @@ Run the policy-focused evaluation without starting a persistent local node:
 npm run evaluate:policies
 ```
 
-It imports `references/paper-example.bpmn` into a fresh instance and applies the real parallel-transport-preparation delta. The smaller `Start → Delivery → End` fixture remains only in the policy integration test. The evaluation reports:
+It imports `references/paper-example.bpmn` into the model of a choreography type, mints an instance born with that model, links its roles, and applies the real parallel-transport-preparation delta. The smaller `Start → Delivery → End` fixture remains only in the policy integration test. The evaluation reports:
 
-- deployment gas for Master, Creator, Holder, `ChoreographyTokenURIRenderer`, and `ChoreographyNMT`;
-- `mint` followed by roles/nodes import versus `mintWithInitialModel`;
+- deployment gas for Master, Creator, Holder, `ChoreographyTokenURIRenderer`, the model contract of the type (SSTORE2), and `ChoreographyNMT`;
+- the mint of an instance, born with the model, and the assignment of its role accounts;
 - Master allow/deny cases for authorized Creators and eligible Holders;
 - the cost of changing the Creator rules: deploying `ChoreographyParticipantAM` and `CreatorSmartPolicyPaperScenario` and installing it with `setCreatorSmartPolicy`;
 - Creator allow/deny cases for compliant updates, task limits, task-name allowlist, known flow targets, and protected nodes;
@@ -117,8 +117,8 @@ The generated reports embed the UML use case and sequence diagrams of [`docs/uml
 
 | Report | Diagrams | Explain |
 | --- | --- | --- |
-| `experiment-summary.generated.md` (paper workflow) | deploy and mint, import and render, apply a BPMN delta | the deployment, import, modification, and render phases |
-| `policy-lifecycle.generated.md` | choreography use cases, deploy and mint, participant license use cases, role license sale, policy replacement, apply a BPMN delta | the mint comparison, the Special Carrier handover, and every allowed and denied policy row |
+| `experiment-summary.generated.md` (paper workflow) | deploy and mint, import and render, apply a BPMN delta | the import, deployment, mint, modification, and render phases |
+| `policy-lifecycle.generated.md` | choreography use cases, deploy and mint, participant license use cases, role license sale, policy replacement, apply a BPMN delta | the model contract and mint rows, the Special Carrier handover, and every allowed and denied policy row |
 | `policy-tests.generated.md` | choreography and participant license use cases | the actor and use case behind each test case |
 | `final-report.generated.md` | reading guide: every diagram with the rows it explains | the whole report |
 
@@ -134,16 +134,16 @@ npm run evaluate:summary
 
 It writes `evaluation/final-report.generated.md`, linking and embedding the available paper-workflow, policy-lifecycle, and policy-test reports. `evaluation/summary.generated.md` is retained as a compatibility copy. Missing evaluations are explicitly marked, so it is safe to run after any command.
 
-## Delta versus full population benchmark
+## Delta versus a new instance benchmark
 
-The experiment also creates a second fresh asset and fully populates it with the final, modified model. It compares that write cost with the delta update on the first asset.
+A choreography type fixes its model, so the alternative to a delta is a new instance of the type, born with the whole model. The experiment mints a second instance of the same type (mint and role accounts) and compares its cost with the delta update on the first one.
 
 This is a benchmark only: it does **not** change the operational workflow or force a strategy. In normal usage you can still choose either:
 
-- `modify:asset` to update only the changed nodes of an existing asset;
-- complete population of a fresh asset when a clean full replacement is needed.
+- `modify:asset` to update only the changed nodes of an existing instance;
+- a new instance when a clean model is needed.
 
-The comparison excludes deployment cost, so it measures only model-write transactions. Its result appears in the `Delta update versus full model population` table of the generated experiment summary.
+The comparison excludes deployment cost, so it measures only per-instance transactions. Its result appears in the `Delta update versus a new instance` table of the generated experiment summary.
 
 It fetches an ETH/USD spot price for the report. For a reproducible study, provide a fixed historical value instead: `ETH_USD_PRICE=<price> npm run evaluate:paper`.
 
@@ -156,7 +156,7 @@ gnuplot evaluation/gnuplot/duration-by-nodes.gp
 gnuplot evaluation/gnuplot/duration-by-edges.gp
 ```
 
-The CSV also contains total gas used and ETH cost for each import or delta operation, so the gas template uses the same generated CSV:
+The CSV also contains total gas used and ETH cost for each deploy or delta operation, so the gas template uses the same generated CSV:
 
 ```bash
 gnuplot evaluation/gnuplot/gas-by-changed-nodes.gp

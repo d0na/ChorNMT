@@ -8,8 +8,14 @@ import "./ChoreographyTokenURIRenderer.sol";
 
 contract ChoreographyNMT is NMT {
     address public immutable tokenURIRenderer;
+    // The choreography type: every token is minted with this model (see ChoreographyMutableAsset).
+    address public immutable model;
 
-    constructor(address masterSmartPolicyAddress, address tokenURIRendererAddress)
+    constructor(
+        address masterSmartPolicyAddress,
+        address tokenURIRendererAddress,
+        address modelAddress
+    )
         ERC721(
             "Mutable Choreography for a PUB Decentraland UniPi Project",
             "PUBMNTCHOREO"
@@ -18,35 +24,8 @@ contract ChoreographyNMT is NMT {
     {
         if (tokenURIRendererAddress == address(0)) revert InvalidAddress();
         tokenURIRenderer = tokenURIRendererAddress;
-    }
-
-    function mintWithInitialModel(
-        address to,
-        address creatorSmartPolicy,
-        address holderSmartPolicy,
-        ChoreographyMutableAsset.InitialModel memory model
-    )
-        public
-        evaluatedByMaster(
-            abi.encodeWithSelector(
-                this.mintWithInitialModel.selector,
-                to,
-                creatorSmartPolicy,
-                holderSmartPolicy,
-                model
-            ),
-            address(this)
-        )
-        returns (address, uint256)
-    {
-        (address assetAddress, uint256 tokenId) = _mint(
-            to,
-            creatorSmartPolicy,
-            holderSmartPolicy
-        );
-        ChoreographyMutableAsset(assetAddress).initializeChoreography(model);
-
-        return (assetAddress, tokenId);
+        if (modelAddress.code.length == 0) revert InvalidAddress();
+        model = modelAddress;
     }
 
     function _mint(
@@ -57,7 +36,8 @@ contract ChoreographyNMT is NMT {
         ChoreographyMutableAsset choreography = new ChoreographyMutableAsset(
             address(this),
             creatorSmartPolicy,
-            holderSmartPolicy
+            holderSmartPolicy,
+            model
         );
 
         uint256 tokenId = uint160(address(choreography));

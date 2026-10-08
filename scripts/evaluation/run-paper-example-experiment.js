@@ -2,11 +2,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { deployAsset } from "../deploy-local.js";
-import { importBpmnIntoAsset } from "../import-bpmn-asset.js";
+import { deployAsset, mintAsset } from "../deploy-local.js";
 import { renderAsset } from "../render-asset.js";
 import { applyAssetDelta } from "../apply-asset-delta.js";
-import { populateDataset } from "../populate-local.js";
 import { exportMetricsCsv } from "./export-metrics-csv.js";
 import { renderBpmnImages } from "./render-bpmn-images.js";
 import { resolveEthUsdPrice, scenarioUsd } from "./metrics.js";
@@ -26,11 +24,8 @@ async function main() {
   for (const file of await fs.readdir(metricsDirectory)) {
     if (file.includes(".generated.")) await fs.unlink(path.join(metricsDirectory, file));
   }
-  const deployStartedAt = performance.now();
-  const deployment = await deployAsset();
-  const deployDurationMs = performance.now() - deployStartedAt;
-  const imported = await importBpmnIntoAsset(deployment.assetAddress, bpmn);
-  const baseline = await renderAsset(deployment.assetAddress, imported.nmtPath);
+  const deployment = await deployAsset(bpmn);
+  const baseline = await renderAsset(deployment.assetAddress, deployment.nmtPath);
   const modified = await applyAssetDelta(deployment.assetAddress, delta, { render: false });
   const finalRender = await renderAsset(deployment.assetAddress, delta);
   const baselineImage = await renderBpmnImages({
@@ -41,32 +36,35 @@ async function main() {
     xmlPath: finalRender.xmlPath,
     outputBaseName: "paper-example-final"
   });
-  const baselineDataset = JSON.parse(await fs.readFile(imported.nmtPath, "utf8"));
   const deltaDataset = JSON.parse(await fs.readFile(path.join(root, delta), "utf8"));
-  const finalNodes = new Map(baselineDataset.nodes.map((node) => [node.name, node]));
-  deltaDataset.nodes.forEach((node) => finalNodes.set(node.name, node));
-  const fullPopulationDeployment = await deployAsset();
-  const fullPopulation = await populateDataset(fullPopulationDeployment.assetAddress, {
-    ...baselineDataset,
-    nodes: [...finalNodes.values()]
-  }, "paper-example-final-full");
+  // The alternative to a delta: a new instance of the type, born with the whole model.
+  const newInstance = await mintAsset(
+    deployment.choreographyNmtAddress,
+    deployment.creatorPolicyAddress,
+    deployment.holderPolicyAddress,
+    deployment.dataset.roles
+  );
   const csvPath = await exportMetricsCsv();
   const readMetric = async (result) => JSON.parse(await fs.readFile(result.metricsPath, "utf8"));
-  const importMetric = await readMetric(imported);
+  const deployMetric = await readMetric(deployment);
   const baselineMetric = await readMetric(baseline);
   const modifyMetric = await readMetric(modified);
   const finalMetric = await readMetric(finalRender);
   const resultsPath = path.join(root, "evaluation", "experiment-results.generated.csv");
-  const deploymentGas = deployment.costs.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n);
+  const sumGas = (costs) => costs.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n);
+  const sumEth = (costs) => costs.reduce((sum, cost) => sum + Number(cost.costEth), 0);
+  const deploymentGas = sumGas(deployment.costs);
   const scenarioCosts = [10, 30, 100].map((gwei) => {
     const eth = Number(deploymentGas) * gwei / 1e9;
     return { gwei, eth, usd: ethUsdPrice ? eth * ethUsdPrice : null };
   });
   const deltaGas = modifyMetric.blockchain.transactions.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n);
-  const fullGas = fullPopulation.costs.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n);
+  const instanceGas = sumGas(newInstance.costs);
+  const model = deployMetric.model;
   const rows = [
-    ["deploy", deployDurationMs, deployment.costs.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n), deployment.totalCost.totalEth, "", "", "", ""],
-    ["import", importMetric.timingsMs.total, importMetric.blockchain.transactions.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n), importMetric.blockchain.total.totalEth, importMetric.model.nodes, importMetric.model.sequenceEdges, importMetric.model.gateways, importMetric.model.messages],
+    ["import", deployment.timingsMs.import, 0, 0, model.nodes, model.sequenceEdges, model.gateways, model.messages],
+    ["deploy", deployment.timingsMs.deploy, sumGas(deployment.deploymentCosts), sumEth(deployment.deploymentCosts), model.nodes, model.sequenceEdges, model.gateways, model.messages],
+    ["mint", deployment.timingsMs.mint, sumGas(deployment.mintCosts), sumEth(deployment.mintCosts), model.nodes, model.sequenceEdges, model.gateways, model.messages],
     ["baseline-render", baselineMetric.timingsMs.total, 0, 0, baselineMetric.model.nodes, baselineMetric.model.sequenceEdges, baselineMetric.model.gateways, baselineMetric.model.messages],
     ["modify", modifyMetric.timingsMs.total, modifyMetric.blockchain.transactions.reduce((sum, cost) => sum + BigInt(cost.gasUsed), 0n), modifyMetric.blockchain.total.totalEth, modifyMetric.delta.nodes, modifyMetric.delta.sequenceEdges, modifyMetric.delta.gateways, modifyMetric.delta.messages],
     ["final-render", finalMetric.timingsMs.total, 0, 0, finalMetric.model.nodes, finalMetric.model.sequenceEdges, finalMetric.model.gateways, finalMetric.model.messages]
@@ -89,7 +87,8 @@ async function main() {
     `- Asset: \`${deployment.assetAddress}\``,
     `- Total wall-clock duration: \`${(performance.now() - startedAt).toFixed(2)} ms\``,
     `- ETH/USD price used: ${ethUsdPrice ? `$${ethUsdPrice.toFixed(2)}` : "not available"}`,
-    `- Import metrics: [${path.basename(imported.metricsPath)}](${relativeToSummary(imported.metricsPath)})`,
+    `- Choreography type (NMT): \`${deployment.choreographyNmtAddress}\`, model contract \`${deployment.modelAddress}\``,
+    `- Import, deploy, and mint metrics: [${path.basename(deployment.metricsPath)}](${relativeToSummary(deployment.metricsPath)})`,
     `- Baseline render metrics: [${path.basename(baseline.metricsPath)}](${relativeToSummary(baseline.metricsPath)})`,
     `- Modification metrics: [${path.basename(modified.metricsPath)}](${relativeToSummary(modified.metricsPath)})`,
     `- Final render metrics: [${path.basename(finalRender.metricsPath)}](${relativeToSummary(finalRender.metricsPath)})`,
@@ -97,7 +96,7 @@ async function main() {
     "",
     "## How the measured operations work",
     "",
-    "The sequence diagrams show the transactions behind the measured phases: deployment and mint, the import (`setRoles`, `setNodes`), the delta modification with its policy checks, and the renders, which read the asset with one `tokenURI` call.",
+    "The sequence diagrams show the transactions behind the measured phases: the import of the BPMN into the model of a choreography type, the deployment of the type and the mint of an instance born with that model, the delta modification with its policy checks, and the renders, which read the asset with one `tokenURI` call.",
     "",
     ...umlFigure("sequence-deploy-and-mint", summaryPath),
     ...umlFigure("sequence-import-and-render", summaryPath),
@@ -123,18 +122,27 @@ async function main() {
     "",
     "| Transaction | Smart contract / asset | Address | Gas | ETH cost | USD @10 gwei | USD @30 gwei | USD @100 gwei |",
     "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |",
-    ...[[deployment.costs[0], "MasterSmartPolicy", deployment.masterPolicyAddress], [deployment.costs[1], "CreatorSmartPolicy", deployment.creatorPolicyAddress], [deployment.costs[2], "HolderSmartPolicy", deployment.holderPolicyAddress], [deployment.costs[3], "ChoreographyTokenURIRenderer", deployment.rendererAddress], [deployment.costs[4], "ChoreographyNMT", deployment.choreographyNmtAddress], [deployment.costs[5], "ChoreographyMutableAsset (mint)", deployment.assetAddress]].map(([cost, name, address]) => `| ${cost.label} | ${name} | \`${address}\` | ${cost.gasUsed} | ${cost.costEth} | ${scenarioUsd(cost.gasUsed, ethUsdPrice).join(" | ")} |`),
+    ...[
+      ["MasterSmartPolicy", deployment.masterPolicyAddress],
+      ["CreatorSmartPolicy", deployment.creatorPolicyAddress],
+      ["HolderSmartPolicy", deployment.holderPolicyAddress],
+      ["ChoreographyTokenURIRenderer", deployment.rendererAddress],
+      ["Choreography model (SSTORE2)", deployment.modelAddress],
+      ["ChoreographyNMT", deployment.choreographyNmtAddress],
+      ["ChoreographyMutableAsset (mint)", deployment.assetAddress],
+      ["ChoreographyMutableAsset (role accounts)", deployment.assetAddress]
+    ].map(([name, address], index) => [deployment.costs[index], name, address]).map(([cost, name, address]) => `| ${cost.label} | ${name} | \`${address}\` | ${cost.gasUsed} | ${cost.costEth} | ${scenarioUsd(cost.gasUsed, ethUsdPrice).join(" | ")} |`),
     `| **Deployment and mint total** | — | — | **${deploymentGas}** | **${deployment.totalCost.totalEth}** | **${scenarioUsd(deploymentGas, ethUsdPrice).join(" | ")}** |`,
     "| Transfer asset | Not executed in this experiment | — | Not applicable | Not applicable | Not applicable | Not applicable | Not applicable |",
     "",
-    "## Delta update versus full model population",
+    "## Delta update versus a new instance",
     "",
-    "Deployment cost is excluded: this comparison measures only the model-write transactions.",
+    "A choreography type fixes its model, so the alternative to a delta is a new instance of the type, born with the whole model (mint and role accounts). Deployment cost is excluded: this comparison measures only the per-instance transactions.",
     "",
     "| Strategy | Gas used | ETH cost | USD @10 gwei | USD @30 gwei | USD @100 gwei | Relative gas saving |",
     "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
-    `| Delta update (${deltaDataset.nodes.length} changed nodes) | ${deltaGas} | ${modifyMetric.blockchain.total.totalEth} | ${scenarioUsd(deltaGas, ethUsdPrice).join(" | ")} | ${((1 - Number(deltaGas) / Number(fullGas)) * 100).toFixed(2)}% |`,
-    `| Full population (${finalNodes.size} nodes) | ${fullGas} | ${fullPopulation.totalCost.totalEth} | ${scenarioUsd(fullGas, ethUsdPrice).join(" | ")} | 0.00% |`,
+    `| Delta update (${deltaDataset.nodes.length} changed nodes) | ${deltaGas} | ${modifyMetric.blockchain.total.totalEth} | ${scenarioUsd(deltaGas, ethUsdPrice).join(" | ")} | ${((1 - Number(deltaGas) / Number(instanceGas)) * 100).toFixed(2)}% |`,
+    `| New instance (${deployment.dataset.nodes.length} nodes) | ${instanceGas} | ${sumEth(newInstance.costs)} | ${scenarioUsd(instanceGas, ethUsdPrice).join(" | ")} | 0.00% |`,
     "",
     "## Estimated deployment and mint cost under public-network gas-price scenarios",
     "",

@@ -8,12 +8,12 @@
   "scripts": {
     "compile": "hardhat compile",
     "check:size": "node scripts/check-contract-size.js",
+    "check:invariants": "node scripts/check-invariants.js",
     "docs:uml": "node scripts/render-uml.js",
     "check:uml": "node scripts/render-uml.js --check",
     "start:operations": "hardhat compile && hardhat node",
     "deploy:asset": "node scripts/deploy-local.js",
     "render:asset": "node scripts/render-asset.js",
-    "import:asset": "node scripts/import-bpmn-asset.js",
     "modify:asset": "node scripts/apply-asset-delta.js",
     "test": "npm run test:policies",
     "test:policies": "hardhat run scripts/test-policies.js",

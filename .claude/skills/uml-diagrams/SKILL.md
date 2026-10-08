@@ -11,9 +11,9 @@ Use case and sequence diagrams are documentation: they follow the code in the sa
 | --- | --- | --- |
 | `use-case-choreography` | Actors and use cases of the choreography NMT and asset | A choreography action, actor, or trust rule changes (`docs/choreography-policies.md` table). |
 | `use-case-participant-license` | Actors and use cases of the role licenses | A participant action or rule changes. |
-| `sequence-deploy-and-mint` | `deploy:asset`, `mintWithInitialModel` | Deploy order, constructor arguments, mint checks. |
+| `sequence-deploy-and-mint` | `deploy:asset`, `mint`, the model contract of a type | Deploy order, constructor arguments, mint checks, asset initialization from the model. |
 | `sequence-apply-delta` | `modify:asset`, `setNodes` with action and domain checks | Asset mutators, policy evaluation order, errors. |
-| `sequence-import-and-render` | `import:asset`, `render:asset`, the off-chain pipeline | Importer, `tokenURI`, renderer, `bpmn-builder-js` stages. |
+| `sequence-import-and-render` | `deploy:asset` (import), `render:asset`, the off-chain pipeline | Importer, model contract, `tokenURI`, renderer, `bpmn-builder-js` stages. |
 | `sequence-role-license-sale` | Role linked to a license, license sale | `ChoreographyParticipantAM`, constrained Creator, participant policies. |
 | `sequence-policy-replacement` | `setMasterSmartPolicy`, `setCreatorSmartPolicy` | Policy variants, administrators, replacement rules. |
 

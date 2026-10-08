@@ -154,10 +154,10 @@ Il layout è deterministico: lo stesso modello produce sempre lo stesso diagramm
 
 | Proprietà | Come è verificata |
 | --- | --- |
-| Il JSON di `tokenURI` riproduce esattamente il modello scritto | `scripts/test-policies.js`: un asset creato con `mintWithInitialModel` viene decodificato da `tokenURI` e confrontato campo per campo con il modello. `nmt.tokenURI(id)` e `asset.tokenURI()` coincidono. |
-| L'escape è corretto | Lo stesso test usa nomi con virgolette, backslash, a capo, tab, lettere accentate e simboli (`Città ✓`). |
+| Il JSON di `tokenURI` riproduce esattamente il modello scritto | `scripts/test-policies.js`: un asset appena coniato, nato con il modello del suo tipo, viene decodificato da `tokenURI` e confrontato campo per campo con il modello. `nmt.tokenURI(id)` e `asset.tokenURI()` coincidono. |
+| L'escape è corretto | Lo stesso test usa un tipo con nomi con virgolette, backslash, a capo, tab, lettere accentate e simboli (`Città ✓`). |
 | Andata e ritorno BPMN → chain → BPMN senza perdite semantiche | Si importa `references/paper-example.bpmn`, lo si scrive on-chain, lo si renderizza, e poi si reimporta il BPMN generato: il dataset ottenuto coincide con l'originale. Lo stesso vale per il modello evoluto con il delta del gateway parallelo, a meno di `conditions: []` contro `[""]`, che sono equivalenti. |
-| Percorso completo | `npm run evaluate:all` e il percorso del README (deploy, import, render, modifica, render). |
+| Percorso completo | `npm run evaluate:all` e il percorso del README (deploy del tipo dal BPMN e mint, render, modifica, render). |
 
 ## Costi
 

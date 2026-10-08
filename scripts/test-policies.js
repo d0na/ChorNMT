@@ -5,6 +5,7 @@ import hre from "hardhat";
 import { resolveEthUsdPrice, scenarioUsd, writeMetrics } from "./evaluation/metrics.js";
 import { decodeTokenURI } from "../bpmn-builder-js/scripts/web3.js";
 import { umlFigure } from "./evaluation/uml.js";
+import { deployChoreographyModel } from "./choreography-model.js";
 
 const GAS_LIMIT = 10_000_000n;
 
@@ -93,14 +94,42 @@ async function main() {
   const creatorPolicy = await creatorFactory.deploy();
   const holderPolicy = await holderFactory.deploy();
   const renderer = await rendererFactory.deploy();
-  await renderer.waitForDeployment();
-  const nmt = await nmtFactory.deploy(await master.getAddress(), await renderer.getAddress());
   await Promise.all([
     master.waitForDeployment(),
     creatorPolicy.waitForDeployment(),
     holderPolicy.waitForDeployment(),
-    nmt.waitForDeployment()
+    renderer.waitForDeployment()
   ]);
+
+  // A ChoreographyNMT is one choreography type: its model is fixed at deploy, and every token is
+  // minted with it. Roles keep only their names; each instance links its accounts with setRoles.
+  const deployChoreographyType = async (model) => {
+    const { address: modelAddress } = await deployChoreographyModel(administrator, model);
+    const typeNmt = await nmtFactory.deploy(master.target, renderer.target, modelAddress);
+    await typeNmt.waitForDeployment();
+    return typeNmt;
+  };
+  const roles = ["Buyer", "Supplier"];
+  const roleAddresses = [administrator.address, eligibleHolder.address];
+  const unassignedRoles = roles.map(() => ethers.ZeroAddress);
+  const initialModel = {
+    roleNames: roles,
+    roleAddresses: unassignedRoles,
+    names: ["Start", "Delivery", "End"],
+    nodeTypes: [0, 2, 1],
+    incoming: [[], ["Start"], ["Delivery"]],
+    outgoing: [["Delivery"], ["End"], []],
+    conditions: [[], [], []],
+    initiatorRoles: ["", "Buyer", ""],
+    participantRoles: ["", "Supplier", ""],
+    initiatingMessages: ["", "requestDelivery", ""],
+    returnMessages: ["", "deliveryConfirmed", ""]
+  };
+  const nmt = await deployChoreographyType(initialModel);
+  await assert.rejects(
+    nmtFactory.deploy(master.target, renderer.target, administrator.address),
+    "a choreography type needs a model contract"
+  );
 
   const nmtAddress = await nmt.getAddress();
   const creatorPolicyAddress = await creatorPolicy.getAddress();
@@ -115,22 +144,12 @@ async function main() {
   const [assetAddress] = await nmt.mint.staticCall(...mintArguments);
   report.push(await expectAllowed("authorized creator mints eligible holder", () => nmt.mint(...mintArguments)));
 
+  // The asset is born with the model of its type.
   const asset = await ethers.getContractAt("ChoreographyMutableAsset", assetAddress);
-  const roles = ["Buyer", "Supplier"];
-  const roleAddresses = [administrator.address, eligibleHolder.address];
-  const initialModel = {
-    roleNames: roles,
-    roleAddresses,
-    names: ["Start", "Delivery", "End"],
-    nodeTypes: [0, 2, 1],
-    incoming: [[], ["Start"], ["Delivery"]],
-    outgoing: [["Delivery"], ["End"], []],
-    conditions: [[], [], []],
-    initiatorRoles: ["", "Buyer", ""],
-    participantRoles: ["", "Supplier", ""],
-    initiatingMessages: ["", "requestDelivery", ""],
-    returnMessages: ["", "deliveryConfirmed", ""]
-  };
+  const mintedTokenURI = await nmt.tokenURI(BigInt(assetAddress));
+  assert.equal(await asset.tokenURI(), mintedTokenURI);
+  assert.deepEqual(modelFromTokenURI(mintedTokenURI), initialModel);
+
   report.push(await expectAllowed("creator and holder update roles", () => asset.setRoles(roles, roleAddresses)));
   report.push(await expectAllowed(
     "creator and holder update nodes",
@@ -146,20 +165,7 @@ async function main() {
       initialModel.returnMessages
     )
   ));
-
-  const [initializedAssetAddress] = await nmt.mintWithInitialModel.staticCall(
-    ...mintArguments,
-    initialModel
-  );
-  report.push(await expectAllowed(
-    "authorized creator mints initialized model",
-    () => nmt.mintWithInitialModel(...mintArguments, initialModel)
-  ));
-  const initializedAsset = await ethers.getContractAt("ChoreographyMutableAsset", initializedAssetAddress);
-  assert.deepEqual(Array.from(await initializedAsset.getNodeNames()), initialModel.names);
-  const initializedTokenURI = await nmt.tokenURI(BigInt(initializedAssetAddress));
-  assert.equal(await initializedAsset.tokenURI(), initializedTokenURI);
-  assert.deepEqual(modelFromTokenURI(initializedTokenURI), initialModel);
+  assert.deepEqual(modelFromTokenURI(await nmt.tokenURI(BigInt(assetAddress))), { ...initialModel, roleAddresses });
 
   const escapedModel = {
     ...initialModel,
@@ -171,18 +177,10 @@ async function main() {
     initiatorRoles: ["", 'Buyer "B"', ""],
     participantRoles: ["", "Supplier\\S", ""]
   };
-  const [escapedAssetAddress] = await nmt.mintWithInitialModel.staticCall(...mintArguments, escapedModel);
-  await (await nmt.mintWithInitialModel(...mintArguments, escapedModel)).wait();
-  assert.deepEqual(modelFromTokenURI(await nmt.tokenURI(BigInt(escapedAssetAddress))), escapedModel);
-
-  const emptyThenImportGas =
-    gasFor(report, "authorized creator mints eligible holder") +
-    gasFor(report, "creator and holder update roles") +
-    gasFor(report, "creator and holder update nodes");
-  const initializedMintGas = gasFor(report, "authorized creator mints initialized model");
-  console.log(
-    `Initial model gas: mint then import=${emptyThenImportGas}, mintWithInitialModel=${initializedMintGas}, saving=${emptyThenImportGas - initializedMintGas}`
-  );
+  const escapedNmt = await deployChoreographyType(escapedModel);
+  const [escapedAssetAddress] = await escapedNmt.mint.staticCall(...mintArguments);
+  await (await escapedNmt.mint(...mintArguments)).wait();
+  assert.deepEqual(modelFromTokenURI(await escapedNmt.tokenURI(BigInt(escapedAssetAddress))), escapedModel);
 
   // Creator constraints are hardcoded: the constrained assets are minted with the test-scenario
   // Creator policy, which reads role licenses through the participant attribute manager.
@@ -213,13 +211,10 @@ async function main() {
   await scenarioCreatorPolicy.waitForDeployment();
   const constrainedMintArguments = [administrator.address, scenarioCreatorPolicy.target, holderPolicyAddress];
 
-  const [constrainedAssetAddress] = await nmt.mintWithInitialModel.staticCall(
-    ...constrainedMintArguments,
-    initialModel
-  );
+  const [constrainedAssetAddress] = await nmt.mint.staticCall(...constrainedMintArguments);
   report.push(await expectAllowed(
     "authorized creator mints with the test-scenario creator policy",
-    () => nmt.mintWithInitialModel(...constrainedMintArguments, initialModel)
+    () => nmt.mint(...constrainedMintArguments)
   ));
   const constrainedAsset = await ethers.getContractAt(
     "ChoreographyMutableAsset",
@@ -344,6 +339,11 @@ async function main() {
     "creator policy allows unprotected role update",
     () => constrainedAsset.setRoles(["Supplier"], [ineligibleHolder.address])
   ));
+  // A protected role is assigned once: the instance is born without its account.
+  report.push(await expectAllowed(
+    "creator policy allows the first assignment of a protected role",
+    () => constrainedAsset.setRoles(["Buyer"], [administrator.address])
+  ));
   report.push(await expectDenied(
     "creator policy denies protected role update",
     administrator,
@@ -418,15 +418,20 @@ async function main() {
   const carrierModel = {
     ...initialModel,
     roleNames: ["Buyer", "Supplier", "Carrier"],
-    roleAddresses: [administrator.address, eligibleHolder.address, ethers.ZeroAddress],
+    roleAddresses: [ethers.ZeroAddress, ethers.ZeroAddress, ethers.ZeroAddress],
     participantRoles: ["", "Carrier", ""]
   };
-  const [carrierAssetAddress] = await nmt.mintWithInitialModel.staticCall(...constrainedMintArguments, carrierModel);
+  const carrierNmt = await deployChoreographyType(carrierModel);
+  const [carrierAssetAddress] = await carrierNmt.mint.staticCall(...constrainedMintArguments);
   report.push(await expectAllowed(
     "authorized creator mints a model whose Carrier role requires a SpecialCarrier license",
-    () => nmt.mintWithInitialModel(...constrainedMintArguments, carrierModel)
+    () => carrierNmt.mint(...constrainedMintArguments)
   ));
   const carrierAsset = await ethers.getContractAt("ChoreographyMutableAsset", carrierAssetAddress);
+  report.push(await expectAllowed(
+    "holder assigns the accounts of the new instance",
+    () => carrierAsset.setRoles(roles, roleAddresses)
+  ));
   const setRoleTransaction = (role, account) => ({
     to: carrierAssetAddress,
     data: carrierAsset.interface.encodeFunctionData("setRoles", [[role], [account]])
@@ -485,7 +490,7 @@ async function main() {
   // The sold license still meets the role requirement: relinking it is allowed.
   await carrierAsset.setRoles.staticCall(["Carrier"], [carrierLicense.target]);
   assert.deepEqual(
-    modelFromTokenURI(await nmt.tokenURI(BigInt(carrierAssetAddress))),
+    modelFromTokenURI(await carrierNmt.tokenURI(BigInt(carrierAssetAddress))),
     { ...carrierModel, roleAddresses: [administrator.address, eligibleHolder.address, carrierLicense.target] }
   );
   // The sale clears the seller's organization data and keeps the messages, marked with their writer.

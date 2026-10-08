@@ -14,7 +14,7 @@ npm run compile && npm run check:size
 ETH_USD_PRICE=3000 npm test 2>&1 | tee <scratchpad>/gas-before.txt
 ```
 
-For changes to import/modify paths, also run the paper flow (`local-flow` skill) and keep the gas lines printed by `deploy:asset`, `import:asset`, and `modify:asset`. Save outputs in the scratchpad, not in the repo.
+For changes to import/modify paths, also run the paper flow (`local-flow` skill) and keep the gas lines printed by `deploy:asset` and `modify:asset`. Save outputs in the scratchpad, not in the repo.
 
 ## 2. Change
 
@@ -30,7 +30,7 @@ Rerun the same commands and compare per operation:
 | Operation | Before | After | Δ | Δ % |
 | --- | --- | --- | --- | --- |
 
-Include deploy of each contract, mint (empty and `mintWithInitialModel`), `setRoles`, `setNodes` (import and delta), and the denied cases the change touches. Also report `check:size` for `ChoreographyNMT` and `ParticipantNMT`.
+Include deploy of each contract, the model contract of a type, mint, `setRoles`, `setNodes` (delta), and the denied cases the change touches. Also report `check:size` for `ChoreographyNMT` and `ParticipantNMT`.
 
 ## 4. Decide
 

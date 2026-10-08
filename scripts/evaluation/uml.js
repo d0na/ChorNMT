@@ -12,12 +12,12 @@ export const UML_DIAGRAMS = {
     explains: "the license rows: issuing, declaring messages, updating organization data, selling, linking a role"
   },
   "sequence-deploy-and-mint": {
-    title: "Deploy and mint with an initial model",
-    explains: "the deployment rows and the empty versus populated mint comparison"
+    title: "Deploy a choreography type and mint an instance",
+    explains: "the deployment rows, the model contract of the type, and the mint of an instance born with that model"
   },
   "sequence-import-and-render": {
     title: "Import and render",
-    explains: "the import phase (setRoles, setNodes) and the render phases, which read the asset with one tokenURI call and cost no gas"
+    explains: "the import of the BPMN into the model of the type and the render phases, which read the asset with one tokenURI call and cost no gas"
   },
   "sequence-apply-delta": {
     title: "Apply a BPMN delta",

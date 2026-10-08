@@ -50,7 +50,7 @@ The order follows the Solidity style guide:
 | Internal/private function | `_camelCase` | `_setNodes`, `_addressAt` |
 | State variable (any visibility) | `camelCase`, no underscore | `descriptor`, `participantType` |
 | Constant | `UPPER_SNAKE_CASE` | `SET_NODES`, `RUNTIME_LIMIT` |
-| Selector constant | the function name in `UPPER_SNAKE_CASE` | `MINT_WITH_INITIAL_MODEL` for `mintWithInitialModel(...)` |
+| Selector constant | the function name in `UPPER_SNAKE_CASE` | `SET_MASTER_SMART_POLICY` for `setMasterSmartPolicy(...)` |
 | Constructor parameter | `<name>Address` for addresses | `masterSmartPolicyAddress` |
 | Setter parameter that shadows a state variable | `<name>Value` | `participantTypeValue` |
 | Event | `<Thing>Changed`, or a past-tense verb for one-off facts | `NodesChanged`, `ChoreographyInitialized` |
@@ -64,12 +64,13 @@ The order follows the Solidity style guide:
 
 - `address public masterSmartPolicy`, declared in the base `NMT` — required, non-zero, checked in the base constructor (`NMT(masterSmartPolicyAddress)`). It is storage, not `immutable`, because it is replaceable: `setMasterSmartPolicy(address)` is `evaluatedByMaster` with the current Master, rejects the zero address, and emits `MasterSmartPolicyChanged`. Concrete Tokens do not redeclare it.
 - Other immutables for stateless collaborators (e.g. `tokenURIRenderer`), non-zero.
+- A domain Token whose assets start from a fixed model holds the address of that model as an `immutable` (e.g. `ChoreographyNMT.model`, a data-only SSTORE2 contract), checked to have code: the Token is then one type of asset, not a generic container.
 - No domain data and no version registry: the model lives in the asset, and its history is the chain itself (transactions and events).
 
 **Public functions**
 
 - `mint(to, creatorSmartPolicy, holderSmartPolicy)` is defined once in the base `NMT`, `evaluatedByMaster(abi.encodeWithSignature("mint(address,address,address)", ...), address(this))`.
-- Every other minting entry point (`mintWith…`) is `evaluatedByMaster` with its exact signature, then calls the internal `_mint`.
+- Every other minting entry point (e.g. `ParticipantNMT.mintWithParticipantType`) is `evaluatedByMaster` with its exact signature, then calls the internal `_mint`. A Token whose assets need data at birth passes it to the asset constructor in `_mint` (e.g. the model address), not as a mint argument.
 - `transferFrom(from, to, tokenId)` is defined once in the base `NMT`: `evaluatedByMaster(abi.encodeWithSignature("transferFrom(address,address)", from, to), getMutableAssetAddress(tokenId))`, then the asset's Creator check, then the ERC-721 transfer.
 - `tokenURI(tokenId)` calls `_requireOwned(tokenId)`, then delegates: to the renderer, or to the asset.
 
@@ -128,7 +129,7 @@ function _evaluateThingUpdate(T calldata value) private view {
   - `onlyHolder` only: `setHolderSmartPolicy`.
 - The action passed to the policies is `msg.data` (see [Gas](#gas)). The policies' selector constants use the exact canonical signature, with enums as `uint8` and structs as tuples. The asset mutators pass `msg.data`; the NMT mutators still re-encode with `abi.encodeWithSignature` and the same signature string (remaining part of G2).
 - No logic between the policy check and the private setter, except the domain check.
-- One-shot initialization by the Token is a separate function guarded by `onlyNMT` that calls the same private setters (trusted path; no policy evaluation).
+- Initialization at birth happens in the constructor, which calls the same private setters (trusted path; no policy evaluation): `ChoreographyMutableAsset` decodes the model contract of its type (`abi.decode(model.code, (InitialModel))`) and emits `ChoreographyInitialized(model)`.
 
 **Public view functions**
 
@@ -201,7 +202,7 @@ The cost of the whole flow is measured, not estimated: `npm test` and `npm run e
 
 **Structural rules**
 
-- Public mutators that only the outside world calls are `external` with `calldata` parameters; `memory` only where the function is also called internally, or where calldata arrays exceed the stack: `setNodes` (nine dynamic arrays, two stack slots each in calldata) and, sharing `_setRoles` with `initializeChoreography`, `setRoles` keep `memory`.
+- Public mutators that only the outside world calls are `external` with `calldata` parameters; `memory` only where the function is also called internally, or where calldata arrays exceed the stack: `setNodes` (nine dynamic arrays, two stack slots each in calldata) and, sharing `_setRoles` with the constructor, `setRoles` keep `memory`.
 - Pass `msg.data` to the policies as the action instead of re-encoding the arguments with `abi.encodeWithSignature`: for an external call they are byte-identical, and re-encoding large arrays (e.g. in `setNodes`) is paid on every call. The selector constants in the policies stay the contract between asset and policy.
 - Policy `evaluate` and domain evaluations read only what they need: the selector and, at fixed offsets, the static arguments. Do not decode dynamic arrays a decision does not use.
 - Keep loops over storage in the contract that owns the storage; avoid one external call per element (e.g. counting all nodes from a policy on every update). Prefer counters maintained by the private setters when a policy needs totals.
@@ -217,13 +218,14 @@ The cost of the whole flow is measured, not estimated: `npm test` and `npm run e
 
 | # | Change | Affected cost | Expected effect |
 | --- | --- | --- | --- |
-| G1 | Deploy assets as EIP-1167 minimal-proxy clones of one implementation, with an `initialize` guarded by `onlyNMT`, instead of `new`. | Every mint; Token size. | Mint drops from a full asset deployment to a clone plus initialization; the Token no longer embeds the Asset bytecode, which removes the 24 KB constraint. Requires replacing `immutable nmt` and the constructor with initializer state. |
-| G2 | Use `msg.data` as the policy action in the NMT mutators (`mint`, `mintWithInitialModel`, `transferFrom`, `setMasterSmartPolicy`); done for the asset mutators. | Every NMT call. | Removes re-encoding of every array argument on each call. Safe only while the policies read the selector or fixed-offset static arguments: a caller can send non-canonical ABI encoding, so a policy that decodes dynamic arguments from the action must use `abi.decode`, not offsets. |
-| G3 | `external` + `calldata` for the NMT `mint…` functions; the asset mutators are `external` (see the stack note above). | NMT calls. | Avoids copying arguments to memory. |
+| G1 | Deploy assets as EIP-1167 minimal-proxy clones of one implementation, with an `initialize(model)` guarded by `onlyNMT`, instead of `new` and the constructor initialization. | Every mint; Token size. | Mint drops from a full asset deployment to a clone plus initialization; the Token no longer embeds the Asset bytecode, which removes the 24 KB constraint. Requires replacing `immutable nmt` and the constructor with initializer state. |
+| G2 | Use `msg.data` as the policy action in the NMT mutators (`mint`, `transferFrom`, `setMasterSmartPolicy`); done for the asset mutators. | Every NMT call. | Removes re-encoding of every array argument on each call. Safe only while the policies read the selector or fixed-offset static arguments: a caller can send non-canonical ABI encoding, so a policy that decodes dynamic arguments from the action must use `abi.decode`, not offsets. |
+| G3 | `external` + `calldata` for the NMT mint functions; the asset mutators are `external` (see the stack note above). | NMT calls. | Avoids copying arguments to memory. |
 | G5 | Keep task and sequence-flow counters in the asset, updated by `_setNodes`, and expose them to the Creator policy. | `setNodes` with a configured Creator policy. | Replaces the O(N) `_currentCounts` scan of external calls. |
 | G6 | Copy `incoming`/`outgoing`/`conditions` arrays with a single assignment where the compiler supports it, instead of `delete` + `push` loops. | `setNodes`, import. | Fewer storage-length writes; measure first. |
 | G7 | Emit `NodesChanged`/`RolesChanged` with counts or hashes instead of full name arrays. | `setNodes`, `setRoles`. | Smaller log data cost. Check off-chain consumers first. |
 | G8 | Tune optimizer `runs` for the flow's call pattern (deploy-heavy vs. call-heavy). | All. | Lower `runs` favours deployment, higher favours calls; pick from measurements. |
+| G9 | Store the model of a choreography type with a compact encoding instead of `abi.encode`, which pads every string and length to 32 bytes (the paper model takes 11,136 bytes). | Model contract deploy (about 200 gas per byte); every mint (decoding). | Smaller model contract and a larger model under the 24,576-byte limit, at the cost of a custom decoder in the asset, which the Token embeds. |
 
 ## Known deviations
 

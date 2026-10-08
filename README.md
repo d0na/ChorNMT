@@ -1,6 +1,6 @@
 # ChorNMT
 
-ChorNMT imports a BPMN choreography into a local NMT asset, allows its nodes to be changed on-chain, and regenerates BPMN from the configuration stored in that asset.
+ChorNMT turns a BPMN choreography into a choreography type on-chain: a `ChoreographyNMT` whose instances are mutable assets born with that model. It allows the nodes of an instance to be changed on-chain under smart policies, and regenerates BPMN from the configuration stored in that asset.
 
 The main path uses `paper-example`: a logistics choreography involving a buyer, manufacturer, intermediary, supplier, and special carrier. The repository also includes `parallel-gateway-example`, a small model used for technical demonstrations of parallel splits and joins.
 
@@ -16,33 +16,27 @@ npm install
 (cd bpmn-builder-js && npm install)
 ```
 
-## Main path: import, render, modify, and render the paper example
+## Main path: deploy, render, modify, and render the paper example
 
-Before importing, open two terminals in the repository root. In the first, start the local operations environment (it compiles contracts and starts the blockchain):
+Open two terminals in the repository root. In the first, start the local operations environment (it compiles contracts and starts the blockchain):
 
 ```bash
 npm run start:operations
 ```
 
-In the second terminal, deploy a new asset and copy the printed `ChoreographyMutableAsset` address:
+### 1. Deploy the choreography type and mint an instance
+
+In the second terminal, import the source BPMN and deploy its choreography type, then copy the printed `ChoreographyMutableAsset` address:
 
 ```bash
-npm run deploy:asset
+npm run deploy:asset -- references/paper-example.bpmn
 ```
 
-Use that exact value in every `<asset-address>` placeholder below; all commands must target the same asset.
-
-### 1. Import
-
-Convert the source BPMN into NMT and store that dataset in the asset:
-
-```bash
-npm run import:asset -- <asset-address> references/paper-example.bpmn
-```
+The command converts the BPMN into an NMT dataset (`bpmn-builder-js/example/input/paper-example.nmt.json`), stores it as the model of the type (the code of a data-only contract), deploys the `ChoreographyNMT` that fixes that model, mints an instance born with it, and links its roles to local accounts. Use the printed address in every `<asset-address>` placeholder below; all commands must target the same asset.
 
 ### 2. Render the baseline
 
-Render BPMN from the imported data stored on-chain:
+Render BPMN from the model stored on-chain:
 
 ```bash
 npm run render:asset -- <asset-address> bpmn-builder-js/example/input/paper-example.nmt.json
@@ -84,13 +78,11 @@ Use [scripts/data/paper-example-parallel-transport-preparation.delta.json](scrip
 
 When an edge changes, include both endpoint nodes in the delta with their complete `incoming` and `outgoing` arrays. The asset can add or replace nodes, but it cannot yet permanently remove one.
 
-Node and role names are the contract reference keys. To import another BPMN or start again from a clean asset, run `deploy:asset` again and use the new address: the asset does not clear the names already stored in its lists.
-
-For a trusted fixed template, `ChoreographyNMT.mintWithInitialModel(...)` creates and populates an instance atomically. It avoids the two post-mint import transactions; the policy test compares its gas cost with the empty-asset workflow.
+Node and role names are the contract reference keys. A `ChoreographyNMT` is one choreography type: another BPMN is another type, deployed with `deploy:asset -- <input.bpmn>`, and a clean model is a new instance of the type. The asset does not clear the names already stored in its lists.
 
 The default `CreatorSmartPolicy` has no BPMN constraint. Constraints (task and sequence-flow limits, permitted task names, known flow targets, protected nodes and roles, role licenses) are hardcoded in scenario policies such as `CreatorSmartPolicyPaperScenario`, installed with `setCreatorSmartPolicy` or passed at mint.
 
-Run `npm run evaluate:policies` to measure a fresh model's empty-versus-populated mint cost and the allow/deny cost of Master, Creator, and Holder policy calls. It writes local JSON and Markdown evaluation reports.
+Run `npm run evaluate:policies` to measure the cost of the model contract and of a mint for the paper type, and the allow/deny cost of Master, Creator, and Holder policy calls. It writes local JSON and Markdown evaluation reports.
 
 ## Other examples
 

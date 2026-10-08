@@ -27,9 +27,9 @@ The role licenses that choreography roles link to: the authority (account 9) iss
 
 ## Sequences
 
-### Deploy and mint with an initial model
+### Deploy a choreography type and mint an instance
 
-`deploy:asset` and `mintWithInitialModel`: the Master policy approves the mint, the NMT deploys the asset and initializes it in the same transaction.
+`deploy:asset`: a `ChoreographyNMT` is one choreography type, whose model is fixed at deploy in a data-only contract (SSTORE2). The Master policy approves every mint; the asset is born with the model of the type, and its roles get accounts afterwards with `setRoles`.
 
 ![Deploy and mint](uml/sequence-deploy-and-mint.svg)
 
@@ -41,7 +41,7 @@ The role licenses that choreography roles link to: the authority (account 9) iss
 
 ### Import and render
 
-`import:asset` writes the model; `render:asset` reads it back with one `tokenURI` call and regenerates the BPMN XML off-chain. The pipeline is described in [Rendering](rendering.md).
+`deploy:asset` imports the BPMN into the model contract of a choreography type; `render:asset` reads an instance back with one `tokenURI` call and regenerates the BPMN XML off-chain. The pipeline is described in [Rendering](rendering.md).
 
 ![Import and render](uml/sequence-import-and-render.svg)
 

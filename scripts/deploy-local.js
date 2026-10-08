@@ -1,7 +1,10 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { ContractFactory, JsonRpcProvider, NonceManager, Wallet } from "ethers";
+import { Contract, ContractFactory, JsonRpcProvider, NonceManager, Wallet } from "ethers";
+import { importBpmnToNmt } from "../bpmn-builder-js/scripts/import-bpmn.js";
+import { deployChoreographyModel, modelFromDataset } from "./choreography-model.js";
+import { summarizeNodes, writeMetrics } from "./evaluation/metrics.js";
 import { reportTotalCost, reportTransactionCost } from "./evaluation/transaction-cost.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -11,171 +14,127 @@ const RPC_URL = process.env.RPC_URL || "http://127.0.0.1:8545";
 const DEPLOYER_PRIVATE_KEY =
   process.env.DEPLOYER_PRIVATE_KEY ||
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+const DEFAULT_BPMN = "references/paper-example.bpmn";
 
-export async function deployAsset() {
-  const choreographyNmtArtifact = JSON.parse(
-    await fs.readFile(
-      path.join(
-        __dirname,
-        "..",
-        "artifacts",
-        "contracts",
-        "choreography",
-        "ChoreographyNMT.sol",
-        "ChoreographyNMT.json"
-      ),
-      "utf8"
-    )
-  );
-  const creatorPolicyArtifact = JSON.parse(
-    await fs.readFile(
-      path.join(
-        __dirname,
-        "..",
-        "artifacts",
-        "contracts",
-        "choreography",
-        "CreatorSmartPolicy.sol",
-        "CreatorSmartPolicy.json"
-      ),
-      "utf8"
-    )
-  );
-  const masterPolicyArtifact = JSON.parse(
-    await fs.readFile(
-      path.join(
-        __dirname,
-        "..",
-        "artifacts",
-        "contracts",
-        "choreography",
-        "MasterSmartPolicy.sol",
-        "MasterSmartPolicy.json"
-      ),
-      "utf8"
-    )
-  );
-  const rendererArtifact = JSON.parse(
-    await fs.readFile(
-      path.join(
-        __dirname,
-        "..",
-        "artifacts",
-        "contracts",
-        "choreography",
-        "ChoreographyTokenURIRenderer.sol",
-        "ChoreographyTokenURIRenderer.json"
-      ),
-      "utf8"
-    )
-  );
-  const holderPolicyArtifact = JSON.parse(
-    await fs.readFile(
-      path.join(
-        __dirname,
-        "..",
-        "artifacts",
-        "contracts",
-        "choreography",
-        "HolderSmartPolicy.sol",
-        "HolderSmartPolicy.json"
-      ),
-      "utf8"
-    )
-  );
+async function readArtifact(fileName, contractName = fileName) {
+  return JSON.parse(await fs.readFile(
+    path.join(__dirname, "..", "artifacts", "contracts", "choreography", `${fileName}.sol`, `${contractName}.json`),
+    "utf8"
+  ));
+}
 
-  const provider = new JsonRpcProvider(RPC_URL);
-  const signer = new NonceManager(new Wallet(DEPLOYER_PRIVATE_KEY, provider));
+async function deployContract(signer, fileName, args = []) {
+  const artifact = await readArtifact(fileName);
+  const contract = await new ContractFactory(artifact.abi, artifact.bytecode, signer).deploy(...args);
+  await contract.waitForDeployment();
+  return { contract, receipt: await contract.deploymentTransaction().wait() };
+}
+
+function connect() {
+  return new NonceManager(new Wallet(DEPLOYER_PRIVATE_KEY, new JsonRpcProvider(RPC_URL)));
+}
+
+// Mints an instance of the choreography type, born with the type's model, and links its roles
+// to local accounts 1..n: the model keeps only the role names.
+export async function mintAsset(choreographyNmtAddress, creatorPolicyAddress, holderPolicyAddress, roleNames) {
+  const signer = connect();
   const deployerAddress = await signer.getAddress();
-  const creatorPolicyFactory = new ContractFactory(
-    creatorPolicyArtifact.abi,
-    creatorPolicyArtifact.bytecode,
-    signer
-  );
-  const masterPolicyFactory = new ContractFactory(
-    masterPolicyArtifact.abi,
-    masterPolicyArtifact.bytecode,
-    signer
-  );
-  const holderPolicyFactory = new ContractFactory(
-    holderPolicyArtifact.abi,
-    holderPolicyArtifact.bytecode,
-    signer
-  );
-  const rendererFactory = new ContractFactory(
-    rendererArtifact.abi,
-    rendererArtifact.bytecode,
-    signer
-  );
-  const choreographyNmtFactory = new ContractFactory(
-    choreographyNmtArtifact.abi,
-    choreographyNmtArtifact.bytecode,
-    signer
-  );
+  const nmt = new Contract(choreographyNmtAddress, (await readArtifact("ChoreographyNMT")).abi, signer);
+  const [assetAddress, tokenId] = await nmt.mint.staticCall(deployerAddress, creatorPolicyAddress, holderPolicyAddress);
+  const mintReceipt = await (await nmt.mint(deployerAddress, creatorPolicyAddress, holderPolicyAddress)).wait();
 
-  const masterPolicy = await masterPolicyFactory.deploy();
-  await masterPolicy.waitForDeployment();
-  const masterReceipt = await masterPolicy.deploymentTransaction().wait();
+  const accounts = await signer.provider.send("eth_accounts", []);
+  if (accounts.length < roleNames.length + 1) {
+    throw new Error("Not enough local accounts to assign choreography roles.");
+  }
+  const asset = new Contract(assetAddress, (await readArtifact("ChoreographyMutableAsset")).abi, signer);
+  const rolesReceipt = await (await asset.setRoles(roleNames, roleNames.map((_, index) => accounts[index + 1]))).wait();
 
-  const creatorPolicy = await creatorPolicyFactory.deploy();
-  await creatorPolicy.waitForDeployment();
-  const creatorReceipt = await creatorPolicy.deploymentTransaction().wait();
-
-  const holderPolicy = await holderPolicyFactory.deploy();
-  await holderPolicy.waitForDeployment();
-  const holderReceipt = await holderPolicy.deploymentTransaction().wait();
-
-  const renderer = await rendererFactory.deploy();
-  await renderer.waitForDeployment();
-  const rendererReceipt = await renderer.deploymentTransaction().wait();
-
-  const choreographyNmt = await choreographyNmtFactory.deploy(masterPolicy.target, renderer.target);
-  await choreographyNmt.waitForDeployment();
-  const nmtReceipt = await choreographyNmt.deploymentTransaction().wait();
-
-  const [assetAddress, tokenId] = await choreographyNmt.mint.staticCall(
-    deployerAddress,
-    creatorPolicy.target,
-    holderPolicy.target
-  );
-  const mintTx = await choreographyNmt.mint(
-    deployerAddress,
-    creatorPolicy.target,
-    holderPolicy.target
-  );
-  const mintReceipt = await mintTx.wait();
-
-  console.log(`ChoreographyNMT deployed to: ${choreographyNmt.target}`);
-  console.log(`MasterSmartPolicy deployed to: ${masterPolicy.target}`);
-  console.log(`CreatorSmartPolicy deployed to: ${creatorPolicy.target}`);
-  console.log(`HolderSmartPolicy deployed to: ${holderPolicy.target}`);
-  console.log(`ChoreographyTokenURIRenderer deployed to: ${renderer.target}`);
-  console.log(`ChoreographyMutableAsset minted at: ${assetAddress}`);
-  console.log(`Token ID: ${tokenId}`);
-  const costs = [
-    reportTransactionCost("Deploy MasterSmartPolicy", masterReceipt),
-    reportTransactionCost("Deploy CreatorSmartPolicy", creatorReceipt),
-    reportTransactionCost("Deploy HolderSmartPolicy", holderReceipt),
-    reportTransactionCost("Deploy ChoreographyTokenURIRenderer", rendererReceipt),
-    reportTransactionCost("Deploy ChoreographyNMT", nmtReceipt),
-    reportTransactionCost("Mint ChoreographyMutableAsset", mintReceipt)
-  ];
-  const totalCost = reportTotalCost(costs);
   return {
     assetAddress,
     tokenId,
-    choreographyNmtAddress: choreographyNmt.target,
-    masterPolicyAddress: masterPolicy.target,
-    creatorPolicyAddress: creatorPolicy.target,
-    holderPolicyAddress: holderPolicy.target,
-    rendererAddress: renderer.target,
+    costs: [
+      reportTransactionCost("Mint ChoreographyMutableAsset", mintReceipt),
+      reportTransactionCost("setRoles", rolesReceipt)
+    ]
+  };
+}
+
+// Deploys a choreography type from a BPMN model (policies, renderer, the model contract, and its
+// ChoreographyNMT) and mints one instance.
+export async function deployAsset(bpmnPath = DEFAULT_BPMN, outputPath) {
+  const startedAt = performance.now();
+  const { dataset, outputPath: nmtPath } = await importBpmnToNmt(bpmnPath, outputPath);
+  const importedAt = performance.now();
+
+  const signer = connect();
+  const master = await deployContract(signer, "MasterSmartPolicy");
+  const creator = await deployContract(signer, "CreatorSmartPolicy");
+  const holder = await deployContract(signer, "HolderSmartPolicy");
+  const renderer = await deployContract(signer, "ChoreographyTokenURIRenderer");
+  const model = await deployChoreographyModel(signer, modelFromDataset(dataset));
+  const choreographyNmt = await deployContract(signer, "ChoreographyNMT", [
+    master.contract.target,
+    renderer.contract.target,
+    model.address
+  ]);
+  const deployedAt = performance.now();
+  const instance = await mintAsset(choreographyNmt.contract.target, creator.contract.target, holder.contract.target, dataset.roles);
+  const mintedAt = performance.now();
+
+  console.log(`ChoreographyNMT deployed to: ${choreographyNmt.contract.target}`);
+  console.log(`Choreography model (SSTORE2) deployed to: ${model.address}`);
+  console.log(`MasterSmartPolicy deployed to: ${master.contract.target}`);
+  console.log(`CreatorSmartPolicy deployed to: ${creator.contract.target}`);
+  console.log(`HolderSmartPolicy deployed to: ${holder.contract.target}`);
+  console.log(`ChoreographyTokenURIRenderer deployed to: ${renderer.contract.target}`);
+  console.log(`ChoreographyMutableAsset minted at: ${instance.assetAddress}`);
+  console.log(`Token ID: ${instance.tokenId}`);
+  console.log(`NMT dataset: ${nmtPath}`);
+  const deploymentCosts = [
+    reportTransactionCost("Deploy MasterSmartPolicy", master.receipt),
+    reportTransactionCost("Deploy CreatorSmartPolicy", creator.receipt),
+    reportTransactionCost("Deploy HolderSmartPolicy", holder.receipt),
+    reportTransactionCost("Deploy ChoreographyTokenURIRenderer", renderer.receipt),
+    reportTransactionCost("Deploy choreography model (SSTORE2)", model.receipt),
+    reportTransactionCost("Deploy ChoreographyNMT", choreographyNmt.receipt)
+  ];
+  const costs = [...deploymentCosts, ...instance.costs];
+  const totalCost = reportTotalCost(costs);
+  const metricsPath = await writeMetrics("deploy-asset", {
+    assetAddress: instance.assetAddress,
+    sourceBpmn: bpmnPath,
+    model: summarizeNodes(dataset.nodes, dataset.roles),
+    blockchain: { transactions: costs, total: totalCost },
+    timingsMs: {
+      import: importedAt - startedAt,
+      deploy: deployedAt - importedAt,
+      mint: mintedAt - deployedAt,
+      total: mintedAt - startedAt
+    }
+  });
+  return {
+    assetAddress: instance.assetAddress,
+    tokenId: instance.tokenId,
+    nmtPath,
+    dataset,
+    choreographyNmtAddress: choreographyNmt.contract.target,
+    modelAddress: model.address,
+    masterPolicyAddress: master.contract.target,
+    creatorPolicyAddress: creator.contract.target,
+    holderPolicyAddress: holder.contract.target,
+    rendererAddress: renderer.contract.target,
+    deploymentCosts,
+    mintCosts: instance.costs,
     costs,
-    totalCost
+    totalCost,
+    metricsPath,
+    timingsMs: { import: importedAt - startedAt, deploy: deployedAt - importedAt, mint: mintedAt - deployedAt }
   };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
-  deployAsset().catch((error) => {
+  deployAsset(process.argv[2], process.argv[3]).catch((error) => {
     console.error(error);
     process.exitCode = 1;
   });

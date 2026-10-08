@@ -13,6 +13,7 @@ flowchart LR
   subgraph offchain[Off-chain · JavaScript]
     B[BPMN sorgente] --> I[Importer<br/>import-bpmn.js]
     I --> D[Dataset NMT<br/>.nmt.json]
+    D --> M[choreography-model.js<br/>abi.encode]
     DL[Delta JSON] --> A[apply-asset-delta.js]
     R[Render<br/>web3.js + bpmn-builder-js] --> X[BPMN rigenerato]
   end
@@ -23,13 +24,15 @@ flowchart LR
     HP[HolderSmartPolicy] -->|seconda approvazione| CMA
     TR[ChoreographyTokenURIRenderer] -->|legge| CMA
     NMT -->|tokenURI| TR
+    MC[Contratto modello<br/>SSTORE2] -->|letto al mint| CMA
+    NMT -.->|immutable| MC
   end
-  D -->|setRoles + setNodes| CMA
+  M -->|deploy del codice| MC
   A -->|setRoles + setNodes| CMA
   CMA -->|tokenURI| R
 ```
 
-Il ciclo di vita tipico ha quattro passi: **deploy** di policy, renderer e NMT, e mint di un asset; **import** di un BPMN nell'asset; **modifica** tramite delta JSON; **render** del BPMN dallo stato corrente. Il BPMN rigenerato è una vista: le modifiche passano sempre dall'asset, mai dal file XML. Comandi e formati sono in [Commands and scripts](commands-and-scripts.md) e [BPMN to NMT workflow](bpmn-to-nmt-workflow.md).
+Il ciclo di vita tipico ha quattro passi: **import** di un BPMN nel modello di un tipo di coreografia; **deploy** di policy, renderer, contratto del modello e NMT, e mint di un'istanza che nasce con quel modello; **modifica** tramite delta JSON; **render** del BPMN dallo stato corrente. Il BPMN rigenerato è una vista: le modifiche passano sempre dall'asset, mai dal file XML. Comandi e formati sono in [Commands and scripts](commands-and-scripts.md) e [BPMN to NMT workflow](bpmn-to-nmt-workflow.md).
 
 ## Principi di progetto
 
@@ -177,7 +180,7 @@ tokenId = uint160(address(asset))        asset = address(uint160(tokenId))
 
 ### `ChoreographyNMT`
 
-**A cosa serve:** conia i token di coreografia, crea un `ChoreographyMutableAsset` per ciascuno, fa passare mint e trasferimenti dalla Master policy ed espone `tokenURI`. Master policy, `evaluatedByMaster`, `mint`, `transferFrom` e `setMasterSmartPolicy` stanno nel base `NMT`, condiviso con `ParticipantNMT`.
+**A cosa serve:** rappresenta **un tipo di coreografia**, non un contenitore generico: un'altra coreografia è un altro NMT. Conia i token, cioè le istanze del tipo, crea un `ChoreographyMutableAsset` per ciascuno, fa passare mint e trasferimenti dalla Master policy ed espone `tokenURI`. Master policy, `evaluatedByMaster`, `mint`, `transferFrom` e `setMasterSmartPolicy` stanno nel base `NMT`, condiviso con `ParticipantNMT`.
 
 **Struttura interna:**
 
@@ -185,11 +188,11 @@ tokenId = uint160(address(asset))        asset = address(uint160(tokenId))
 | --- | --- | --- |
 | `masterSmartPolicy` | `address` (nel base `NMT`) | Policy consultata da `evaluatedByMaster` su ogni operazione dell'NMT. Si sostituisce con `setMasterSmartPolicy`, solo se la Master corrente lo consente (al suo `administrator`). |
 | `tokenURIRenderer` | `address immutable` | Contratto che genera i metadati. Si passa al costruttore. |
+| `model` | `address immutable` | Contratto dati (SSTORE2) il cui codice è `abi.encode(InitialModel)`: il modello del tipo. Si passa al costruttore, che rifiuta un indirizzo senza codice. |
 
 | Funzione | Master policy richiede | Effetto |
 | --- | --- | --- |
-| `mint(to, creator, holder)` | creator autorizzato, `to` idoneo | Crea un asset vuoto e il suo token. |
-| `mintWithInitialModel(to, creator, holder, model)` | creator autorizzato, `to` idoneo | Crea l'asset e lo inizializza con `initializeChoreography(model)` nella stessa transazione. |
+| `mint(to, creator, holder)` | creator autorizzato, `to` idoneo | Crea l'asset con `new ChoreographyMutableAsset(nmt, creator, holder, model)`: l'asset nasce con il modello del tipo. Poi conia il token. |
 | `transferFrom(from, to, tokenId)` | `subject == from == holder`, `to` idoneo | Poi l'asset valuta la Creator policy e il token viene trasferito. |
 | `setMasterSmartPolicy(policy)` | chiamante `administrator` della Master corrente; `policy` diversa da zero | Sostituisce la Master: da quel momento decide lei mint e trasferimenti. |
 | `tokenURI(tokenId)` | — (lettura) | Verifica che il token esista e restituisce `renderer.tokenURI(asset)`. |
@@ -198,7 +201,7 @@ Il mint usa `ERC721._mint` e non `_safeMint`: nessuna callback raggiunge il dest
 
 L'NMT non tiene un registro delle versioni: la storia di un modello è la blockchain stessa, cioè le transazioni `setNodes`/`setRoles` e gli eventi `NodesChanged`/`RolesChanged` dell'asset, e uno stato passato si legge interrogando l'asset a un blocco precedente.
 
-**Vincolo di dimensione:** l'NMT contiene il bytecode dell'asset, perché lo crea con `new`. Occupa 20.565 byte su un limite di 24.576. Per questo la generazione del JSON sta in un contratto separato.
+**Vincolo di dimensione:** l'NMT contiene il bytecode dell'asset, perché lo crea con `new`. Occupa 21.440 byte su un limite di 24.576; il modello non sta nell'NMT ma nel contratto dati, che ha un suo limite di 24.576 byte (il paper example ne occupa 11.136). Per questo la generazione del JSON sta in un contratto separato.
 
 ### `ChoreographyMutableAsset`
 
@@ -246,7 +249,9 @@ struct Node {
 
 Gli archi sono salvati **due volte**: `A.outgoing` contiene `B` e `B.incoming` contiene `A`. Il contratto non verifica che i due lati siano coerenti. Per questo un delta che cambia un arco deve includere entrambi i nodi agli estremi.
 
-`InitialModel` è la stessa informazione organizzata "per colonne", come argomento di `mintWithInitialModel`: `roleNames` e `roleAddresses`, più un array per ogni campo di `Node`, tutti della stessa lunghezza.
+`InitialModel` è la stessa informazione organizzata "per colonne", come codice del contratto del modello: `roleNames` e `roleAddresses`, più un array per ogni campo di `Node`, tutti della stessa lunghezza.
+
+**Nascita dell'asset.** Il costruttore riceve, oltre a NMT e policy, l'indirizzo del contratto del modello: legge il codice (`model.code`), lo decodifica come `InitialModel` e scrive ruoli e nodi con `_setRoles` e `_setNodes`, senza controlli strutturali (il modello fa parte del tipo). Emette `ChoreographyInitialized(model)`. I ruoli nascono senza account: l'holder li collega con `setRoles`.
 
 **Scrittura e ordine dei controlli:**
 
@@ -269,7 +274,6 @@ sequenceDiagram
 | --- | --- | --- |
 | `setRoles(names, addresses)` | Creator e Holder, poi `evaluateRoleUpdate` di Creator e Holder | Aggiunge o sovrascrive ruoli. Emette `RolesChanged`. |
 | `setNodes(...)` (9 array paralleli) | Creator e Holder, poi `evaluateNodeUpdate` di Creator e Holder | Aggiunge o sovrascrive nodi completi. Emette `NodesChanged`. |
-| `initializeChoreography(model)` | `onlyNMT` | Scrive ruoli e nodi del modello iniziale senza controlli strutturali: il modello è fidato. Emette `ChoreographyInitialized`. |
 | `tokenURI()` | — | Restituisce `NMT.tokenURI(tokenId)`, lo stesso valore letto dall'NMT. |
 
 | Lettura | Uso |
@@ -299,7 +303,7 @@ Come ogni policy, la Creator rappresenta una policy tradotta da XACML: le regole
 
 `evaluateRoleUpdate` controlla chi può interpretare un ruolo. Rifiuta l'aggiornamento se:
 
-- contiene nomi vuoti o duplicati, o un ruolo protetto;
+- contiene nomi vuoti o duplicati, o un ruolo protetto che ha già un account (un ruolo protetto si assegna una sola volta);
 - crea un ruolo nuovo: si possono solo riassegnare i ruoli esistenti;
 - collega un ruolo con requisito a qualcosa che non è una licenza adatta: `ChoreographyParticipantAM` deve restituire per quell'indirizzo il tipo richiesto, cioè l'indirizzo deve essere un `ParticipantMutableAsset` emesso da `participantNmt` e certificato da `participantCertifier`;
 - fa interpretare due ruoli allo stesso account, quando lo scenario lo richiede. Il controllo usa i ruoli dopo l'aggiornamento.
@@ -328,7 +332,7 @@ Le due policy negano per default: una funzione nuova della licenza resta bloccat
 
 Un transfer azzera la Holder policy della licenza e cancella nome e profilo del venditore; i messaggi restano, con l'indirizzo dell'holder che li ha scritti. Il nuovo holder installa una Holder policy con `setHolderSmartPolicy`, poi aggiorna i propri dati. Il vecchio holder perde ogni diritto sulla licenza. Le qualifiche contano al momento della vendita. Il design completo è in [Participant license design](participant-license-design.md).
 
-Gli script di import e popolamento assegnano ancora ai ruoli gli account del nodo locale. Le licenze le usano per ora `test:policies` e `evaluate:policies`.
+`deploy:asset` assegna ancora ai ruoli gli account del nodo locale. Le licenze le usano per ora `test:policies` e `evaluate:policies`.
 
 ```solidity
 bytes32 public immutable participantType; // tipo del ruolo, fissato al mint
@@ -355,10 +359,10 @@ Il render BPMN usa ancora i nomi dei ruoli come identità dei partecipanti. L'ex
 | Componente | File | Cosa fa |
 | --- | --- | --- |
 | Importer BPMN | `bpmn-builder-js/scripts/import-bpmn.js` | Legge il BPMN con `bpmn-moddle` e produce un dataset NMT: un nodo per elemento di flusso, con nomi al posto degli ID. Riconosce i gateway convergenti (join) e rifiuta gli elementi non supportati. |
-| Popolamento | `scripts/populate-local.js`, `scripts/import-bpmn-asset.js` | Scrive il dataset nell'asset con `setRoles` e `setNodes`. Assegna ai ruoli gli account del nodo locale, in ordine. |
+| Modello del tipo | `scripts/choreography-model.js` | Converte il dataset NMT in `InitialModel` (ruoli senza account), lo codifica ABI e ne fa il deploy come codice di un contratto dati (SSTORE2). |
 | Delta | `scripts/apply-asset-delta.js` | Valida il delta, invia `setRoles` (se il delta ha `roles`) e `setNodes`, poi fa il render, salvo `--no-render`. |
 | Render | `bpmn-builder-js/scripts/web3.js`, `bpmn-builder-js/src/`, `scripts/render-*.js` | Legge `tokenURI` e rigenera il BPMN. Vedi [Rendering](rendering.md). |
-| Deploy | `scripts/deploy-local.js` | Deploya Master, Creator e Holder policy, il renderer e l'NMT, poi conia un asset: sei transazioni. |
+| Deploy | `scripts/deploy-local.js` | Importa il BPMN, deploya Master, Creator e Holder policy, il renderer, il contratto del modello e l'NMT, poi conia un'istanza e ne collega i ruoli agli account locali, in ordine: otto transazioni. |
 | Valutazione | `scripts/evaluation/`, `scripts/test-policies.js` | Misura gas e tempi e verifica la matrice delle policy. Vedi [Evaluation](../evaluation/README.md). |
 
 ### Formati dei dati

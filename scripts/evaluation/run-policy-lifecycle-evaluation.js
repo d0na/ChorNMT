@@ -5,6 +5,7 @@ import hre from "hardhat";
 import { importBpmnToNmt } from "../../bpmn-builder-js/scripts/import-bpmn.js";
 import { resolveEthUsdPrice, scenarioUsd, summarizeNodes, writeMetrics } from "./metrics.js";
 import { umlFigure } from "./uml.js";
+import { deployChoreographyModel, modelFromDataset } from "../choreography-model.js";
 
 const GAS_LIMIT = 1_500_000n;
 
@@ -51,24 +52,12 @@ function markdownTable(results, ethUsdPrice) {
   ];
 }
 
-function toModel(dataset, signers) {
-  if (dataset.roles.length > signers.length) {
-    throw new Error(`The BPMN model needs ${dataset.roles.length} role addresses, but only ${signers.length} signers are available.`);
+// The paper roles are played by accounts 0-4; the participant policies hardcode accounts 5-9.
+function roleAccounts(dataset, signers) {
+  if (dataset.roles.length > 5) {
+    throw new Error(`The BPMN model needs ${dataset.roles.length} role accounts; accounts 5-9 are license organizations.`);
   }
-
-  return {
-    roleNames: dataset.roles,
-    roleAddresses: dataset.roles.map((_, index) => signers[index].address),
-    names: dataset.nodes.map((node) => node.name),
-    nodeTypes: dataset.nodes.map((node) => node.nodeType),
-    incoming: dataset.nodes.map((node) => node.incoming),
-    outgoing: dataset.nodes.map((node) => node.outgoing),
-    conditions: dataset.nodes.map((node) => node.conditions),
-    initiatorRoles: dataset.nodes.map((node) => node.initiatorRole),
-    participantRoles: dataset.nodes.map((node) => node.participantRole),
-    initiatingMessages: dataset.nodes.map((node) => node.initiatingMessage),
-    returnMessages: dataset.nodes.map((node) => node.returnMessage)
-  };
+  return dataset.roles.map((_, index) => signers[index].address);
 }
 
 function toNodeUpdate(nodes) {
@@ -132,7 +121,10 @@ async function main() {
   const renderer = await rendererFactory.deploy();
   await renderer.waitForDeployment();
   deployment.push({ label: "deploy ChoreographyTokenURIRenderer", outcome: "allowed", ...receiptCost(await renderer.deploymentTransaction().wait()) });
-  const nmt = await nmtFactory.deploy(await master.getAddress(), await renderer.getAddress());
+  const model = modelFromDataset(dataset);
+  const { address: modelAddress, receipt: modelReceipt } = await deployChoreographyModel(administrator, model);
+  deployment.push({ label: "deploy paper-example model (SSTORE2)", outcome: "allowed", ...receiptCost(modelReceipt) });
+  const nmt = await nmtFactory.deploy(await master.getAddress(), await renderer.getAddress(), modelAddress);
   await nmt.waitForDeployment();
   deployment.push({ label: "deploy ChoreographyNMT", outcome: "allowed", ...receiptCost(await nmt.deploymentTransaction().wait()) });
 
@@ -140,37 +132,18 @@ async function main() {
   const creatorPolicyAddress = await creatorPolicy.getAddress();
   const holderPolicyAddress = await holderPolicy.getAddress();
   const mintArguments = [administrator.address, creatorPolicyAddress, holderPolicyAddress];
-  const model = toModel(dataset, signers);
   const deltaUpdate = toNodeUpdate(delta.nodes);
   const evolvedNodes = mergeNodes(dataset.nodes, delta.nodes);
   const initialCounts = countNodes(dataset.nodes);
   const evolvedCounts = countNodes(evolvedNodes);
 
-  const strategy = [];
-  const [emptyAssetAddress] = await nmt.mint.staticCall(...mintArguments);
-  await allow(strategy, "mint empty asset", () => nmt.mint(...mintArguments));
-  const emptyAsset = await ethers.getContractAt("ChoreographyMutableAsset", emptyAssetAddress);
-  await allow(strategy, "import roles into empty asset", () => emptyAsset.setRoles(model.roleNames, model.roleAddresses));
-  await allow(
-    strategy,
-    "import nodes into empty asset",
-    () => emptyAsset.setNodes(
-      model.names,
-      model.nodeTypes,
-      model.incoming,
-      model.outgoing,
-      model.conditions,
-      model.initiatorRoles,
-      model.participantRoles,
-      model.initiatingMessages,
-      model.returnMessages
-    )
-  );
-
-  const [populatedAssetAddress] = await nmt.mintWithInitialModel.staticCall(...mintArguments, model);
-  await allow(strategy, "mint asset with initial BPMN", () => nmt.mintWithInitialModel(...mintArguments, model));
+  // Every instance of the type is born with the paper model; its roles get accounts afterwards.
+  const instance = [];
+  const [populatedAssetAddress] = await nmt.mint.staticCall(...mintArguments);
+  await allow(instance, "mint paper-example instance", () => nmt.mint(...mintArguments));
   const populatedAsset = await ethers.getContractAt("ChoreographyMutableAsset", populatedAssetAddress);
   assert.deepEqual(Array.from(await populatedAsset.getNodeNames()), model.names);
+  await allow(instance, "holder assigns the role accounts", () => populatedAsset.setRoles(model.roleNames, roleAccounts(dataset, signers)));
 
   const policyResults = [];
   await deny(policyResults, "master denies unauthorized mint", unauthorizedCreator, {
@@ -348,16 +321,16 @@ async function main() {
   const denyAll = await denyAllFactory.deploy();
   await denyAll.waitForDeployment();
   const denyAllAddress = await denyAll.getAddress();
-  await allow(policyResults, "holder installs restrictive policy", () => emptyAsset.setHolderSmartPolicy(denyAllAddress));
+  const [restrictedAssetAddress] = await nmt.mint.staticCall(...mintArguments);
+  await (await nmt.mint(...mintArguments)).wait();
+  const restrictedAsset = await ethers.getContractAt("ChoreographyMutableAsset", restrictedAssetAddress);
+  await allow(policyResults, "holder installs restrictive policy", () => restrictedAsset.setHolderSmartPolicy(denyAllAddress));
   await deny(policyResults, "holder denies model update", administrator, {
-    to: emptyAssetAddress,
-    data: emptyAsset.interface.encodeFunctionData("setNodes", deltaUpdate)
+    to: restrictedAssetAddress,
+    data: restrictedAsset.interface.encodeFunctionData("setNodes", deltaUpdate)
   });
 
-  const emptyPath = strategy.slice(0, 3);
-  const atomicPath = strategy.slice(3);
-  const emptyPathGas = totalGas(emptyPath);
-  const atomicPathGas = totalGas(atomicPath);
+  const modelDeployment = deployment.find((result) => result.label.startsWith("deploy paper-example model"));
   const summary = {
     model: summarizeNodes(model.names.map((name, index) => ({
       name,
@@ -373,15 +346,15 @@ async function main() {
     initialFlowCount: initialCounts.flows,
     evolvedFlowCount: evolvedCounts.flows,
     deploymentGas: totalGas(deployment).toString(),
-    emptyMintAndImportGas: emptyPathGas.toString(),
-    populatedMintGas: atomicPathGas.toString(),
-    populatedMintSavingGas: (emptyPathGas - atomicPathGas).toString(),
-    populatedMintSavingPercent: ((Number(emptyPathGas - atomicPathGas) / Number(emptyPathGas)) * 100).toFixed(2),
+    modelBytes: ((await ethers.provider.getCode(modelAddress)).length - 2) / 2,
+    modelDeploymentGas: modelDeployment.gasUsed,
+    instanceMintGas: instance[0].gasUsed,
+    roleAssignmentGas: instance[1].gasUsed,
     allowedPolicyGas: totalGas(policyResults.filter((result) => result.outcome === "allowed")).toString(),
     deniedPolicyGas: totalGas(policyResults.filter((result) => result.outcome === "denied")).toString(),
     roleHandover
   };
-  const metricsPath = await writeMetrics("policy-lifecycle", { summary: { ...summary, ethUsdPrice }, deployment, strategy, policyResults });
+  const metricsPath = await writeMetrics("policy-lifecycle", { summary: { ...summary, ethUsdPrice }, deployment, instance, policyResults });
   const markdownPath = path.join(process.cwd(), "evaluation", "policy-lifecycle.generated.md");
   await fs.writeFile(markdownPath, [
     "# Policy lifecycle evaluation",
@@ -432,24 +405,18 @@ async function main() {
     "",
     `The sale resets the license Holder policy and clears the seller's name and profile, so Carrier B installs its own policy before updating the license data, and Carrier A loses every right on it. The messages stay on the license, marked as written by Carrier A, until Carrier B confirms them.`,
     "",
-    "## Mint strategy comparison",
+    "## Choreography type and instances",
     "",
     ...umlFigure("sequence-deploy-and-mint", markdownPath),
-    "| Strategy | Gas | USD @10 gwei | USD @30 gwei | USD @100 gwei |",
-    "| --- | ---: | ---: | ---: | ---: |",
-    `| Empty mint + import | ${summary.emptyMintAndImportGas} | ${scenarioUsd(summary.emptyMintAndImportGas, ethUsdPrice).join(" | ")} |`,
-    `| Populated mint | ${summary.populatedMintGas} | ${scenarioUsd(summary.populatedMintGas, ethUsdPrice).join(" | ")} |`,
-    `| Saving | ${summary.populatedMintSavingGas} (${summary.populatedMintSavingPercent}%) | ${scenarioUsd(summary.populatedMintSavingGas, ethUsdPrice).join(" | ")} |`,
-    "",
-    "Both strategies write the same roles and nodes to storage. The populated mint avoids the two post-mint transactions, but storage writes remain the dominant cost; therefore the gas saving is expected to be modest while atomic creation is the main operational benefit.",
+    `A \`ChoreographyNMT\` is one choreography type. The paper model is deployed once as the code of a data-only contract (SSTORE2, ${summary.modelBytes} bytes, ${summary.modelDeploymentGas} gas), whose address the NMT fixes at deploy; every mint then creates an asset that decodes the model in its constructor and is born populated (${summary.instanceMintGas} gas). Roles keep only their names in the model, so each instance links its accounts or licenses with \`setRoles\` (${summary.roleAssignmentGas} gas), under the Creator AND Holder checks.`,
     "",
     "## Deployment",
     "",
     ...markdownTable(deployment, ethUsdPrice),
     "",
-    "## Mint and import operations",
+    "## Instance operations",
     "",
-    ...markdownTable(strategy, ethUsdPrice),
+    ...markdownTable(instance, ethUsdPrice),
     "",
     "## Policy operations",
     "",
@@ -478,10 +445,9 @@ async function main() {
 
   console.table([
     { metric: "deployment gas", value: summary.deploymentGas },
-    { metric: "empty mint + import gas", value: summary.emptyMintAndImportGas },
-    { metric: "populated mint gas", value: summary.populatedMintGas },
-    { metric: "populated mint saving gas", value: summary.populatedMintSavingGas },
-    { metric: "populated mint saving percent", value: `${summary.populatedMintSavingPercent}%` },
+    { metric: "model deployment gas", value: summary.modelDeploymentGas },
+    { metric: "instance mint gas", value: summary.instanceMintGas },
+    { metric: "role assignment gas", value: summary.roleAssignmentGas },
     { metric: "allowed policy gas", value: summary.allowedPolicyGas },
     { metric: "denied policy gas", value: summary.deniedPolicyGas }
   ]);

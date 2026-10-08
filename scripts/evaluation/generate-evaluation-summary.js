@@ -7,12 +7,12 @@ const reports = [
   {
     title: "Paper workflow evaluation",
     fileName: "experiment-summary.generated.md",
-    description: "BPMN import, render, delta update, full population comparison, and figures."
+    description: "BPMN import, choreography type deployment and mint, render, delta update versus a new instance, and figures."
   },
   {
     title: "Policy lifecycle evaluation",
     fileName: "policy-lifecycle.generated.md",
-    description: "Empty versus populated mint and Master, Creator, and Holder policy outcomes."
+    description: "Model contract and mint costs, and Master, Creator, and Holder policy outcomes."
   },
   {
     title: "Policy integration test results",

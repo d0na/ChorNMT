@@ -14,13 +14,17 @@ Each entry: the decision, why, and what it implies.
 
 **D4. No version registry (2026-10-08).** `mintVersion`, `predecessorOf`, and `versionOf` were removed. *Why:* the chain already keeps the history of a model: the `setNodes`/`setRoles` transactions and the `NodesChanged`/`RolesChanged` events of its asset. *Implies:* a past state is read from the events, or by querying the asset at an earlier block.
 
+**D13. A `ChoreographyNMT` is one choreography type (2026-10-08).** Its model is fixed at deploy: the ABI-encoded `InitialModel` stored as the code of a data-only contract (SSTORE2), whose address the NMT keeps as an `immutable`. `mint` takes no model; `_mint` deploys an asset that decodes the model in its constructor, so every instance is born with it. `mintWithInitialModel` and the empty mint were removed. *Why:* an NMT identifies one choreography, not a generic container; keeping the model outside the NMT avoids the bytecode limit (the NMT embeds the asset), and the caller cannot pass a different model. *Implies:* another choreography, or another starting model, is another NMT; the model contract is read only at birth, and every later change is a delta on the asset; the model must fit 24,576 bytes; the model is part of the type, so it is not checked by the policies. Deploying a type costs the model contract once (2,343,146 gas for the paper example), and each paper instance costs about 310,000 gas less than an empty mint plus import.
+
+**D14. Roles are born without accounts (2026-10-08).** The model keeps only the role names; each instance links its accounts or licenses with `setRoles`. *Why:* who plays a role is a decision of the instance and must pass the Creator AND Holder checks, licenses included. *Implies:* a protected role is assigned once: `setRoles` accepts it only while it has no account.
+
 ## Policies
 
 **D5. Policies stand for XACML translations (2026-10-06).** Rules and their configuration are literals in the policy source, tuned to the test and evaluation scenarios; there are no runtime setters. *Why:* the contribution is the XACML to smart-policy translation, and XACML policies carry no mutable configuration; literals are also the cheapest form. *Implies:* a rule change is a new policy, installed through the policy it replaces; rule variants are separate policy contracts.
 
 **D6. Creator AND Holder on every asset decision (2026-10-06).** Both policies approve every change to an asset, at the action check (`evaluate`) and at the domain check (`evaluateNodeUpdate`, `evaluateRoleUpdate`). *Why:* the Creator sets the outer bounds and the Holder can only restrict further; neither approval can override a denial by the other. *Implies:* a second external call per mutator, kept cheap by a permissive Holder that reads nothing.
 
-**D7. The Master decides only at the NMT level (2026-10-08).** It governs `mint`, `mintWithInitialModel`, `transferFrom`, and its own replacement, never a change to a model. `MasterSmartPolicyFrozen` was removed. *Why:* a model change is an instance decision (D6). *Implies:* freezing an instance is not a Master feature (see the open questions).
+**D7. The Master decides only at the NMT level (2026-10-08).** It governs `mint`, `transferFrom`, and its own replacement, never a change to a model. `MasterSmartPolicyFrozen` was removed. *Why:* a model change is an instance decision (D6). *Implies:* freezing an instance is not a Master feature (see the open questions).
 
 **D8. Default deny (2026-10-06).** Every policy allows an explicit list of actions and returns `false` otherwise. *Why:* a new function must stay blocked until a policy assigns it. *Implies:* `test:policies` checks that every mutator has an explicit decision.
 
