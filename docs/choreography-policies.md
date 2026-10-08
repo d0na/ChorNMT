@@ -13,8 +13,7 @@ The table is the intended trust model with the default policies. Every change to
 | --- | --- | --- | --- | --- | --- |
 | Replace the Master policy of the NMT (`setMasterSmartPolicy`) | yes | no | no | no | no |
 | `mint` / `mintWithInitialModel` to an eligible holder | yes (an authorized creator) | yes | no | no | no |
-| `mintVersion` | yes (an authorized creator) | yes, with any policies | yes, only keeping the predecessor's Creator policy | no | no |
-| `transferFrom` to an eligible holder, unless the frozen Master is installed | no | no | yes | no | no |
+| `transferFrom` to an eligible holder | no | no | yes | no | no |
 | `setNodes` | no | no | yes, within the Creator BPMN constraints | no | no |
 | `setRoles` | no | no | yes, except protected roles and within the Creator role constraints | no | no |
 | `setLinked` | no | no | yes | no | no |
@@ -25,15 +24,15 @@ The table is the intended trust model with the default policies. Every change to
 
 Design decisions behind the table:
 
-- Every policy is replaceable only with the approval of the policy it replaces: the Master by the current Master (its `administrator`), the Creator by the current Creator, the Holder by the holder. A replacement Master governs every later mint, version, and transfer of the NMT; it cannot be the zero address.
+- Every policy is replaceable only with the approval of the policy it replaces: the Master by the current Master (its `administrator`), the Creator by the current Creator, the Holder by the holder. A replacement Master governs every later mint and transfer of the NMT; it cannot be the zero address.
 - The Creator policy is a constraint the Holder cannot remove. `setCreatorSmartPolicy` is evaluated by the current Creator policy only, and the choreography `CreatorSmartPolicy` allows it only to its `administrator`.
-- A new version starts from an empty model; it does not copy nodes or roles from its predecessor. A Holder who is not an authorized creator must reuse the predecessor's Creator policy, so versioning cannot be used to escape the Creator constraints.
+- There is no version registry: the history of a choreography is the chain itself, the `setNodes`/`setRoles` transactions and the `NodesChanged`/`RolesChanged` events of its asset. Who governs transfers, whether the Creator policy stays replaceable, and how an instance is frozen are open questions.
 - The initial model passed to `mintWithInitialModel` is trusted: it comes from an authorized creator and is not checked by `evaluateNodeUpdate`. The constraints apply to every later `setNodes`.
 - A protected node is frozen together with its sequence flows: an update of another node cannot add or remove a link to it, in either `incoming` or `outgoing`, so a protected node cannot be disconnected through its neighbours.
 - A protected role keeps its address: `setRoles` rejects any entry for it. A role with a requirement can be linked only to a participant license (`ParticipantMutableAsset`) of the required type. The organization behind the role changes when the license is sold, not through `setRoles`: see [Role licenses](#role-licenses). Roles referenced by a protected task are not protected implicitly; protect them explicitly when their address must not change.
 - Nodes are never deleted: a node with the same name is overwritten. Roles are currently name-to-address entries that can be overwritten but not removed; the target design identifies participants by `ParticipantMutableAsset` NFTs, which can be destroyed independently of the choreography.
 - A transfer resets the Holder policy to zero. The new Holder must install a Holder policy with `setHolderSmartPolicy` before editing the model.
-- NMT tokens are minted with `_mint`, not `_safeMint`, so no receiver callback runs before an asset is initialized and its version lineage is recorded.
+- NMT tokens are minted with `_mint`, not `_safeMint`, so no receiver callback runs before an asset is initialized.
 
 ## Master policy
 
@@ -41,9 +40,8 @@ The Master stands for a policy translated from XACML, so its configuration is ha
 
 - `mint(...)` requires an authorized creator and an eligible initial holder.
 - `transferFrom(...)` requires the current holder as caller and an eligible receiving holder.
-- `mintVersion(...)` requires an eligible holder for the new instance, and either an authorized creator or the holder of the predecessor instance. A holder who is not an authorized creator must pass the predecessor's Creator policy.
 
-`MasterSmartPolicyFrozen` keeps the same rules but denies every transfer and every new version, without changing existing instances or their history. The administrator installs it to freeze the choreographies and reinstalls `MasterSmartPolicy` to reopen them. `predecessorOf` and `versionOf` on `ChoreographyNMT` expose that history.
+The Master works only at the NMT level: it never decides a change to the model of an asset, which is a Creator AND Holder decision.
 
 ## Atomic initialization
 
@@ -63,11 +61,11 @@ The Master policy authorizes the Creator and initial Holder but does not current
 
 | Route | Gas used |
 | --- | ---: |
-| `mint` + `setRoles` + `setNodes` | 3,670,781 |
-| `mintWithInitialModel` | 3,608,174 |
-| Saving | 62,607 (1.71%) |
+| `mint` + `setRoles` + `setNodes` | 3,513,123 |
+| `mintWithInitialModel` | 3,454,689 |
+| Saving | 58,434 (1.66%) |
 
-The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 407,461 gas and structural deny paths used 141,405--179,611 gas.
+The values are reproducible local gas measurements, not public-network prices. Storage writes dominate both routes, so the saving is modest; atomic creation is the main operational advantage. In the same run, an allowed constrained update used 406,680 gas and structural deny paths used 138,463--176,285 gas.
 
 ## Instance policies
 

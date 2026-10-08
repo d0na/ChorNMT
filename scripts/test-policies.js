@@ -85,13 +85,11 @@ async function main() {
   const holderFactory = await ethers.getContractFactory(
     "contracts/choreography/HolderSmartPolicy.sol:HolderSmartPolicy"
   );
-  const frozenMasterFactory = await ethers.getContractFactory("MasterSmartPolicyFrozen");
   const denyAllFactory = await ethers.getContractFactory("DenyAllSmartPolicy");
   const rendererFactory = await ethers.getContractFactory("ChoreographyTokenURIRenderer");
   const nmtFactory = await ethers.getContractFactory("ChoreographyNMT");
 
   const master = await masterFactory.deploy();
-  const frozenMaster = await frozenMasterFactory.deploy();
   const creatorPolicy = await creatorFactory.deploy();
   const holderPolicy = await holderFactory.deploy();
   const renderer = await rendererFactory.deploy();
@@ -99,7 +97,6 @@ async function main() {
   const nmt = await nmtFactory.deploy(await master.getAddress(), await renderer.getAddress());
   await Promise.all([
     master.waitForDeployment(),
-    frozenMaster.waitForDeployment(),
     creatorPolicy.waitForDeployment(),
     holderPolicy.waitForDeployment(),
     nmt.waitForDeployment()
@@ -593,63 +590,19 @@ async function main() {
     }
   ));
 
-  const [versionAddress, versionTokenId] = await nmt.mintVersion.staticCall(
-    administrator.address,
-    creatorPolicyAddress,
-    holderPolicyAddress,
-    BigInt(assetAddress)
-  );
-  report.push(await expectAllowed(
-    "authorized version evolution",
-    () => nmt.mintVersion(
-      administrator.address,
-      creatorPolicyAddress,
-      holderPolicyAddress,
-      BigInt(assetAddress)
-    )
-  ));
-  assert.equal(await nmt.predecessorOf(versionTokenId), BigInt(assetAddress));
-  assert.equal(await nmt.versionOf(versionTokenId), 1n);
-  assert.notEqual(versionAddress, ethers.ZeroAddress);
-
-  // Master rules are hardcoded: closing versions or transfers means installing the frozen Master.
-  report.push(await expectAllowed(
-    "master administrator installs frozen master policy",
-    () => nmt.setMasterSmartPolicy(frozenMaster.target)
-  ));
-  report.push(await expectDenied(
-    "disabled versioning rejects new versions",
-    administrator,
-    {
-      to: nmtAddress,
-      data: nmt.interface.encodeFunctionData("mintVersion", [
-        administrator.address,
-        creatorPolicyAddress,
-        holderPolicyAddress,
-        BigInt(assetAddress)
-      ])
-    }
-  ));
-
-  report.push(await expectAllowed(
-    "master administrator reinstalls master policy",
-    () => nmt.setMasterSmartPolicy(master.target)
-  ));
   report.push(await expectAllowed(
     "holder transfers to eligible holder",
     () => nmt.transferFrom(administrator.address, eligibleHolder.address, BigInt(assetAddress))
   ));
   assert.equal(await nmt.ownerOf(BigInt(assetAddress)), eligibleHolder.address);
-
-  await (await nmt.setMasterSmartPolicy(frozenMaster.target)).wait();
   report.push(await expectDenied(
-    "disabled transfer policy rejects ownership transfer",
+    "holder cannot transfer to an ineligible holder",
     eligibleHolder,
     {
-      to: await nmt.getAddress(),
+      to: nmtAddress,
       data: nmt.interface.encodeFunctionData("transferFrom", [
         eligibleHolder.address,
-        administrator.address,
+        ineligibleHolder.address,
         BigInt(assetAddress)
       ])
     }
@@ -676,29 +629,6 @@ async function main() {
     () => holderAsset.setCreatorSmartPolicy(creatorPolicyAddress)
   ));
 
-  await (await nmt.setMasterSmartPolicy(master.target)).wait();
-  report.push(await expectDenied(
-    "holder cannot mint version with another creator policy",
-    eligibleHolder,
-    {
-      to: nmtAddress,
-      data: nmt.interface.encodeFunctionData("mintVersion", [
-        eligibleHolder.address,
-        holderPolicyAddress,
-        holderPolicyAddress,
-        BigInt(holderAssetAddress)
-      ])
-    }
-  ));
-  report.push(await expectAllowed(
-    "holder mints version keeping creator policy",
-    () => nmt.connect(eligibleHolder).mintVersion(
-      eligibleHolder.address,
-      creatorPolicyAddress,
-      holderPolicyAddress,
-      BigInt(holderAssetAddress)
-    )
-  ));
   const secondMint = await nmt.mint.staticCall(...mintArguments);
   await (await nmt.mint(...mintArguments)).wait();
   const restrictedAsset = await ethers.getContractAt("ChoreographyMutableAsset", secondMint[0]);
@@ -795,7 +725,7 @@ async function main() {
     "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
     ...report.map((entry) => `| ${entry.label} | ${entry.outcome} | ${entry.gasUsed} | ${entry.costWei} | ${scenarioUsd(entry.gasUsed, ethUsdPrice).join(" | ")} |`),
     "",
-    "The test covers Master mint and eligibility controls, Creator BPMN constraints, role licenses and their sale, Holder restrictions, version evolution, and ownership transfer. Denied rows are reverted transactions with receipts, not simulated calls.",
+    "The test covers Master mint and eligibility controls, Creator BPMN constraints, role licenses and their sale, Holder restrictions, Master replacement, and ownership transfer. Denied rows are reverted transactions with receipts, not simulated calls.",
     ""
   ].join("\n"));
   console.log(`Policy test metrics: ${metricsPath}`);

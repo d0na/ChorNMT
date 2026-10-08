@@ -5,7 +5,7 @@ import path from "node:path";
 export const UML_DIAGRAMS = {
   "use-case-choreography": {
     title: "Choreography use cases",
-    explains: "who may mint, version, transfer, edit, and replace policies: the actors behind every allowed and denied row"
+    explains: "who may mint, transfer, edit, and replace policies: the actors behind every allowed and denied row"
   },
   "use-case-participant-license": {
     title: "Participant license use cases",

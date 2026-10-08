@@ -8,10 +8,6 @@ import "./ChoreographyTokenURIRenderer.sol";
 
 contract ChoreographyNMT is NMT {
     address public immutable tokenURIRenderer;
-    mapping(uint256 => uint256) public predecessorOf;
-    mapping(uint256 => uint256) public versionOf;
-
-    error UnknownPredecessor();
 
     constructor(address masterSmartPolicyAddress, address tokenURIRendererAddress)
         ERC721(
@@ -22,38 +18,6 @@ contract ChoreographyNMT is NMT {
     {
         if (tokenURIRendererAddress == address(0)) revert InvalidAddress();
         tokenURIRenderer = tokenURIRendererAddress;
-    }
-
-    function mintVersion(
-        address to,
-        address creatorSmartPolicy,
-        address holderSmartPolicy,
-        uint256 predecessorTokenId
-    )
-        public
-        evaluatedByMaster(
-            abi.encodeWithSignature(
-                "mintVersion(address,address,address,uint256)",
-                to,
-                creatorSmartPolicy,
-                holderSmartPolicy,
-                predecessorTokenId
-            ),
-            getMutableAssetAddress(predecessorTokenId)
-        )
-        returns (address, uint256)
-    {
-        if (_ownerOf(predecessorTokenId) == address(0)) revert UnknownPredecessor();
-
-        (address assetAddress, uint256 tokenId) = _mint(
-            to,
-            creatorSmartPolicy,
-            holderSmartPolicy
-        );
-        predecessorOf[tokenId] = predecessorTokenId;
-        versionOf[tokenId] = versionOf[predecessorTokenId] + 1;
-
-        return (assetAddress, tokenId);
     }
 
     function mintWithInitialModel(

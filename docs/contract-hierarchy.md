@@ -35,7 +35,7 @@ NMT (ERC721Enumerable)
 
 ```text
 ChoreographyNMT : NMT
-  - evaluates version and initial-model mints with MasterSmartPolicy
+  - evaluates initial-model mints with MasterSmartPolicy
   - deploys ChoreographyMutableAsset on mint
   - can initialize an asset atomically with mintWithInitialModel
 
@@ -48,7 +48,7 @@ ChoreographyMutableAsset : MutableAsset
   - asks its Creator AND Holder policy (IChoreographyPolicy) to validate every node and role update
 
 MasterSmartPolicy  : SmartPolicy
-  - hardcoded creators and holders; MasterSmartPolicyFrozen also denies transfers and versions
+  - hardcoded creators and holders
 CreatorSmartPolicy : SmartPolicy
   - authorizes editors; no BPMN constraint (hardcoded, administrator = account 0)
 ConstrainedCreatorSmartPolicy : CreatorSmartPolicy (abstract)
@@ -115,7 +115,7 @@ flowchart TD
   NMT --> PNMT
 
   CNMT -- mints --> CMA
-  CNMT -. evaluates mint/transfer/version .-> CMSP
+  CNMT -. evaluates mint/transfer .-> CMSP
   PNMT -- mints --> PMA
 
   CMA -. evaluatedBySmartPolicies .-> CCSP

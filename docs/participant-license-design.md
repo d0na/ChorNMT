@@ -104,4 +104,4 @@ These figures are estimates; the implementation will report measured gas as requ
 
 ## Follow-ups (separate changes)
 
-- **Choreography policies:** the no-setter rule is general; the setters of the choreography policies became deviation 14, since fixed: the choreography Master and Creator are hardcoded, with variants as separate policies (`MasterSmartPolicyFrozen`, `CreatorSmartPolicyTestScenario`, `CreatorSmartPolicyPaperScenario`).
+- **Choreography policies:** the no-setter rule is general; the setters of the choreography policies became deviation 14, since fixed: the choreography Master and Creator are hardcoded, with variants as separate policies (`CreatorSmartPolicyTestScenario`, `CreatorSmartPolicyPaperScenario`).

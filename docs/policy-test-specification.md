@@ -50,10 +50,9 @@ accounts.
 | Control | Hardcoded rule | Enforced action | Expected effect |
 | --- | --- | --- | --- |
 | Administrator | account 0 | `setMasterSmartPolicy` | Only the authority replaces the Master. |
-| Authorized Creator | account 0 | `mint`, `mintWithInitialModel`, `mintVersion` | Only approved organizations can create instances. |
-| Eligible Holder | accounts 0 and 1 | mint, transfer, version mint | An instance can only be assigned to an approved Holder. |
-| Frozen Master | `MasterSmartPolicyFrozen`, installed with `setMasterSmartPolicy` | `transferFrom`, `mintVersion` | Denies ownership transfers and new versions while retaining instances and history; reinstalling `MasterSmartPolicy` reopens them. |
-| Master replacement | `setMasterSmartPolicy(address)` on the NMT, allowed by the current Master to its administrator | every later NMT action | The new Master governs every later mint, version, and transfer; the zero address is rejected. |
+| Authorized Creator | account 0 | `mint`, `mintWithInitialModel` | Only approved organizations can create instances. |
+| Eligible Holder | accounts 0 and 1 | mint, transfer | An instance can only be assigned to an approved Holder. |
+| Master replacement | `setMasterSmartPolicy(address)` on the NMT, allowed by the current Master to its administrator | every later NMT action | The new Master governs every later mint and transfer; the zero address is rejected. |
 
 Both NMTs inherit the Master policy from the base `NMT`. The tests check that a
 Holder cannot replace it, that the administrator cannot remove it, and that
@@ -61,11 +60,10 @@ after a replacement the new Master decides: a mint the old Master allowed is
 denied by `DenyAllSmartPolicy`, and so is a license sale to a buyer qualified only under the old
 participant Master.
 
-`ChoreographyNMT` records version lineage through `predecessorOf(tokenId)` and
-`versionOf(tokenId)`. A version may be created by an authorized Creator or by
-the Holder of the predecessor, provided that Master-policy conditions hold. A
-Holder who is not an authorized Creator must keep the predecessor's Creator
-policy. A new version starts from an empty model.
+`ChoreographyNMT` keeps no version registry: the history of a model is the
+chain itself, the `setNodes`/`setRoles` transactions and the
+`NodesChanged`/`RolesChanged` events of its asset. The tests check a transfer to
+an eligible Holder (allowed) and to an ineligible one (denied).
 
 ## Creator Policy
 
@@ -193,7 +191,7 @@ than assuming a universal saving.
 
 | Command | Model | Evidence produced |
 | --- | --- | --- |
-| `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, versioning, Master policy replacement, attempts to bypass the Creator policy, and receipt gas/wei. The script exits with an error if any case has an unexpected outcome. |
+| `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, Master policy replacement, attempts to bypass the Creator policy, and receipt gas/wei. The script exits with an error if any case has an unexpected outcome. |
 | `npm run evaluate:policies` | Imported `paper-example` plus real delta | Empty versus populated mint, paper-model structural allow/deny cases, the Special Carrier license sale allow/deny cases, and scenario costs. |
 | `npm run evaluate:paper` | Imported `paper-example` plus real delta | Import/render/delta/full-population measurements, chor-js BPMN images, and gnuplot charts. |
 | `npm run evaluate:all` | All of the above | Rebuilds the canonical final report. |

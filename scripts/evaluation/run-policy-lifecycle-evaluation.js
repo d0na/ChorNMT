@@ -393,7 +393,7 @@ async function main() {
     "",
     "## Policy model",
     "",
-    "- **Master policy** authorizes Creators, eligible initial Holders, transfers, and version evolution.",
+    "- **Master policy** authorizes Creators, eligible initial Holders, and transfers.",
     "- **Creator policy** is hardcoded, as a policy translated from XACML: changing its rules means deploying another policy and installing it. The constrained policy defines BPMN update constraints: task and sequence-flow limits, task-name allowlist, known flow targets, and protected nodes. It also decides which license can play a role: a role can require a participant license of a given type.",
     "- **Participant Master policy** governs role licenses: only the issuer of a type mints it, and only organizations qualified for the type can buy it.",
     "- **Holder policy** is the second authorization layer and can further restrict an instance by installing a deny-all policy.",

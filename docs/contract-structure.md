@@ -50,12 +50,12 @@ The order follows the Solidity style guide:
 | Internal/private function | `_camelCase` | `_setNodes`, `_addressAt` |
 | State variable (any visibility) | `camelCase`, no underscore | `descriptor`, `participantType` |
 | Constant | `UPPER_SNAKE_CASE` | `SET_NODES`, `RUNTIME_LIMIT` |
-| Selector constant | the function name in `UPPER_SNAKE_CASE` | `MINT_VERSION` for `mintVersion(...)` |
+| Selector constant | the function name in `UPPER_SNAKE_CASE` | `MINT_WITH_INITIAL_MODEL` for `mintWithInitialModel(...)` |
 | Constructor parameter | `<name>Address` for addresses | `masterSmartPolicyAddress` |
 | Setter parameter that shadows a state variable | `<name>Value` | `participantTypeValue` |
 | Event | `<Thing>Changed`, or a past-tense verb for one-off facts | `NodesChanged`, `ChoreographyInitialized` |
 | View | `get<Thing>`, `get<Thing>Names`, `has<Thing>`, `is<Condition>` | `getRole`, `hasNode`, `isQualifiedFor` |
-| Policy rule variant | a separate policy contract named `<Policy><Variant>` (no runtime switch) | `MasterSmartPolicyFrozen`, `CreatorSmartPolicyPaperScenario` |
+| Policy rule variant | a separate policy contract named `<Policy><Variant>` (no runtime switch) | `CreatorSmartPolicyTestScenario`, `CreatorSmartPolicyPaperScenario` |
 | Policy modifier | `evaluatedBy<Layer>` / `only<Actor>` | `evaluatedByMaster`, `onlyHolder` |
 
 ## Token (`NMT`)
@@ -64,12 +64,12 @@ The order follows the Solidity style guide:
 
 - `address public masterSmartPolicy`, declared in the base `NMT` — required, non-zero, checked in the base constructor (`NMT(masterSmartPolicyAddress)`). It is storage, not `immutable`, because it is replaceable: `setMasterSmartPolicy(address)` is `evaluatedByMaster` with the current Master, rejects the zero address, and emits `MasterSmartPolicyChanged`. Concrete Tokens do not redeclare it.
 - Other immutables for stateless collaborators (e.g. `tokenURIRenderer`), non-zero.
-- Token-level bookkeeping only (e.g. `predecessorOf`, `versionOf`). Never domain data: that lives in the asset.
+- No domain data and no version registry: the model lives in the asset, and its history is the chain itself (transactions and events).
 
 **Public functions**
 
 - `mint(to, creatorSmartPolicy, holderSmartPolicy)` is defined once in the base `NMT`, `evaluatedByMaster(abi.encodeWithSignature("mint(address,address,address)", ...), address(this))`.
-- Every other minting entry point (`mintVersion`, `mintWith…`) is `evaluatedByMaster` with its exact signature, then calls the internal `_mint`.
+- Every other minting entry point (`mintWith…`) is `evaluatedByMaster` with its exact signature, then calls the internal `_mint`.
 - `transferFrom(from, to, tokenId)` is defined once in the base `NMT`: `evaluatedByMaster(abi.encodeWithSignature("transferFrom(address,address)", from, to), getMutableAssetAddress(tokenId))`, then the asset's Creator check, then the ERC-721 transfer.
 - `tokenURI(tokenId)` calls `_requireOwned(tokenId)`, then delegates: to the renderer, or to the asset.
 
@@ -150,7 +150,7 @@ function _evaluateThingUpdate(T calldata value) private view {
 - Selector constants: `bytes4 private constant NAME = bytes4(keccak256("<canonical signature>"))`, one per action the policy recognizes.
 - **Configuration is hardcoded.** A policy stands for a policy translated from XACML, so its rules and their data (accounts, types, allowed values, limits, switches) are `private constant`s and literal conditions in the source, edited by hand when the scenarios change. There is one policy per role, tuned to the current test and evaluation scenarios. Changing a rule means deploying a new policy and installing it through the policy it replaces (`setMasterSmartPolicy`, `setCreatorSmartPolicy`), never a runtime setter. Literals are also the cheapest form: no storage at deploy, no `SLOAD` at evaluation.
 - `administrator`: the account that may replace the policy, hardcoded as a `constant` (Master policies and the choreography Creator policies) or the deployer stored as an `immutable` (participant Creator policies, whose deployer is the certifier).
-- **Rule variants are policies.** A variant of a rule (e.g. transfers closed) is a separate contract, named `<Policy><Variant>`, that may extend the policy it varies and override `evaluate`. When several policies share rules and differ only in data, the rules live in an abstract policy with `internal pure virtual` hooks, and each scenario policy implements the hooks with literals (`ConstrainedCreatorSmartPolicy` → `CreatorSmartPolicyTestScenario`, `CreatorSmartPolicyPaperScenario`).
+- **Rule variants are policies.** A variant of a rule (e.g. a stricter constraint set) is a separate contract, named `<Policy><Variant>`, that may extend the policy it varies and override `evaluate`. When several policies share rules and differ only in data, the rules live in an abstract policy with `internal pure virtual` hooks, and each scenario policy implements the hooks with literals (`ConstrainedCreatorSmartPolicy` → `CreatorSmartPolicyTestScenario`, `CreatorSmartPolicyPaperScenario`).
 - **Attributes of other contracts come from an attribute manager.** When a rule needs an attribute held by contracts deployed at runtime (e.g. the type of a role license), the policy reads it through an attribute manager (`ChoreographyParticipantAM`), bound as an `immutable` constructor argument. The attribute manager only answers about attributes; which value a rule requires stays in the policy. Deploy-time bindings of contract addresses are not runtime configuration.
 
 **Public functions**
@@ -186,8 +186,8 @@ function _evaluateThingUpdate(T calldata value) private view {
 
 ## Errors and checks
 
-- Every contract uses **custom errors**, never `require` strings: `if (!condition) revert Error();`. A policy denial reverts with `OperationDenied(layer)` in the asset (`CREATOR` = 0, `HOLDER` = 1, also for the domain checks) and `MasterDenied()` in the Token; the other errors name the failed check (`CallerNotHolder`, `CallerNotNMT`, `HolderPolicyDisabled`, `InvalidAddress`, `ArraySizeMismatch`, `NameRequired`, `TransferDenied`, `UnknownPredecessor`, `MalformedAction`). They are cheaper to deploy and to revert than `require` strings, and the Token embeds the Asset bytecode, so every string counts twice.
-- Errors shared by a kind are declared once in its base (`MutableAsset`, `NMT`, `SmartPolicy`); an error used by one contract only is declared there (`UnknownPredecessor` in `ChoreographyNMT`, `ParticipantTypeRequired` in `ParticipantNMT`).
+- Every contract uses **custom errors**, never `require` strings: `if (!condition) revert Error();`. A policy denial reverts with `OperationDenied(layer)` in the asset (`CREATOR` = 0, `HOLDER` = 1, also for the domain checks) and `MasterDenied()` in the Token; the other errors name the failed check (`CallerNotHolder`, `CallerNotNMT`, `HolderPolicyDisabled`, `InvalidAddress`, `ArraySizeMismatch`, `NameRequired`, `TransferDenied`, `MalformedAction`). They are cheaper to deploy and to revert than `require` strings, and the Token embeds the Asset bytecode, so every string counts twice.
+- Errors shared by a kind are declared once in its base (`MutableAsset`, `NMT`, `SmartPolicy`); an error used by one contract only is declared there (`ParticipantTypeRequired` in `ParticipantNMT`).
 - Constructors reject the zero address for every required collaborator.
 - Every allow and deny path of a public mutator is covered in `scripts/test-policies.js`. The tests check revert status, not revert messages, so switching to custom errors does not change them.
 
@@ -218,7 +218,7 @@ The cost of the whole flow is measured, not estimated: `npm test` and `npm run e
 | # | Change | Affected cost | Expected effect |
 | --- | --- | --- | --- |
 | G1 | Deploy assets as EIP-1167 minimal-proxy clones of one implementation, with an `initialize` guarded by `onlyNMT`, instead of `new`. | Every mint; Token size. | Mint drops from a full asset deployment to a clone plus initialization; the Token no longer embeds the Asset bytecode, which removes the 24 KB constraint. Requires replacing `immutable nmt` and the constructor with initializer state. |
-| G2 | Use `msg.data` as the policy action in the NMT mutators (`mint`, `mintVersion`, `mintWithInitialModel`, `transferFrom`, `setMasterSmartPolicy`); done for the asset mutators. | Every NMT call. | Removes re-encoding of every array argument on each call. Safe only while the policies read the selector or fixed-offset static arguments: a caller can send non-canonical ABI encoding, so a policy that decodes dynamic arguments from the action must use `abi.decode`, not offsets. |
+| G2 | Use `msg.data` as the policy action in the NMT mutators (`mint`, `mintWithInitialModel`, `transferFrom`, `setMasterSmartPolicy`); done for the asset mutators. | Every NMT call. | Removes re-encoding of every array argument on each call. Safe only while the policies read the selector or fixed-offset static arguments: a caller can send non-canonical ABI encoding, so a policy that decodes dynamic arguments from the action must use `abi.decode`, not offsets. |
 | G3 | `external` + `calldata` for the NMT `mint…` functions; the asset mutators are `external` (see the stack note above). | NMT calls. | Avoids copying arguments to memory. |
 | G5 | Keep task and sequence-flow counters in the asset, updated by `_setNodes`, and expose them to the Creator policy. | `setNodes` with a configured Creator policy. | Replaces the O(N) `_currentCounts` scan of external calls. |
 | G6 | Copy `incoming`/`outgoing`/`conditions` arrays with a single assignment where the compiler supports it, instead of `delete` + `push` loops. | `setNodes`, import. | Fewer storage-length writes; measure first. |

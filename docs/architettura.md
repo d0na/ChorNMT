@@ -18,7 +18,7 @@ flowchart LR
   end
   subgraph onchain[On-chain · Solidity]
     NMT[ChoreographyNMT<br/>ERC-721] -->|crea e possiede| CMA[ChoreographyMutableAsset]
-    MP[MasterSmartPolicy] -->|autorizza mint, versioni,<br/>trasferimenti| NMT
+    MP[MasterSmartPolicy] -->|autorizza mint<br/>e trasferimenti| NMT
     CP[CreatorSmartPolicy] -->|autorizza e vincola<br/>le modifiche| CMA
     HP[HolderSmartPolicy] -->|seconda approvazione| CMA
     TR[ChoreographyTokenURIRenderer] -->|legge| CMA
@@ -49,11 +49,10 @@ contracts/
 │   ├── IMutableAsset.sol        interface viste comuni a ogni asset (holder, policy, NMT)
 │   └── SmartPolicy.sol          abstract  evaluate(subject, action, resource), decodifica degli argomenti
 ├── choreography/
-│   ├── ChoreographyNMT.sol               NMT delle coreografie, master policy, versioni, tokenURI
+│   ├── ChoreographyNMT.sol               NMT delle coreografie, master policy, tokenURI
 │   ├── ChoreographyMutableAsset.sol      modello della coreografia (ruoli e nodi)
 │   ├── ChoreographyTokenURIRenderer.sol  genera i metadati JSON dallo stato dell'asset
-│   ├── MasterSmartPolicy.sol             chi crea, chi può possedere, trasferimenti e versioning (hardcoded)
-│   ├── MasterSmartPolicyFrozen.sol       variante della Master che nega trasferimenti e versioni
+│   ├── MasterSmartPolicy.sol             chi crea, chi può possedere, trasferimenti (hardcoded)
 │   ├── CreatorSmartPolicy.sol            chi modifica; nessun vincolo BPMN (hardcoded)
 │   ├── ConstrainedCreatorSmartPolicy.sol abstract  regole dei vincoli strutturali BPMN e dei ruoli
 │   ├── CreatorSmartPolicyTestScenario.sol  vincoli dello scenario dei test (letterali)
@@ -100,7 +99,6 @@ classDiagram
   MutableAsset <|-- ChoreographyMutableAsset
   MutableAsset <|-- ParticipantMutableAsset
   SmartPolicy <|-- MasterSmartPolicy
-  MasterSmartPolicy <|-- MasterSmartPolicyFrozen
   SmartPolicy <|-- CreatorSmartPolicy
   CreatorSmartPolicy <|-- ConstrainedCreatorSmartPolicy
   SmartPolicy <|-- HolderSmartPolicy
@@ -179,7 +177,7 @@ tokenId = uint160(address(asset))        asset = address(uint160(tokenId))
 
 ### `ChoreographyNMT`
 
-**A cosa serve:** conia i token di coreografia, crea un `ChoreographyMutableAsset` per ciascuno, fa passare mint, versioni e trasferimenti dalla Master policy ed espone `tokenURI`. Master policy, `evaluatedByMaster`, `mint`, `transferFrom` e `setMasterSmartPolicy` stanno nel base `NMT`, condiviso con `ParticipantNMT`.
+**A cosa serve:** conia i token di coreografia, crea un `ChoreographyMutableAsset` per ciascuno, fa passare mint e trasferimenti dalla Master policy ed espone `tokenURI`. Master policy, `evaluatedByMaster`, `mint`, `transferFrom` e `setMasterSmartPolicy` stanno nel base `NMT`, condiviso con `ParticipantNMT`.
 
 **Struttura interna:**
 
@@ -187,21 +185,20 @@ tokenId = uint160(address(asset))        asset = address(uint160(tokenId))
 | --- | --- | --- |
 | `masterSmartPolicy` | `address` (nel base `NMT`) | Policy consultata da `evaluatedByMaster` su ogni operazione dell'NMT. Si sostituisce con `setMasterSmartPolicy`, solo se la Master corrente lo consente (al suo `administrator`). |
 | `tokenURIRenderer` | `address immutable` | Contratto che genera i metadati. Si passa al costruttore. |
-| `predecessorOf` | `mapping(uint256 => uint256)` | Per una versione: il token da cui deriva. |
-| `versionOf` | `mapping(uint256 => uint256)` | Numero di versione: 0 per un asset originale, predecessore + 1 per una versione. |
 
 | Funzione | Master policy richiede | Effetto |
 | --- | --- | --- |
 | `mint(to, creator, holder)` | creator autorizzato, `to` idoneo | Crea un asset vuoto e il suo token. |
 | `mintWithInitialModel(to, creator, holder, model)` | creator autorizzato, `to` idoneo | Crea l'asset e lo inizializza con `initializeChoreography(model)` nella stessa transazione. |
-| `mintVersion(to, creator, holder, predecessorId)` | Master non congelata (`MasterSmartPolicyFrozen` le nega), `to` idoneo, chiamante creator autorizzato **oppure** holder del predecessore che mantiene la sua Creator policy | Crea un asset **vuoto** e registra `predecessorOf` e `versionOf`. Il modello non viene copiato. |
-| `transferFrom(from, to, tokenId)` | Master non congelata, `subject == from == holder`, `to` idoneo | Poi l'asset valuta la Creator policy e il token viene trasferito. |
-| `setMasterSmartPolicy(policy)` | chiamante `administrator` della Master corrente; `policy` diversa da zero | Sostituisce la Master: da quel momento decide lei mint, versioni e trasferimenti. |
+| `transferFrom(from, to, tokenId)` | `subject == from == holder`, `to` idoneo | Poi l'asset valuta la Creator policy e il token viene trasferito. |
+| `setMasterSmartPolicy(policy)` | chiamante `administrator` della Master corrente; `policy` diversa da zero | Sostituisce la Master: da quel momento decide lei mint e trasferimenti. |
 | `tokenURI(tokenId)` | — (lettura) | Verifica che il token esista e restituisce `renderer.tokenURI(asset)`. |
 
-Il mint usa `ERC721._mint` e non `_safeMint`: nessuna callback raggiunge il destinatario prima che l'asset sia inizializzato e la sua versione registrata.
+Il mint usa `ERC721._mint` e non `_safeMint`: nessuna callback raggiunge il destinatario prima che l'asset sia inizializzato.
 
-**Vincolo di dimensione:** l'NMT contiene il bytecode dell'asset, perché lo crea con `new`. Occupa 21.177 byte su un limite di 24.576. Per questo la generazione del JSON sta in un contratto separato.
+L'NMT non tiene un registro delle versioni: la storia di un modello è la blockchain stessa, cioè le transazioni `setNodes`/`setRoles` e gli eventi `NodesChanged`/`RolesChanged` dell'asset, e uno stato passato si legge interrogando l'asset a un blocco precedente.
+
+**Vincolo di dimensione:** l'NMT contiene il bytecode dell'asset, perché lo crea con `new`. Occupa 20.565 byte su un limite di 24.576. Per questo la generazione del JSON sta in un contratto separato.
 
 ### `ChoreographyMutableAsset`
 
@@ -285,8 +282,7 @@ sequenceDiagram
 
 | Policy | Stato interno | Decide |
 | --- | --- | --- |
-| `MasterSmartPolicy` | nessuno: regole **hardcoded**, come una policy tradotta da XACML (`administrator` e unico creator autorizzato = account 0, holder ammessi = account 0 e 1) | Operazioni dell'NMT: mint, mint con modello, versioni, trasferimenti, propria sostituzione (solo `administrator`). |
-| `MasterSmartPolicyFrozen` | nessuno | Come la Master, ma nega trasferimenti e versioni. Si installa con `setMasterSmartPolicy` per congelare le coreografie. |
+| `MasterSmartPolicy` | nessuno: regole **hardcoded**, come una policy tradotta da XACML (`administrator` e unico creator autorizzato = account 0, holder ammessi = account 0 e 1) | Operazioni dell'NMT: mint, mint con modello, trasferimenti, propria sostituzione (solo `administrator`). |
 | `CreatorSmartPolicy` | nessuno: regole **hardcoded** (`administrator` = account 0) | Modifiche dell'holder e propria sostituzione (solo `administrator`). Nessun vincolo BPMN: rifiuta solo aggiornamenti malformati (array di lunghezze diverse, nomi vuoti o duplicati). |
 | `ConstrainedCreatorSmartPolicy` (abstract) | `participants`: l'attribute manager, `immutable` dal costruttore | Le regole dei vincoli strutturali e dei ruoli. I dati (limiti, task ammessi, nodi e ruoli protetti, tipi richiesti) sono letterali scritti da ogni scenario: `CreatorSmartPolicyTestScenario` (fixture dei test) e `CreatorSmartPolicyPaperScenario` (paper example). |
 | `ChoreographyParticipantAM` | `participantNmt`, `participantCertifier` (`immutable`) | Non è una policy ma un attribute manager: restituisce il tipo di una licenza emessa dal participant NMT e certificata dalla participant Creator policy, zero per ogni altro indirizzo. |
@@ -399,7 +395,7 @@ Il **`tokenURI`** restituisce ruoli e nodi nella stessa forma del dataset, con i
 
 | Livello | Responsabilità | Non fa |
 | --- | --- | --- |
-| NMT | Possesso, creazione degli asset, versioni, punto d'accesso ai metadati | Non conserva il modello. |
+| NMT | Possesso, creazione degli asset, punto d'accesso ai metadati | Non conserva il modello. |
 | Asset | Persistenza del modello, applicazione delle modifiche | Non decide chi può modificare. |
 | Policy | Autorizzazione e vincoli strutturali | Non conservano il modello. |
 | Renderer on-chain | Serializza lo stato in JSON | Non scrive e non ha stato. |

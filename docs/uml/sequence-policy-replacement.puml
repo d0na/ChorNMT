@@ -6,21 +6,20 @@ actor "Authority\n(account 0)" as Authority
 actor "Holder" as Holder
 participant "ChoreographyNMT" as NMT
 participant "MasterSmartPolicy" as Master
-participant "MasterSmartPolicyFrozen" as Frozen
+participant "New Master policy" as NewMaster
 participant "ChoreographyMutableAsset" as Asset
 participant "CreatorSmartPolicy" as Creator
 participant "CreatorSmartPolicyPaperScenario" as Paper
 
-== Freeze transfers and versions ==
-Authority -> Frozen ** : deploy
-Authority -> NMT : setMasterSmartPolicy(frozen)
+== Replace the Master (NMT-level rules) ==
+Authority -> NewMaster ** : deploy
+Authority -> NMT : setMasterSmartPolicy(newMaster)
 NMT -> Master : evaluate(authority, action, nmt)
 Master --> NMT : subject == administrator
-NMT -> NMT : masterSmartPolicy = frozen,\nemit MasterSmartPolicyChanged
+NMT -> NMT : masterSmartPolicy = newMaster,\nemit MasterSmartPolicyChanged
 Holder -> NMT : transferFrom(holder, partner, tokenId)
-NMT -> Frozen : evaluate(holder, action, asset)
-Frozen --> NMT : false
-NMT --> Holder : revert MasterDenied()
+NMT -> NewMaster : evaluate(holder, action, asset)
+NewMaster --> NMT : decision of the new rules
 
 == Install BPMN constraints on an asset ==
 Authority -> Paper ** : deploy(participantAM)

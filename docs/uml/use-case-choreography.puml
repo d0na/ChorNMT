@@ -11,9 +11,8 @@ actor "Anyone" as Anyone
 rectangle "ChoreographyNMT + ChoreographyMutableAsset" {
   usecase "Mint a choreography" as UC_Mint
   usecase "Mint with an initial\nBPMN model" as UC_MintModel
-  usecase "Mint a new version" as UC_Version
   usecase "Transfer the choreography\nto an eligible holder" as UC_Transfer
-  usecase "Replace the Master policy\n(e.g. MasterSmartPolicyFrozen)" as UC_Master
+  usecase "Replace the Master policy\n(a new hardcoded Master)" as UC_Master
   usecase "Replace the Creator policy\n(install scenario constraints)" as UC_Creator
   usecase "Apply a BPMN delta\n(setNodes)" as UC_Nodes
   usecase "Update roles\n(setRoles)" as UC_Roles
@@ -25,7 +24,6 @@ rectangle "ChoreographyNMT + ChoreographyMutableAsset" {
 }
 
 Authority --> UC_Mint
-Authority --> UC_Version
 Authority --> UC_Master
 Authority --> UC_Creator
 UC_MintModel .> UC_Mint : <<extend>>
@@ -34,7 +32,6 @@ Holder --> UC_Nodes
 Holder --> UC_Roles
 Holder --> UC_Holder
 Holder --> UC_Transfer
-Holder --> UC_Version
 UC_Link .> UC_Roles : <<extend>>
 UC_Nodes ..> UC_Domain : <<include>>
 UC_Roles ..> UC_Domain : <<include>>
@@ -45,11 +42,6 @@ Anyone --> UC_Read
 Anyone --> UC_Render
 UC_Render ..> UC_Read : <<include>>
 
-note right of UC_Version
-  A holder who is not an authorized
-  creator must keep the predecessor's
-  Creator policy.
-end note
 note bottom of UC_Domain
   evaluateNodeUpdate / evaluateRoleUpdate
   of IChoreographyPolicy, asked of both
