@@ -13,6 +13,7 @@ These are the only commands intended for the normal `paper-example` workflow.
 | `npm run render:asset -- <asset-address> <nmt-or-delta.json>` | Exports the asset and generates BPMN XML. | Asset address plus imported NMT or delta file. | Raw JSON, normalized JSON, and BPMN XML. |
 | `npm run modify:asset -- <asset-address> <delta.json> [--no-render]` | Applies a delta to existing asset nodes. | Asset address and delta JSON. | Updated asset; also rendered artifacts unless `--no-render` is used. |
 | `npm run check:size` | Checks every compiled contract against the EIP-170 runtime limit (24,576 bytes) and the EIP-3860 init-code limit (49,152 bytes); warns within `CONTRACT_SIZE_WARNING_MARGIN` bytes (default 1,024) and fails above the limit. The GitHub Actions workflow runs it after `compile`. | Compiled artifacts (`npm run compile`). | Size table; non-zero exit if a contract is too large. |
+| `npm run check:invariants` | Checks the contract sources against the design decisions a grep can verify (comments and strings ignored): no `_safeMint` (D12), no version registry (D4), no model passed after deploy and an immutable `ChoreographyNMT` state (D13), no node or name-list removal in `ChoreographyMutableAsset` (D2), no setters and only `constant`/`immutable` state in policies and attribute managers (D5). The GitHub Actions workflow runs it after `check:size`. | None; no compile needed. | Non-zero exit with file, line, and decision of each violation. |
 | `npm run docs:uml` | Renders the UML diagrams `docs/uml/*.puml` to SVG next to their source, with PlantUML 1.2024.7 (downloaded once into `.cache/plantuml/`, checksum verified) and Graphviz. | Java and Graphviz (`dot`). | `docs/uml/*.svg`, shown in `docs/uml.md`. |
 | `npm run check:uml` | Fails if an SVG is missing or was rendered from another version of its source (a source hash is stored in the SVG). The GitHub Actions workflow runs it. | None; no Java needed. | Non-zero exit on a stale diagram. |
 | `npm run test:policies` (alias `npm test`) | Runs policy allow/deny integration tests, fails on any unexpected outcome, and prints receipt-derived gas costs. The GitHub Actions workflow runs it on every push. | None. | Policy matrix and per-type mint checks on an ephemeral Hardhat network. |
@@ -53,7 +54,7 @@ Deployment (import, type, and mint), modification, and rendering write JSON repo
 
 ## Claude Code hooks
 
-`.claude/settings.json` runs the scripts in `.claude/hooks/` during Claude Code sessions (see `CLAUDE.md`, section "Hooks and skills"): `session-start.sh` checks Node 22, `guard-generated.sh` blocks edits to generated files and build outputs, `post-edit.sh` runs `docs:uml` after a UML source edit and `compile` plus `check:size` after a contract edit, `pre-commit.sh` runs `check:uml` (and the contract checks when `contracts/` changed) before `git commit`. They do not apply outside Claude Code; CI runs the same checks for every push.
+`.claude/settings.json` runs the scripts in `.claude/hooks/` during Claude Code sessions (see `CLAUDE.md`, section "Hooks and skills"): `session-start.sh` checks Node 22, `guard-generated.sh` blocks edits to generated files and build outputs, `confirm-sources.sh` asks the user before an edit to `docs/requirements.md`, `docs/decisions.md`, `references/`, or `scripts/data/`, `post-edit.sh` runs `docs:uml` after a UML source edit and `compile`, `check:size`, and `check:invariants` after a contract edit, `pre-commit.sh` runs `check:uml` and `check:invariants` (and the compile and size checks when `contracts/` changed) before `git commit`. They do not apply outside Claude Code; CI runs the same checks for every push.
 
 ## Implementation scripts
 
@@ -67,6 +68,7 @@ These scripts are used by public commands and are not intended as separate user-
 | `render-local-support.js` | `render:asset`, `modify:asset` | Writes manifest and JSON artifacts, normalizes data, and generates BPMN XML. |
 | `apply-asset-delta.js` | `modify:asset` | Validates and applies delta roles and nodes. |
 | `check-contract-size.js` | `check:size` | Reads `artifacts/contracts/` and enforces the contract size limits. |
+| `check-invariants.js` | `check:invariants` | Greps `contracts/` for violations of the design decisions in `docs/decisions.md`; each rule names its decision. |
 | `render-uml.js` | `docs:uml`, `check:uml` | Renders `docs/uml/*.puml` to SVG with a pinned PlantUML and stamps each SVG with the hash of its source; `--check` compares the hashes. |
 | `test-policies.js` | `test:policies` | Exercises policy allow/deny paths on one choreography type per fixture model. |
 | `evaluation/run-policy-lifecycle-evaluation.js` | `evaluate:policies` | Measures deployment (model contract included), the mint of an instance, and Master/Creator/Holder allow-deny operations. |

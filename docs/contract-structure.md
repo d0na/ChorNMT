@@ -231,4 +231,6 @@ The cost of the whole flow is measured, not estimated: `npm test` and `npm run e
 
 Resolved: 1–4 (participant asset and token, rewritten as a role license), 5 (`MutableAsset` modifiers moved before the constructor), 6 and 9 (choreography Creator layout and switch naming, removed with its runtime configuration), 7 (shared asset interfaces), 8 (action decoding shared in `SmartPolicy`), 10 (default-deny participant policies), 11 (custom errors everywhere, G4), 12 (asset mutators `external` with `msg.data` as the action, G2 and G3 for the assets), 13 (choreography domain checks asked of Creator AND Holder through `IChoreographyPolicy`) and 14 (hardcoded choreography Master and Creator policies).
 
+`npm run check:invariants` (CI, pre-commit) checks the rules a grep can verify: policies without setters or mutable state, `_mint` not `_safeMint`, no node removal, an immutable model. A deviation from one of them also needs its rule in `scripts/check-invariants.js` narrowed.
+
 There are no known deviations: the code follows the rules above. When a change has to break a rule, add a row here (`| # | Contract | Deviation | Rule |`, numbered from 15) and fix it in a dedicated change, with tests and `check:size`.
