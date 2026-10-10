@@ -10,6 +10,7 @@ The docs are the source of truth and must stay in sync with the code:
 | --- | --- |
 | Claims, acceptance criteria, non-goals | `docs/requirements.md` |
 | Design decisions and open questions | `docs/decisions.md` |
+| Future improvements with estimates (not implemented) | `docs/future-improvements.md` |
 | **Contract structure standard: kinds, layout, state, functions, gas rules, known deviations** | `docs/contract-structure.md` |
 | Components and internals (Italian) | `docs/architettura.md` |
 | tokenURI renderer + off-chain BPMN pipeline (Italian) | `docs/rendering.md` |

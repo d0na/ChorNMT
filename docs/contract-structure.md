@@ -214,7 +214,7 @@ The cost of the whole flow is measured, not estimated: `npm test` and `npm run e
 
 **Applied**: G4 (custom errors instead of `require` strings: `ChoreographyNMT` deploy −201,733 gas, every mint −107,926, every denied case −52 to −99; `ChoreographyNMT` runtime 22,336 → 21,407 bytes). G2 and G3 for the asset mutators (`msg.data` as the action, `external`: `ChoreographyNMT` deploy −73,968, every mint −68,788, paper import −32,133, paper delta −20,620; runtime 21,407 → 21,064 bytes). The policies read only the selector of these actions, so non-canonical encodings cannot change a decision.
 
-**Optimization candidates** (not yet applied; each needs a measured before/after):
+**Optimization candidates** (not yet applied; each needs a measured before/after; estimates and larger ideas are in [Future improvements](future-improvements.md)):
 
 | # | Change | Affected cost | Expected effect |
 | --- | --- | --- | --- |

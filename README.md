@@ -108,6 +108,7 @@ Files with a `.generated.*` suffix and imported `*.nmt.json` files are local art
 
 - [Requirements](docs/requirements.md): what the prototype demonstrates, acceptance criteria, and non-goals.
 - [Design decisions](docs/decisions.md): why the main choices were made, and the open questions.
+- [Future improvements](docs/future-improvements.md): ideas not implemented yet, with estimated gas effects.
 - [Evaluation quick start](evaluation/README.md#complete-evaluation-run): commands for the complete paper and policy evaluation suite.
 - [BPMN to NMT workflow](docs/bpmn-to-nmt-workflow.md): NMT format, import, and delta rules.
 - [Contract structure](docs/contract-structure.md): the standard internal structure of Token, Asset, Policy, and Renderer contracts, gas rules, and known deviations.
