@@ -1,0 +1,48 @@
+@startuml sequence-apply-delta
+!include style.iuml
+title Apply a BPMN delta (modify:asset, setNodes)
+
+actor "Holder" as Holder
+participant "apply-asset-delta.js" as Script
+participant "ChoreographyMutableAsset" as Asset
+participant "ChoreographyNMT" as NMT
+participant "Creator policy\n(e.g. CreatorSmartPolicyPaperScenario)" as Creator
+participant "Holder policy\n(HolderSmartPolicy)" as HolderPolicy
+
+Holder -> Script : modify:asset <asset> <delta.json>
+Script -> Script : validateDelta (whole nodes, both edge endpoints)
+opt delta has roles
+  Script -> Asset : setRoles(names, addresses)
+  note right : same checks, with evaluateRoleUpdate
+end
+Script -> Asset : setNodes(names, types, incoming, outgoing, ...)
+activate Asset
+
+group Action check: Creator AND Holder (evaluatedBySmartPolicies)
+  Asset -> Creator : evaluate(holder, msg.data, asset)
+  Creator -> Asset : getHolder()
+  Asset -> NMT : ownerOf(tokenId)
+  Creator --> Asset : caller is the holder
+  Asset -> HolderPolicy : evaluate(holder, msg.data, asset)
+  HolderPolicy --> Asset : caller is the holder
+end
+
+group Domain check: Creator AND Holder (IChoreographyPolicy)
+  Asset -> Asset : abi.encodeCall(evaluateNodeUpdate, ...) once
+  Asset -> Creator : staticcall evaluateNodeUpdate
+  Creator -> Asset : getNodeNames, getNodeTypeAndOutgoing,\nhasNode, getNodeTypeAndEdges
+  Creator --> Asset : limits, allowlist, known endpoints,\nprotected nodes respected
+  Asset -> HolderPolicy : staticcall evaluateNodeUpdate
+  HolderPolicy --> Asset : true (no constraint, reads nothing)
+end
+
+alt any check fails
+  Asset --> Script : revert OperationDenied(0 Creator | 1 Holder)
+else all approve
+  Asset -> Asset : _setNodes (overwrite whole nodes)
+  Asset -> Asset : emit NodesChanged
+  Asset --> Script : receipt (gas)
+end
+deactivate Asset
+Script -> Script : render the new BPMN (see sequence-import-and-render)
+@enduml

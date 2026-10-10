@@ -3,96 +3,29 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../base/NMT.sol";
-import "../base/SmartPolicy.sol";
 import "./ChoreographyMutableAsset.sol";
+import "./ChoreographyTokenURIRenderer.sol";
 
 contract ChoreographyNMT is NMT {
-    address public immutable masterSmartPolicy;
+    address public immutable tokenURIRenderer;
+    // The choreography type: every token is minted with this model (see ChoreographyMutableAsset).
+    address public immutable model;
 
-    modifier evaluatedByMaster(
-        bytes memory action,
-        address resource
-    ) {
-        require(
-            SmartPolicy(masterSmartPolicy).evaluate(msg.sender, action, resource),
-            "Operation DENIED by MASTER policy"
-        );
-        _;
-    }
-
-    constructor(address masterSmartPolicyAddress)
+    constructor(
+        address masterSmartPolicyAddress,
+        address tokenURIRendererAddress,
+        address modelAddress
+    )
         ERC721(
             "Mutable Choreography for a PUB Decentraland UniPi Project",
             "PUBMNTCHOREO"
         )
+        NMT(masterSmartPolicyAddress)
     {
-        require(masterSmartPolicyAddress != address(0), "Invalid master policy");
-        masterSmartPolicy = masterSmartPolicyAddress;
-    }
-
-    function mint(
-        address to,
-        address creatorSmartPolicy,
-        address holderSmartPolicy
-    )
-        public
-        override
-        evaluatedByMaster(
-            abi.encodeWithSignature(
-                "mint(address,address,address)",
-                to,
-                creatorSmartPolicy,
-                holderSmartPolicy
-            ),
-            address(this)
-        )
-        returns (address, uint256)
-    {
-        return super.mint(to, creatorSmartPolicy, holderSmartPolicy);
-    }
-
-    function mintWithInitialModel(
-        address to,
-        address creatorSmartPolicy,
-        address holderSmartPolicy,
-        ChoreographyMutableAsset.InitialModel memory model
-    )
-        public
-        evaluatedByMaster(
-            abi.encodeWithSelector(
-                this.mintWithInitialModel.selector,
-                to,
-                creatorSmartPolicy,
-                holderSmartPolicy,
-                model
-            ),
-            address(this)
-        )
-        returns (address, uint256)
-    {
-        (address assetAddress, uint256 tokenId) = _mint(
-            to,
-            creatorSmartPolicy,
-            holderSmartPolicy
-        );
-        ChoreographyMutableAsset(assetAddress).initializeChoreography(model);
-
-        return (assetAddress, tokenId);
-    }
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    )
-        public
-        override
-        evaluatedByMaster(
-            abi.encodeWithSignature("transferFrom(address,address)", from, to),
-            getMutableAssetAddress(tokenId)
-        )
-    {
-        super.transferFrom(from, to, tokenId);
+        if (tokenURIRendererAddress == address(0)) revert InvalidAddress();
+        tokenURIRenderer = tokenURIRendererAddress;
+        if (modelAddress.code.length == 0) revert InvalidAddress();
+        model = modelAddress;
     }
 
     function _mint(
@@ -103,7 +36,8 @@ contract ChoreographyNMT is NMT {
         ChoreographyMutableAsset choreography = new ChoreographyMutableAsset(
             address(this),
             creatorSmartPolicy,
-            holderSmartPolicy
+            holderSmartPolicy,
+            model
         );
 
         uint256 tokenId = uint160(address(choreography));
@@ -115,7 +49,10 @@ contract ChoreographyNMT is NMT {
     function tokenURI(
         uint256 tokenId
     ) public view override returns (string memory) {
+        _requireOwned(tokenId);
         return
-            ChoreographyMutableAsset(getMutableAssetAddress(tokenId)).tokenURI();
+            ChoreographyTokenURIRenderer(tokenURIRenderer).tokenURI(
+                getMutableAssetAddress(tokenId)
+            );
     }
 }

@@ -205,7 +205,7 @@ Manifest example:
 
 The export script produces a raw semantic JSON. BPMN ids are generated later by the library normalization step before XML generation.
 
-When the root `scripts/run-local-flow.js` or `render:asset` workflow creates manifests automatically, it writes them as `example/contract/*-contract-manifest.generated.json`. Those files are generated artifacts and are not intended to be committed. For manual export you can either reuse one of those generated manifests or create a local manifest file with the same schema.
+When the root `render:asset` workflow creates manifests automatically, it writes them as `example/contract/*-contract-manifest.generated.json`. Those files are generated artifacts and are not intended to be committed. For manual export you can either reuse one of those generated manifests or create a local manifest file with the same schema.
 
 ## Current Rules
 

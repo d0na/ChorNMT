@@ -1,22 +1,23 @@
 # BPMN to NMT workflow
 
-The supported workflow has four operations after the local environment and asset have been started:
+The supported workflow has four operations after the local environment has been started:
 
 ```text
-import BPMN into asset → render asset → modify asset → render asset
+deploy a choreography type from BPMN and mint an instance → render asset → modify asset → render asset
 ```
+
+A `ChoreographyNMT` is one choreography type: `deploy:asset` imports the BPMN into an NMT dataset, stores it as the model of the type (the ABI-encoded `InitialModel`, as the code of a data-only contract), deploys the NMT that fixes that model, mints an instance born with it, and links the roles of the instance to local accounts. The model keeps only the role names; each instance assigns its own accounts or licenses.
 
 The commands are deliberately limited to:
 
 | Command | Purpose |
 | --- | --- |
 | `npm run start:operations` | Compile contracts and start the local blockchain. |
-| `npm run deploy:asset` | Create a `ChoreographyMutableAsset`. |
-| `npm run import:asset -- <asset-address> <input.bpmn> [output.nmt.json]` | Convert BPMN to NMT and store it in the asset. The NMT file defaults to `bpmn-builder-js/example/input/<name>.nmt.json`. |
-| `npm run render:asset -- <asset-address> <nmt-or-delta.json>` | Export the asset from the chain and generate BPMN XML. The JSON file only supplies render metadata. |
-| `npm run modify:asset -- <asset-address> <delta.json> [--no-render]` | Apply a node delta; it also renders the result unless `--no-render` is given. |
+| `npm run deploy:asset -- [input.bpmn]` | Convert BPMN to NMT, deploy the choreography type (`references/paper-example.bpmn` by default), and mint a `ChoreographyMutableAsset` born with its model. |
+| `npm run render:asset -- <asset-address> <nmt-or-delta.json>` | Export an asset and generate BPMN XML. |
+| `npm run modify:asset -- <asset-address> <delta.json> --no-render` | Apply a node delta without rendering it. |
 
-`<asset-address>` is the `ChoreographyMutableAsset` address printed by `deploy:asset`. Use the same address in every later command. Output paths are listed in [Commands and scripts](commands-and-scripts.md#public-npm-commands).
+`<asset-address>` is the `ChoreographyMutableAsset` address printed by `deploy:asset`. Use the same address in every later command.
 
 ## Paper example
 
@@ -25,8 +26,7 @@ The commands are deliberately limited to:
 npm run start:operations
 
 # Terminal 2
-npm run deploy:asset
-npm run import:asset -- <asset-address> references/paper-example.bpmn
+npm run deploy:asset -- references/paper-example.bpmn
 npm run render:asset -- <asset-address> bpmn-builder-js/example/input/paper-example.nmt.json
 npm run modify:asset -- <asset-address> scripts/data/paper-example-parallel-transport-preparation.delta.json --no-render
 npm run render:asset -- <asset-address> scripts/data/paper-example-parallel-transport-preparation.delta.json
@@ -38,12 +38,12 @@ Only the first `bpmn:Choreography` of the file is imported; collaborations, proc
 
 | BPMN element | NMT representation |
 | --- | --- |
-| Participant | Role named after the participant `name` (or `id` when unnamed), stored without a participant (zero address). Names must be unique. |
+| Participant | Role named after the participant `name` (or `id` when unnamed). Names must be unique. |
 | Start/end event | Node type `0` / `1`. Event definitions are not kept. |
 | Choreography task | Node type `2`. |
 | Task initiator and other participant | `initiatorRole` = `initiatingParticipantRef`; `participantRole` = the first other `participantRef`. Further participants are ignored. |
 | Messages | `initiatingMessage` (initiator → participant) and `returnMessage` (participant → initiator). The message name is the message `name`, else the message flow `name`, else the message or flow `id`. |
-| Sequence flow | `outgoing` of its `sourceRef` and `incoming` of its `targetRef`, as node names. |
+| Sequence flow | `outgoing` of its `sourceRef` and `incoming` of its `targetRef`, as node names. The sequence flows are the source of truth: the `<incoming>`/`<outgoing>` children of a node are optional in BPMN. |
 | Exclusive / parallel gateway | Split `3` / `5` or join `4` / `6` (see below). |
 | Event-based gateway | Node type `7`. |
 | Outgoing flow names | `conditions`, one entry per outgoing flow, `""` when the flow has no name. `conditionExpression` is not imported. |
@@ -56,12 +56,12 @@ Any other flow element (intermediate events, sub-choreographies, call choreograp
 
 ## Delta rules
 
-A delta lists only changed or added nodes, but each listed node is a complete replacement. If an edge changes, include both endpoints with their full `incoming` and `outgoing` arrays. Role and node names are the current contract reference keys.
-
 `modify:asset` validates the delta before sending it:
 
 - `nodes` is a non-empty array; every node has `name` (non-empty string), `nodeType` (integer `0`–`7`), `incoming`, `outgoing`, `conditions` (string arrays), and `initiatorRole`, `participantRole`, `initiatingMessage`, `returnMessage` (strings, empty when unused);
 - `render` contains `choreographyId`, `choreographyName`, `definitionsId`, `targetNamespace`, and `outputBaseName`;
-- optional `roles` maps role names to the zero address (role not assigned) or to a `ParticipantMutableAsset` address. Each entry is sent with `setRoles`, adding new roles and binding, rebinding, or clearing the participant of existing ones; the address must also match the role category (Creator policy) and be allowlisted by the Holder (Holder policy).
+- optional `roles` maps role names to Ethereum addresses. Each entry is sent with `setRoles`, adding new roles and overwriting the address of existing ones.
 
-The contract supports adding and replacing nodes. It does not currently remove a node name from the stored list, so use a fresh asset when a clean model replacement is required.
+A delta lists only changed or added nodes, but each listed node is a complete replacement. If an edge changes, include both endpoints with their full `incoming` and `outgoing` arrays. Role and node names are the current contract reference keys.
+
+The contract supports adding and replacing nodes. It does not remove a node name from the stored list: a clean model is a new instance (mint), and a different starting model is a new choreography type (`deploy:asset` with another BPMN).

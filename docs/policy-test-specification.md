@@ -31,8 +31,10 @@ For `setNodes(...)`, `ChoreographyMutableAsset` performs the following checks
 in order:
 
 1. The regular Creator and Holder policy evaluations must permit the action.
-2. The current Creator policy evaluates the submitted BPMN node update against
-   its structural configuration.
+2. The current Creator policy and then the current Holder policy evaluate the
+   submitted BPMN node update (`evaluateNodeUpdate` of `IChoreographyPolicy`);
+   `setRoles(...)` does the same with `evaluateRoleUpdate`. The default Holder
+   policy adds no constraint; `DenyAllSmartPolicy` denies.
 3. Only then are the changed node records written to contract storage.
 
 A rejected transaction reverts. It still consumes gas because the authorization
@@ -40,68 +42,133 @@ and, where applicable, structural checks execute before the revert.
 
 ## Master Policy
 
-The Master policy is administered by its deployer. It maintains allowlists and
-a transfer switch.
+The Master policy is hardcoded, as a policy translated from XACML would be:
+its rules are literals in the source, and a different rule is a different
+policy installed with `setMasterSmartPolicy`. Accounts are default Hardhat
+accounts.
 
-| Control | Configuration method | Enforced action | Expected effect |
+| Control | Hardcoded rule | Enforced action | Expected effect |
 | --- | --- | --- | --- |
-| Authorized Creator | `setAuthorizedCreator(address, bool)` | `mint`, `mintWithInitialModel` | Only approved organizations can create instances. |
-| Eligible Holder | `setEligibleHolder(address, bool)` | mint, transfer | An instance can only be assigned to an approved Holder. |
-| Transfer switch | `setTransfersEnabled(bool)` | `transferFrom` | Disables ownership transfer without deleting the instance. |
+| Administrator | account 0 | `setMasterSmartPolicy` | Only the authority replaces the Master. |
+| Authorized Creator | account 0 | `mint` | Only approved organizations can create instances. |
+| Eligible Holder | accounts 0 and 1 | mint, transfer | An instance can only be assigned to an approved Holder. |
+| Master replacement | `setMasterSmartPolicy(address)` on the NMT, allowed by the current Master to its administrator | every later NMT action | The new Master governs every later mint and transfer; the zero address is rejected. |
 
-There is no application-level versioning. The model history is kept by the
-blockchain: every accepted change is a transaction on the asset and emits
-`ChoreographyInitialized`, `RolesChanged`, or `NodesChanged`. The policy test
-checks that the `NodesChanged` events reproduce the sequence of accepted node
-updates.
+Both NMTs inherit the Master policy from the base `NMT`. The tests check that a
+Holder cannot replace it, that the administrator cannot remove it, and that
+after a replacement the new Master decides: a mint the old Master allowed is
+denied by `DenyAllSmartPolicy`, and so is a license sale to a buyer qualified only under the old
+participant Master.
+
+`ChoreographyNMT` keeps no version registry: the history of a model is the
+chain itself, the `setNodes`/`setRoles` transactions and the
+`NodesChanged`/`RolesChanged` events of its asset. The tests check that the
+`ChoreographyInitialized` event names the model of the type and that the
+`NodesChanged` events reproduce the sequence of accepted node updates, and they
+check a transfer to an eligible Holder (allowed) and to an ineligible one
+(denied).
 
 ## Creator Policy
 
 The Creator policy has two responsibilities: ordinary edit authorization and
-optional BPMN structural governance. Its administrator configures the latter
-and is the only party allowed to replace the Creator policy of an instance;
-the Holder cannot remove the constraints it is subject to.
-All structural controls are opt-in by default, except that limits are set to
-the maximum unsigned value until configured.
+optional BPMN structural governance. Its rules are hardcoded, as a policy
+translated from XACML would be. The default `CreatorSmartPolicy` has no
+structural constraint beyond well-formed updates; the constraints live in
+`ConstrainedCreatorSmartPolicy`, whose scenario policies
+(`CreatorSmartPolicyTestScenario`, `CreatorSmartPolicyPaperScenario`) write
+the data as literals. The administrator (Hardhat account 0) is the only party
+allowed to replace the Creator policy of an instance; the Holder cannot remove
+the constraints it is subject to.
 
 ### Structural Controls
 
-| Control | Configuration method | Rule evaluated for a `setNodes` update |
-| --- | --- | --- |
-| Task limit | `setBpmnLimits(maxTasks, maxSequenceFlows)` | The post-update model cannot contain more task nodes than `maxTasks`. |
-| Flow limit | `setBpmnLimits(maxTasks, maxSequenceFlows)` | The post-update model cannot contain more outgoing sequence flows than `maxSequenceFlows`. |
-| Task-name allowlist | `setTaskNameAllowlistEnabled(bool)`, `setAllowedTaskName(name, bool)` | When enabled, every changed task name must be approved. |
-| Known flow endpoint | `setKnownFlowTargetsEnabled(bool)` | When enabled, each `incoming` source and `outgoing` target must exist already or be present in the same update. |
-| Consistent flows | `setConsistentFlowsEnabled(bool)` | When enabled, the post-update model must declare every sequence flow on both endpoints: B is in A's `outgoing` if and only if A is in B's `incoming`. Adding or removing a flow therefore requires updating both nodes. |
-| Protected node | `setProtectedNode(name, bool)` | A protected node cannot be changed by `setNodes`, and no other node may add or remove a sequence flow to or from it. |
-| Protected role | `setProtectedRole(name, bool)` | Evaluated on `setRoles`: a protected role cannot be reassigned. |
-| Role category | `setRoleCategory(role, bytes32)` | Always evaluated on `setRoles`: every address must be zero (role not assigned) or a tokenized participant asset whose `descriptor` equals the role category; a role without category accepts any participant asset. |
+| Control | Test scenario | Paper scenario | Rule evaluated |
+| --- | --- | --- | --- |
+| Task limit | 4 | 11 | `setNodes`: the post-update model cannot contain more task nodes. |
+| Flow limit | 5 | 15 | `setNodes`: the post-update model cannot contain more outgoing sequence flows. |
+| Task-name allowlist | `Delivery`, `Inspection`, `Packing`, `Labeling`, `Shipping` | the 10 evolved paper tasks, `Optional Customs Inspection`, `Optional Quality Inspection` | `setNodes`: every changed task name must be approved. |
+| Known flow endpoint | always | always | `setNodes`: each `incoming` source and `outgoing` target must exist already or be present in the same update. |
+| Consistent flows | always (also the default Creator policy) | always | `setNodes`: in the post-update model every flow is declared on both endpoints, `B` in `A.outgoing` if and only if `A` in `B.incoming`; a delta that changes a flow carries both endpoints. |
+| Protected node | `Start` | `Order` | `setNodes`: a protected node cannot be changed, and no other node may add or remove a sequence flow to or from it. |
+| Protected role | `Buyer` | none | `setRoles`: a protected role is assigned once, while it has no account, and cannot be reassigned. |
+| Role license requirement | `Carrier` → `SpecialCarrier` | `Special Carrier` → `SpecialCarrier` | `setRoles`: the role can be linked only to a license whose type, read from `ChoreographyParticipantAM`, is the required one: minted by the participant NMT and certified by the participant Creator policy bound to the attribute manager. |
+| Known roles | always | always | `setRoles`: only existing roles can be reassigned; new roles are rejected. |
+| Distinct role accounts | yes | no | `setRoles`: after the update, no account plays two roles. |
 
 The implementation also rejects duplicate node names in the same submitted
-delta. Counts are computed over the effective post-update model: existing node
+delta. The denied test updates are well formed (the default Creator policy
+accepts them), so each one is denied by the constraint it names; a flow to or
+from an unknown node, and a new or removed link to a protected node, are also
+one-sided and denied by both rules. Counts are computed over the effective post-update model: existing node
 records are considered, then changed nodes replace records with the same name
 or add new records.
 
 ### Example: Paper Example Delta
 
-The policy lifecycle evaluation imports `references/paper-example.bpmn` and
-uses `paper-example-parallel-transport-preparation.delta.json`. The permitted
+The policy lifecycle evaluation imports `references/paper-example.bpmn` into
+the model of a choreography type, mints an instance, and uses `paper-example-parallel-transport-preparation.delta.json`. The permitted
 delta adds the `Prepare Transport Documentation` task and introduces a parallel
-split/join before the waybill. The evaluation configures limits for the evolved
-model, allowlists its task names, enables known-target validation, and protects
-`Order`.
+split/join before the waybill. The evaluation deploys
+`CreatorSmartPolicyPaperScenario` and installs it on the populated instance
+with `setCreatorSmartPolicy`: the delta is checked against limits one above the
+evolved model, the allowlist of its task names, known targets, and the
+protected `Order`.
 
 The permitted delta is followed by denials for:
 
-- a new task exceeding the evolved task limit;
-- an extra sequence flow exceeding the evolved flow limit;
+- two new approved tasks exceeding the task limit;
+- two extra sequence flows exceeding the flow limit;
 - a task outside the name allowlist;
 - a flow pointing to an unknown BPMN node; and
 - a modification of the protected `Order` node.
 
-## Holder Policy Restrictions
+### Example: Special Carrier License Sale
 
-The Holder policy also keeps the Holder's participant allowlist. `setAllowedParticipant(asset, participant, bool)` is callable only by the current Holder of `asset`, and entries are keyed by asset and Holder, so a new Holder does not inherit them after a transfer. On `setRoles`, every non-zero address must be in the current Holder's list.
+The same evaluation then changes the organization that plays `Special
+Carrier`. The role is played by a license, a `ParticipantMutableAsset`; the
+choreography links the role to the license once, and the organization changes
+when Carrier A sells the license to Carrier B. The role, its tasks, and every
+node stay unchanged.
+
+The authority is the participant Master administrator, the issuer of every
+license type, and the certifier. The participant policies are hardcoded, as
+policies translated from XACML would be: Carrier A and Carrier B (Hardhat
+accounts 5 and 6) are qualified for `SpecialCarrier` and `Carrier`, Carrier C
+(account 7) for `Carrier` only, and the Supplier company (account 8) for
+`Supplier`; the authority is account 9. The authority mints the `Special
+Carrier` license to Carrier A with type `SpecialCarrier`, fixed at mint. The
+certifier's policy allows a `SpecialCarrier` license to declare the messages
+of the Special Carrier tasks of the paper example, including the one added by
+the delta.
+
+| Case | Expected outcome | Rule |
+| --- | --- | --- |
+| Link the role to a plain account | denied | The role requires a license. |
+| Link the role to a `Carrier` license | denied | Wrong license type. |
+| Link the role to a `Supplier` license | denied | Wrong license type. |
+| Link the role to the Special Carrier license | allowed | The license meets the requirement. |
+| Create a `Backup Carrier` role | denied | Only existing roles can be reassigned. |
+| Carrier A declares the Special Carrier messages | allowed | Every message is allowed for `SpecialCarrier`. |
+| Carrier A declares a message of another role | denied | The certifier's policy rejects it (`evaluateMessagesUpdate`). |
+| Sell the license to Carrier C | denied | Carrier C is not qualified for `SpecialCarrier`. |
+| Sell the license to the Supplier company | denied | Not qualified for `SpecialCarrier`. |
+| Carrier B takes the license by itself | denied | Only the holder sells. |
+| Carrier A sells the license to Carrier B | allowed | Carrier B is qualified; the sale clears name and profile and keeps the messages, written by Carrier A. |
+| Carrier B updates the license before installing a Holder policy | denied | The sale reset the Holder policy. |
+| Carrier B installs its Holder policy, then updates its name and profile | allowed | Carrier B is the holder. |
+| Carrier A updates the license after the sale | denied | Carrier A is no longer the holder. |
+| Carrier B confirms the messages | allowed | The messages are now written by the current holder. |
+
+After the sale the evaluation checks that the license belongs to Carrier B,
+that `getRole("Special Carrier")` still returns the license, that every task
+of the role still references it, and that the messages survived the sale with
+Carrier A as writer. `npm run test:policies` covers the same rules on the
+small fixture, plus an unauthorized issuer, a mint without a type, a license
+certified by an untrusted policy, an account playing two roles, the computed
+license `tokenURI` before and after the sale, and the replacement of the
+participant Master policy.
+
+## Holder Policy Restrictions
 
 The Holder policy is evaluated together with the Creator policy. It allows the
 Holder to adopt a stricter local rule without weakening Creator constraints. In
@@ -114,26 +181,25 @@ that policy under the Holder's administrative authority. The tests demonstrate
 this behavior by installing `DenyAllSmartPolicy` and rejecting a later model
 update.
 
-## Atomic Initialization and Cost Comparison
+## Choreography Types and Instances
 
-Two initialization strategies are measured:
-
-1. `mint(...)`, followed by `setRoles(...)` and `setNodes(...)`.
-2. `mintWithInitialModel(...)`, which stores the same initial model inside the
-   mint transaction.
-
-Atomic initialization removes two post-mint transactions but does not remove
-the dominant storage writes. It is primarily an atomicity and operational
-simplicity improvement; the report records the measured gas difference rather
-than assuming a universal saving.
+A `ChoreographyNMT` is one choreography type: its model is fixed at deploy in a
+data-only contract (SSTORE2), and `mint(...)` creates an asset born with that
+model. The tests deploy one type per fixture model (the three-node fixture, a
+model with escaped names, and a model with a licensed `Carrier` role) and
+check that a minted instance returns the model of its type through `tokenURI`.
+Roles are born with no account: the tests link them with `setRoles` before the
+role constraints are exercised, and the first assignment of the protected
+`Buyer` is allowed while a later one is denied. The evaluation reports the
+cost of the model contract (once per type) and of each mint.
 
 ## Automated Evidence
 
 | Command | Model | Evidence produced |
 | --- | --- | --- |
-| `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, event-based model history, attempts to bypass the Creator policy, and receipt gas/wei. The script exits with an error if any case has an unexpected outcome. |
-| `npm run evaluate:policies` | Imported `paper-example` plus real delta | Empty versus populated mint, paper-model structural allow/deny cases, and scenario costs. |
-| `npm run evaluate:paper` | Imported `paper-example` plus real delta | Import/render/delta/full-population measurements, chor-js BPMN images, and gnuplot charts. |
+| `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, event-based model history, Master policy replacement, attempts to bypass the Creator policy, and receipt gas/wei. The script exits with an error if any case has an unexpected outcome. |
+| `npm run evaluate:policies` | Imported `paper-example` plus real delta | Model contract and instance mint, paper-model structural allow/deny cases, the Special Carrier license sale allow/deny cases, and scenario costs. |
+| `npm run evaluate:paper` | Imported `paper-example` plus real delta | Import/deploy/mint/render/delta measurements, delta versus a new instance, chor-js BPMN images, and gnuplot charts. |
 | `npm run evaluate:all` | All of the above | Rebuilds the canonical final report. |
 
 The generated `evaluation/final-report.generated.md` embeds the paper workflow,

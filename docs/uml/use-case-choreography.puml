@@ -1,0 +1,48 @@
+@startuml use-case-choreography
+!include style.iuml
+title ChorNMT - choreography use cases
+left to right direction
+
+actor "Authority\n(account 0)" as Authority
+actor "Holder" as Holder
+actor "Partner\n(account 1)" as Partner
+actor "Anyone" as Anyone
+
+rectangle "ChoreographyNMT + ChoreographyMutableAsset" {
+  usecase "Mint an instance of the\nchoreography type" as UC_Mint
+  usecase "Transfer the choreography\nto an eligible holder" as UC_Transfer
+  usecase "Replace the Master policy\n(a new hardcoded Master)" as UC_Master
+  usecase "Replace the Creator policy\n(install scenario constraints)" as UC_Creator
+  usecase "Apply a BPMN delta\n(setNodes)" as UC_Nodes
+  usecase "Update roles\n(setRoles)" as UC_Roles
+  usecase "Link a role to a\nparticipant license" as UC_Link
+  usecase "Check domain constraints\n(Creator AND Holder)" as UC_Domain
+  usecase "Install a Holder policy\n(e.g. DenyAllSmartPolicy)" as UC_Holder
+  usecase "Read the model\n(tokenURI)" as UC_Read
+  usecase "Render the BPMN\n(off-chain)" as UC_Render
+}
+
+Authority --> UC_Mint
+Authority --> UC_Master
+Authority --> UC_Creator
+
+Holder --> UC_Nodes
+Holder --> UC_Roles
+Holder --> UC_Holder
+Holder --> UC_Transfer
+UC_Link .> UC_Roles : <<extend>>
+UC_Nodes ..> UC_Domain : <<include>>
+UC_Roles ..> UC_Domain : <<include>>
+
+Partner --> UC_Transfer : receives
+
+Anyone --> UC_Read
+Anyone --> UC_Render
+UC_Render ..> UC_Read : <<include>>
+
+note bottom of UC_Domain
+  evaluateNodeUpdate / evaluateRoleUpdate
+  of IChoreographyPolicy, asked of both
+  the Creator and the Holder policy.
+end note
+@enduml

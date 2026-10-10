@@ -1,12 +1,12 @@
 # ChorNMT
 
-ChorNMT imports a BPMN choreography into a local NMT asset, allows its nodes to be changed on-chain, and regenerates BPMN from the configuration stored in that asset.
+ChorNMT turns a BPMN choreography into a choreography type on-chain: a `ChoreographyNMT` whose instances are mutable assets born with that model. It allows the nodes of an instance to be changed on-chain under smart policies, and regenerates BPMN from the configuration stored in that asset.
 
 The main path uses `paper-example`: a logistics choreography involving a buyer, manufacturer, intermediary, supplier, and special carrier. The repository also includes `parallel-gateway-example`, a small model used for technical demonstrations of parallel splits and joins.
 
 ## Prerequisites
 
-- Node.js 20 or later
+- Node.js 22 (see `.nvmrc`; run `nvm use`)
 - npm
 
 Install both sets of dependencies:
@@ -16,33 +16,27 @@ npm install
 (cd bpmn-builder-js && npm install)
 ```
 
-## Main path: import, render, modify, and render the paper example
+## Main path: deploy, render, modify, and render the paper example
 
-Before importing, open two terminals in the repository root. In the first, start the local operations environment (it compiles contracts and starts the blockchain):
+Open two terminals in the repository root. In the first, start the local operations environment (it compiles contracts and starts the blockchain):
 
 ```bash
 npm run start:operations
 ```
 
-In the second terminal, deploy a new asset and copy the printed `ChoreographyMutableAsset` address:
+### 1. Deploy the choreography type and mint an instance
+
+In the second terminal, import the source BPMN and deploy its choreography type, then copy the printed `ChoreographyMutableAsset` address:
 
 ```bash
-npm run deploy:asset
+npm run deploy:asset -- references/paper-example.bpmn
 ```
 
-Use that exact value in every `<asset-address>` placeholder below; all commands must target the same asset.
-
-### 1. Import
-
-Convert the source BPMN into NMT and store that dataset in the asset:
-
-```bash
-npm run import:asset -- <asset-address> references/paper-example.bpmn
-```
+The command converts the BPMN into an NMT dataset (`bpmn-builder-js/example/input/paper-example.nmt.json`), stores it as the model of the type (the code of a data-only contract), deploys the `ChoreographyNMT` that fixes that model, mints an instance born with it, and links its roles to local accounts. Use the printed address in every `<asset-address>` placeholder below; all commands must target the same asset.
 
 ### 2. Render the baseline
 
-Render BPMN from the imported data stored on-chain:
+Render BPMN from the model stored on-chain:
 
 ```bash
 npm run render:asset -- <asset-address> bpmn-builder-js/example/input/paper-example.nmt.json
@@ -80,32 +74,17 @@ Use [scripts/data/paper-example-parallel-transport-preparation.delta.json](scrip
 
 - `render`: the generated BPMN name and metadata;
 - `nodes`: only nodes that are added or changed, each in its complete final state;
-- optional `roles`: a `role name → address` map, where the address is the zero address (no participant yet) or a `ParticipantMutableAsset`; new roles are added and existing ones are bound, rebound, or cleared.
+- optional `roles`: a `role name → Ethereum address` map; new roles are added and existing ones get the new address.
 
 The full field list and validation rules are in [BPMN to NMT workflow](docs/bpmn-to-nmt-workflow.md#delta-rules).
 
 When an edge changes, include both endpoint nodes in the delta with their complete `incoming` and `outgoing` arrays. The asset can add or replace nodes, but it cannot yet permanently remove one.
 
-Node and role names are the contract reference keys. To import another BPMN or start again from a clean asset, run `deploy:asset` again and use the new address: the asset does not clear the names already stored in its lists.
+Node and role names are the contract reference keys. A `ChoreographyNMT` is one choreography type: another BPMN is another type, deployed with `deploy:asset -- <input.bpmn>`, and a clean model is a new instance of the type. The asset does not clear the names already stored in its lists.
 
-For a trusted fixed template, `ChoreographyNMT.mintWithInitialModel(...)` creates and populates an instance atomically. It avoids the two post-mint import transactions; the policy test compares its gas cost with the empty-asset workflow.
+The default `CreatorSmartPolicy` has no BPMN constraint. Constraints (task and sequence-flow limits, permitted task names, known flow targets, protected nodes and roles, role licenses) are hardcoded in scenario policies such as `CreatorSmartPolicyPaperScenario`, installed with `setCreatorSmartPolicy` or passed at mint.
 
-The `CreatorSmartPolicy` can optionally limit BPMN updates by task count, sequence-flow count, permitted task names, valid flow targets, sequence flows declared consistently on both endpoints, and protected nodes and roles. Existing import and delta workflows remain unchanged until these constraints are configured. Role addresses are always restricted: a role is either unassigned (zero address) or bound to a `ParticipantMutableAsset` of the category the Creator set for that role and allowlisted by the Holder; imported choreographies start without participants.
-
-Run `npm run evaluate:policies` to measure a fresh model's empty-versus-populated mint cost and the allow/deny cost of Master, Creator, and Holder policy calls. It writes local JSON and Markdown evaluation reports.
-
-## Assign participants
-
-An imported choreography starts without participants. The Creator sets a category per role and the Holder chooses which participant asset fills it:
-
-```bash
-npm run deploy:participants
-npm run mint:participant -- BUYER
-npm run set:role-category -- <asset-address> "Bulk Buyer" BUYER
-npm run assign:participant -- <asset-address> "Bulk Buyer" <participant-address>
-```
-
-Details are in [Commands and scripts](docs/commands-and-scripts.md#participants).
+Run `npm run evaluate:policies` to measure the cost of the model contract and of a mint for the paper type, and the allow/deny cost of Master, Creator, and Holder policy calls. It writes local JSON and Markdown evaluation reports.
 
 ## Other examples
 
@@ -127,13 +106,25 @@ Files with a `.generated.*` suffix and imported `*.nmt.json` files are local art
 
 ## Technical documentation
 
+- [Requirements](docs/requirements.md): what the prototype demonstrates, acceptance criteria, and non-goals.
+- [Design decisions](docs/decisions.md): why the main choices were made, and the open questions.
 - [Evaluation quick start](evaluation/README.md#complete-evaluation-run): commands for the complete paper and policy evaluation suite.
 - [BPMN to NMT workflow](docs/bpmn-to-nmt-workflow.md): NMT format, import, and delta rules.
-- [Architecture](docs/architettura.md): general design and the NMT, choreography, and participant assets.
+- [Contract structure](docs/contract-structure.md): the standard internal structure of Token, Asset, Policy, and Renderer contracts, gas rules, and known deviations.
+- [Architecture](docs/architettura.md): components, responsibilities, and internal structure of the NMT, asset, policy, and renderer contracts and of the JavaScript tooling.
+- [Rendering](docs/rendering.md): on-chain `tokenURI` metadata and the off-chain pipeline that regenerates BPMN from it, with costs and limits.
 - [Delta updates and Solidity calls](docs/delta-update-and-solidity-calls.md): `setNodes(...)` and `setRoles(...)` details.
 - [Contract hierarchy](docs/contract-hierarchy.md): asset and policy model.
-- [ChoreographyMutableAsset](docs/choreography-mutable-asset.md) and [ParticipantMutableAsset](docs/participant-mutable-asset.md): fields, events, and methods of the two asset contracts.
-- [Choreography policies](docs/choreography-policies.md): minting, ownership, policy-controlled updates, and model history.
+- [Choreography policies](docs/choreography-policies.md): minting, ownership, and policy-controlled updates.
 - [Commands and scripts](docs/commands-and-scripts.md): public npm commands, implementation scripts, and legacy references.
 - [Evaluation toolkit](evaluation/README.md): measurement reports, CSV aggregation, and Gnuplot figure templates.
 - [bpmn-builder-js](bpmn-builder-js/README.md): BPMN renderer and intermediate JSON format.
+
+## Claude Code
+
+The repository ships project instructions (`CLAUDE.md`), hooks (`.claude/settings.json`, `.claude/hooks/`), and skills (`.claude/skills/`). The `grill-me` and `grilling` skills come from skills.sh and are tracked in `skills-lock.json`:
+
+```bash
+npx skills add https://github.com/mattpocock/skills --skill grill-me --skill grilling -a claude-code --copy
+npx skills update -p   # update them
+```

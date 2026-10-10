@@ -2,20 +2,10 @@
 pragma solidity ^0.8.20;
 
 import "../base/MutableAsset.sol";
-import "./IChoreographyCreatorPolicy.sol";
+import "./IChoreographyAsset.sol";
+import "./IChoreographyPolicy.sol";
 
-contract ChoreographyMutableAsset is MutableAsset {
-    enum NodeType {
-        START_EVENT,
-        END_EVENT,
-        TASK,
-        EXCLUSIVE_SPLIT,
-        EXCLUSIVE_JOIN,
-        PARALLEL_SPLIT,
-        PARALLEL_JOIN,
-        EVENT_BASED_GATEWAY
-    }
-
+contract ChoreographyMutableAsset is MutableAsset, IChoreographyAsset {
     struct Node {
         string name;
         NodeType nodeType;
@@ -39,6 +29,7 @@ contract ChoreographyMutableAsset is MutableAsset {
 
     struct InitialModel {
         string[] roleNames;
+        address[] roleAddresses;
         string[] names;
         NodeType[] nodeTypes;
         string[][] incoming;
@@ -53,50 +44,64 @@ contract ChoreographyMutableAsset is MutableAsset {
     Descriptor private descriptor;
     event RolesChanged(string[] roleNames);
     event NodesChanged(string[] nodeNames);
-    event ChoreographyInitialized(string[] roleNames, string[] nodeNames);
+    event ChoreographyInitialized(address model);
 
+    // The asset is born with the model of its choreography type: the ABI-encoded InitialModel
+    // stored as the code of the model contract fixed in the NMT. Trusted path: the model is
+    // part of the type, so it is not evaluated by the policies.
     constructor(
         address nmtAddress,
         address creatorSmartPolicyAddress,
-        address holderSmartPolicyAddress
+        address holderSmartPolicyAddress,
+        address modelAddress
     )
         MutableAsset(
             nmtAddress,
             creatorSmartPolicyAddress,
             holderSmartPolicyAddress
         )
-    {}
+    {
+        InitialModel memory model = abi.decode(modelAddress.code, (InitialModel));
+        _setRoles(model.roleNames, model.roleAddresses);
+        _setNodes(
+            model.names,
+            model.nodeTypes,
+            model.incoming,
+            model.outgoing,
+            model.conditions,
+            model.initiatorRoles,
+            model.participantRoles,
+            model.initiatingMessages,
+            model.returnMessages
+        );
+        emit ChoreographyInitialized(modelAddress);
+    }
 
     function setRoles(
         string[] memory roleNames,
         address[] memory addresses
-    )
-        public
-        evaluatedBySmartPolicies(
-            msg.sender,
-            abi.encodeWithSignature("setRoles(string[],address[])", roleNames, addresses),
-            address(this)
-        )
-    {
-        require(
-            IChoreographyCreatorPolicy(creatorSmartPolicy).evaluateRoleUpdate(
-                address(this),
-                roleNames,
-                addresses
-            ),
-            "Operation DENIED by CREATOR role policy"
-        );
+    ) external evaluatedBySmartPolicies(msg.sender, msg.data, address(this)) {
+        _evaluateRoleUpdate(roleNames, addresses);
         _setRoles(roleNames, addresses);
+    }
+
+    function _evaluateRoleUpdate(
+        string[] memory roleNames,
+        address[] memory addresses
+    ) private view {
+        _evaluateDomainUpdate(
+            abi.encodeCall(IChoreographyPolicy.evaluateRoleUpdate, (address(this), roleNames, addresses))
+        );
     }
 
     function _setRoles(
         string[] memory roleNames,
         address[] memory addresses
     ) private {
-        require(roleNames.length == addresses.length, "Array size mismatch");
+        if (roleNames.length != addresses.length) revert ArraySizeMismatch();
 
         for (uint256 i = 0; i < roleNames.length; i++) {
-            require(bytes(roleNames[i]).length > 0, "Role name required");
+            if (bytes(roleNames[i]).length == 0) revert NameRequired();
 
             if (!descriptor.hasRole[roleNames[i]]) {
                 descriptor.hasRole[roleNames[i]] = true;
@@ -119,26 +124,8 @@ contract ChoreographyMutableAsset is MutableAsset {
         string[] memory participantRoles,
         string[] memory initiatingMessages,
         string[] memory returnMessages
-    )
-        public
-        evaluatedBySmartPolicies(
-            msg.sender,
-            abi.encodeWithSignature(
-                "setNodes(string[],uint8[],string[][],string[][],string[][],string[],string[],string[],string[])",
-                names,
-                nodeTypes,
-                incoming,
-                outgoing,
-                conditions,
-                initiatorRoles,
-                participantRoles,
-                initiatingMessages,
-                returnMessages
-            ),
-            address(this)
-        )
-    {
-        _evaluateCreatorNodePolicy(names, nodeTypes, incoming, outgoing);
+    ) external evaluatedBySmartPolicies(msg.sender, msg.data, address(this)) {
+        _evaluateNodeUpdate(names, nodeTypes, incoming, outgoing);
         _setNodes(
             names,
             nodeTypes,
@@ -152,7 +139,7 @@ contract ChoreographyMutableAsset is MutableAsset {
         );
     }
 
-    function _evaluateCreatorNodePolicy(
+    function _evaluateNodeUpdate(
         string[] memory names,
         NodeType[] memory nodeTypes,
         string[][] memory incoming,
@@ -163,16 +150,21 @@ contract ChoreographyMutableAsset is MutableAsset {
             types[i] = uint8(nodeTypes[i]);
         }
 
-        require(
-            IChoreographyCreatorPolicy(creatorSmartPolicy).evaluateNodeUpdate(
-                address(this),
-                names,
-                types,
-                incoming,
-                outgoing
-            ),
-            "Operation DENIED by CREATOR BPMN policy"
+        _evaluateDomainUpdate(
+            abi.encodeCall(IChoreographyPolicy.evaluateNodeUpdate, (address(this), names, types, incoming, outgoing))
         );
+    }
+
+    // Domain check: Creator AND Holder, with the call encoded once. A policy that reverts or
+    // does not answer true denies.
+    function _evaluateDomainUpdate(bytes memory domainCall) private view {
+        if (!_approves(creatorSmartPolicy, domainCall)) revert OperationDenied(CREATOR);
+        if (!_approves(holderSmartPolicy, domainCall)) revert OperationDenied(HOLDER);
+    }
+
+    function _approves(address policy, bytes memory domainCall) private view returns (bool) {
+        (bool success, bytes memory result) = policy.staticcall(domainCall);
+        return success && result.length == 32 && abi.decode(result, (bool));
     }
 
     function _setNodes(
@@ -186,20 +178,21 @@ contract ChoreographyMutableAsset is MutableAsset {
         string[] memory initiatingMessages,
         string[] memory returnMessages
     ) private {
-        require(
-            names.length == nodeTypes.length &&
-                names.length == incoming.length &&
-                names.length == outgoing.length &&
-                names.length == conditions.length &&
-                names.length == initiatorRoles.length &&
-                names.length == participantRoles.length &&
-                names.length == initiatingMessages.length &&
-                names.length == returnMessages.length,
-            "Array size mismatch"
-        );
+        if (
+            names.length != nodeTypes.length ||
+            names.length != incoming.length ||
+            names.length != outgoing.length ||
+            names.length != conditions.length ||
+            names.length != initiatorRoles.length ||
+            names.length != participantRoles.length ||
+            names.length != initiatingMessages.length ||
+            names.length != returnMessages.length
+        ) {
+            revert ArraySizeMismatch();
+        }
 
         for (uint256 i = 0; i < names.length; i++) {
-            require(bytes(names[i]).length > 0, "Node name required");
+            if (bytes(names[i]).length == 0) revert NameRequired();
 
             if (!descriptor.hasNode[names[i]]) {
                 descriptor.hasNode[names[i]] = true;
@@ -233,35 +226,8 @@ contract ChoreographyMutableAsset is MutableAsset {
         emit NodesChanged(names);
     }
 
-    // Roles start without participants: binding a ParticipantMutableAsset to a
-    // role is a later setRoles update, subject to the Creator and Holder policies.
-    function initializeChoreography(InitialModel memory model) public onlyNMT {
-        _setRoles(model.roleNames, new address[](model.roleNames.length));
-        _setNodes(
-            model.names,
-            model.nodeTypes,
-            model.incoming,
-            model.outgoing,
-            model.conditions,
-            model.initiatorRoles,
-            model.participantRoles,
-            model.initiatingMessages,
-            model.returnMessages
-        );
-        emit ChoreographyInitialized(model.roleNames, model.names);
-    }
-
-    function setTokenURI(
-        string memory uri
-    )
-        public
-        evaluatedBySmartPolicies(
-            msg.sender,
-            abi.encodeWithSignature("setTokenURI(string)", uri),
-            address(this)
-        )
-    {
-        _setTokenURI(uri);
+    function tokenURI() public view returns (string memory) {
+        return NMT(nmt).tokenURI(uint160(address(this)));
     }
 
     function getNode(
@@ -320,6 +286,10 @@ contract ChoreographyMutableAsset is MutableAsset {
 
     function getRole(string memory role) public view returns (address) {
         return descriptor.roles[role];
+    }
+
+    function hasRole(string memory role) public view returns (bool) {
+        return descriptor.hasRole[role];
     }
 
     function getRoleNames() public view returns (string[] memory) {
