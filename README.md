@@ -74,7 +74,9 @@ Use [scripts/data/paper-example-parallel-transport-preparation.delta.json](scrip
 
 - `render`: the generated BPMN name and metadata;
 - `nodes`: only nodes that are added or changed, each in its complete final state;
-- optional `roles`: a `role name → Ethereum address` map for new roles.
+- optional `roles`: a `role name → Ethereum address` map; new roles are added and existing ones get the new address.
+
+The full field list and validation rules are in [BPMN to NMT workflow](docs/bpmn-to-nmt-workflow.md#delta-rules).
 
 When an edge changes, include both endpoint nodes in the delta with their complete `incoming` and `outgoing` arrays. The asset can add or replace nodes, but it cannot yet permanently remove one.
 
@@ -96,9 +98,11 @@ Every import, export, or rendering operation writes files to:
 bpmn-builder-js/example/input/
 bpmn-builder-js/example/output/
 bpmn-builder-js/example/contract/
+metrics/
+evaluation/
 ```
 
-Files with a `.generated.*` suffix are local artifacts ignored by Git and can be regenerated with the commands above. Reference BPMNs and JSON deltas are versioned.
+Files with a `.generated.*` suffix and imported `*.nmt.json` files are local artifacts ignored by Git and can be regenerated with the commands above. Reference BPMNs and JSON deltas are versioned.
 
 ## Technical documentation
 

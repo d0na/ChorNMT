@@ -20,10 +20,30 @@ These are the only commands intended for the normal `paper-example` workflow.
 | `npm run evaluate:policies` | Runs the lifecycle cost evaluation for a new BPMN model. | None. | JSON and Markdown reports with model-contract, mint, and policy-operation costs. |
 | `npm run evaluate:summary` | Collects generated experiment reports in one overview. | Existing evaluation reports. | `evaluation/summary.generated.md`. |
 | `npm run evaluate:all` | Cleans then executes paper, policy, and integration evaluations in the correct order. | Local operations node; Chromium installed. | Complete reports, graphs, BPMN SVG/PNG images, and unified overview. |
+| `npm run evaluate:paper` | Runs the paper workflow experiment on its own choreography type: import, deploy, mint, baseline render, delta, final render, and the delta versus new instance benchmark. | Local operations node; Chromium; `gnuplot`. | Metrics, CSV, charts, BPMN SVG/PNG images, and `evaluation/experiment-summary.generated.md`. |
 | `npm run setup:evaluation` | Installs the local headless Chromium used to render BPMN SVG/PNG images. | Internet access; run once after `npm install`. | Browser cache used by `evaluate:paper`. |
 | `npm run clean` | Removes local Hardhat artifacts/cache, `*.generated.*` files and imported `*.nmt.json` files under `bpmn-builder-js/example/`, `metrics/`, and `evaluation/`, the `evaluation/figures/` folder, and the evaluation temporary files in `/tmp`. | None. | Reset only reproducible local outputs. |
 
 All commands after deployment must receive the same `<asset-address>` printed by `deploy:asset`.
+
+`render:asset` always reads the model from the chain. Its JSON argument only provides the render metadata: the `render` object of a delta, or, for an imported `.nmt.json`, metadata derived from the file (`<name>-from-contract` as output base name). It writes:
+
+```text
+bpmn-builder-js/example/contract/<base>-contract-manifest.generated.json
+bpmn-builder-js/example/input/<base>.raw.generated.json
+bpmn-builder-js/example/input/<base>.normalized.generated.json
+bpmn-builder-js/example/output/<base>.generated.bpmn.xml
+```
+
+### Environment variables
+
+| Variable | Default | Used by |
+| --- | --- | --- |
+| `RPC_URL` | `http://127.0.0.1:8545` | `deploy:asset`, `modify:asset`, `render:asset` |
+| `DEPLOYER_PRIVATE_KEY` | Hardhat account #0 | `deploy:asset`, `modify:asset` (signer and initial holder) |
+| `ETH_USD_PRICE` | fetched from Coinbase | evaluation reports (see the [evaluation toolkit](../evaluation/README.md#usd-price-for-gas-scenarios)) |
+
+`deploy:asset` links the roles of the minted instance to the node's unlocked accounts (`eth_accounts`, starting from index 1). It therefore works only against a local development node and supports at most as many roles as available accounts minus one (19 on a default Hardhat node).
 
 ## Public workflow
 
