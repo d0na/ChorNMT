@@ -11,7 +11,7 @@
     "hardhat": "^3.9.0",
     "network": "hardhat (edr-simulated, ephemeral)",
     "ethUsdPrice": 3000,
-    "repetitions": 1
+    "timings": "timings.json, measured over the repetitions and not compared"
   },
   "accounts": [
     {

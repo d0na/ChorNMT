@@ -43,7 +43,11 @@ async function main() {
   const book = new Map(evidence.contracts.map((entry, index) => [entry.address.toLowerCase(), { ...entry, alias: `C${index}` }]));
   const accounts = new Map(evidence.accounts.map((account) => [account.address.toLowerCase(), account]));
   const records = new Map(evidence.transactions.map((record) => [record.key, record]));
-  const trace = async (key) => JSON.parse(await fs.readFile(path.join(evidenceDirectory, "traces", `${key}.json`), "utf8"));
+  const traces = JSON.parse(await fs.readFile(path.join(evidenceDirectory, "traces.json"), "utf8"));
+  const trace = async (key) => {
+    if (!traces[key]) throw new Error(`traces.json has no trace for ${key}`);
+    return traces[key];
+  };
 
   const party = (address) => {
     if (address === "offchain") return { alias: "OffChain", kind: "offchain" };

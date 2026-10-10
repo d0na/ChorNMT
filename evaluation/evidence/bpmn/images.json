@@ -1,0 +1,14 @@
+{
+  "baseline": {
+    "xml": "baseline.bpmn.xml",
+    "xmlSha256": "d5f5a1d02813c172a1dd55c4ac16ade7520f97a17b3b044f76d7e596cc5471cc",
+    "svg": "baseline.svg",
+    "names": 25
+  },
+  "final": {
+    "xml": "final.bpmn.xml",
+    "xmlSha256": "2f18c67a6da78d275690d5ad112e7ed981605069dfb2e6195b49ea37b632697e",
+    "svg": "final.svg",
+    "names": 29
+  }
+}

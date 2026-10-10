@@ -10,11 +10,15 @@ if (outIndex !== -1 && !process.argv[outIndex + 1]) {
 }
 const env = { ...process.env };
 if (outIndex !== -1) env.EVIDENCE_OUT = path.resolve(process.argv[outIndex + 1]);
-// The run, then the sequence diagrams generated from its traces, then their SVG (Java and Graphviz).
+// The run (EXPERIMENT_REPETITIONS measured runs after a warm-up), then from its evidence the
+// sequence diagrams, the charts (gnuplot), the BPMN images (Chromium), and the diagram SVG (Java
+// and Graphviz).
 const evidence = env.EVIDENCE_OUT || path.resolve("evaluation", "evidence");
 for (const command of [
   ["npx", "hardhat", "run", "scripts/experiment/run.js"],
   ["node", "scripts/experiment/sequence.js"],
+  ["node", "scripts/experiment/charts.js"],
+  ["node", "scripts/experiment/bpmn.js"],
   ["node", "scripts/render-uml.js", "--dir", path.join(evidence, "uml")]
 ]) {
   const result = spawnSync(command[0], command.slice(1), { stdio: "inherit", env });

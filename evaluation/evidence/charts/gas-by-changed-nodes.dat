@@ -1,0 +1,8 @@
+# key,nodes,allowedGas,deniedGas
+F5.delta,7,1866349,NaN
+F5.denied.task-limit,2,NaN,318816
+F5.denied.flow-limit,3,NaN,547091
+F5.denied.task-name,1,NaN,298426
+F5.denied.unknown-target,1,NaN,76686
+F5.denied.protected-node,1,NaN,340491
+F7.denied.delta,7,NaN,136179

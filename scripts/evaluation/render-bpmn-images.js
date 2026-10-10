@@ -21,10 +21,11 @@ html, body, #canvas { width: 100%; height: 100%; margin: 0; background: white; }
   return page;
 }
 
-export async function renderBpmnImages({ xmlPath, outputBaseName }) {
-  const outputDirectory = path.join(process.cwd(), "evaluation", "figures");
-  const svgPath = path.join(outputDirectory, `${outputBaseName}.generated.svg`);
-  const pngPath = path.join(outputDirectory, `${outputBaseName}.generated.png`);
+// outputDirectory, suffix, and png let the experiment write versioned SVG only
+// (evaluation/evidence/bpmn/, no ".generated" suffix); the defaults are the git-ignored figures.
+export async function renderBpmnImages({ xmlPath, outputBaseName, outputDirectory = path.join(process.cwd(), "evaluation", "figures"), suffix = ".generated", png = true }) {
+  const svgPath = path.join(outputDirectory, `${outputBaseName}${suffix}.svg`);
+  const pngPath = path.join(outputDirectory, `${outputBaseName}${suffix}.png`);
   const xml = await fs.readFile(xmlPath, "utf8");
 
   await fs.mkdir(outputDirectory, { recursive: true });
@@ -40,10 +41,10 @@ export async function renderBpmnImages({ xmlPath, outputBaseName }) {
       return svg;
     }, xml);
     await fs.writeFile(svgPath, svg);
-    await page.locator("#canvas").screenshot({ path: pngPath });
+    if (png) await page.locator("#canvas").screenshot({ path: pngPath });
   } finally {
     await browser.close();
   }
 
-  return { svgPath, pngPath };
+  return { svgPath, pngPath: png ? pngPath : null };
 }

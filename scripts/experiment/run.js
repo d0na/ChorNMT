@@ -1,9 +1,11 @@
-// The experiment run (decisions D16-D18): executes the phases of phases.js on one ephemeral Hardhat
-// network, through the same functions as the CLI commands, and writes the evidence. Every value in
-// the evidence comes from a receipt, a call trace, or a chain read; the run fails as soon as a
-// transaction differs from the specification.
+// The experiment run (decisions D16-D18): executes the phases of phases.js, through the same
+// functions as the CLI commands, once as warm-up and EXPERIMENT_REPETITIONS more times (default
+// 10), each on a fresh ephemeral Hardhat network, and fails unless every run gives the same
+// evidence. Every value in the evidence comes from a receipt, a call trace, or a chain read; a run
+// fails as soon as a transaction differs from the specification. It writes experiment.json,
+// transactions.csv, traces.json, timings.json, and the BPMN XML of the two renders.
 //
-// npm run evidence:update [-- --out <dir>]   (default evaluation/evidence/)
+// npm run evidence:update [-- --out <dir>]   (default evaluation/evidence/; EVIDENCE_OUT for this script alone)
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
@@ -33,7 +35,8 @@ const sha256 = (content) => createHash("sha256").update(content).digest("hex");
 const json = (value) => `${JSON.stringify(value, (_, item) => typeof item === "bigint" ? item.toString() : item, 2)}\n`;
 
 class Recorder {
-  constructor({ ethers, artifacts, accounts, trustTables }) {
+  constructor({ ethers, artifacts, accounts, trustTables, instrument }) {
+    this.instrument = instrument;
     this.ethers = ethers;
     this.artifacts = artifacts;
     this.accounts = accounts;
@@ -81,8 +84,13 @@ class Recorder {
     return `unknown revert ${data.slice(0, 10)}`;
   }
 
-  // Records the receipt of a transaction the run already sent, and checks it against the specification.
-  async record(key, receipt, { deployed } = {}) {
+  // Records the receipt of a transaction the run already sent, and checks it against the
+  // specification. Tracing and checking are instrumentation: their time is not a phase duration.
+  async record(key, receipt, options) {
+    return this.instrument(() => this.recordReceipt(key, receipt, options));
+  }
+
+  async recordReceipt(key, receipt, { deployed } = {}) {
     const expected = this.next(key);
     const trace = await this.ethers.provider.send("debug_traceTransaction", [receipt.hash, { tracer: "callTracer" }]);
     const outcome = receipt.status === 1 ? "allowed" : "denied";
@@ -168,8 +176,30 @@ function toNodeUpdate(nodes) {
   ];
 }
 
-async function main() {
+// One execution of the experiment on a fresh ephemeral network: the evidence, the traces, the BPMN
+// XML of the two renders, and the duration of every phase and sub-step.
+async function runExperiment() {
   const { ethers } = await hre.network.connect("hardhat");
+  const timings = { phases: {}, steps: {} };
+  // The time the run spends tracing, reading the state it reports, and checking is instrumentation,
+  // not part of what a user of the contracts waits for: each phase duration leaves it out.
+  let instrumentationMs = 0;
+  const instrument = async (work) => {
+    const start = performance.now();
+    try {
+      return await work();
+    } finally {
+      instrumentationMs += performance.now() - start;
+    }
+  };
+  let lapStart = performance.now();
+  let lapInstrumentation = 0;
+  const lap = (id) => {
+    const now = performance.now();
+    timings.phases[id] = now - lapStart - (instrumentationMs - lapInstrumentation);
+    lapStart = now;
+    lapInstrumentation = instrumentationMs;
+  };
   const signers = await ethers.getSigners();
   const accounts = ACCOUNTS.map((account) => ({ ...account, address: signers[account.index].address }));
   const signer = (name) => signers[ACCOUNTS.find((account) => account.name === name).index];
@@ -177,7 +207,7 @@ async function main() {
   const [carrierA, carrierB, carrierC, supplierCompany, authority] =
     ["Carrier A", "Carrier B", "Carrier C", "Supplier company", "Authority"].map(signer);
   const artifacts = await loadArtifacts();
-  const rec = new Recorder({ ethers, artifacts, accounts, trustTables: await loadTrustTables(path.join(root, INPUTS.trustTables)) });
+  const rec = new Recorder({ ethers, artifacts, accounts, trustTables: await loadTrustTables(path.join(root, INPUTS.trustTables)), instrument });
   const readTokenURI = (address) => new ethers.Contract(address, ["function tokenURI() view returns (string)"], ethers.provider).tokenURI();
   const contract = (name, address, runner = administrator) => new ethers.Contract(address, artifacts[name].abi, runner);
   const phases = {};
@@ -204,7 +234,7 @@ async function main() {
   // What exists when a phase ends: the policies of the choreography type, of the main instance,
   // and of the license that plays the role, read from the chain at that moment.
   const live = {};
-  const endPhase = async (id, extra = {}) => {
+  const endPhase = (id, extra = {}) => instrument(async () => {
     const policies = [];
     if (live.nmt) policies.push(await policyEntry("choreography type", "Master", await live.nmt.masterSmartPolicy()));
     if (live.asset) {
@@ -217,10 +247,14 @@ async function main() {
       policies.push(await policyEntry("licensed role", "Holder", await live.license.holderSmartPolicy()));
     }
     finishPhase(id, { policies, ...(live.asset ? { instance: await instanceState(live.asset.target) } : {}), ...extra });
-  };
+  });
 
   // F1: the choreography type through the deploy:asset functions, then the license infrastructure.
+  // F1 starts here: connecting to the network and loading the artifacts are not part of a phase.
+  lapStart = performance.now();
+  const importStart = lapStart;
   const imported = await importBpmnToNmt(path.join(root, INPUTS.bpmn), path.join(workDirectory, "paper-example.nmt.json"));
+  timings.steps["F1.import"] = performance.now() - importStart;
   const { dataset } = imported;
   const type = await deployChoreographyType(administrator, dataset);
   for (const [key, part, name] of [
@@ -253,6 +287,7 @@ async function main() {
       modelBytes: ((await ethers.provider.getCode(type.model.address)).length - 2) / 2
     }
   });
+  lap("F1");
 
   // F2: the instance is born with the model and the paper-scenario Creator policy.
   const roleAccounts = dataset.roles.filter((role) => role !== LICENSED_ROLE);
@@ -272,6 +307,7 @@ async function main() {
   });
   live.asset = asset;
   await endPhase("F2");
+  lap("F2");
 
   // F3: licenses of three types; only a SpecialCarrier license can play the Special Carrier role.
   const typeId = (name) => ethers.encodeBytes32String(name);
@@ -304,6 +340,7 @@ async function main() {
   });
   live.license = specialCarrierLicense;
   await endPhase("F3");
+  lap("F3");
 
   // F4 and F8 render through the render:asset function, reading tokenURI from this network. The
   // run traces the tokenURI call and hashes what each off-chain step wrote; the raw and normalized
@@ -318,9 +355,12 @@ async function main() {
   };
   const render = async (id, configPath) => {
     const tokenURIData = new Interface(["function tokenURI() view returns (string)"]).encodeFunctionData("tokenURI");
-    rec.traces[`${id}.tokenURI`] = await ethers.provider.send("debug_traceCall", [{ from: "0x0000000000000000000000000000000000000000", to: instance.assetAddress, data: tokenURIData }, "latest", { tracer: "callTracer" }]);
+    rec.traces[`${id}.tokenURI`] = await instrument(() => ethers.provider.send("debug_traceCall", [{ from: "0x0000000000000000000000000000000000000000", to: instance.assetAddress, data: tokenURIData }, "latest", { tracer: "callTracer" }]));
+    const renderStart = performance.now();
     const result = await renderAsset(instance.assetAddress, configPath, { readTokenURI });
+    timings.steps[`${id}.render`] = performance.now() - renderStart;
     const xml = await fs.readFile(result.xmlPath, "utf8");
+    // endPhase is instrumentation; the hashes are computed inside it.
     await endPhase(id, {
       reads: [{ key: `${id}.tokenURI`, call: "ChoreographyMutableAsset.tokenURI", by: "eth_call (any account)" }],
       offchain: [
@@ -332,14 +372,17 @@ async function main() {
     });
   };
   await render("F4", imported.outputPath);
+  lap("F4");
 
   // F5: the delta through the modify:asset function, then five well-formed updates the
   // paper-scenario Creator policy denies, each for the constraint its key names.
+  const deltaStart = performance.now();
   const applied = await applyAssetDelta(instance.assetAddress, path.join(root, INPUTS.delta), { render: false, signer: administrator });
+  timings.steps["F5.delta"] = performance.now() - deltaStart;
   await rec.record("F5.delta", applied.receipts.setNodes);
   const defaultCreator = contract("CreatorSmartPolicy", type.creator.contract.target);
   const denyUpdate = async (key, nodes) => {
-    assert.equal(await defaultCreator.evaluateNodeUpdate(asset.target, ...toNodeUpdate(nodes).slice(0, 4)), true, `${key}: the denied update must be well formed`);
+    await instrument(async () => assert.equal(await defaultCreator.evaluateNodeUpdate(asset.target, ...toNodeUpdate(nodes).slice(0, 4)), true, `${key}: the denied update must be well formed`));
     await rec.deny(key, administrator, { to: asset.target, data: asset.interface.encodeFunctionData("setNodes", toNodeUpdate(nodes)) });
   };
   const evolved = (name) => evolvedNodes.find((node) => node.name === name);
@@ -360,19 +403,20 @@ async function main() {
   });
   await denyUpdate("F5.denied.protected-node", [{ ...evolved("Order"), initiatingMessage: "Modified order request" }]);
   await endPhase("F5");
+  lap("F5");
 
   // F6: the license changes holder; the role stays linked to it.
   const licenseId = BigInt(specialCarrierLicense.target);
   const sell = (from, to) => ({ to: participantNmt.target, data: participantNmt.interface.encodeFunctionData("transferFrom", [from.address, to.address, licenseId]) });
   const setName = (name) => ({ to: specialCarrierLicense.target, data: specialCarrierLicense.interface.encodeFunctionData("setName", [typeId(name)]) });
-  const licenseChecks = async () => ({
+  const licenseChecks = () => instrument(async () => ({
     licenseHolder: rec.accountName(await participantNmt.ownerOf(licenseId)),
     roleLinkedTo: rec.contractAt(await asset.getRole(LICENSED_ROLE)),
     roleLicense: await asset.getRole(LICENSED_ROLE),
     licenseName: ethers.decodeBytes32String(await specialCarrierLicense.getName()),
     messagesWriter: rec.accountName(await specialCarrierLicense.getMessagesWriter()),
     holderPolicy: rec.contractAt(await specialCarrierLicense.holderSmartPolicy())
-  });
+  }));
   const beforeSale = await licenseChecks();
   await rec.deny("F6.denied.carrier-buyer", carrierA, sell(carrierA, carrierC));
   await rec.deny("F6.denied.supplier-buyer", carrierA, sell(carrierA, supplierCompany));
@@ -396,6 +440,7 @@ async function main() {
     roleTasks: licensedNodes.map((node) => node.name),
     messages: licensedMessages.map((message) => ethers.decodeBytes32String(message))
   });
+  lap("F6");
 
   // F7: a second instance, with the default policies, restricted by its holder.
   const denyAll = await rec.deploy("F7.deploy.deny-all", administrator, "DenyAllSmartPolicy");
@@ -414,13 +459,14 @@ async function main() {
   await rec.deny("F7.denied.delta", partner, { to: restrictedAddress, data: restricted.interface.encodeFunctionData("setNodes", toNodeUpdate(delta.nodes)) });
   // F7 reports the restricted instance, not the main one.
   finishPhase("F7", {
-    policies: [
+    policies: await instrument(async () => [
       await policyEntry("choreography type", "Master", await nmt.masterSmartPolicy()),
       await policyEntry("restricted instance", "Creator", await restricted.creatorSmartPolicy()),
       await policyEntry("restricted instance", "Holder", await restricted.holderSmartPolicy())
-    ],
-    restrictedInstance: { ...await instanceState(restrictedAddress), holder: rec.accountName(await nmt.ownerOf(restrictedId)) }
+    ]),
+    restrictedInstance: await instrument(async () => ({ ...await instanceState(restrictedAddress), holder: rec.accountName(await nmt.ownerOf(restrictedId)) }))
   });
+  lap("F7");
 
   // F8: the final render, and the alternative to the delta: a new instance with the same roles.
   await render("F8", path.join(root, INPUTS.delta));
@@ -430,7 +476,8 @@ async function main() {
   await rec.record("F8.new-instance.roles", fresh.receipts.setRoles);
   const freshAsset = contract("ChoreographyMutableAsset", fresh.assetAddress);
   await rec.allow("F8.new-instance.link", () => freshAsset.setRoles([LICENSED_ROLE], [specialCarrierLicense.target]));
-  finishPhase("F8", { newInstance: await instanceState(fresh.assetAddress) });
+  finishPhase("F8", { newInstance: await instrument(() => instanceState(fresh.assetAddress)) });
+  lap("F8");
   rec.done();
 
   const inputs = {};
@@ -449,7 +496,7 @@ async function main() {
       hardhat: packageJson.devDependencies.hardhat,
       network: "hardhat (edr-simulated, ephemeral)",
       ethUsdPrice: ETH_USD_PRICE,
-      repetitions: 1
+      timings: "timings.json, measured over the repetitions and not compared"
     },
     accounts,
     contracts: [...rec.addressBook.values()],
@@ -465,21 +512,72 @@ async function main() {
     transactions: rec.records
   };
 
+  await fs.rm(workDirectory, { recursive: true, force: true });
+  return { evidence, traces: rec.traces, xml: { baseline: phases.F4.render.xml, final: phases.F8.render.xml }, timings };
+}
+
+// Sample statistics of a list of durations in milliseconds, rounded to the microsecond.
+function statistics(samples) {
+  const sorted = [...samples].sort((left, right) => left - right);
+  const mean = samples.reduce((sum, value) => sum + value, 0) / samples.length;
+  const variance = samples.length > 1 ? samples.reduce((sum, value) => sum + (value - mean) ** 2, 0) / (samples.length - 1) : 0;
+  const middle = Math.floor(sorted.length / 2);
+  const median = sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+  const round = (value) => Math.round(value * 1000) / 1000;
+  return { medianMs: round(median), minMs: round(sorted[0]), maxMs: round(sorted.at(-1)), meanMs: round(mean), stddevMs: round(Math.sqrt(variance)), samplesMs: samples.map(round) };
+}
+
+// Runs the experiment once as warm-up and EXPERIMENT_REPETITIONS more times (default 10), each on
+// a fresh network. Every run must produce the same evidence; the timings come from the measured runs.
+async function main() {
+  const repetitions = Number(process.env.EXPERIMENT_REPETITIONS ?? 10);
+  if (!Number.isInteger(repetitions) || repetitions < 1) throw new Error("EXPERIMENT_REPETITIONS must be a positive integer");
+  const runs = [];
+  const log = console.log;
+  try {
+    for (let run = 0; run <= repetitions; run++) {
+      if (run > 0) console.log = () => {};
+      const result = await runExperiment();
+      if (runs.length > 0 && json(result.evidence) + json(result.traces) + json(result.xml) !== json(runs[0].evidence) + json(runs[0].traces) + json(runs[0].xml)) {
+        throw new Error(`run ${run} produced different evidence from the first run: the experiment is not deterministic`);
+      }
+      runs.push(result);
+    }
+  } finally {
+    console.log = log;
+  }
+  const [{ evidence, traces, xml }] = runs;
+  const measured = runs.slice(1).map((run) => run.timings);
+  const cpus = os.cpus();
+  const timings = {
+    repetitions,
+    warmUpRuns: 1,
+    note: "Wall-clock durations of the measured runs, without the time the run spends tracing, reading the state it reports, and checking; the warm-up run is excluded. Not compared by check:evidence.",
+    machine: {
+      platform: `${os.platform()} ${os.release()}`,
+      arch: os.arch(),
+      cpu: cpus[0]?.model ?? "unknown",
+      cores: cpus.length,
+      memoryGiB: Math.round(os.totalmem() / 2 ** 30),
+      node: process.versions.node
+    },
+    phases: Object.fromEntries(Object.keys(measured[0].phases).map((id) => [id, statistics(measured.map((timing) => timing.phases[id]))])),
+    steps: Object.fromEntries(Object.keys(measured[0].steps).map((id) => [id, statistics(measured.map((timing) => timing.steps[id]))]))
+  };
+
   await fs.rm(outDirectory, { recursive: true, force: true });
-  await fs.mkdir(path.join(outDirectory, "traces"), { recursive: true });
   await fs.mkdir(path.join(outDirectory, "bpmn"), { recursive: true });
   await fs.writeFile(path.join(outDirectory, "experiment.json"), json(evidence));
+  await fs.writeFile(path.join(outDirectory, "timings.json"), json(timings));
   const columns = ["key", "phase", "from", "call", "outcome", "reason", "gasUsed", "gasPriceWei", "costWei"];
-  await fs.writeFile(path.join(outDirectory, "transactions.csv"), `${columns.join(",")}\n${rec.records.map((record) =>
+  await fs.writeFile(path.join(outDirectory, "transactions.csv"), `${columns.join(",")}\n${evidence.transactions.map((record) =>
     [record.key, record.phase, record.from.account, record.call, record.outcome, record.reason ?? "", record.gasUsed, record.gasPriceWei, record.costWei]
       .map((value) => /[,"]/.test(String(value)) ? `"${String(value).replaceAll("\"", "\"\"")}"` : value).join(",")).join("\n")}\n`);
-  for (const [key, trace] of Object.entries(rec.traces)) {
-    await fs.writeFile(path.join(outDirectory, "traces", `${key}.json`), json(trace));
-  }
-  await fs.writeFile(path.join(outDirectory, "bpmn", "baseline.bpmn.xml"), phases.F4.render.xml);
-  await fs.writeFile(path.join(outDirectory, "bpmn", "final.bpmn.xml"), phases.F8.render.xml);
-  await fs.rm(workDirectory, { recursive: true, force: true });
-  console.log(`Experiment evidence: ${path.relative(root, outDirectory)} (${rec.records.length} transactions in ${PHASES.length} phases)`);
+  // Every call trace in one file, by transaction or read key, in the order of the run.
+  await fs.writeFile(path.join(outDirectory, "traces.json"), json(traces));
+  await fs.writeFile(path.join(outDirectory, "bpmn", "baseline.bpmn.xml"), xml.baseline);
+  await fs.writeFile(path.join(outDirectory, "bpmn", "final.bpmn.xml"), xml.final);
+  console.log(`Experiment evidence: ${path.relative(root, outDirectory)} (${evidence.transactions.length} transactions in ${PHASES.length} phases, ${repetitions} measured runs after a warm-up, all identical)`);
 }
 
 main().catch((error) => {

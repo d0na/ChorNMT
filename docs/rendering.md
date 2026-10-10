@@ -37,7 +37,7 @@ flowchart LR
     VAL --> MAP[process-mapper.js<br/>elementi BPMN + layout DI]
     MAP --> GEN[moddle-generator.js<br/>bpmn-moddle]
     GEN --> XML[*.generated.bpmn.xml]
-    XML -.-> IMG[render-bpmn-images.js<br/>chor-js + Playwright → SVG/PNG]
+    XML -.-> IMG[render-bpmn-images.js<br/>chor-js + Playwright → SVG, PNG opzionale]
   end
   CMA -->|eth_call| W
 ```
@@ -137,7 +137,7 @@ Il comando `npm run render:asset -- <asset> <delta-o-dataset.json>` esegue `scri
 | 5. Validazione | `bpmn-builder-js/src/validation.js` | Controlla la presenza degli ID e che i riferimenti tra nodi, flussi e partecipanti esistano. | — |
 | 6. Mapping e layout | `bpmn-builder-js/src/mappers/process-mapper.js` | Produce il descrittore degli elementi BPMN (`Choreography`, `ChoreographyTask`, gateway, `SequenceFlow`, `MessageFlow`, `Message`) e il diagramma DI (vedi sotto). | descrittore in memoria |
 | 7. XML | `bpmn-builder-js/src/generators/moddle-generator.js` | Due passate su `bpmn-moddle`. `createSkeleton` crea tutti gli elementi e li indicizza per ID, poi `hydrateElement` imposta gli attributi e trasforma i riferimenti (`sourceRef`, `incoming`, `participantRef`, …) in puntatori agli oggetti. Infine `toXML` serializza. | `example/output/*.generated.bpmn.xml` |
-| 8. Immagini (opzionale) | `scripts/evaluation/render-bpmn-images.js` | Apre l'XML nel viewer `chor-js` dentro Chromium, tramite Playwright, ed esporta SVG e PNG. Si usa nella valutazione. | `evaluation/figures/*.generated.{svg,png}` |
+| 8. Immagini (opzionale) | `scripts/evaluation/render-bpmn-images.js` | Apre l'XML nel viewer `chor-js` dentro Chromium, tramite Playwright, ed esporta SVG e, se richiesto, PNG. Si usa nella valutazione e in `scripts/experiment/bpmn.js`, che scrive solo SVG (`png: false`) in `evaluation/evidence/bpmn/` e verifica che il disegno mostri esattamente i nomi dell'XML. | `evaluation/figures/*.generated.{svg,png}`, `evaluation/evidence/bpmn/*.svg` |
 
 ### Layout automatico
 

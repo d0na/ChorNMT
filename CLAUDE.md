@@ -45,7 +45,7 @@ npm run check:use-cases                              # fail if a use case disagr
 npm run check:invariants                             # fail if a contract breaks a design decision (grep, no compile)
 npm test                                             # = test:policies, ephemeral network, no node needed
 npm run evaluate:policies                            # lifecycle evaluation, ephemeral network
-npm run evidence:update [-- --out <dir>]             # experiment F1-F8, ephemeral network: evaluation/evidence/ (+ sequence diagrams)
+npm run evidence:update [-- --out <dir>]             # experiment F1-F8, 1+10 runs on ephemeral networks: evaluation/evidence/ (traces, timings, sequence diagrams, charts, BPMN SVG); needs gnuplot, Chromium (setup:evaluation), Java, Graphviz
 npm run check:gas                                    # fail if a gas figure in the docs differs from the last test/evaluation run
 npm run start:operations                             # compile + hardhat node on :8545 (long-running)
 npm run deploy:asset -- references/paper-example.bpmn  # needs the node: deploy the type, mint, print the asset

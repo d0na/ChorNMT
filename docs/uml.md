@@ -10,7 +10,7 @@ Every change to an actor or a trust rule updates the use case diagrams in the sa
 npm run docs:uml          # render docs/uml/*.puml and evaluation/evidence/uml/*.puml to SVG (Java and Graphviz; PlantUML 1.2024.7 downloaded once into .cache/)
 npm run check:uml         # fail if an SVG is missing or older than its source (no Java needed; CI runs it)
 npm run check:use-cases   # fail if a use case disagrees with the trust tables, the tests, or the evidence (CI runs it)
-npm run evidence:update   # rerun the experiment: evidence, sequence diagrams, and their SVG
+npm run evidence:update   # rerun the experiment: evidence, timings, sequence diagrams and their SVG, charts, BPMN drawings
 ```
 
 ## Use cases
