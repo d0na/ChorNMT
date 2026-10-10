@@ -73,6 +73,7 @@ CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:invariant
 - JavaScript is ESM (`"type": "module"`), Node 22 (pinned in `.nvmrc`; Hardhat 3/EDR needs ≥ 22), no TypeScript, no lint config — match the surrounding style.
 - Contracts: OpenZeppelin v5, custom policies extend `SmartPolicy`.
 - Commits: Conventional Commits (`feat:`, `fix:`, `perf:`, `docs:`, `refactor:`, `chore:`, `ci:`), imperative, lowercase.
+- No AI attribution anywhere: commit messages, PR titles and descriptions, tags, release notes, and code comments never mention Claude or Claude Code (no `Co-Authored-By: Claude …` trailer, no "Generated with Claude Code" line).
 - Docs: `architettura.md` and `rendering.md` are in Italian, everything else in English; keep each file's language.
 
 ## Hooks and skills
