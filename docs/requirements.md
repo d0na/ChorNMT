@@ -56,6 +56,18 @@ Acceptance criteria:
 - Every contract change reports its gas before and after; an increase needs a stated reason (see [Contract structure](contract-structure.md#gas)).
 - Every contract fits the EIP-170 and EIP-3860 limits (`check:size`, CI).
 
+### E. The experiment is documented by evidence produced by code
+
+Every number, outcome, chart, BPMN drawing, and sequence diagram that documents the experiment comes from the experiment run, never from hand-written text, and the documentation is at least as exhaustive as the reports it replaces (decisions D16–D22). Being implemented in six steps; until then the claims above keep their current evidence.
+
+Acceptance criteria:
+
+- One run on an ephemeral network executes phases F1–F8 of the versioned phase specification on one instance, through the same functions as the CLI commands, and fails if an outcome differs from the expected one.
+- `evaluation/evidence/` holds the last approved run; `check:evidence` regenerates and compares it in the pre-commit hook and in CI, timings excluded, and recomputes every derived value (gas from receipts, phase totals, USD, delta versus new instance, chart points, test matrix versus run) independently.
+- The sequence diagrams are generated from the call trace, filtered and complete; their transactions, order, outcomes, and participants match the phase tables. The use case diagrams match the trust table, the test cases, and the evidence both ways.
+- The baseline BPMN XML is equivalent to `references/paper-example.bpmn`, the final one equals the baseline plus the delta, both equal the on-chain state, and each SVG contains exactly the element names of its XML.
+- `docs/experiment.md` contains no number or outcome word outside generated blocks, except declared structural ones, and the parity checklist maps every section, table, column, and artifact of the former reports to a block of the protocol.
+
 ## Supporting features
 
 None at the moment: every tested function serves a claim.
