@@ -191,39 +191,51 @@ async function main() {
   assert.equal(evolvedCounts.flows + 1, 15, "CreatorSmartPolicyPaperScenario hardcodes 15 sequence flows");
 
   await allow(policyResults, "creator permits paper-example BPMN delta", () => populatedAsset.setNodes(...deltaUpdate));
+  // Denied updates are well formed (flows declared on both endpoints, as the default Creator policy
+  // requires), so each one is denied by the paper-scenario constraint it names.
+  const assertWellFormed = async (nodes) => assert.equal(
+    await creatorPolicy.evaluateNodeUpdate(populatedAssetAddress, ...toNodeUpdate(nodes).slice(0, 4)),
+    true,
+    "the denied update must be well formed"
+  );
+  const evolvedNode = (name) => evolvedNodes.find((node) => node.name === name);
   const optionalTask = {
     name: "Optional Customs Inspection",
     nodeType: 2,
-    incoming: ["Arrival Intermediate"],
-    outgoing: ["Delivery of Product"],
-    conditions: [""],
+    incoming: [],
+    outgoing: [],
+    conditions: [],
     initiatorRole: "Middleman",
     participantRole: "Special Carrier",
     initiatingMessage: "Optional customs inspection",
     returnMessage: ""
   };
-  // Two approved optional tasks, one of them without outgoing flows: 12 tasks, 15 flows.
+  // Two approved optional tasks, not yet linked: 12 tasks, 14 flows.
+  const twoOptionalTasks = [optionalTask, { ...optionalTask, name: "Optional Quality Inspection" }];
+  await assertWellFormed(twoOptionalTasks);
   await deny(policyResults, "creator denies paper-example task limit breach", administrator, {
     to: populatedAssetAddress,
-    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([
-      optionalTask,
-      { ...optionalTask, name: "Optional Quality Inspection", outgoing: [], conditions: [] }
-    ]))
+    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate(twoOptionalTasks))
   });
 
-  const waybillWithAdditionalFlow = delta.nodes.find((node) => node.name === "Waybill for Intermediate");
+  // The waybill gains flows to two existing nodes, declared on both endpoints: 10 tasks, 16 flows.
+  const waybill = evolvedNode("Waybill for Intermediate");
+  const extraTargets = ["Delivery of Product", "Order Intermediate"];
+  const extraFlows = [
+    { ...waybill, outgoing: [...waybill.outgoing, ...extraTargets], conditions: [...waybill.conditions, "", ""] },
+    ...extraTargets.map((name) => ({ ...evolvedNode(name), incoming: [...evolvedNode(name).incoming, waybill.name] }))
+  ];
+  await assertWellFormed(extraFlows);
   await deny(policyResults, "creator denies paper-example flow limit breach", administrator, {
     to: populatedAssetAddress,
-    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([{
-      ...waybillWithAdditionalFlow,
-      outgoing: [...waybillWithAdditionalFlow.outgoing, "Delivery of Product", "Order Intermediate"],
-      conditions: [...waybillWithAdditionalFlow.conditions, "", ""]
-    }]))
+    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate(extraFlows))
   });
 
+  const unapprovedTask = [{ ...optionalTask, name: "Unapproved Customs Task" }];
+  await assertWellFormed(unapprovedTask);
   await deny(policyResults, "creator denies paper-example task-name policy breach", administrator, {
     to: populatedAssetAddress,
-    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([{ ...optionalTask, name: "Unapproved Customs Task" }]))
+    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate(unapprovedTask))
   });
   const unknownFlowUpdate = delta.nodes.find((node) => node.name === "Waybill for Intermediate");
   await deny(policyResults, "creator denies paper-example unknown flow target", administrator, {
@@ -231,6 +243,7 @@ async function main() {
     data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([{ ...unknownFlowUpdate, outgoing: ["Unknown BPMN node"] }]))
   });
   const protectedOrder = dataset.nodes.find((node) => node.name === "Order");
+  await assertWellFormed([{ ...protectedOrder, initiatingMessage: "Modified order request" }]);
   await deny(policyResults, "creator denies paper-example protected node update", administrator, {
     to: populatedAssetAddress,
     data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([{ ...protectedOrder, initiatingMessage: "Modified order request" }]))

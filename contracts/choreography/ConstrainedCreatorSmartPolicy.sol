@@ -194,17 +194,4 @@ abstract contract ConstrainedCreatorSmartPolicy is CreatorSmartPolicy {
         }
         return true;
     }
-
-    function _containsName(
-        string[] memory names,
-        string memory candidate
-    ) private pure returns (bool) {
-        bytes32 candidateHash = keccak256(bytes(candidate));
-        for (uint256 i = 0; i < names.length; i++) {
-            if (keccak256(bytes(names[i])) == candidateHash) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

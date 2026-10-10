@@ -60,7 +60,7 @@ The model keeps only the role names: every role is born with no account, and the
 | Link its five role accounts (`setRoles`) | 198,112 |
 | Mint a three-node test instance | 3,173,819 |
 
-The values are reproducible local gas measurements, not public-network prices. Storage writes in the asset dominate the mint. In the same run, an allowed constrained update used 406,903 gas and structural deny paths used 138,930--176,730 gas.
+The values are reproducible local gas measurements, not public-network prices. Storage writes in the asset dominate the mint. In the same run, an allowed constrained update (three whole nodes) used 609,279 gas and structural deny paths used 76,086--324,233 gas; the paper delta used 1,866,349 gas.
 
 ## Instance policies
 
@@ -72,7 +72,7 @@ Replacing the Creator policy is not a Holder operation: only the Creator policy'
 
 The Creator policy also defines the structural boundaries for `setNodes(...)`; it is not a fourth policy type. Like every policy it stands for a policy translated from XACML, so its rules are hardcoded, not set at runtime; a different set of constraints is a different policy, installed with `setCreatorSmartPolicy` or passed at mint.
 
-- `CreatorSmartPolicy`, the default, has no BPMN constraint: it rejects only malformed updates (array lengths that differ, empty or duplicate names).
+- `CreatorSmartPolicy`, the default, has no BPMN constraint: it rejects only malformed updates (array lengths that differ, empty or duplicate names, and sequence flows declared on one endpoint only: in the post-update model `B` is in `A.outgoing` if and only if `A` is in `B.incoming`). A one-sided flow would leave a model that the render cannot draw, so every Creator policy enforces it, the constrained ones included.
 - `ConstrainedCreatorSmartPolicy` (abstract) holds the constraint rules. Each scenario extends it and writes the data as literals: `CreatorSmartPolicyTestScenario` for the fixture of `scripts/test-policies.js` (4 tasks, 5 flows, allowed tasks `Delivery`, `Inspection`, `Packing`, `Labeling`, `Shipping`, protected node `Start`, protected role `Buyer`, `Carrier` requires a `SpecialCarrier` license, distinct role accounts) and `CreatorSmartPolicyPaperScenario` for the paper example (11 tasks, 15 flows, the evolved paper tasks plus two optional inspections, protected node `Order`, `Special Carrier` requires a `SpecialCarrier` license).
 - `ChoreographyParticipantAM` is the attribute manager the constrained policies read role licenses from: it returns the type of a license minted by the participant NMT and certified by the participant Creator policy, both bound at its deploy, and zero for any other address. Which type a role requires stays in the Creator policy.
 

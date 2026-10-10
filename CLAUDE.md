@@ -61,7 +61,7 @@ CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:invariant
 - **Bytecode limit.** `ChoreographyNMT` embeds the asset bytecode (`new`) and is close to the 24,576-byte limit. Put new logic in the renderer or a policy, not in `ChoreographyMutableAsset` or `ChoreographyNMT`, and run `npm run check:size`.
 - **Identity by name.** Nodes and roles are keyed by name; BPMN IDs are not stored on-chain. Nodes are never deleted, only overwritten; an asset never clears its name lists — mint a new instance for a clean model.
 - **One NMT, one choreography type.** `ChoreographyNMT` fixes its model (ABI-encoded `InitialModel` as the code of an SSTORE2 contract, `scripts/choreography-model.js`); every asset decodes it in its constructor, roles born without accounts. Another model is another NMT.
-- **Whole-node writes.** A delta contains only changed nodes, each in its complete final state; when an edge changes, both endpoints go in the delta.
+- **Whole-node writes.** A delta contains only changed nodes, each in its complete final state; when an edge changes, both endpoints go in the delta — every Creator policy rejects a flow declared on one endpoint only.
 - **NodeType enum** (`ChoreographyMutableAsset.sol`): 0 START_EVENT, 1 END_EVENT, 2 TASK, 3 EXCLUSIVE_SPLIT, 4 EXCLUSIVE_JOIN, 5 PARALLEL_SPLIT, 6 PARALLEL_JOIN, 7 EVENT_BASED_GATEWAY.
 - **tokenURI is computed**, never stored; render reads the whole model in one `tokenURI` call.
 - NMT mints with `_mint`, not `_safeMint` — keep it that way.

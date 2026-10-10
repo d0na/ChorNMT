@@ -287,7 +287,7 @@ sequenceDiagram
 | Policy | Stato interno | Decide |
 | --- | --- | --- |
 | `MasterSmartPolicy` | nessuno: regole **hardcoded**, come una policy tradotta da XACML (`administrator` e unico creator autorizzato = account 0, holder ammessi = account 0 e 1) | Operazioni dell'NMT: mint, mint con modello, trasferimenti, propria sostituzione (solo `administrator`). |
-| `CreatorSmartPolicy` | nessuno: regole **hardcoded** (`administrator` = account 0) | Modifiche dell'holder e propria sostituzione (solo `administrator`). Nessun vincolo BPMN: rifiuta solo aggiornamenti malformati (array di lunghezze diverse, nomi vuoti o duplicati). |
+| `CreatorSmartPolicy` | nessuno: regole **hardcoded** (`administrator` = account 0) | Modifiche dell'holder e propria sostituzione (solo `administrator`). Nessun vincolo BPMN: rifiuta solo aggiornamenti malformati (array di lunghezze diverse, nomi vuoti o duplicati, sequence flow dichiarati su un solo estremo: nel modello dopo l'aggiornamento `B` sta in `A.outgoing` se e solo se `A` sta in `B.incoming`). Un modello così non si potrebbe più disegnare. |
 | `ConstrainedCreatorSmartPolicy` (abstract) | `participants`: l'attribute manager, `immutable` dal costruttore | Le regole dei vincoli strutturali e dei ruoli. I dati (limiti, task ammessi, nodi e ruoli protetti, tipi richiesti) sono letterali scritti da ogni scenario: `CreatorSmartPolicyTestScenario` (fixture dei test) e `CreatorSmartPolicyPaperScenario` (paper example). |
 | `ChoreographyParticipantAM` | `participantNmt`, `participantCertifier` (`immutable`) | Non è una policy ma un attribute manager: restituisce il tipo di una licenza emessa dal participant NMT e certificata dalla participant Creator policy, zero per ogni altro indirizzo. |
 | `HolderSmartPolicy` | nessuno | Seconda approvazione: consente all'holder `setRoles`, `setNodes` e `setLinked`. Implementa `IChoreographyPolicy` senza vincoli: `evaluateNodeUpdate` ed `evaluateRoleUpdate` rispondono `true` senza leggere l'asset. |
@@ -296,7 +296,7 @@ sequenceDiagram
 Come ogni policy, la Creator rappresenta una policy tradotta da XACML: le regole non si configurano a runtime, e un insieme diverso di vincoli è un'altra policy, installata con `setCreatorSmartPolicy` o passata al mint. Nelle policy vincolate `evaluateNodeUpdate` calcola il modello **dopo** l'aggiornamento: parte dai conteggi correnti e sostituisce i nodi con lo stesso nome. Rifiuta l'aggiornamento se:
 
 - supera il numero massimo di task o di sequence flow;
-- contiene nomi vuoti o duplicati (questo controllo lo fa anche la `CreatorSmartPolicy` di default);
+- contiene nomi vuoti o duplicati, o un sequence flow dichiarato su un solo estremo (questi controlli li fa la `CreatorSmartPolicy` di default, da cui le policy vincolate ereditano);
 - contiene un task fuori dall'allowlist;
 - ha un estremo di `incoming` o `outgoing` sconosciuto;
 - modifica un nodo protetto, oppure aggiunge o toglie un collegamento verso di esso.

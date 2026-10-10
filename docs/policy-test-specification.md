@@ -88,6 +88,7 @@ the constraints it is subject to.
 | Flow limit | 5 | 15 | `setNodes`: the post-update model cannot contain more outgoing sequence flows. |
 | Task-name allowlist | `Delivery`, `Inspection`, `Packing`, `Labeling`, `Shipping` | the 10 evolved paper tasks, `Optional Customs Inspection`, `Optional Quality Inspection` | `setNodes`: every changed task name must be approved. |
 | Known flow endpoint | always | always | `setNodes`: each `incoming` source and `outgoing` target must exist already or be present in the same update. |
+| Consistent flows | always (also the default Creator policy) | always | `setNodes`: in the post-update model every flow is declared on both endpoints, `B` in `A.outgoing` if and only if `A` in `B.incoming`; a delta that changes a flow carries both endpoints. |
 | Protected node | `Start` | `Order` | `setNodes`: a protected node cannot be changed, and no other node may add or remove a sequence flow to or from it. |
 | Protected role | `Buyer` | none | `setRoles`: a protected role is assigned once, while it has no account, and cannot be reassigned. |
 | Role license requirement | `Carrier` → `SpecialCarrier` | `Special Carrier` → `SpecialCarrier` | `setRoles`: the role can be linked only to a license whose type, read from `ChoreographyParticipantAM`, is the required one: minted by the participant NMT and certified by the participant Creator policy bound to the attribute manager. |
@@ -95,7 +96,10 @@ the constraints it is subject to.
 | Distinct role accounts | yes | no | `setRoles`: after the update, no account plays two roles. |
 
 The implementation also rejects duplicate node names in the same submitted
-delta. Counts are computed over the effective post-update model: existing node
+delta. The denied test updates are well formed (the default Creator policy
+accepts them), so each one is denied by the constraint it names; a flow to or
+from an unknown node, and a new or removed link to a protected node, are also
+one-sided and denied by both rules. Counts are computed over the effective post-update model: existing node
 records are considered, then changed nodes replace records with the same name
 or add new records.
 

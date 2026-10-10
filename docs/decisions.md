@@ -18,6 +18,8 @@ Each entry: the decision, why, and what it implies.
 
 **D14. Roles are born without accounts (2026-10-08).** The model keeps only the role names; each instance links its accounts or licenses with `setRoles`. *Why:* who plays a role is a decision of the instance and must pass the Creator AND Holder checks, licenses included. *Implies:* a protected role is assigned once: `setRoles` accepts it only while it has no account.
 
+**D15. Every Creator policy rejects one-sided flows (2026-10-10).** In the post-update model, `B` is in `A.outgoing` if and only if `A` is in `B.incoming`; the default `CreatorSmartPolicy` enforces it as a well-formedness rule, without a setter, and the constrained policies inherit it. *Why:* the render rejects an inconsistent model, so an accepted one-sided flow would make the instance undrawable (claim C1); `main` had the rule behind a runtime switch, which D5 rules out. *Implies:* a delta that changes a flow carries both endpoints; the paper delta costs 101,548 gas more (1,764,801 → 1,866,349) and the default Creator policy 471,009 more to deploy.
+
 ## Policies
 
 **D5. Policies stand for XACML translations (2026-10-06).** Rules and their configuration are literals in the policy source, tuned to the test and evaluation scenarios; there are no runtime setters. *Why:* the contribution is the XACML to smart-policy translation, and XACML policies carry no mutable configuration; literals are also the cheapest form. *Implies:* a rule change is a new policy, installed through the policy it replaces; rule variants are separate policy contracts.

@@ -166,6 +166,18 @@ async function main() {
     )
   ));
   assert.deepEqual(modelFromTokenURI(await nmt.tokenURI(BigInt(assetAddress))), { ...initialModel, roleAddresses });
+  // A flow declared on one endpoint only is a malformed update, since the model could no longer be
+  // rendered: Delivery drops its flow to End while End still lists Delivery as incoming.
+  report.push(await expectDenied(
+    "creator policy denies a flow declared on one endpoint",
+    administrator,
+    {
+      to: assetAddress,
+      data: asset.interface.encodeFunctionData("setNodes", [
+        ["Delivery"], [2], [["Start"]], [[]], [[]], ["Buyer"], ["Supplier"], ["requestDelivery"], ["deliveryConfirmed"]
+      ])
+    }
+  ));
 
   const escapedModel = {
     ...initialModel,
@@ -225,114 +237,95 @@ async function main() {
     [nodeType],
     [incoming],
     [outgoing],
-    [[]],
+    [outgoing.map(() => "")],
     [nodeType === 2 ? "Buyer" : ""],
     [nodeType === 2 ? "Supplier" : ""],
     [nodeType === 2 ? `${name}Request` : ""],
     [nodeType === 2 ? `${name}Response` : ""]
   ];
-  const inspectionUpdate = nodeUpdate("Inspection", 2, ["Delivery"], ["End"]);
+  // A delta writes whole nodes: when a flow changes, both endpoints are in the update.
+  const nodesUpdate = (...nodes) => [0, 1, 2, 3, 4, 5, 6, 7, 8].map((field) => nodes.flatMap((node) => node[field]));
+  const setNodesTransaction = (update) => ({
+    to: constrainedAssetAddress,
+    data: constrainedAsset.interface.encodeFunctionData("setNodes", update)
+  });
+  // The default Creator policy checks only well-formed updates (distinct names, flows declared on
+  // both endpoints): a denied update it accepts is denied by the scenario constraint under test.
+  const assertWellFormed = async (update) => assert.equal(
+    await creatorPolicy.evaluateNodeUpdate(constrainedAssetAddress, update[0], update[1], update[2], update[3]),
+    true
+  );
+
+  // Start -> Delivery -> Inspection -> End: 2 tasks, 3 flows.
   report.push(await expectAllowed(
     "creator policy allows approved task within limits",
-    () => constrainedAsset.setNodes(...inspectionUpdate)
+    () => constrainedAsset.setNodes(...nodesUpdate(
+      nodeUpdate("Delivery", 2, ["Start"], ["Inspection"]),
+      nodeUpdate("Inspection", 2, ["Delivery"], ["End"]),
+      nodeUpdate("End", 1, ["Inspection"], [])
+    ))
   ));
 
-  // The test scenario allows 4 tasks and 5 sequence flows; the model now has 2 and 3.
-  const packingUpdate = nodeUpdate("Packing", 2, ["Inspection"], ["End"]);
+  // The test scenario allows 4 tasks and 5 sequence flows: Start -> Delivery -> Inspection ->
+  // Packing -> End has 3 tasks and 4 flows.
   report.push(await expectAllowed(
     "creator policy allows second approved task within limits",
-    () => constrainedAsset.setNodes(...packingUpdate)
+    () => constrainedAsset.setNodes(...nodesUpdate(
+      nodeUpdate("Inspection", 2, ["Delivery"], ["Packing"]),
+      nodeUpdate("Packing", 2, ["Inspection"], ["End"]),
+      nodeUpdate("End", 1, ["Packing"], [])
+    ))
   ));
 
-  // Two approved tasks without outgoing flows: 5 tasks, 4 flows.
-  const twoTasksUpdate = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((field) => [
-    ...nodeUpdate("Labeling", 2, ["Packing"], [])[field],
-    ...nodeUpdate("Shipping", 2, ["Packing"], [])[field]
-  ]);
-  report.push(await expectDenied(
-    "creator policy denies task count above limit",
-    administrator,
-    {
-      to: constrainedAssetAddress,
-      data: constrainedAsset.interface.encodeFunctionData("setNodes", twoTasksUpdate)
-    }
-  ));
+  // Two approved tasks without flows: 5 tasks, 4 flows.
+  const twoTasksUpdate = nodesUpdate(nodeUpdate("Labeling", 2, [], []), nodeUpdate("Shipping", 2, [], []));
+  await assertWellFormed(twoTasksUpdate);
+  report.push(await expectDenied("creator policy denies task count above limit", administrator, setNodesTransaction(twoTasksUpdate)));
 
-  // Inspection gains two outgoing flows: 3 tasks, 6 flows.
-  report.push(await expectDenied(
-    "creator policy denies sequence flow count above limit",
-    administrator,
-    {
-      to: constrainedAssetAddress,
-      data: constrainedAsset.interface.encodeFunctionData(
-        "setNodes",
-        nodeUpdate("Inspection", 2, ["Delivery"], ["End", "Packing", "Delivery"])
-      )
-    }
-  ));
+  // Inspection gains flows to End and back to Delivery: 3 tasks, 6 flows.
+  const extraFlowsUpdate = nodesUpdate(
+    nodeUpdate("Delivery", 2, ["Start", "Inspection"], ["Inspection"]),
+    nodeUpdate("Inspection", 2, ["Delivery"], ["Packing", "End", "Delivery"]),
+    nodeUpdate("End", 1, ["Packing", "Inspection"], [])
+  );
+  await assertWellFormed(extraFlowsUpdate);
+  report.push(await expectDenied("creator policy denies sequence flow count above limit", administrator, setNodesTransaction(extraFlowsUpdate)));
 
-  const unapprovedUpdate = nodeUpdate("Unapproved", 2, ["Packing"], ["End"]);
-  report.push(await expectDenied(
-    "creator policy denies task outside name allowlist",
-    administrator,
-    {
-      to: constrainedAssetAddress,
-      data: constrainedAsset.interface.encodeFunctionData("setNodes", unapprovedUpdate)
-    }
-  ));
+  const unapprovedUpdate = nodeUpdate("Unapproved", 2, [], []);
+  await assertWellFormed(unapprovedUpdate);
+  report.push(await expectDenied("creator policy denies task outside name allowlist", administrator, setNodesTransaction(unapprovedUpdate)));
 
-  const unknownTargetUpdate = nodeUpdate("Inspection", 2, ["Delivery"], ["Unknown"]);
+  // A flow to or from an unknown node is also declared on one endpoint only.
   report.push(await expectDenied(
     "creator policy denies flow to unknown node",
     administrator,
-    {
-      to: constrainedAssetAddress,
-      data: constrainedAsset.interface.encodeFunctionData("setNodes", unknownTargetUpdate)
-    }
+    setNodesTransaction(nodeUpdate("Packing", 2, ["Inspection"], ["Unknown"]))
   ));
 
   const protectedStartUpdate = nodeUpdate("Start", 0, [], ["Delivery"]);
-  report.push(await expectDenied(
-    "creator policy denies protected node update",
-    administrator,
-    {
-      to: constrainedAssetAddress,
-      data: constrainedAsset.interface.encodeFunctionData("setNodes", protectedStartUpdate)
-    }
-  ));
+  await assertWellFormed(protectedStartUpdate);
+  report.push(await expectDenied("creator policy denies protected node update", administrator, setNodesTransaction(protectedStartUpdate)));
 
-  const unknownSourceUpdate = nodeUpdate("Inspection", 2, ["Unknown"], ["End"]);
   report.push(await expectDenied(
     "creator policy denies flow from unknown node",
     administrator,
-    {
-      to: constrainedAssetAddress,
-      data: constrainedAsset.interface.encodeFunctionData("setNodes", unknownSourceUpdate)
-    }
+    setNodesTransaction(nodeUpdate("Packing", 2, ["Unknown"], ["End"]))
   ));
 
   report.push(await expectAllowed(
     "creator policy allows update keeping protected node links",
-    () => constrainedAsset.setNodes(...nodeUpdate("Delivery", 2, ["Start"], ["End"]))
+    () => constrainedAsset.setNodes(...nodeUpdate("Delivery", 2, ["Start"], ["Inspection"]))
   ));
+  // Unlinking or linking the protected Start needs Start in the update, which is protected.
   report.push(await expectDenied(
     "creator policy denies unlinking protected node",
     administrator,
-    {
-      to: constrainedAssetAddress,
-      data: constrainedAsset.interface.encodeFunctionData("setNodes", nodeUpdate("Delivery", 2, [], ["End"]))
-    }
+    setNodesTransaction(nodeUpdate("Delivery", 2, [], ["Inspection"]))
   ));
   report.push(await expectDenied(
     "creator policy denies new link to protected node",
     administrator,
-    {
-      to: constrainedAssetAddress,
-      data: constrainedAsset.interface.encodeFunctionData(
-        "setNodes",
-        nodeUpdate("Inspection", 2, ["Delivery", "Start"], ["End"])
-      )
-    }
+    setNodesTransaction(nodeUpdate("Inspection", 2, ["Delivery", "Start"], ["Packing"]))
   ));
 
   // Model history is kept by the chain: the asset is born with the model of its type, and every
@@ -342,7 +335,7 @@ async function main() {
   const nodeHistory = await constrainedAsset.queryFilter(constrainedAsset.filters.NodesChanged());
   assert.deepEqual(
     nodeHistory.map((event) => Array.from(event.args.nodeNames)),
-    [initialModel.names, ["Inspection"], ["Packing"], ["Delivery"]]
+    [initialModel.names, ["Delivery", "Inspection", "End"], ["Inspection", "Packing", "End"], ["Delivery"]]
   );
 
   report.push(await expectAllowed(

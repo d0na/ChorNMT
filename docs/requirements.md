@@ -16,6 +16,7 @@ Acceptance criteria:
 - Every instance is born with the model of its type: `test:policies` decodes a freshly minted asset through `tokenURI` and compares it with the model.
 - The baseline and the modified BPMN XML are regenerated from the on-chain state through `tokenURI`, and drawn with chor-js as SVG/PNG (`evaluate:paper`, paper section of `evaluation/final-report.generated.md`).
 - The CI importer step converts the reference BPMN models without errors.
+- No accepted update can make the model undrawable: every Creator policy rejects a sequence flow declared on one endpoint only, and `test:policies` covers the denial.
 
 ### C2. Every change is decided by policies, at the right level
 
