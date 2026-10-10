@@ -20,7 +20,7 @@ Acceptance criteria:
 
 ### C2. Every change is decided by policies, at the right level
 
-No state change bypasses the policies. The Master policy decides only NMT-level actions (`mint`, `transferFrom`, its own replacement). A change to the model of an asset (`setNodes`, `setRoles`, `setLinked`) is decided only by the Creator AND the Holder policy, both at the action check and at the domain check. Policies stand for XACML translations: their rules are hardcoded, and a rule change is a new policy.
+No state change bypasses the policies. The Master policy decides only NMT-level actions (`mint`, `transferFrom`, its own replacement; by rule the Master and the Creator are never replaced, see the open questions in [Design decisions](decisions.md#open-questions)). A change to the model of an asset (`setNodes`, `setRoles`, `setLinked`) is decided only by the Creator AND the Holder policy, both at the action check and at the domain check. Policies stand for XACML translations: their rules are hardcoded, and a rule change is a new policy.
 
 Acceptance criteria:
 
