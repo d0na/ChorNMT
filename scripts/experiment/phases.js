@@ -127,7 +127,7 @@ export const PHASES = [
       tx("F6.denied.without-seller", "the participant Master policy denies Carrier B taking the license without the seller", "Carrier B", "ParticipantNMT.transferFrom", "denied", "licenses:transferFrom", "MasterDenied"),
       tx("F6.sale", "Carrier A sells the SpecialCarrier license to Carrier B", "Carrier A", "ParticipantNMT.transferFrom", "allowed", "licenses:transferFrom"),
       tx("F6.denied.buyer-without-policy", "Carrier B cannot update the license before installing a Holder policy", "Carrier B", "ParticipantMutableAsset.setName", "denied", "licenses:setName", "HolderPolicyDisabled"),
-      tx("F6.buyer.holder-policy", "Carrier B installs its Holder policy on the license", "Carrier B", "ParticipantMutableAsset.setHolderSmartPolicy", "allowed", null),
+      tx("F6.buyer.holder-policy", "Carrier B installs its Holder policy on the license", "Carrier B", "ParticipantMutableAsset.setHolderSmartPolicy", "allowed", "licenses:setHolderSmartPolicy"),
       tx("F6.denied.former-holder", "Carrier A can no longer update the license", "Carrier A", "ParticipantMutableAsset.setName", "denied", "licenses:setName", CREATOR_DENIED),
       tx("F6.buyer.name", "Carrier B updates the name on the license", "Carrier B", "ParticipantMutableAsset.setName", "allowed", "licenses:setName"),
       tx("F6.buyer.profile", "Carrier B links its organization profile", "Carrier B", "ParticipantMutableAsset.setProfile", "allowed", "licenses:setProfile"),

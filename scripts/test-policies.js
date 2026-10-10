@@ -511,7 +511,19 @@ async function main() {
     messagesWrittenByHolder: false
   });
   assert.equal(await carrierLicense.holderSmartPolicy(), ethers.ZeroAddress);
-  await (await carrierLicense.connect(carrierB).setHolderSmartPolicy(participantHolderPolicy.target)).wait();
+  // Installing a Holder policy is not a policy decision: only the current holder can (CallerNotHolder).
+  report.push(await expectDenied(
+    "former license holder cannot install a Holder policy",
+    carrierA,
+    {
+      to: carrierLicense.target,
+      data: carrierLicense.interface.encodeFunctionData("setHolderSmartPolicy", [participantHolderPolicy.target])
+    }
+  ));
+  report.push(await expectAllowed(
+    "new license holder installs its Holder policy",
+    () => carrierLicense.connect(carrierB).setHolderSmartPolicy(participantHolderPolicy.target)
+  ));
   report.push(await expectDenied(
     "former license holder cannot update the license",
     carrierA,

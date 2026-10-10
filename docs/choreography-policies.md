@@ -98,6 +98,7 @@ The participant policies stand for policies translated from XACML: their configu
 | Replace the license Creator policy (`setCreatorSmartPolicy`) | no | yes | no | no | no |
 | Change the license type | no | no | no | no | no |
 | Sell the license (`transferFrom`) to an organization qualified for its type | no | no | yes | no | no |
+| Install a Holder policy on the license (`setHolderSmartPolicy`; not a policy decision, only the current holder) | no | no | yes; a sale resets it | no | no |
 | Update the organization data (`setName`, `setProfile`, `setLinked`) | no | no | yes, after installing a Holder policy | no | no |
 | Declare messages (`setMessages`) allowed for the license type | no | no | yes, after installing a Holder policy | no | no |
 | Any other action on the license | no | no | no | no | no |

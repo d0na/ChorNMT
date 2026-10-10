@@ -155,6 +155,7 @@ the delta.
 | Carrier B takes the license by itself | denied | Only the holder sells. |
 | Carrier A sells the license to Carrier B | allowed | Carrier B is qualified; the sale clears name and profile and keeps the messages, written by Carrier A. |
 | Carrier B updates the license before installing a Holder policy | denied | The sale reset the Holder policy. |
+| Carrier A installs a Holder policy on the sold license | denied | Not a policy decision: only the current holder installs one (`CallerNotHolder`); covered by `test:policies`. |
 | Carrier B installs its Holder policy, then updates its name and profile | allowed | Carrier B is the holder. |
 | Carrier A updates the license after the sale | denied | Carrier A is no longer the holder. |
 | Carrier B confirms the messages | allowed | The messages are now written by the current holder. |

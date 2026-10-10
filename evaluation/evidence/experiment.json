@@ -104,7 +104,7 @@
     },
     "trustTables": {
       "path": "docs/choreography-policies.md",
-      "sha256": "06a0bb841e84b89bb0a97b28b42c65bb41d9ddd4c28c79a260932e6483912f9e"
+      "sha256": "1a14ebf528dc0195e3a15595ca68b4fc70c2053c3be897c8c4f934a0058aad98"
     }
   },
   "phases": [
@@ -1963,7 +1963,10 @@
       "call": "ParticipantMutableAsset.setHolderSmartPolicy",
       "outcome": "allowed",
       "reason": null,
-      "trust": null,
+      "trust": {
+        "table": "licenses",
+        "action": "Install a Holder policy on the license (`setHolderSmartPolicy`; not a policy decision, only the current holder)"
+      },
       "gasUsed": "49611",
       "gasPriceWei": "7022344",
       "costWei": "348385508184",
