@@ -206,7 +206,7 @@
     },
     "trustTables": {
       "path": "docs/choreography-policies.md",
-      "sha256": "316ab1b2211b5cb6d4062c347079877b5a6cec1987c6b6db58c34077707f6ae1"
+      "sha256": "fa3d8e400fee3226fc70e197e84906862b592336995166adbd8db9b1abaea5b5"
     }
   },
   "phases": [
@@ -311,7 +311,7 @@
           "contract": "CreatorSmartPolicyPaperScenario",
           "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d"
+          "bytecodeKeccak256": "0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b"
         },
         {
           "resource": "instance",
@@ -409,7 +409,7 @@
           "contract": "CreatorSmartPolicyPaperScenario",
           "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d"
+          "bytecodeKeccak256": "0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b"
         },
         {
           "resource": "instance",
@@ -507,7 +507,7 @@
           "contract": "CreatorSmartPolicyPaperScenario",
           "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d"
+          "bytecodeKeccak256": "0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b"
         },
         {
           "resource": "instance",
@@ -654,7 +654,7 @@
           "contract": "CreatorSmartPolicyPaperScenario",
           "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d"
+          "bytecodeKeccak256": "0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b"
         },
         {
           "resource": "instance",
@@ -766,7 +766,7 @@
           "contract": "CreatorSmartPolicyPaperScenario",
           "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d"
+          "bytecodeKeccak256": "0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b"
         },
         {
           "resource": "instance",
@@ -1002,7 +1002,7 @@
           "contract": "CreatorSmartPolicyPaperScenario",
           "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d"
+          "bytecodeKeccak256": "0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b"
         },
         {
           "resource": "instance",
@@ -1453,7 +1453,7 @@
       "gasUsed": "1790784",
       "gasPriceWei": "239951758",
       "costWei": "429701768998272",
-      "transactionHash": "0x8c298471b85c5150b96d43735c4e83d5d93ff69ab4eabdcca4fe34cebe748056",
+      "transactionHash": "0xe67d7532f7cfe59b59805157c0e81b3d344c84b3bfac913bdfa8902a6001eaeb",
       "blockNumber": 13
     },
     {

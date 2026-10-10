@@ -21,10 +21,7 @@
     "test": "npm run test:policies",
     "test:policies": "hardhat run scripts/test-policies.js",
     "evidence:update": "node scripts/experiment/update.js",
-    "evaluate:policies": "hardhat run scripts/evaluation/run-policy-lifecycle-evaluation.js",
-    "evaluate:summary": "node scripts/evaluation/generate-evaluation-summary.js",
-    "evaluate:paper": "node scripts/evaluation/run-paper-example-experiment.js",
-    "evaluate:all": "npm run clean && npm run compile && npm run evaluate:paper && npm run evaluate:policies && npm run test:policies && npm run evaluate:summary",
+    "check:evidence": "node scripts/experiment/check.js",
     "setup:evaluation": "playwright install chromium",
     "clean": "node scripts/clean.js"
   },

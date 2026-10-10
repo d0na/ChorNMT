@@ -98,7 +98,7 @@ async function main() {
   const images = {};
   for (const [name, model] of Object.entries(models)) {
     const xml = await fs.readFile(model.xml, "utf8");
-    const { svgPath } = await renderBpmnImages({ xmlPath: model.xml, outputBaseName: name, outputDirectory: bpmnDirectory, suffix: "", png: false });
+    const { svgPath } = await renderBpmnImages({ xmlPath: model.xml, outputBaseName: name, outputDirectory: bpmnDirectory });
     const svg = await fs.readFile(svgPath, "utf8");
     const expected = drawableNames(xml);
     const shown = new Set();

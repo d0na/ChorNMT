@@ -84,7 +84,7 @@ Node and role names are the contract reference keys. A `ChoreographyNMT` is one 
 
 The default `CreatorSmartPolicy` has no BPMN constraint. Constraints (task and sequence-flow limits, permitted task names, known flow targets, protected nodes and roles, role licenses) are hardcoded in scenario policies such as `CreatorSmartPolicyPaperScenario`, installed with `setCreatorSmartPolicy` or passed at mint.
 
-Run `npm run evaluate:policies` to measure the cost of the model contract and of a mint for the paper type, and the allow/deny cost of Master, Creator, and Holder policy calls. It writes local JSON and Markdown evaluation reports.
+Run `npm run evidence:update` to run the experiment (phases F1–F8: the type, the mint, the licenses, the renders, the delta, the role sale, the transfer, and a new instance) on ephemeral networks. It writes the versioned evidence of `evaluation/evidence/` (gas and outcome of every allowed and denied policy decision, call traces, sequence diagrams, charts, BPMN drawings) and the generated parts of [the experiment protocol](docs/experiment.md); `npm run check:evidence` checks that the versioned evidence is the evidence of the current code. See the [evaluation toolkit](evaluation/README.md).
 
 ## Other examples
 
@@ -99,17 +99,16 @@ bpmn-builder-js/example/input/
 bpmn-builder-js/example/output/
 bpmn-builder-js/example/contract/
 metrics/
-evaluation/
 ```
 
-Files with a `.generated.*` suffix and imported `*.nmt.json` files are local artifacts ignored by Git and can be regenerated with the commands above. Reference BPMNs and JSON deltas are versioned.
+Files with a `.generated.*` suffix and imported `*.nmt.json` files are local artifacts ignored by Git and can be regenerated with the commands above. Reference BPMNs and JSON deltas are versioned, and so is the experiment evidence in `evaluation/evidence/`, which only `npm run evidence:update` writes.
 
 ## Technical documentation
 
 - [Requirements](docs/requirements.md): what the prototype demonstrates, acceptance criteria, and non-goals.
 - [Design decisions](docs/decisions.md): why the main choices were made, and the open questions.
 - [Future improvements](docs/future-improvements.md): ideas not implemented yet, with estimated gas effects.
-- [Evaluation quick start](evaluation/README.md#complete-evaluation-run): commands for the complete paper and policy evaluation suite.
+- [Experiment protocol](docs/experiment.md): the phases F1–F8 of the experiment, with their actors, policies, transactions, costs, sequence diagrams, charts, and BPMN models, generated from the evidence.
 - [BPMN to NMT workflow](docs/bpmn-to-nmt-workflow.md): NMT format, import, and delta rules.
 - [Contract structure](docs/contract-structure.md): the standard internal structure of Token, Asset, Policy, and Renderer contracts, gas rules, and known deviations.
 - [Architecture](docs/architettura.md): components, responsibilities, and internal structure of the NMT, asset, policy, and renderer contracts and of the JavaScript tooling.
@@ -118,7 +117,7 @@ Files with a `.generated.*` suffix and imported `*.nmt.json` files are local art
 - [Contract hierarchy](docs/contract-hierarchy.md): asset and policy model.
 - [Choreography policies](docs/choreography-policies.md): minting, ownership, and policy-controlled updates.
 - [Commands and scripts](docs/commands-and-scripts.md): public npm commands, implementation scripts, and legacy references.
-- [Evaluation toolkit](evaluation/README.md): measurement reports, CSV aggregation, and Gnuplot figure templates.
+- [Evaluation toolkit](evaluation/README.md): the experiment setup, runs, checks, and evidence layout.
 - [bpmn-builder-js](bpmn-builder-js/README.md): BPMN renderer and intermediate JSON format.
 
 ## Claude Code

@@ -37,7 +37,7 @@ flowchart LR
     VAL --> MAP[process-mapper.js<br/>elementi BPMN + layout DI]
     MAP --> GEN[moddle-generator.js<br/>bpmn-moddle]
     GEN --> XML[*.generated.bpmn.xml]
-    XML -.-> IMG[render-bpmn-images.js<br/>chor-js + Playwright → SVG, PNG opzionale]
+    XML -.-> IMG[render-bpmn-images.js<br/>chor-js + Playwright → SVG]
   end
   CMA -->|eth_call| W
 ```
@@ -137,7 +137,7 @@ Il comando `npm run render:asset -- <asset> <delta-o-dataset.json>` esegue `scri
 | 5. Validazione | `bpmn-builder-js/src/validation.js` | Controlla la presenza degli ID e che i riferimenti tra nodi, flussi e partecipanti esistano. | — |
 | 6. Mapping e layout | `bpmn-builder-js/src/mappers/process-mapper.js` | Produce il descrittore degli elementi BPMN (`Choreography`, `ChoreographyTask`, gateway, `SequenceFlow`, `MessageFlow`, `Message`) e il diagramma DI (vedi sotto). | descrittore in memoria |
 | 7. XML | `bpmn-builder-js/src/generators/moddle-generator.js` | Due passate su `bpmn-moddle`. `createSkeleton` crea tutti gli elementi e li indicizza per ID, poi `hydrateElement` imposta gli attributi e trasforma i riferimenti (`sourceRef`, `incoming`, `participantRef`, …) in puntatori agli oggetti. Infine `toXML` serializza. | `example/output/*.generated.bpmn.xml` |
-| 8. Immagini (opzionale) | `scripts/evaluation/render-bpmn-images.js` | Apre l'XML nel viewer `chor-js` dentro Chromium, tramite Playwright, ed esporta SVG e, se richiesto, PNG. Si usa nella valutazione e in `scripts/experiment/bpmn.js`, che scrive solo SVG (`png: false`) in `evaluation/evidence/bpmn/` e verifica che il disegno mostri esattamente i nomi dell'XML. | `evaluation/figures/*.generated.{svg,png}`, `evaluation/evidence/bpmn/*.svg` |
+| 8. Immagini (opzionale) | `scripts/evaluation/render-bpmn-images.js` | Apre l'XML nel viewer `chor-js` dentro Chromium, tramite Playwright, ed esporta SVG e, se richiesto, PNG (`png: true`). Lo usa `scripts/experiment/bpmn.js`, che scrive solo SVG in `evaluation/evidence/bpmn/`, verifica che il disegno mostri esattamente i nomi dell'XML e gli imprime lo SHA-256 dell'XML, controllato da `check:evidence`. | `evaluation/evidence/bpmn/*.svg` |
 
 ### Layout automatico
 
@@ -157,7 +157,7 @@ Il layout è deterministico: lo stesso modello produce sempre lo stesso diagramm
 | Il JSON di `tokenURI` riproduce esattamente il modello scritto | `scripts/test-policies.js`: un asset appena coniato, nato con il modello del suo tipo, viene decodificato da `tokenURI` e confrontato campo per campo con il modello. `nmt.tokenURI(id)` e `asset.tokenURI()` coincidono. |
 | L'escape è corretto | Lo stesso test usa un tipo con nomi con virgolette, backslash, a capo, tab, lettere accentate e simboli (`Città ✓`). |
 | Andata e ritorno BPMN → chain → BPMN senza perdite semantiche | Si importa `references/paper-example.bpmn`, lo si scrive on-chain, lo si renderizza, e poi si reimporta il BPMN generato: il dataset ottenuto coincide con l'originale. Lo stesso vale per il modello evoluto con il delta del gateway parallelo, a meno di `conditions: []` contro `[""]`, che sono equivalenti. |
-| Percorso completo | `npm run evaluate:all` e il percorso del README (deploy del tipo dal BPMN e mint, render, modifica, render). |
+| Percorso completo | L'esperimento (`npm run evidence:update`, confrontato da `npm run check:evidence`): il baseline coincide con il BPMN sorgente reimportato, il finale è il baseline con il delta scritto sopra, ed entrambi coincidono con il modello restituito da `tokenURI`. Il percorso del README (deploy del tipo dal BPMN e mint, render, modifica, render) segue le stesse funzioni su un nodo locale. |
 
 ## Costi
 

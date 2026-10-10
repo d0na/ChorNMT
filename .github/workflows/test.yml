@@ -21,6 +21,10 @@ jobs:
       - run: npm ci
       - run: npm ci
         working-directory: bpmn-builder-js
+      # check:evidence reruns the experiment: gnuplot for the charts, Chromium for the BPMN drawings,
+      # Java (preinstalled) and Graphviz for PlantUML.
+      - run: sudo apt-get update && sudo apt-get install -y gnuplot graphviz
+      - run: npx playwright install --with-deps chromium
       - run: npm run compile
       - run: npm run check:size
       - run: npm run check:invariants
@@ -28,7 +32,7 @@ jobs:
       - run: npm run check:use-cases
       - run: npm run check:protocol
       - run: npm test
-      - run: npm run evaluate:policies
+      - run: npm run check:evidence
       - run: npm run check:gas
       - name: Import reference BPMN models
         run: |

@@ -86,7 +86,7 @@ The accounts are the default Hardhat ones. The choreography policies name the ad
 | --- | --- | --- |
 | bpmn | [references/paper-example.bpmn](../references/paper-example.bpmn) | `dc76537103877870ceae2e826f025dc6cebf018d46d22682d9a8c3f9776d477b` |
 | delta | [scripts/data/paper-example-parallel-transport-preparation.delta.json](../scripts/data/paper-example-parallel-transport-preparation.delta.json) | `0906afd9b88d63f815eaf4d89a1bdf304ef3379d7a737731568ed717c27cab99` |
-| trustTables | [docs/choreography-policies.md](../docs/choreography-policies.md) | `316ab1b2211b5cb6d4062c347079877b5a6cec1987c6b6db58c34077707f6ae1` |
+| trustTables | [docs/choreography-policies.md](../docs/choreography-policies.md) | `fa3d8e400fee3226fc70e197e84906862b592336995166adbd8db9b1abaea5b5` |
 <!-- /evidence:inputs -->
 
 <!-- narrative:policies -->
@@ -114,21 +114,21 @@ The experiment is one run, on one ephemeral network, through the same functions 
 <!-- evidence:phases-overview -->
 | Phase | Title | Transactions | Allowed | Denied | Gas allowed | Gas denied | Cost (ETH) | Median (ms) | Nodes | Tasks | Edges | Gateways | Messages |
 | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| [F1](#f1) | Deploy the choreography type and the license infrastructure | 13 | 13 | 0 | 17,221,293 | 0 | 0.009596606556653547 | 38.510 | — | — | — | — | — |
-| [F2](#f2) | Mint the instance and assign the role accounts | 4 | 2 | 2 | 5,796,619 | 59,909 | 0.001232974194045129 | 14.980 | 11 | 9 | 10 | 0 | 9 |
-| [F3](#f3) | Issue the participant licenses and link the Special Carrier role | 11 | 6 | 5 | 3,992,059 | 305,186 | 0.000443532747357883 | 18.035 | 11 | 9 | 10 | 0 | 9 |
-| [F4](#f4) | Render the baseline model from the chain | 0 | 0 | 0 | 0 | 0 | 0.0 | 17.430 | 11 | 9 | 10 | 0 | 9 |
-| [F5](#f5) | Apply the delta: one allowed update and five denied ones | 6 | 1 | 5 | 1,866,349 | 1,581,510 | 0.000089818068853874 | 155.554 | 14 | 10 | 14 | 2 | 10 |
-| [F6](#f6) | Sell the Special Carrier role: Carrier A to Carrier B | 10 | 5 | 5 | 368,336 | 176,543 | 0.000004116862628044 | 14.113 | 14 | 10 | 14 | 2 | 10 |
-| [F7](#f7) | Transfer a second instance and restrict it through its Holder policy | 6 | 4 | 2 | 6,117,025 | 166,501 | 0.000019710363637162 | 22.016 | — | — | — | — | — |
-| [F8](#f8) | Render the final model and compare the delta with a new instance | 3 | 3 | 0 | 5,899,495 | 0 | 0.000009771866898741 | 40.317 | 14 | 10 | 14 | 2 | 10 |
+| [F1](#f1) | Deploy the choreography type and the license infrastructure | 13 | 13 | 0 | 17,221,293 | 0 | 0.009596606556653547 | 40.028 | — | — | — | — | — |
+| [F2](#f2) | Mint the instance and assign the role accounts | 4 | 2 | 2 | 5,796,619 | 59,909 | 0.001232974194045129 | 14.799 | 11 | 9 | 10 | 0 | 9 |
+| [F3](#f3) | Issue the participant licenses and link the Special Carrier role | 11 | 6 | 5 | 3,992,059 | 305,186 | 0.000443532747357883 | 17.420 | 11 | 9 | 10 | 0 | 9 |
+| [F4](#f4) | Render the baseline model from the chain | 0 | 0 | 0 | 0 | 0 | 0.0 | 16.398 | 11 | 9 | 10 | 0 | 9 |
+| [F5](#f5) | Apply the delta: one allowed update and five denied ones | 6 | 1 | 5 | 1,866,349 | 1,581,510 | 0.000089818068853874 | 144.138 | 14 | 10 | 14 | 2 | 10 |
+| [F6](#f6) | Sell the Special Carrier role: Carrier A to Carrier B | 10 | 5 | 5 | 368,336 | 176,543 | 0.000004116862628044 | 14.975 | 14 | 10 | 14 | 2 | 10 |
+| [F7](#f7) | Transfer a second instance and restrict it through its Holder policy | 6 | 4 | 2 | 6,117,025 | 166,501 | 0.000019710363637162 | 20.494 | — | — | — | — | — |
+| [F8](#f8) | Render the final model and compare the delta with a new instance | 3 | 3 | 0 | 5,899,495 | 0 | 0.000009771866898741 | 36.629 | 14 | 10 | 14 | 2 | 10 |
 
 | Whole experiment | Value |
 | --- | --- |
 | Transactions | 53 |
 | Allowed transactions, gas | 34, 41,261,176 |
 | Denied transactions, gas | 19, 2,289,649 |
-| Duration of a run, median (min–max), ms | 327.125 (311.963–407.074) |
+| Duration of a run, median (min–max), ms | 334.823 (273.345–586.958) |
 
 Nodes to messages: the main instance at the end of the phase (F7 works on a second instance). Durations leave out the time the run spends tracing and checking.
 <!-- /evidence:phases-overview -->
@@ -218,8 +218,8 @@ Role names: `Bulk Buyer`, `Manufacturer`, `Middleman`, `Supplier`, `Special Carr
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F1 | 38.510 | 36.296 | 45.599 | 3.051 |
-| step `F1.import` | 4.388 | 3.262 | 7.443 | 1.221 |
+| phase F1 | 40.028 | 33.875 | 94.619 | 19.006 |
+| step `F1.import` | 4.419 | 2.881 | 6.171 | 0.992 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F1-full.svg))
 
@@ -290,7 +290,7 @@ The administrator mints the instance, which decodes the model of the type in its
 | Resource | Layer | Contract | Address | Source | Bytecode keccak256 |
 | --- | --- | --- | --- | --- | --- |
 | choreography type | Master | MasterSmartPolicy | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | [MasterSmartPolicy.sol](../contracts/choreography/MasterSmartPolicy.sol) | `0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5` |
-| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d` |
+| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b` |
 | instance | Holder | HolderSmartPolicy | `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` | [HolderSmartPolicy.sol](../contracts/choreography/HolderSmartPolicy.sol) | `0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b` |
 | license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13` |
 
@@ -298,7 +298,7 @@ The administrator mints the instance, which decodes the model of the type in its
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F2 | 14.980 | 14.014 | 17.869 | 1.328 |
+| phase F2 | 14.799 | 11.876 | 54.026 | 12.665 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F2-full.svg))
 
@@ -391,7 +391,7 @@ The authority issues three licenses: a SpecialCarrier license to Carrier A, a Ca
 | Resource | Layer | Contract | Address | Source | Bytecode keccak256 |
 | --- | --- | --- | --- | --- | --- |
 | choreography type | Master | MasterSmartPolicy | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | [MasterSmartPolicy.sol](../contracts/choreography/MasterSmartPolicy.sol) | `0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5` |
-| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d` |
+| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b` |
 | instance | Holder | HolderSmartPolicy | `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` | [HolderSmartPolicy.sol](../contracts/choreography/HolderSmartPolicy.sol) | `0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b` |
 | license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13` |
 | licensed role | Creator | ParticipantCreatorSmartPolicy | `0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35` | [CreatorSmartPolicy.sol](../contracts/participant/CreatorSmartPolicy.sol) | `0x4d098019c20560369a6704135eed48691ee32450415386e62b410242325ffe13` |
@@ -401,7 +401,7 @@ The authority issues three licenses: a SpecialCarrier license to Carrier A, a Ca
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F3 | 18.035 | 16.436 | 51.583 | 10.637 |
+| phase F3 | 17.420 | 15.592 | 20.690 | 1.699 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F3-full.svg))
 
@@ -456,7 +456,7 @@ Anyone can read the model: the render reads the instance with one `tokenURI` cal
 | Resource | Layer | Contract | Address | Source | Bytecode keccak256 |
 | --- | --- | --- | --- | --- | --- |
 | choreography type | Master | MasterSmartPolicy | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | [MasterSmartPolicy.sol](../contracts/choreography/MasterSmartPolicy.sol) | `0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5` |
-| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d` |
+| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b` |
 | instance | Holder | HolderSmartPolicy | `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` | [HolderSmartPolicy.sol](../contracts/choreography/HolderSmartPolicy.sol) | `0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b` |
 | license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13` |
 | licensed role | Creator | ParticipantCreatorSmartPolicy | `0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35` | [CreatorSmartPolicy.sol](../contracts/participant/CreatorSmartPolicy.sol) | `0x4d098019c20560369a6704135eed48691ee32450415386e62b410242325ffe13` |
@@ -466,8 +466,8 @@ Anyone can read the model: the render reads the instance with one `tokenURI` cal
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F4 | 17.430 | 16.918 | 19.630 | 0.860 |
-| step `F4.render` | 16.813 | 16.208 | 18.932 | 0.863 |
+| phase F4 | 16.398 | 14.002 | 67.301 | 16.410 |
+| step `F4.render` | 15.672 | 13.462 | 66.145 | 16.212 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F4-full.svg))
 
@@ -553,7 +553,7 @@ Split transport preparation into parallel detail collection and documentation pr
 | Resource | Layer | Contract | Address | Source | Bytecode keccak256 |
 | --- | --- | --- | --- | --- | --- |
 | choreography type | Master | MasterSmartPolicy | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | [MasterSmartPolicy.sol](../contracts/choreography/MasterSmartPolicy.sol) | `0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5` |
-| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d` |
+| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b` |
 | instance | Holder | HolderSmartPolicy | `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` | [HolderSmartPolicy.sol](../contracts/choreography/HolderSmartPolicy.sol) | `0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b` |
 | license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13` |
 | licensed role | Creator | ParticipantCreatorSmartPolicy | `0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35` | [CreatorSmartPolicy.sol](../contracts/participant/CreatorSmartPolicy.sol) | `0x4d098019c20560369a6704135eed48691ee32450415386e62b410242325ffe13` |
@@ -563,8 +563,8 @@ Split transport preparation into parallel detail collection and documentation pr
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F5 | 155.554 | 143.558 | 240.698 | 30.469 |
-| step `F5.delta` | 73.910 | 68.175 | 111.248 | 12.443 |
+| phase F5 | 144.138 | 114.463 | 175.396 | 20.826 |
+| step `F5.delta` | 67.513 | 58.905 | 82.780 | 7.999 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F5-full.svg))
 
@@ -677,7 +677,7 @@ Messages declared on the license: `Message_0dai5by`, `Message_10n229k`, `Message
 | Resource | Layer | Contract | Address | Source | Bytecode keccak256 |
 | --- | --- | --- | --- | --- | --- |
 | choreography type | Master | MasterSmartPolicy | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | [MasterSmartPolicy.sol](../contracts/choreography/MasterSmartPolicy.sol) | `0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5` |
-| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d` |
+| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b` |
 | instance | Holder | HolderSmartPolicy | `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` | [HolderSmartPolicy.sol](../contracts/choreography/HolderSmartPolicy.sol) | `0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b` |
 | license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13` |
 | licensed role | Creator | ParticipantCreatorSmartPolicy | `0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35` | [CreatorSmartPolicy.sol](../contracts/participant/CreatorSmartPolicy.sol) | `0x4d098019c20560369a6704135eed48691ee32450415386e62b410242325ffe13` |
@@ -687,7 +687,7 @@ Messages declared on the license: `Message_0dai5by`, `Message_10n229k`, `Message
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F6 | 14.113 | 13.440 | 23.441 | 3.104 |
+| phase F6 | 14.975 | 12.638 | 18.516 | 1.846 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F6-full.svg))
 
@@ -785,7 +785,7 @@ Holder: Partner.
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F7 | 22.016 | 20.424 | 23.513 | 0.944 |
+| phase F7 | 20.494 | 18.449 | 23.034 | 1.588 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F7-full.svg))
 
@@ -872,7 +872,7 @@ The render reads the instance again and regenerates the BPMN of the changed mode
 | Resource | Layer | Contract | Address | Source | Bytecode keccak256 |
 | --- | --- | --- | --- | --- | --- |
 | choreography type | Master | MasterSmartPolicy | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | [MasterSmartPolicy.sol](../contracts/choreography/MasterSmartPolicy.sol) | `0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5` |
-| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d` |
+| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b` |
 | instance | Holder | HolderSmartPolicy | `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` | [HolderSmartPolicy.sol](../contracts/choreography/HolderSmartPolicy.sol) | `0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b` |
 | license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13` |
 | licensed role | Creator | ParticipantCreatorSmartPolicy | `0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35` | [CreatorSmartPolicy.sol](../contracts/participant/CreatorSmartPolicy.sol) | `0x4d098019c20560369a6704135eed48691ee32450415386e62b410242325ffe13` |
@@ -882,8 +882,8 @@ The render reads the instance again and regenerates the BPMN of the changed mode
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F8 | 40.317 | 37.242 | 42.743 | 1.802 |
-| step `F8.render` | 22.599 | 21.601 | 27.383 | 2.026 |
+| phase F8 | 36.629 | 33.282 | 301.001 | 83.488 |
+| step `F8.render` | 20.142 | 18.997 | 285.384 | 83.508 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F8-full.svg))
 

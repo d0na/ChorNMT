@@ -34,6 +34,6 @@ npm run check:use-cases   # what CI runs: use cases against trust tables, tests,
 3. Look at the result before committing: render a PNG into the scratchpad (`java -jar .cache/plantuml/plantuml-1.2024.7.jar -tpng -o <scratchpad> docs/uml/<file>.puml`) and read it; fix overlaps or unreadable labels.
 4. Commit the `.puml` and `.svg` together with the change. Never edit an `.svg` by hand: it carries the source hash `check:uml` verifies.
 
-## Sequence diagrams in the reports
+## Diagrams in the protocol
 
-The evaluation reports embed the diagrams next to the rows they explain (`UML_DIAGRAMS` in `scripts/evaluation/uml.js`, with `umlFigure`); when a phase changes what it explains, update its `explains` text there and the table in `evaluation/README.md`.
+`docs/experiment.md` embeds the sequence diagram of each phase in its phase block, and its reading guide (the `uml-guide` block of `scripts/experiment/protocol.js`) lists every diagram with what it shows: a new use case diagram gets a row there, and the phase rows follow the specification. Never edit those blocks by hand; rerun `npm run evidence:update` (the `experiment` skill).

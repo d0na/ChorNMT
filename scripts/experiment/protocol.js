@@ -324,6 +324,8 @@ async function main() {
   for (const match of narrative.matchAll(OUTCOME_WORDS)) errors.push(`an outcome word outside the generated blocks and outcome placeholders: "${match[0]}"`);
 
   const narratives = new Set([...text.matchAll(/<!-- narrative:([\w-]+) -->/g)].map(([, name]) => name));
+  const readme = await fs.readFile(path.join(root, "evaluation", "README.md"), "utf8");
+  const readmeSections = new Set([...readme.matchAll(/^#{2,3} (.+)$/gm)].map(([, heading]) => heading.trim()));
   for (const entry of PARITY) {
     const [kind, ...rest] = entry.destination.split(":");
     const target = rest.join(":");
@@ -331,6 +333,7 @@ async function main() {
     if (kind === "block" && !found.has(target)) errors.push(`${where}: no block evidence:${target}`);
     else if (kind === "narrative" && !narratives.has(target)) errors.push(`${where}: no narrative:${target} section`);
     else if (kind === "artifact" && !ctx.files.includes(target)) errors.push(`${where}: no evidence file ${target}`);
+    else if (kind === "readme" && !readmeSections.has(target)) errors.push(`${where}: no section "${target}" in evaluation/README.md`);
     else if (kind === "dropped" && !entry.reason) errors.push(`${where}: dropped without a reason`);
     else if (!["block", "narrative", "artifact", "readme", "dropped"].includes(kind)) errors.push(`${where}: unknown destination ${entry.destination}`);
   }

@@ -1,10 +1,10 @@
 # Choreography Policy and Test Specification
 
 This document describes the policy model implemented by ChorNMT and the
-evaluation cases exercised by the automated test and evaluation scripts. It is
-intended to make the authorization boundaries, BPMN update constraints, and
-measurement methodology explicit for readers of the implementation and the
-experimental report.
+cases exercised by the automated test and experiment scripts. It is intended to
+make the authorization boundaries, BPMN update constraints, and measurement
+methodology explicit for readers of the implementation and of the
+[experiment protocol](experiment.md).
 
 ## Scope and Policy Types
 
@@ -106,14 +106,15 @@ or add new records.
 
 ### Example: Paper Example Delta
 
-The policy lifecycle evaluation imports `references/paper-example.bpmn` into
-the model of a choreography type, mints an instance, and uses `paper-example-parallel-transport-preparation.delta.json`. The permitted
-delta adds the `Prepare Transport Documentation` task and introduces a parallel
-split/join before the waybill. The evaluation deploys
-`CreatorSmartPolicyPaperScenario` and installs it on the populated instance
-with `setCreatorSmartPolicy`: the delta is checked against limits one above the
-evolved model, the allowlist of its task names, known targets, and the
-protected `Order`.
+The experiment imports `references/paper-example.bpmn` into the model of a
+choreography type and deploys `CreatorSmartPolicyPaperScenario` (phase F1),
+mints an instance born with that Creator policy (phase F2; the Creator policy
+is never replaced), and applies
+`paper-example-parallel-transport-preparation.delta.json` (phase F5). The
+permitted delta adds the `Prepare Transport Documentation` task and introduces
+a parallel split/join before the waybill. It is checked against limits one
+above the evolved model, the allowlist of its task names, known targets, and
+the protected `Order`.
 
 The permitted delta is followed by denials for:
 
@@ -125,7 +126,7 @@ The permitted delta is followed by denials for:
 
 ### Example: Special Carrier License Sale
 
-The same evaluation then changes the organization that plays `Special
+The experiment then (phase F6) changes the organization that plays `Special
 Carrier`. The role is played by a license, a `ParticipantMutableAsset`; the
 choreography links the role to the license once, and the organization changes
 when Carrier A sells the license to Carrier B. The role, its tasks, and every
@@ -161,7 +162,7 @@ the delta.
 | Carrier A updates the license after the sale | denied | Carrier A is no longer the holder. |
 | Carrier B confirms the messages | allowed | The messages are now written by the current holder. |
 
-After the sale the evaluation checks that the license belongs to Carrier B,
+After the sale the experiment checks that the license belongs to Carrier B,
 that `getRole("Special Carrier")` still returns the license, that every task
 of the role still references it, and that the messages survived the sale with
 Carrier A as writer. `npm run test:policies` covers the same rules on the
@@ -192,7 +193,7 @@ model with escaped names, and a model with a licensed `Carrier` role) and
 check that a minted instance returns the model of its type through `tokenURI`.
 Roles are born with no account: the tests link them with `setRoles` before the
 role constraints are exercised, and the first assignment of the protected
-`Buyer` is allowed while a later one is denied. The evaluation reports the
+`Buyer` is allowed while a later one is denied. The experiment records the
 cost of the model contract (once per type) and of each mint.
 
 ## Automated Evidence
@@ -200,25 +201,21 @@ cost of the model contract (once per type) and of each mint.
 | Command | Model | Evidence produced |
 | --- | --- | --- |
 | `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, `setLinked`, event-based model history, Master policy replacement, attempts to bypass the Creator policy, and receipt gas/wei. The script exits with an error if any case has an unexpected outcome. |
-| `npm run evaluate:policies` | Imported `paper-example` plus real delta | Model contract and instance mint, paper-model structural allow/deny cases, the Special Carrier license sale allow/deny cases, and scenario costs. |
-| `npm run evaluate:paper` | Imported `paper-example` plus real delta | Import/deploy/mint/render/delta measurements, delta versus a new instance, chor-js BPMN images, and gnuplot charts. |
-| `npm run evaluate:all` | All of the above | Rebuilds the canonical final report. |
+| `npm run evidence:update` | Imported `paper-example` plus real delta | The experiment, phases F1–F8 of `scripts/experiment/phases.js`: model contract and instance mint, Master denials, the licenses and the Special Carrier link with its Creator denials, the baseline render, the paper delta with five structural denials, the Special Carrier license sale with its denials, a transfer and a Holder restriction, the final render, and the delta versus a new instance; every transaction checked against its expected outcome and trust-table row, with call traces, sequence diagrams, charts, chor-js BPMN drawings, and the `test:policies` matrix (`evaluation/evidence/`). |
+| `npm run check:evidence` | Same | Reruns the experiment and fails if its evidence differs from the versioned one. |
 
-The generated `evaluation/final-report.generated.md` embeds the paper workflow,
-policy lifecycle evaluation, and policy integration test matrix. The on-chain
-cost tables report gas, the local receipt cost in wei where available, and
-estimated USD costs at 10, 30, and 100 gwei. ETH/USD is fetched automatically
-unless a fixed `ETH_USD_PRICE` value is supplied for reproducibility.
+The tables of [`docs/experiment.md`](experiment.md) are generated from the evidence: per
+phase, the actors, the transactions with outcome, revert reason, trust-table
+row, gas, wei, and estimated USD costs at 10, 30, and 100 gwei (ETH/USD fixed
+by `ETH_USD_PRICE`, 3000 by default), the policies in force, and the sequence
+diagram; then the test matrix.
 
 ## Reproducing the Evidence
 
 ```bash
-# Terminal 1
-npm run start:operations
-
-# Terminal 2
-ETH_USD_PRICE=3000 npm run evaluate:all
+npm run evidence:update    # no local node needed
+npm run check:evidence
 ```
 
-Open `evaluation/final-report.generated.md` after completion. The fixed price
-is optional; omit it to use the current ETH/USD spot price when available.
+Open `docs/experiment.md` after completion; the setup and the other runs are in
+the [evaluation toolkit](../evaluation/README.md).

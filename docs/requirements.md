@@ -4,7 +4,7 @@ What ChorNMT must demonstrate for the paper, how each claim is checked, and what
 
 ## Claims
 
-Each claim has acceptance criteria that point to evidence already produced by the tests or the evaluation. A claim holds when its evidence is produced and its checks pass; `npm test` (CI) and `npm run evaluate:all` produce all of it.
+Each claim has acceptance criteria that point to evidence already produced by the tests or the evaluation. A claim holds when its evidence is produced and its checks pass; `npm test` and the experiment (`npm run evidence:update`, its evidence in `evaluation/evidence/` and its protocol in [`docs/experiment.md`](experiment.md)) produce all of it, and CI checks that the versioned evidence is the evidence of the current code (`check:evidence`).
 
 ### C1. A choreography lives on-chain and is rebuilt from the chain
 
@@ -14,7 +14,7 @@ Acceptance criteria:
 
 - `paper-example.bpmn` is imported into the model of a choreography type, an instance is minted with that model (`deploy:asset`), and a delta is applied to it (`modify:asset`).
 - Every instance is born with the model of its type: `test:policies` decodes a freshly minted asset through `tokenURI` and compares it with the model.
-- The baseline and the modified BPMN XML are regenerated from the on-chain state through `tokenURI`, and drawn with chor-js as SVG/PNG (`evaluate:paper`, paper section of `evaluation/final-report.generated.md`).
+- The baseline and the modified BPMN XML are regenerated from the on-chain state through `tokenURI`, and drawn with chor-js as SVG (experiment phases F4 and F8, `evaluation/evidence/bpmn/`).
 - The CI importer step converts the reference BPMN models without errors.
 - No accepted update can make the model undrawable: every Creator policy rejects a sequence flow declared on one endpoint only, and `test:policies` covers the denial.
 
@@ -26,7 +26,7 @@ Acceptance criteria:
 
 - The trust table in [Choreography policies](choreography-policies.md#who-can-do-what), the cases of `scripts/test-policies.js`, and [Policy and test specification](policy-test-specification.md) agree.
 - `test:policies` passes: every public mutator has at least one allowed and one denied case, and every denial is a reverted transaction.
-- `evaluate:policies` reports the gas of every allowed and denied policy decision.
+- The experiment records the outcome, revert reason, trust-table row, and gas of every allowed and denied policy decision of the paper scenario (`evaluation/evidence/experiment.json`).
 
 ### C3. The Creator sets constraints the Holder cannot remove
 
@@ -35,7 +35,7 @@ The Creator policy defines the structural boundaries of the BPMN model (task and
 Acceptance criteria:
 
 - `test:policies` denies every update outside the constraints of `CreatorSmartPolicyTestScenario` and the bypass attempts (holder replacing the Creator policy, unlinking a protected node through a neighbour).
-- `evaluate:policies` applies the paper delta under `CreatorSmartPolicyPaperScenario` and reports the allowed and denied structural cases.
+- The experiment applies the paper delta under `CreatorSmartPolicyPaperScenario` and records the allowed and denied structural cases (phase F5) and the role license constraints (phase F3).
 
 ### C4. Roles are played by transferable participant licenses
 
@@ -44,7 +44,7 @@ A role is linked once to a license (`ParticipantMutableAsset`) of the type the C
 Acceptance criteria:
 
 - `test:policies` covers license minting, linking, message declaration, and sale, with allowed and denied cases (see [Participant license design](participant-license-design.md)).
-- `evaluate:policies` reports the Special Carrier license sale and its costs.
+- The experiment records the Special Carrier license sale, its denials, and its costs (phase F6).
 
 ### H5. Cost hypothesis
 
@@ -52,18 +52,18 @@ The cost of the whole flow (deploy of a type, mint, modify) is measured, and a d
 
 Acceptance criteria:
 
-- `evaluate:paper` reports the gas of the type deployment (model contract included), the mint, and the delta, the delta versus new instance comparison, and the gas by number of changed nodes (`gas-by-changed-nodes`).
+- The experiment records the gas of the type deployment (F1, model contract included), the mint (F2), and the delta (F5), the delta versus new instance comparison (F8), and the gas by number of changed nodes (the `gas-by-changed-nodes` chart).
 - Every contract change reports its gas before and after; an increase needs a stated reason (see [Contract structure](contract-structure.md#gas)).
 - Every contract fits the EIP-170 and EIP-3860 limits (`check:size`, CI).
 
 ### E. The experiment is documented by evidence produced by code
 
-Every number, outcome, chart, BPMN drawing, and sequence diagram that documents the experiment comes from the experiment run, never from hand-written text, and the documentation is at least as exhaustive as the reports it replaces (decisions D16–D22). Being implemented in six steps; until then the claims above keep their current evidence.
+Every number, outcome, chart, BPMN drawing, and sequence diagram that documents the experiment comes from the experiment run, never from hand-written text, and the documentation is at least as exhaustive as the reports it replaces (decisions D16–D22).
 
 Acceptance criteria:
 
 - One run on an ephemeral network executes phases F1–F8 of the versioned phase specification on one instance, through the same functions as the CLI commands, and fails if an outcome differs from the expected one.
-- `evaluation/evidence/` holds the last approved run; `check:evidence` regenerates and compares it in the pre-commit hook and in CI, timings excluded, and recomputes every derived value (gas from receipts, phase totals, USD, delta versus new instance, chart points, test matrix versus run) independently.
+- `evaluation/evidence/` holds the last approved run; `check:evidence` regenerates and compares it in the pre-commit hook and in CI, timings excluded and each image checked through the hash of the compared file it is drawn from, and recomputes every derived value (gas from receipts, phase totals, USD, delta versus new instance, chart points, test matrix versus run) independently.
 - The sequence diagrams are generated from the call trace, filtered and complete; their transactions, order, outcomes, and participants match the phase tables. The use case diagrams match the trust table, the test cases, and the evidence both ways.
 - The baseline BPMN XML is equivalent to `references/paper-example.bpmn`, the final one equals the baseline plus the delta, both equal the on-chain state, and each SVG contains exactly the element names of its XML.
 - `docs/experiment.md` contains no number or outcome word outside generated blocks, except declared structural ones, and the parity checklist maps every section, table, column, and artifact of the former reports to a block of the protocol.

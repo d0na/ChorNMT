@@ -6,14 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const ROOT = path.join(__dirname, "..");
-const METRICS_DIR = path.join(ROOT, "metrics");
-const CONTRACTS_DIR = path.join(ROOT, "contracts");
-
-// Metrics written by `npm run test:policies` and `npm run evaluate:policies`.
-const SOURCES = {
-  tests: "policy-tests",
-  lifecycle: "policy-lifecycle",
-};
+const EVIDENCE_DIR = path.join(ROOT, "evaluation", "evidence");
 
 // Structural Creator denials on setNodes in scripts/test-policies.js.
 const STRUCTURAL_DENIALS = [
@@ -35,17 +28,17 @@ const FIGURES = [
   {
     doc: "docs/choreography-policies.md",
     text: "| Deploy the paper-example model contract (once per type) | {gas} |",
-    gas: ({ lifecycle }) => [gasOf(lifecycle, "deploy paper-example model (SSTORE2)")],
+    gas: ({ experiment }) => [gasOf(experiment, "F1.deploy.model")],
   },
   {
     doc: "docs/choreography-policies.md",
     text: "| Mint a paper-example instance, born with the model | {gas} |",
-    gas: ({ lifecycle }) => [gasOf(lifecycle, "mint paper-example instance")],
+    gas: ({ experiment }) => [gasOf(experiment, "F2.mint")],
   },
   {
     doc: "docs/choreography-policies.md",
-    text: "| Link its five role accounts (`setRoles`) | {gas} |",
-    gas: ({ lifecycle }) => [gasOf(lifecycle, "holder assigns the role accounts")],
+    text: "| Assign an account to four of its five roles (`setRoles`; the fifth takes a license) | {gas} |",
+    gas: ({ experiment }) => [gasOf(experiment, "F2.roles")],
   },
   {
     doc: "docs/choreography-policies.md",
@@ -68,24 +61,24 @@ const FIGURES = [
   {
     doc: "docs/choreography-policies.md",
     text: "the paper delta used {gas} gas",
-    gas: ({ lifecycle }) => [gasOf(lifecycle, "creator permits paper-example BPMN delta")],
+    gas: ({ experiment }) => [gasOf(experiment, "F5.delta")],
   },
   {
     doc: "docs/decisions.md",
     text: "costs the model contract once ({gas} gas for the paper example)",
-    gas: ({ lifecycle }) => [gasOf(lifecycle, "deploy paper-example model (SSTORE2)")],
+    gas: ({ experiment }) => [gasOf(experiment, "F1.deploy.model")],
   },
   {
     doc: "docs/future-improvements.md",
     text: "Part of the paper mint ({gas} gas measured)",
-    gas: ({ lifecycle }) => [gasOf(lifecycle, "mint paper-example instance")],
+    gas: ({ experiment }) => [gasOf(experiment, "F2.mint")],
   },
 ];
 
-function gasOf(metrics, label) {
-  const entry = metrics.cases.find((candidate) => candidate.label === label);
+function gasOf(source, key) {
+  const entry = source.cases.find((candidate) => candidate.key === key);
   if (!entry) {
-    throw new Error(`No measured case "${label}" in ${metrics.file}; update FIGURES in scripts/check-gas.js.`);
+    throw new Error(`No measured case "${key}" in ${source.file}; update FIGURES in scripts/check-gas.js.`);
   }
   return Number(entry.gasUsed);
 }
@@ -96,45 +89,20 @@ function escapeRegExp(text) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-async function newestMtime(directory) {
-  const entries = await fs.readdir(directory, { withFileTypes: true });
-  const times = await Promise.all(entries.map(async (entry) => {
-    const entryPath = path.join(directory, entry.name);
-    if (entry.isDirectory()) {
-      return newestMtime(entryPath);
-    }
-    return entry.name.endsWith(".sol") ? (await fs.stat(entryPath)).mtimeMs : 0;
-  }));
-  return Math.max(0, ...times);
-}
-
-// Newest metrics file of an operation, with every measured transaction in `cases`.
-async function loadMetrics(operation, command, contractsChanged) {
-  let names = [];
-  try {
-    names = (await fs.readdir(METRICS_DIR)).filter((name) => name.endsWith(`-${operation}.generated.json`));
-  } catch (error) {
-    if (error.code !== "ENOENT") {
-      throw error;
-    }
-  }
-  if (names.length === 0) {
-    throw new Error(`No ${operation} metrics found. Run \`${command}\` first.`);
-  }
-  const file = path.join(METRICS_DIR, names.sort().at(-1));
-  if ((await fs.stat(file)).mtimeMs < contractsChanged) {
-    throw new Error(`${path.relative(ROOT, file)} is older than the contracts. Run \`${command}\` first.`);
-  }
-  const metrics = JSON.parse(await fs.readFile(file, "utf8"));
-  const cases = metrics.cases ?? [...metrics.deployment, ...metrics.instance, ...metrics.policyResults];
-  return { file: path.relative(ROOT, file), cases };
+// A versioned evidence file, with every measured transaction in `cases`, keyed by `key`. The
+// evidence matches the current code because `npm run check:evidence` regenerates and compares it.
+async function loadEvidence(name, cases) {
+  const file = path.join(EVIDENCE_DIR, name);
+  const evidence = JSON.parse(await fs.readFile(file, "utf8"));
+  return { file: path.relative(ROOT, file), cases: cases(evidence) };
 }
 
 async function main() {
-  const contractsChanged = await newestMtime(CONTRACTS_DIR);
   const metrics = {
-    tests: await loadMetrics(SOURCES.tests, "npm run test:policies", contractsChanged),
-    lifecycle: await loadMetrics(SOURCES.lifecycle, "npm run evaluate:policies", contractsChanged),
+    // The experiment transactions, by key (scripts/experiment/phases.js).
+    experiment: await loadEvidence("experiment.json", (evidence) => evidence.transactions),
+    // The test:policies matrix, keyed by its case label.
+    tests: await loadEvidence("tests.json", (evidence) => evidence.cases.map((entry) => ({ ...entry, key: entry.label }))),
   };
 
   const problems = [];
@@ -153,7 +121,7 @@ async function main() {
   }
 
   if (problems.length > 0) {
-    console.error(`Gas figures in the docs differ from the measurements (${metrics.tests.file}, ${metrics.lifecycle.file}):\n${problems.join("\n")}`);
+    console.error(`Gas figures in the docs differ from the measurements (${metrics.experiment.file}, ${metrics.tests.file}):\n${problems.join("\n")}`);
     process.exitCode = 1;
     return;
   }

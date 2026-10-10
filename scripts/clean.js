@@ -38,15 +38,12 @@ async function main() {
   await removeIfExists(path.join(projectRoot, "artifacts"));
   await removeIfExists(path.join(projectRoot, "cache"));
   await removeGeneratedFiles(path.join(projectRoot, "metrics"));
-  await removeGeneratedFiles(path.join(projectRoot, "evaluation"));
-  await removeIfExists(path.join(projectRoot, "evaluation", "figures"));
   await removeGeneratedFiles(path.join(bpmnRoot, "example", "contract"));
   await removeGeneratedFiles(path.join(bpmnRoot, "example", "input"));
   await removeGeneratedFiles(path.join(bpmnRoot, "example", "output"));
-  await removeIfExists(path.join("/tmp", "chornmt-paper-example-policy-evaluation.nmt.json"));
   await removeIfExists(path.join("/tmp", "chornmt-bpmn-image-viewer.html"));
 
-  console.log("Cleaned Hardhat artifacts, generated BPMN files, evaluation reports, and metrics.");
+  console.log("Cleaned Hardhat artifacts, generated BPMN files, and metrics.");
 }
 
 main().catch((error) => {

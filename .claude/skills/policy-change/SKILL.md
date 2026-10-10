@@ -26,6 +26,6 @@ ETH_USD_PRICE=3000 npm test
 ```
 
    `check:size` fails above the EIP-170 limit and warns when a contract is within 1,024 bytes of it. Report the `ChoreographyNMT` runtime size if it grew, and update the figure in `docs/architettura.md` when it changes.
-6. If the change affects gas meaningfully, mention that `evaluate:policies` numbers in reports will shift.
+6. If the change touches a transaction of the experiment, `npm run check:evidence` fails: an allow/deny outcome that changes is a trust-model change to confirm with the user; then regenerate with `npm run evidence:update` and commit the evidence (`experiment` skill). Run `npm run check:gas` for the figures the docs quote.
 
 Commit as `feat:` / `fix:` with a message naming the rule enforced.

@@ -332,7 +332,7 @@ Le due policy negano per default: una funzione nuova della licenza resta bloccat
 
 Un transfer azzera la Holder policy della licenza e cancella nome e profilo del venditore; i messaggi restano, con l'indirizzo dell'holder che li ha scritti. Il nuovo holder installa una Holder policy con `setHolderSmartPolicy`, poi aggiorna i propri dati. Il vecchio holder perde ogni diritto sulla licenza. Le qualifiche contano al momento della vendita. Il design completo è in [Participant license design](participant-license-design.md).
 
-`deploy:asset` assegna ancora ai ruoli gli account del nodo locale. Le licenze le usano per ora `test:policies` e `evaluate:policies`.
+`deploy:asset` assegna ancora ai ruoli gli account del nodo locale. Le licenze le usano per ora `test:policies` e l'esperimento (fasi F3 e F6, `npm run evidence:update`).
 
 ```solidity
 bytes32 public immutable participantType; // tipo del ruolo, fissato al mint
@@ -363,7 +363,7 @@ Il render BPMN usa ancora i nomi dei ruoli come identità dei partecipanti. L'ex
 | Delta | `scripts/apply-asset-delta.js` | Valida il delta, invia `setRoles` (se il delta ha `roles`) e `setNodes`, poi fa il render, salvo `--no-render`. |
 | Render | `bpmn-builder-js/scripts/web3.js`, `bpmn-builder-js/src/`, `scripts/render-*.js` | Legge `tokenURI` e rigenera il BPMN. Vedi [Rendering](rendering.md). |
 | Deploy | `scripts/deploy-local.js` | Importa il BPMN, deploya Master, Creator e Holder policy, il renderer, il contratto del modello e l'NMT, poi conia un'istanza e ne collega i ruoli agli account locali, in ordine: otto transazioni. |
-| Valutazione | `scripts/evaluation/`, `scripts/test-policies.js` | Misura gas e tempi e verifica la matrice delle policy. Vedi [Evaluation](../evaluation/README.md). |
+| Valutazione | `scripts/experiment/`, `scripts/test-policies.js`, `scripts/evaluation/` | L'esperimento (specifica, esecuzione, generatori e controlli) misura gas e tempi delle fasi F1–F8 e scrive le evidenze versionate in `evaluation/evidence/`. `test-policies.js` verifica la matrice delle policy, e `scripts/evaluation/` contiene le metriche dei singoli comandi e il disegno chor-js. Vedi [il protocollo dell'esperimento](experiment.md) ed [Evaluation](../evaluation/README.md). |
 
 ### Formati dei dati
 

@@ -5,7 +5,7 @@ import "./ConstrainedCreatorSmartPolicy.sol";
 
 // Creator constraints of the paper example (references/paper-example.bpmn) evolved by the
 // parallel transport preparation delta: 10 tasks and 14 sequence flows, with room for one
-// more of each. Used by scripts/evaluation/run-policy-lifecycle-evaluation.js.
+// more of each. The experiment instance is born with it (scripts/experiment/phases.js, F2).
 contract CreatorSmartPolicyPaperScenario is ConstrainedCreatorSmartPolicy {
     // Tasks of the evolved paper example.
     bytes32 private constant ORDER = keccak256("Order");

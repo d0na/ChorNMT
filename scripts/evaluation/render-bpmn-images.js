@@ -21,9 +21,10 @@ html, body, #canvas { width: 100%; height: 100%; margin: 0; background: white; }
   return page;
 }
 
-// outputDirectory, suffix, and png let the experiment write versioned SVG only
-// (evaluation/evidence/bpmn/, no ".generated" suffix); the defaults are the git-ignored figures.
-export async function renderBpmnImages({ xmlPath, outputBaseName, outputDirectory = path.join(process.cwd(), "evaluation", "figures"), suffix = ".generated", png = true }) {
+// Draws a BPMN XML with chor-js in headless Chromium and writes <outputBaseName><suffix>.svg to
+// outputDirectory, and a PNG too when png is set. The experiment writes the versioned SVG of
+// evaluation/evidence/bpmn/ (scripts/experiment/bpmn.js).
+export async function renderBpmnImages({ xmlPath, outputBaseName, outputDirectory, suffix = "", png = false }) {
   const svgPath = path.join(outputDirectory, `${outputBaseName}${suffix}.svg`);
   const pngPath = path.join(outputDirectory, `${outputBaseName}${suffix}.png`);
   const xml = await fs.readFile(xmlPath, "utf8");

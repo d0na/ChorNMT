@@ -1,10 +1,8 @@
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
-import path from "node:path";
 import hre from "hardhat";
-import { resolveEthUsdPrice, scenarioUsd, writeMetrics } from "./evaluation/metrics.js";
+import { writeMetrics } from "./evaluation/metrics.js";
 import { decodeTokenURI } from "../bpmn-builder-js/scripts/web3.js";
-import { umlFigure } from "./evaluation/uml.js";
 import { deployChoreographyModel } from "./choreography-model.js";
 
 const GAS_LIMIT = 10_000_000n;
@@ -74,7 +72,6 @@ function totalGas(report, outcome) {
 }
 
 async function main() {
-  const ethUsdPrice = await resolveEthUsdPrice();
   const { ethers } = await hre.network.connect();
   const [administrator, eligibleHolder, unauthorizedCreator, ineligibleHolder, , carrierA, carrierB, carrierC, , authority] =
     await ethers.getSigners();
@@ -739,35 +736,12 @@ async function main() {
     deniedGas: totalGas(report, "denied").toString(),
     caseCount: report.length
   };
-  const metricsPath = await writeMetrics("policy-tests", { summary: { ...summary, ethUsdPrice }, cases: report });
+  const metricsPath = await writeMetrics("policy-tests", { summary, cases: report });
   // evidence:update keeps the test matrix with the experiment evidence (decision D21).
   if (process.env.POLICY_TESTS_OUT) {
     await fs.writeFile(process.env.POLICY_TESTS_OUT, `${JSON.stringify({ summary, cases: report }, null, 2)}\n`);
   }
-  const markdownPath = path.join(process.cwd(), "evaluation", "policy-tests.generated.md");
-  await fs.writeFile(markdownPath, [
-    "# Policy integration test results",
-    "",
-    "This report persists the receipt-derived values printed by `npm run test:policies`.",
-    `USD estimates use ETH/USD ${ethUsdPrice ? `$${ethUsdPrice.toFixed(2)}` : "not available"}; set \`ETH_USD_PRICE\` for a fixed reproducible value.`,
-    "",
-    "- Cases: " + summary.caseCount,
-    "- Allowed-operation gas total: " + summary.allowedGas,
-    "- Denied-operation gas total: " + summary.deniedGas,
-    "",
-    "The cases follow the use cases below: each row is one actor attempting one use case, allowed or denied by the policy layer that owns the decision. The sequence diagrams of every flow are in [UML diagrams](../docs/uml.md).",
-    "",
-    ...umlFigure("use-case-choreography", markdownPath),
-    ...umlFigure("use-case-participant-license", markdownPath),
-    "| Case | Outcome | Gas | Cost (wei) | USD @10 gwei | USD @30 gwei | USD @100 gwei |",
-    "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
-    ...report.map((entry) => `| ${entry.label} | ${entry.outcome} | ${entry.gasUsed} | ${entry.costWei} | ${scenarioUsd(entry.gasUsed, ethUsdPrice).join(" | ")} |`),
-    "",
-    "The test covers Master mint and eligibility controls, Creator BPMN constraints, role licenses and their sale, Holder restrictions, Master replacement, and ownership transfer. Denied rows are reverted transactions with receipts, not simulated calls.",
-    ""
-  ].join("\n"));
   console.log(`Policy test metrics: ${metricsPath}`);
-  console.log(`Policy test report: ${markdownPath}`);
 }
 
 main().catch((error) => {

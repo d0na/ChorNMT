@@ -2,7 +2,7 @@
 
 Ideas worth doing later, with the reasoning and the estimates behind them. Nothing here is implemented. An idea moves out of this page when it is applied (record the measured numbers in [Contract structure](contract-structure.md#gas) and, for a design change, a decision in [Design decisions](decisions.md)) or rejected (say why here).
 
-Estimates are paper-and-pencil: they come from measured totals on the current code (`ETH_USD_PRICE=3000`, `npm test`, `evaluate:policies`, `evaluate:paper`) and from EVM gas rules, not from an implementation. Measure before deciding.
+Estimates are paper-and-pencil: they come from measured totals on the current code (`ETH_USD_PRICE=3000`, `npm test`, and the experiment evidence of `evaluation/evidence/`) and from EVM gas rules, not from an implementation. Measure before deciding.
 
 ## G1: assets as EIP-1167 clones
 
@@ -52,7 +52,7 @@ The whole flow (deploy of the type, first instance, delta) costs about 17.9 M ga
 
 ### How to measure
 
-Implement a minimal version in a separate worktree, then run `npm test` and `evaluate:policies` and compare gas per row, as for the other candidates (`gas-optimization` skill). Keep it only if the whole-flow total drops and every allow/deny outcome is unchanged.
+Implement a minimal version in a separate worktree, then run `npm test` and `npm run check:evidence` and compare gas per row, as for the other candidates (`gas-optimization` skill). Keep it only if the whole-flow total drops and every allow/deny outcome is unchanged.
 
 ## Instances that read unchanged nodes from the model contract
 

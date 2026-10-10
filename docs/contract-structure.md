@@ -194,7 +194,7 @@ function _evaluateThingUpdate(T calldata value) private view {
 
 ## Gas
 
-The cost of the whole flow is measured, not estimated: `npm test` and `npm run evaluate:policies` print receipt-derived gas for deploy, mint, `setRoles`, `setNodes`, and policy allow/deny cases; `evaluate:paper` covers import and delta. Rules:
+The cost of the whole flow is measured, not estimated: `npm test` prints receipt-derived gas for the allow/deny matrix, and the experiment (`npm run evidence:update`, compared by `npm run check:evidence`) records it for deploy, mint, `setRoles`, `setNodes` (the paper delta), and every allowed and denied policy decision of the paper scenario. Rules:
 
 **Measure every change.** Record gas before and after (same `ETH_USD_PRICE`, same inputs) for the operations the change touches, and report the difference. A change that makes the flow more expensive needs a stated reason (e.g. a security rule).
 

@@ -22,7 +22,7 @@ For every changed contract, script, or importer/renderer file, decide which docs
 - **Commands.** A new or changed npm script or script file appears in `docs/commands-and-scripts.md` and, when it is a check, in the CI list of `CLAUDE.md`.
 - **Italian docs.** `docs/architettura.md` and `docs/rendering.md` are in Italian and need the same update as their English counterparts.
 - **UML.** A changed flow, actor, policy decision, or function shown in `docs/uml/*.puml` needs the diagram updated (the SVG is rendered by the hooks).
-- **Evaluation.** `evaluation/README.md` and the report text in `scripts/evaluation/` describe what the evaluation now measures.
+- **Evaluation.** `evaluation/README.md`, the narrative of `docs/experiment.md`, and the generators in `scripts/experiment/` describe what the experiment now measures (the narrative itself is reviewed by `evidence-reviewer`).
 - **Skills and comments.** `.claude/skills/*/SKILL.md` and the code comments near the change still describe what the code does.
 
 Gas figures are checked by `npm run check:gas`, contract sizes by `npm run check:size`; do not recompute them, but report a doc that quotes a figure the change obviously moves and `check:gas` does not cover.

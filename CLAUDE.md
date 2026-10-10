@@ -22,7 +22,7 @@ The docs are the source of truth and must stay in sync with the code:
 | Contract hierarchy and participant target design | `docs/contract-hierarchy.md` |
 | Participant license: fields, hardcoded policies, gas | `docs/participant-license-design.md` |
 | **Experiment protocol: phases, actors, policies, evidence (generated blocks, never edit them)** | `docs/experiment.md` |
-| Evaluation | `evaluation/README.md` |
+| Evaluation: setup, runs, evidence layout | `evaluation/README.md` |
 | UML use case and sequence diagrams | `docs/uml.md`, `docs/uml/` |
 
 ## Layout
@@ -30,7 +30,7 @@ The docs are the source of truth and must stay in sync with the code:
 - `contracts/base/` — generic `NMT`, `MutableAsset`, `SmartPolicy`.
 - `contracts/choreography/` — `ChoreographyNMT`, `ChoreographyMutableAsset`, `ChoreographyTokenURIRenderer`, Master/Creator/Holder policies and their variants, `ChoreographyParticipantAM`, `DenyAllSmartPolicy`.
 - `contracts/participant/` — participant licenses (`ParticipantNMT`, `ParticipantMutableAsset`, `ParticipantTokenURIRenderer`) that choreography roles can be linked to.
-- `scripts/` — npm-command implementations (ESM, ethers v6); `scripts/evaluation/` metrics and reports; `scripts/experiment/` the experiment specification (`phases.js`) and its run (D16–D22, being implemented), writing the versioned `evaluation/evidence/`; `scripts/data/` versioned deltas and legacy datasets.
+- `scripts/` — npm-command implementations (ESM, ethers v6); `scripts/evaluation/` per-command metrics, transaction costs, and the chor-js drawing; `scripts/experiment/` the experiment specification (`phases.js`), its run, the generators, and the checks (D16–D22), writing the versioned `evaluation/evidence/`; `scripts/data/` versioned deltas and legacy datasets.
 - `bpmn-builder-js/` — separate npm package: BPMN→NMT importer, tokenURI reader (`scripts/web3.js`), `normalize` → `validation` → `process-mapper` → `moddle-generator`.
 - `references/` — source BPMN models (`paper-example.bpmn` is the supported one) and the original `BPMNChoreography.sol`.
 
@@ -46,9 +46,9 @@ npm run check:use-cases                              # fail if a use case disagr
 npm run check:protocol                               # fail if docs/experiment.md differs from the evidence or has a number in its narrative
 npm run check:invariants                             # fail if a contract breaks a design decision (grep, no compile)
 npm test                                             # = test:policies, ephemeral network, no node needed
-npm run evaluate:policies                            # lifecycle evaluation, ephemeral network
 npm run evidence:update [-- --out <dir>]             # experiment F1-F8, 1+10 runs on ephemeral networks: evaluation/evidence/ (traces, timings, tests, sequence diagrams, charts, BPMN SVG) and, without --out, docs/experiment.md; needs gnuplot, Chromium (setup:evaluation), Java, Graphviz
-npm run check:gas                                    # fail if a gas figure in the docs differs from the last test/evaluation run
+npm run check:evidence                               # rerun the experiment into a temp dir and fail if the versioned evidence differs (timings, image bytes excepted)
+npm run check:gas                                    # fail if a gas figure in the docs differs from the versioned evidence
 npm run start:operations                             # compile + hardhat node on :8545 (long-running)
 npm run deploy:asset -- references/paper-example.bpmn  # needs the node: deploy the type, mint, print the asset
 npm run render:asset -- <asset> <nmt-or-delta.json>
@@ -56,11 +56,11 @@ npm run modify:asset -- <asset> <delta.json> [--no-render]
 npm run clean
 ```
 
-CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:invariants`, `check:uml`, `check:use-cases`, `check:protocol`, `npm test`, `evaluate:policies`, `check:gas`, and the BPMN importer on both reference models. Run the same before declaring work done. Set `ETH_USD_PRICE=3000` to avoid the live Coinbase price fetch in tests/evaluation.
+CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:invariants`, `check:uml`, `check:use-cases`, `check:protocol`, `npm test`, `check:evidence`, `check:gas`, and the BPMN importer on both reference models. Run the same before declaring work done. The experiment fixes `ETH_USD_PRICE` at 3000; the operational commands (`deploy:asset`, `modify:asset`) print USD costs only when it is set.
 
 ## Invariants and gotchas
 
-- **Docs at every level.** Every change is reflected, in the same commit, in every doc it touches: `CLAUDE.md`, the docs above (including `decisions.md` for a design change), `evaluation/README.md`, the report text in `scripts/evaluation/`, code comments, `.claude/skills/` and `.claude/agents/`, and the UML diagrams (`uml-diagrams` skill; CI fails on a stale SVG).
+- **Docs at every level.** Every change is reflected, in the same commit, in every doc it touches: `CLAUDE.md`, the docs above (including `decisions.md` for a design change), `evaluation/README.md`, the narrative of `docs/experiment.md` and the generators in `scripts/experiment/`, code comments, `.claude/skills/` and `.claude/agents/`, and the UML diagrams (`uml-diagrams` skill; CI fails on a stale SVG).
 - **Contract structure.** Every contract follows `docs/contract-structure.md`; a change that has to break a rule records it in its "Known deviations" table.
 - **Policies are hardcoded** (XACML translations): rules are literals, no runtime setters; a rule change is a new policy. Choreography policies use Hardhat accounts 0–1, participant ones 5–9.
 - **Trust table ↔ tests ↔ spec.** A policy change keeps `docs/choreography-policies.md`, `scripts/test-policies.js` (`expectAllowed`/`expectDenied`), and `docs/policy-test-specification.md` in agreement (`policy-change` skill).
@@ -85,9 +85,10 @@ CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:invariant
 
 ## Hooks, skills, and agents
 
-Hooks (`.claude/settings.json`, `.claude/hooks/`) block edits to generated files and SVGs, ask the user before an edit to `docs/requirements.md`, `docs/decisions.md`, `references/`, or `scripts/data/`, rerun `docs:uml` after a `.puml` edit and `compile` + `check:size` + `check:invariants` after a `.sol` edit, and check UML, use cases, the protocol, invariants, compile, and size before `git commit`, plus `test:policies`, `evaluate:policies`, and `check:gas` when contracts, scripts, or the docs quoting gas changed. `evaluate:paper` and `evaluate:all` need a node or Chromium and are not hooks: run them through the `evaluate` skill. Project skills are in `.claude/skills/`; `grill-me` comes from skills.sh (see `README.md`).
+Hooks (`.claude/settings.json`, `.claude/hooks/`) block edits to generated files, SVGs, `evaluation/evidence/`, and the generated blocks of `docs/experiment.md`, ask the user before an edit to `docs/requirements.md`, `docs/decisions.md`, `references/`, or `scripts/data/`, rerun `docs:uml` after a `.puml` edit and `compile` + `check:size` + `check:invariants` after a `.sol` edit, and check UML, use cases, the protocol, invariants, compile, and size before `git commit`, plus `check:evidence` (which reruns `test:policies`) when anything the experiment runs or reads changed and `check:gas` when contracts, scripts, the evidence, or the docs quoting gas changed. Run, read, and update the experiment through the `experiment` skill. Project skills are in `.claude/skills/`; `grill-me` comes from skills.sh (see `README.md`).
 
 Subagents are in `.claude/agents/`:
 
-- `test-runner` (Haiku) runs the checks, tests, and evaluations and returns only failures, changed allow/deny outcomes, and gas deltas. Use it instead of reading the full test tables in the main session.
+- `test-runner` (Haiku) runs the checks, tests, and `check:evidence` and returns only failures, changed allow/deny outcomes, gas deltas, and evidence differences. Use it instead of reading the full test tables in the main session.
 - `docs-reviewer` (Sonnet, read-only) checks a change against every doc level above and lists the mismatches. Run it before committing a change to contracts, scripts, or `bpmn-builder-js/`; the session that made the change writes the fixes.
+- `evidence-reviewer` (Sonnet, read-only) checks the hand-written narrative of `docs/experiment.md` against the specification, the evidence, and the contracts, and its readability for a paper reviewer; it never produces a value. Run it before committing a change to the narrative or to the phases.

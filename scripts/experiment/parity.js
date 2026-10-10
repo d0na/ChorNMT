@@ -1,7 +1,7 @@
 // The parity checklist (decision D21): every section, table, column, and artifact of the reports
-// the experiment replaces (the evaluation/*.generated.md reports of evaluate:paper,
-// evaluate:policies, test:policies, evaluate:summary) and of evaluation/README.md, with where it
-// lives now. It is permanent: content leaves the documentation only by changing an entry here to
+// the experiment replaced (the evaluation/*.generated.md reports of the former evaluate:paper,
+// evaluate:policies, test:policies, and evaluate:summary commands, removed with them) and of
+// evaluation/README.md, with where it lives now. It is permanent: content leaves the documentation only by changing an entry here to
 // "dropped" with its reason, which shows in the diff. `node scripts/experiment/protocol.js --check`
 // fails if a destination does not exist.
 //
@@ -9,7 +9,7 @@
 //   block:<name>       a generated block of docs/experiment.md
 //   narrative:<name>   a hand-written section of docs/experiment.md (<!-- narrative:<name> -->)
 //   artifact:<path>    a versioned file of evaluation/evidence/
-//   readme             evaluation/README.md, which keeps the instructions
+//   readme:<heading>   a section of evaluation/README.md, which keeps the instructions
 //   dropped            removed, with the reason
 // An entry that keeps its content in another form says how in reason.
 export const PARITY = [
@@ -99,15 +99,15 @@ export const PARITY = [
   { source: "final-report", item: "the embedded paper, lifecycle, and test reports", destination: "block:phases-overview" },
 
   // evaluation/README.md
-  { source: "README", item: "Setup (dependencies, Chromium, gnuplot)", destination: "readme" },
+  { source: "README", item: "Setup (dependencies, Chromium, gnuplot)", destination: "readme:Setup (once)" },
   { source: "README", item: "Complete evaluation run", destination: "block:reproduction" },
   { source: "README", item: "USD price for gas scenarios", destination: "block:provenance" },
-  { source: "README", item: "Targeted runs", destination: "readme" },
-  { source: "README", item: "Cleanup", destination: "readme" },
+  { source: "README", item: "Targeted runs", destination: "readme:Targeted runs" },
+  { source: "README", item: "Cleanup", destination: "readme:Cleanup" },
   { source: "README", item: "Paper workflow details", destination: "narrative:phases" },
   { source: "README", item: "Policy lifecycle evaluation", destination: "narrative:phases" },
   { source: "README", item: "UML diagrams in the reports", destination: "block:uml-guide" },
-  { source: "README", item: "Unified overview", destination: "readme" },
+  { source: "README", item: "Unified overview", destination: "readme:Unified overview" },
   { source: "README", item: "Delta versus a new instance benchmark", destination: "narrative:comparison" },
   { source: "README", item: "Manual gnuplot templates", destination: "block:charts" },
   { source: "README", item: "For publication: repeat, aggregate median/mean/stddev, report network, gas price, optimizer, Node, hardware", destination: "block:provenance" }

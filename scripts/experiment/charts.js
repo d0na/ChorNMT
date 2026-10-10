@@ -1,12 +1,14 @@
 // Generates the gnuplot charts of the experiment (decision D20) from the evidence: one data file
 // per chart in <evidence>/charts/, compared like the rest of the evidence (phase-duration.dat
-// excepted: timings are not compared), and its SVG, versioned but not compared.
+// excepted: timings are not compared), and its SVG, versioned but not compared: it carries the
+// SHA-256 of its data file, which check:evidence matches against the versioned data.
 //
 // Every data point is recomputed from its primary source before the chart is drawn: gas from the
 // call traces (their gasUsed is the receipt's) against experiment.json, timing statistics from
 // their samples, model counts from the BPMN XML. The script fails on any difference.
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -17,6 +19,7 @@ const root = process.cwd();
 const evidenceDirectory = path.resolve(root, process.env.EVIDENCE_OUT || path.join("evaluation", "evidence"));
 const chartsDirectory = path.join(evidenceDirectory, "charts");
 const templates = path.join(root, "evaluation", "gnuplot", "experiment");
+const HASH_MARKER = "chornmt-chart-data-sha256";
 const SET_NODES = new Interface(["function setNodes(string[],uint8[],string[][],string[][],string[][],string[],string[],string[],string[])"]);
 
 function median(values) {
@@ -45,6 +48,10 @@ async function plot(name, variables) {
   const assignments = Object.entries({ datafile: path.join(chartsDirectory, `${name}.dat`), outbase: path.join(chartsDirectory, name), ...variables })
     .map(([key, value]) => `${key}=${typeof value === "number" ? value : `'${value}'`}`).join("; ");
   await run("gnuplot", ["-e", assignments, path.join(templates, `${name}.gp`)]);
+  const svgPath = path.join(chartsDirectory, `${name}.svg`);
+  const dataHash = createHash("sha256").update(await fs.readFile(path.join(chartsDirectory, `${name}.dat`))).digest("hex");
+  const svg = await fs.readFile(svgPath, "utf8");
+  await fs.writeFile(svgPath, svg.replace(/(<svg[^>]*>)/, `$1<!-- ${HASH_MARKER}: ${dataHash} -->`));
 }
 
 async function main() {
