@@ -111,6 +111,14 @@ function normalizeChoreographyInput(input) {
   const normalizedSequenceFlows = sequenceFlows.map((flow, index) => {
     const sourceNode = nodeByKey.get(flow.sourceName) || nodeByKey.get(flow.sourceRef);
     const targetNode = nodeByKey.get(flow.targetName) || nodeByKey.get(flow.targetRef);
+    [
+      [sourceNode, flow.sourceName || flow.sourceRef],
+      [targetNode, flow.targetName || flow.targetRef]
+    ].forEach(([node, reference]) => {
+      if (!node) {
+        throw new Error(`Sequence flow "${flow.key || flow.id || index}" references unknown node "${reference || ""}".`);
+      }
+    });
     const seed =
       flow.key ||
       `${flow.sourceName || flow.sourceRef || "source"}_to_${flow.targetName || flow.targetRef || "target"}_${index + 1}`;
@@ -197,12 +205,25 @@ function normalizeChoreographyInput(input) {
       participantByKey.get(node.initiatingParticipant) ||
       participantByKey.get(node.initiatingParticipantRef);
 
+    // A node may only list flows that exist: an incoming entry without the
+    // matching outgoing entry on its source node is an inconsistent model.
+    const resolveFlow = (direction) => (ref) => {
+      const flow = sequenceFlowByKey.get(ref);
+      if (!flow) {
+        throw new Error(
+          `Node "${node.contractName || node.name || node.id}" lists ${direction} sequence flow "${ref}", but no such flow exists. ` +
+            "Incoming and outgoing references must be consistent on both endpoints."
+        );
+      }
+      return flow.id;
+    };
+
     const incoming = Array.isArray(node.incoming)
-      ? node.incoming.map((ref) => sequenceFlowByKey.get(ref)?.id || ref)
+      ? node.incoming.map(resolveFlow("incoming"))
       : incomingByNodeId.get(node.id) || [];
 
     const outgoing = Array.isArray(node.outgoing)
-      ? node.outgoing.map((ref) => sequenceFlowByKey.get(ref)?.id || ref)
+      ? node.outgoing.map(resolveFlow("outgoing"))
       : outgoingByNodeId.get(node.id) || [];
 
     return {
@@ -214,6 +235,22 @@ function normalizeChoreographyInput(input) {
       ...(messageFlowRef ? { messageFlowRef } : {}),
       ...(initiatingParticipant ? { initiatingParticipantRef: initiatingParticipant.id } : {})
     };
+  });
+
+  const nodeById = new Map(fullyNormalizedNodes.map((node) => [node.id, node]));
+  normalizedSequenceFlows.forEach((flow) => {
+    [
+      [nodeById.get(flow.sourceRef), "outgoing"],
+      [nodeById.get(flow.targetRef), "incoming"]
+    ].forEach(([node, direction]) => {
+      const declared = normalizedNodes.find((candidate) => candidate.id === node.id)[direction];
+      if (Array.isArray(declared) && !node[direction].includes(flow.id)) {
+        throw new Error(
+          `Sequence flow "${flow.key || flow.id}" is missing from the ${direction} references of node "${node.contractName || node.name || node.id}". ` +
+            "Incoming and outgoing references must be consistent on both endpoints."
+        );
+      }
+    });
   });
 
   return {
