@@ -62,8 +62,11 @@ participant Master.
 
 `ChoreographyNMT` keeps no version registry: the history of a model is the
 chain itself, the `setNodes`/`setRoles` transactions and the
-`NodesChanged`/`RolesChanged` events of its asset. The tests check a transfer to
-an eligible Holder (allowed) and to an ineligible one (denied).
+`NodesChanged`/`RolesChanged` events of its asset. The tests check that the
+`ChoreographyInitialized` event names the model of the type and that the
+`NodesChanged` events reproduce the sequence of accepted node updates, and they
+check a transfer to an eligible Holder (allowed) and to an ineligible one
+(denied).
 
 ## Creator Policy
 
@@ -190,7 +193,7 @@ cost of the model contract (once per type) and of each mint.
 
 | Command | Model | Evidence produced |
 | --- | --- | --- |
-| `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, Master policy replacement, attempts to bypass the Creator policy, and receipt gas/wei. The script exits with an error if any case has an unexpected outcome. |
+| `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, event-based model history, Master policy replacement, attempts to bypass the Creator policy, and receipt gas/wei. The script exits with an error if any case has an unexpected outcome. |
 | `npm run evaluate:policies` | Imported `paper-example` plus real delta | Model contract and instance mint, paper-model structural allow/deny cases, the Special Carrier license sale allow/deny cases, and scenario costs. |
 | `npm run evaluate:paper` | Imported `paper-example` plus real delta | Import/deploy/mint/render/delta measurements, delta versus a new instance, chor-js BPMN images, and gnuplot charts. |
 | `npm run evaluate:all` | All of the above | Rebuilds the canonical final report. |

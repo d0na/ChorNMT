@@ -335,6 +335,16 @@ async function main() {
     }
   ));
 
+  // Model history is kept by the chain: the asset is born with the model of its type, and every
+  // accepted change is an event; denied updates revert and leave none.
+  const [birth] = await constrainedAsset.queryFilter(constrainedAsset.filters.ChoreographyInitialized());
+  assert.equal(birth.args.model, await nmt.model());
+  const nodeHistory = await constrainedAsset.queryFilter(constrainedAsset.filters.NodesChanged());
+  assert.deepEqual(
+    nodeHistory.map((event) => Array.from(event.args.nodeNames)),
+    [initialModel.names, ["Inspection"], ["Packing"], ["Delivery"]]
+  );
+
   report.push(await expectAllowed(
     "creator policy allows unprotected role update",
     () => constrainedAsset.setRoles(["Supplier"], [ineligibleHolder.address])
