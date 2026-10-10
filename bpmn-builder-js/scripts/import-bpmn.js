@@ -25,22 +25,35 @@ function nameOf(element, label) {
   return name;
 }
 
-function nodeTypeOf(element) {
+function baseNodeTypeOf(element) {
   const nodeType = BPMN_NODE_TYPE_TO_NMT_TYPE[element.$type];
   if (nodeType === undefined) {
     throw new Error(`Unsupported BPMN flow element "${element.$type}" (${element.id}).`);
   }
+  return nodeType;
+}
+
+function nodeTypeOf(element, incomingCount, outgoingCount) {
+  const nodeType = baseNodeTypeOf(element);
   const joinType = SPLIT_TO_JOIN_NMT_TYPE[nodeType];
   const converging =
     element.gatewayDirection === "Converging" ||
-    (element.gatewayDirection !== "Diverging" &&
-      (element.incoming || []).length > 1 &&
-      (element.outgoing || []).length <= 1);
+    (element.gatewayDirection !== "Diverging" && incomingCount > 1 && outgoingCount <= 1);
   return joinType !== undefined && converging ? joinType : nodeType;
 }
 
+// Sequence flows are the source of truth for edges: the <incoming>/<outgoing>
+// children of a flow node are optional in BPMN. Their order is kept when present.
+function orderedFlows(declared, flows) {
+  const ordered = (declared || []).filter((flow) => flows.includes(flow));
+  flows.forEach((flow) => {
+    if (!ordered.includes(flow)) ordered.push(flow);
+  });
+  return ordered;
+}
+
 function messageName(flow) {
-  return flow.messageRef?.name?.trim() || flow.messageRef?.id || flow.name?.trim() || flow.id;
+  return flow.messageRef?.name?.trim() || flow.name?.trim() || flow.messageRef?.id || flow.id;
 }
 
 function roleForParticipant(participant, participantNames) {
@@ -63,30 +76,37 @@ function toNmtDataset(choreography, sourcePath) {
     return role;
   });
 
-  const elements = (choreography.flowElements || []).filter((element) => element.$type !== "bpmn:SequenceFlow");
+  const flowElements = choreography.flowElements || [];
+  const sequenceFlows = flowElements.filter((element) => element.$type === "bpmn:SequenceFlow");
+  const elements = flowElements.filter((element) => element.$type !== "bpmn:SequenceFlow");
   const nodeNames = new Map();
   elements.forEach((element) => {
-    nodeTypeOf(element);
+    baseNodeTypeOf(element);
     const name = nameOf(element, "Flow element");
     if ([...nodeNames.values()].includes(name)) {
       throw new Error(`Flow element name "${name}" is not unique.`);
     }
     nodeNames.set(element.id, name);
   });
+  sequenceFlows.forEach((flow) => {
+    if (!nodeNames.has(flow.sourceRef?.id) || !nodeNames.has(flow.targetRef?.id)) {
+      throw new Error(`Sequence flow "${flow.id}" must connect two supported flow elements.`);
+    }
+  });
 
   const messageFlows = new Map((choreography.messageFlows || []).map((flow) => [flow.id, flow]));
   const nodes = elements
     .map((element) => {
-      const nodeType = nodeTypeOf(element);
+      const outgoingFlows = orderedFlows(element.outgoing, sequenceFlows.filter((flow) => flow.sourceRef.id === element.id));
+      const incomingFlows = orderedFlows(element.incoming, sequenceFlows.filter((flow) => flow.targetRef.id === element.id));
+      const nodeType = nodeTypeOf(element, incomingFlows.length, outgoingFlows.length);
       const name = nodeNames.get(element.id);
-      const outgoing = (element.outgoing || []).map((flow) => nodeNames.get(flow.targetRef?.id));
-      const incoming = (element.incoming || []).map((flow) => nodeNames.get(flow.sourceRef?.id));
       const node = {
         name,
         nodeType,
-        incoming,
-        outgoing,
-        conditions: (element.outgoing || []).map((flow) => flow.name || "")
+        incoming: incomingFlows.map((flow) => nodeNames.get(flow.sourceRef.id)),
+        outgoing: outgoingFlows.map((flow) => nodeNames.get(flow.targetRef.id)),
+        conditions: outgoingFlows.map((flow) => flow.name || "")
       };
 
       if (element.$type !== "bpmn:ChoreographyTask") {
