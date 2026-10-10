@@ -5,34 +5,35 @@ description: Update, add, and render the ChorNMT UML use case and sequence diagr
 
 # UML diagrams
 
-Use case and sequence diagrams are documentation: they follow the code in the same commit, like the other docs. Sources are PlantUML (`docs/uml/*.puml`, shared style `docs/uml/style.iuml`); the SVG next to each source is generated, versioned, and embedded in `docs/uml.md`.
+Two kinds of diagram, with two rules:
+
+- **Use case diagrams** (`docs/uml/use-case-*.puml`) are written by hand and checked by `npm run check:use-cases` against the trust tables of `docs/choreography-policies.md`, the cases of `scripts/test-policies.js`, and the experiment evidence, both ways.
+- **Sequence diagrams** are generated, one per experiment phase, from the call traces (`scripts/experiment/sequence.js`, into `evaluation/evidence/uml/F<n>.puml` filtered and `F<n>-full.puml` complete). Never write or edit one by hand: change the experiment (`scripts/experiment/phases.js`, `run.js`) or the code it runs, then `npm run evidence:update`.
 
 | Diagram | Shows | Update when |
 | --- | --- | --- |
-| `use-case-choreography` | Actors and use cases of the choreography NMT and asset | A choreography action, actor, or trust rule changes (`docs/choreography-policies.md` table). |
+| `use-case-choreography` | Actors (trust-table columns) and use cases of the choreography NMT and asset | A choreography action, actor, or trust rule changes, or the experiment adds or drops a transaction. |
 | `use-case-participant-license` | Actors and use cases of the role licenses | A participant action or rule changes. |
-| `sequence-deploy-and-mint` | `deploy:asset`, `mint`, the model contract of a type | Deploy order, constructor arguments, mint checks, asset initialization from the model. |
-| `sequence-apply-delta` | `modify:asset`, `setNodes` with action and domain checks | Asset mutators, policy evaluation order, errors. |
-| `sequence-import-and-render` | `deploy:asset` (import), `render:asset`, the off-chain pipeline | Importer, model contract, `tokenURI`, renderer, `bpmn-builder-js` stages. |
-| `sequence-role-license-sale` | Role linked to a license, license sale | `ChoreographyParticipantAM`, constrained Creator, participant policies. |
-| `sequence-policy-replacement` | `setMasterSmartPolicy`, `setCreatorSmartPolicy` | Policy variants, administrators, replacement rules. |
+| `evaluation/evidence/uml/F1`–`F8` | The calls of each phase, with the policy answers | Generated: rerun `npm run evidence:update`. |
 
-## Steps
+## Steps for a use case diagram
 
-1. Find the diagrams the change touches: grep `docs/uml/*.puml` for every contract, function, error, script, or actor you renamed, removed, or changed.
-2. Edit the `.puml` sources. Rules:
-   - `!include style.iuml` first; one diagram per file, `@startuml <file-name>`.
-   - Use the real names: contract, function, and error names exactly as in the code (`OperationDenied(0)`, `evaluateNodeUpdate`), npm commands as in `package.json`.
-   - Sequence diagrams show who calls whom and the decision each policy returns; group the Creator AND Holder checks; show the denial branch with its error.
-   - Use case diagrams use actors with their Hardhat account when the policies hardcode it; `<<include>>` for a mandatory step, `<<extend>>` for an optional variant.
-   - A new flow worth explaining gets a new file `use-case-<topic>.puml` or `sequence-<topic>.puml`, a section in `docs/uml.md`, a row in the table above, and an entry in `UML_DIAGRAMS` of `scripts/evaluation/uml.js` (title and the report rows it explains), embedded with `umlFigure` in the report section it explains.
-   - The evaluation reports embed the diagrams (`scripts/evaluation/uml.js`); when a diagram changes what it explains, update its `explains` text there and the table in `evaluation/README.md`.
-3. Render and check. In a Claude Code session the `post-edit.sh` hook already renders after every `.puml` edit and `pre-commit.sh` refuses a commit with a stale SVG; run the commands yourself outside Claude Code:
+1. Edit the `.puml`. Every element carries its annotations as PlantUML comments on the lines before it:
+   - before an actor: `' accounts: <experiment account names>`; the actor's first line is a trust-table column (`Holder`, `Authorized creator`, `License holder`, `Buyer`, `Authority`, `Anyone else`);
+   - before a use case: `' trust: <table>:<function>` (the row), `' evidence: <transaction or read keys>` or `test-only` (then add `<<test only>>` to the use case), and `' test: <test-policies case labels, separated by ;>`.
+   - Use the real names: contract, function, and error names exactly as in the code. `<<include>>` for a mandatory step, `<<extend>>` for an optional variant.
+   - The Master and Creator policy setters have no use case: those policies are never replaced (open question in `docs/decisions.md`).
+2. `npm run check:use-cases`, then render and check. In a Claude Code session the `post-edit.sh` hook renders after every `.puml` edit and `pre-commit.sh` refuses a commit with a stale SVG or a failing use case check; outside Claude Code:
 
 ```bash
-npm run docs:uml     # needs Java and Graphviz (dot); downloads PlantUML 1.2024.7 once into .cache/
-npm run check:uml    # what CI runs: every SVG matches its source hash
+npm run docs:uml          # needs Java and Graphviz (dot); downloads PlantUML 1.2024.7 once into .cache/
+npm run check:uml         # what CI runs: every SVG matches its source hash
+npm run check:use-cases   # what CI runs: use cases against trust tables, tests, and evidence
 ```
 
-4. Look at the result before committing: render a PNG into the scratchpad (`java -jar .cache/plantuml/plantuml-1.2024.7.jar -tpng -o <scratchpad> docs/uml/<file>.puml`) and read it; fix overlaps or unreadable labels.
-5. Commit the `.puml` and `.svg` together with the code change. Never edit an `.svg` by hand: it carries the source hash `check:uml` verifies.
+3. Look at the result before committing: render a PNG into the scratchpad (`java -jar .cache/plantuml/plantuml-1.2024.7.jar -tpng -o <scratchpad> docs/uml/<file>.puml`) and read it; fix overlaps or unreadable labels.
+4. Commit the `.puml` and `.svg` together with the change. Never edit an `.svg` by hand: it carries the source hash `check:uml` verifies.
+
+## Sequence diagrams in the reports
+
+The evaluation reports embed the diagrams next to the rows they explain (`UML_DIAGRAMS` in `scripts/evaluation/uml.js`, with `umlFigure`); when a phase changes what it explains, update its `explains` text there and the table in `evaluation/README.md`.

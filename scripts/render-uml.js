@@ -5,14 +5,19 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
-// Renders the UML diagrams in docs/uml/*.puml to SVG next to their source, with PlantUML.
-// `--check` renders nothing: it fails when an SVG is missing or was generated from another
-// version of its source, so it runs without Java (e.g. in CI).
+// Renders the UML diagrams to SVG next to their source, with PlantUML: the hand-written ones in
+// docs/uml/ and the sequence diagrams generated from the experiment in evaluation/evidence/uml/
+// (or in the directory given with --dir). `--check` renders nothing: it fails when an SVG is
+// missing or was generated from another version of its source, so it runs without Java (e.g. in CI).
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
 const UML_DIR = path.join(ROOT, "docs", "uml");
-const SHARED_SOURCES = ["style.iuml"];
+const dirIndex = process.argv.indexOf("--dir");
+const DIRECTORIES = dirIndex === -1
+  ? [UML_DIR, path.join(ROOT, "evaluation", "evidence", "uml")]
+  : [path.resolve(process.argv[dirIndex + 1])];
+const SHARED_SOURCES = [path.join(UML_DIR, "style.iuml")];
 
 const PLANTUML_VERSION = "1.2024.7";
 const PLANTUML_SHA256 = "e34c12bbe9944f1f338ca3d88c9b116b86300cc8e90b35c4086b825b5ae96d24";
@@ -22,23 +27,33 @@ const PLANTUML_JAR = path.join(ROOT, ".cache", "plantuml", `plantuml-${PLANTUML_
 const HASH_MARKER = "chornmt-uml-source-sha256";
 const run = promisify(execFile);
 
+// Absolute paths of every diagram source, directory by directory.
 async function diagramSources() {
-  const files = await fs.readdir(UML_DIR);
-  return files.filter((file) => file.endsWith(".puml")).sort();
+  const sources = [];
+  for (const directory of DIRECTORIES) {
+    let files;
+    try {
+      files = await fs.readdir(directory);
+    } catch {
+      continue;
+    }
+    sources.push(...files.filter((file) => file.endsWith(".puml")).sort().map((file) => path.join(directory, file)));
+  }
+  return sources;
 }
 
 // The hash covers the diagram and the shared style it includes.
 async function sourceHash(file) {
   const hash = crypto.createHash("sha256");
-  for (const name of [file, ...SHARED_SOURCES]) {
-    hash.update(name);
-    hash.update(await fs.readFile(path.join(UML_DIR, name)));
+  for (const source of [file, ...SHARED_SOURCES]) {
+    hash.update(path.basename(source));
+    hash.update(await fs.readFile(source));
   }
   return hash.digest("hex");
 }
 
 function svgPath(file) {
-  return path.join(UML_DIR, file.replace(/\.puml$/, ".svg"));
+  return file.replace(/\.puml$/, ".svg");
 }
 
 async function sha256File(file) {
@@ -69,9 +84,13 @@ async function ensurePlantUml() {
 
 async function render(files) {
   await ensurePlantUml();
-  await run("java", ["-Djava.awt.headless=true", "-jar", PLANTUML_JAR, "-tsvg", "-charset", "UTF-8", ...files], {
-    cwd: UML_DIR
-  });
+  for (const directory of new Set(files.map((file) => path.dirname(file)))) {
+    const names = files.filter((file) => path.dirname(file) === directory).map((file) => path.basename(file));
+    await run("java", ["-Djava.awt.headless=true", "-jar", PLANTUML_JAR, "-tsvg", "-charset", "UTF-8", ...names], {
+      cwd: directory,
+      maxBuffer: 64 * 1024 * 1024
+    });
+  }
   for (const file of files) {
     const target = svgPath(file);
     const svg = await fs.readFile(target, "utf8");
@@ -89,12 +108,12 @@ async function check(files) {
     try {
       svg = await fs.readFile(svgPath(file), "utf8");
     } catch {
-      stale.push(`${file}: SVG missing`);
+      stale.push(`${path.relative(ROOT, file)}: SVG missing`);
       continue;
     }
     const recorded = svg.match(new RegExp(`${HASH_MARKER}: ([0-9a-f]+)`))?.[1];
     if (recorded !== await sourceHash(file)) {
-      stale.push(`${file}: SVG out of date`);
+      stale.push(`${path.relative(ROOT, file)}: SVG out of date`);
     }
   }
   if (stale.length > 0) {

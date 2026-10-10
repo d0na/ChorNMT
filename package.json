@@ -9,6 +9,7 @@
     "compile": "hardhat compile",
     "check:size": "node scripts/check-contract-size.js",
     "check:invariants": "node scripts/check-invariants.js",
+    "check:use-cases": "node scripts/check-use-cases.js",
     "check:gas": "node scripts/check-gas.js",
     "docs:uml": "node scripts/render-uml.js",
     "check:uml": "node scripts/render-uml.js --check",

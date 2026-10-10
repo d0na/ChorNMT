@@ -11,7 +11,7 @@ npm run evidence:update                 # writes evaluation/evidence/
 npm run evidence:update -- --out <dir>  # exploratory run, elsewhere
 ```
 
-It runs the phases of [`scripts/experiment/phases.js`](../scripts/experiment/phases.js) on one ephemeral Hardhat network, needs no node, and fails if a transaction differs from the specification. `evaluation/evidence/` holds `experiment.json` (provenance, accounts, inputs with SHA-256 — the BPMN, the delta, and `docs/choreography-policies.md`, whose trust-table rows every transaction must name — and per phase the actors, the policies in force with their bytecode hash, the instance state, and the transactions with outcome, revert reason, trust-table row, and gas), `transactions.csv`, one call trace per transaction in `traces/`, and the baseline and final BPMN XML in `bpmn/`. Two runs produce identical files. Until the next steps land (generated sequence diagrams, charts and BPMN images, the protocol, `check:evidence`), the commands below stay the source of the reports.
+It runs the phases of [`scripts/experiment/phases.js`](../scripts/experiment/phases.js) on one ephemeral Hardhat network, needs no node, and fails if a transaction differs from the specification. `evaluation/evidence/` holds `experiment.json` (provenance, accounts, inputs with SHA-256 — the BPMN, the delta, and `docs/choreography-policies.md`, whose trust-table rows every transaction must name — and per phase the actors, the policies in force with their bytecode hash, the instance state, and the transactions with outcome, revert reason, trust-table row, and gas), `transactions.csv`, one call trace per transaction and per render read in `traces/`, the baseline and final BPMN XML in `bpmn/`, and one sequence diagram per phase in `uml/` (`F<n>` filtered, `F<n>-full` complete, PlantUML and SVG; Java and Graphviz needed). Two runs produce identical files. Until the next steps land (charts and BPMN images, the protocol, `check:evidence`), the commands below stay the source of the reports.
 
 ## Setup (once)
 
@@ -126,16 +126,16 @@ The command writes a timestamped JSON report under `metrics/` and `evaluation/po
 
 ## UML diagrams in the reports
 
-The generated reports embed the UML use case and sequence diagrams of [`docs/uml.md`](../docs/uml.md) next to the rows they explain, so a reader can follow each measured transaction through the contracts and policies that execute it:
+The generated reports embed the UML use case diagrams and the sequence diagrams generated per experiment phase (`evaluation/evidence/uml/F<n>.svg`, see [`docs/uml.md`](../docs/uml.md)) next to the rows they explain, so a reader can follow each measured transaction through the contracts and policies that execute it:
 
 | Report | Diagrams | Explain |
 | --- | --- | --- |
-| `experiment-summary.generated.md` (paper workflow) | deploy and mint, import and render, apply a BPMN delta | the import, deployment, mint, modification, and render phases |
-| `policy-lifecycle.generated.md` | choreography use cases, deploy and mint, participant license use cases, role license sale, policy replacement, apply a BPMN delta | the model contract and mint rows, the Special Carrier handover, and every allowed and denied policy row |
+| `experiment-summary.generated.md` (paper workflow) | F1 deploy, F2 mint, F4 render, F5 delta | the import, deployment, mint, modification, and render phases |
+| `policy-lifecycle.generated.md` | choreography use cases, F1 deploy, F2 mint, participant license use cases, F3 role link, F6 role sale, F5 delta, F7 transfer and Holder restriction | the model contract and mint rows, the Special Carrier handover, and every allowed and denied policy row |
 | `policy-tests.generated.md` | choreography and participant license use cases | the actor and use case behind each test case |
 | `final-report.generated.md` | reading guide: every diagram with the rows it explains | the whole report |
 
-The diagrams are versioned SVGs (`npm run docs:uml`), so the reports show them without rendering anything; the mapping between diagrams and report rows is in `scripts/evaluation/uml.js`.
+The diagrams are versioned SVGs (`npm run docs:uml`, `npm run evidence:update` for the phases), so the reports show them without rendering anything; the mapping between diagrams and report rows is in `scripts/evaluation/uml.js`. These reports come from their own runs, not from the experiment: until they are replaced, the phase diagrams illustrate their rows without being their traces.
 
 ## Unified overview
 

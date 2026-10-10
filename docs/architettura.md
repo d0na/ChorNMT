@@ -6,7 +6,7 @@ Questo documento descrive i componenti, a cosa servono e come sono fatti al loro
 
 ## Vista d'insieme
 
-I diagrammi UML dei casi d'uso e di sequenza (deploy e mint, delta, import e render, licenze di ruolo, sostituzione delle policy) sono in [UML diagrams](uml.md), con i sorgenti PlantUML in `docs/uml/`.
+I diagrammi UML sono in [UML diagrams](uml.md): i casi d'uso sono scritti a mano in `docs/uml/` e verificati con `check:use-cases` contro le tabelle di fiducia, i test e le evidenze; i diagrammi di sequenza, uno per fase F1–F8 dell'esperimento, sono generati dalle tracce delle chiamate in `evaluation/evidence/uml/`.
 
 ```mermaid
 flowchart LR

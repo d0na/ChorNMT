@@ -45,8 +45,10 @@ F6.buyer.profile,F6,Carrier B,ParticipantMutableAsset.setProfile,allowed,,67102,
 F6.buyer.messages,F6,Carrier B,ParticipantMutableAsset.setMessages,allowed,,76009,4120652,313206637868
 F7.deploy.deny-all,F7,Administrator,DenyAllSmartPolicy.constructor,allowed,,335458,3606876,1209955409208
 F7.mint,F7,Administrator,ChoreographyNMT.mint,allowed,,5625370,3161059,17782126466830
-F7.holder.deny-all,F7,Administrator,ChoreographyMutableAsset.setHolderSmartPolicy,allowed,,32533,2840019,92394338127
-F7.denied.delta,F7,Administrator,ChoreographyMutableAsset.setNodes,denied,OperationDenied(HOLDER),136179,2485402,338459558958
-F8.new-instance.mint,F8,Administrator,ChoreographyNMT.mint,allowed,,5625370,2176138,12241581421060
-F8.new-instance.roles,F8,Administrator,ChoreographyMutableAsset.setRoles,allowed,,176849,1955128,345762431672
-F8.new-instance.link,F8,Administrator,ChoreographyMutableAsset.setRoles,allowed,,97276,1712179,166553924404
+F7.denied.transfer,F7,Administrator,ChoreographyNMT.transferFrom,denied,MasterDenied,30322,2840019,86115056118
+F7.transfer,F7,Administrator,ChoreographyNMT.transferFrom,allowed,,106564,2485376,264851608064
+F7.holder.deny-all,F7,Partner,ChoreographyMutableAsset.setHolderSmartPolicy,allowed,,49633,2175808,107991878464
+F7.denied.delta,F7,Partner,ChoreographyMutableAsset.setNodes,denied,OperationDenied(HOLDER),136179,1904282,259323218478
+F8.new-instance.mint,F8,Administrator,ChoreographyNMT.mint,allowed,,5625370,1667328,9379336911360
+F8.new-instance.roles,F8,Administrator,ChoreographyMutableAsset.setRoles,allowed,,176849,1497993,264918564057
+F8.new-instance.link,F8,Administrator,ChoreographyMutableAsset.setRoles,allowed,,97276,1311849,127611423324

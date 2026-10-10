@@ -41,10 +41,11 @@ npm run compile                                      # hardhat compile (Solidity
 npm run check:size                                   # fail if a contract exceeds EIP-170/3860 size limits
 npm run docs:uml                                     # render docs/uml/*.puml to SVG (Java + Graphviz)
 npm run check:uml                                    # fail if a UML SVG is missing or stale
+npm run check:use-cases                              # fail if a use case disagrees with trust tables, tests, or evidence
 npm run check:invariants                             # fail if a contract breaks a design decision (grep, no compile)
 npm test                                             # = test:policies, ephemeral network, no node needed
 npm run evaluate:policies                            # lifecycle evaluation, ephemeral network
-npm run evidence:update [-- --out <dir>]             # experiment F1-F8, ephemeral network: evaluation/evidence/
+npm run evidence:update [-- --out <dir>]             # experiment F1-F8, ephemeral network: evaluation/evidence/ (+ sequence diagrams)
 npm run check:gas                                    # fail if a gas figure in the docs differs from the last test/evaluation run
 npm run start:operations                             # compile + hardhat node on :8545 (long-running)
 npm run deploy:asset -- references/paper-example.bpmn  # needs the node: deploy the type, mint, print the asset
@@ -53,7 +54,7 @@ npm run modify:asset -- <asset> <delta.json> [--no-render]
 npm run clean
 ```
 
-CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:invariants`, `check:uml`, `npm test`, `evaluate:policies`, `check:gas`, and the BPMN importer on both reference models. Run the same before declaring work done. Set `ETH_USD_PRICE=3000` to avoid the live Coinbase price fetch in tests/evaluation.
+CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:invariants`, `check:uml`, `check:use-cases`, `npm test`, `evaluate:policies`, `check:gas`, and the BPMN importer on both reference models. Run the same before declaring work done. Set `ETH_USD_PRICE=3000` to avoid the live Coinbase price fetch in tests/evaluation.
 
 ## Invariants and gotchas
 
@@ -82,7 +83,7 @@ CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:invariant
 
 ## Hooks, skills, and agents
 
-Hooks (`.claude/settings.json`, `.claude/hooks/`) block edits to generated files and SVGs, ask the user before an edit to `docs/requirements.md`, `docs/decisions.md`, `references/`, or `scripts/data/`, rerun `docs:uml` after a `.puml` edit and `compile` + `check:size` + `check:invariants` after a `.sol` edit, and check UML, invariants, compile, and size before `git commit`, plus `test:policies`, `evaluate:policies`, and `check:gas` when contracts, scripts, or the docs quoting gas changed. `evaluate:paper` and `evaluate:all` need a node or Chromium and are not hooks: run them through the `evaluate` skill. Project skills are in `.claude/skills/`; `grill-me` comes from skills.sh (see `README.md`).
+Hooks (`.claude/settings.json`, `.claude/hooks/`) block edits to generated files and SVGs, ask the user before an edit to `docs/requirements.md`, `docs/decisions.md`, `references/`, or `scripts/data/`, rerun `docs:uml` after a `.puml` edit and `compile` + `check:size` + `check:invariants` after a `.sol` edit, and check UML, use cases, invariants, compile, and size before `git commit`, plus `test:policies`, `evaluate:policies`, and `check:gas` when contracts, scripts, or the docs quoting gas changed. `evaluate:paper` and `evaluate:all` need a node or Chromium and are not hooks: run them through the `evaluate` skill. Project skills are in `.claude/skills/`; `grill-me` comes from skills.sh (see `README.md`).
 
 Subagents are in `.claude/agents/`:
 

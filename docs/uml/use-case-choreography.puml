@@ -2,47 +2,76 @@
 !include style.iuml
 title ChorNMT - choreography use cases
 left to right direction
-
-actor "Authority\n(account 0)" as Authority
-actor "Holder" as Holder
-actor "Partner\n(account 1)" as Partner
-actor "Anyone" as Anyone
-
+' Every actor is a column of the "Who can do what" table of docs/choreography-policies.md, played
+' by the experiment accounts listed; every use case names its trust-table row, the experiment
+' evidence (transactions or reads of evaluation/evidence/), and the test:policies cases that prove
+' it. npm run check:use-cases checks all of them both ways. The Master and Creator policies are
+' never replaced (open question in docs/decisions.md), so those use cases are not shown.
+' accounts: Administrator
+actor "Authorized creator\n(account 0)" as Creator
+' accounts: Administrator, Partner
+actor "Holder\n(account 0, then 1)" as Holder
+' accounts: eth_call
+actor "Anyone else" as Anyone
 rectangle "ChoreographyNMT + ChoreographyMutableAsset" {
+  ' trust: choreography:mint
+  ' evidence: F2.mint, F2.denied.unauthorized-creator, F2.denied.ineligible-holder, F7.mint, F8.new-instance.mint
+  ' test: authorized creator mints eligible holder; unauthorized creator cannot mint; authorized creator cannot assign an ineligible holder
   usecase "Mint an instance of the\nchoreography type" as UC_Mint
-  usecase "Transfer the choreography\nto an eligible holder" as UC_Transfer
-  usecase "Replace the Master policy\n(a new hardcoded Master)" as UC_Master
-  usecase "Replace the Creator policy\n(install scenario constraints)" as UC_Creator
+  ' trust: choreography:transferFrom
+  ' evidence: F7.transfer, F7.denied.transfer
+  ' test: holder transfers to eligible holder; holder cannot transfer to an ineligible holder
+  usecase "Transfer the instance\nto an eligible holder" as UC_Transfer
+  ' trust: choreography:setNodes
+  ' evidence: F5.delta, F5.denied.task-limit, F5.denied.flow-limit, F5.denied.task-name, F5.denied.unknown-target, F5.denied.protected-node, F7.denied.delta
+  ' test: creator and holder update nodes; creator policy denies task count above limit; non-holder cannot update choreography
   usecase "Apply a BPMN delta\n(setNodes)" as UC_Nodes
-  usecase "Update roles\n(setRoles)" as UC_Roles
+  ' trust: choreography:setRoles
+  ' evidence: F2.roles, F8.new-instance.roles
+  ' test: creator and holder update roles; non-holder cannot update choreography
+  usecase "Assign role accounts\n(setRoles)" as UC_Roles
+  ' trust: choreography:setRoles
+  ' evidence: F3.link, F3.denied.plain-account, F3.denied.carrier-license, F3.denied.supplier-license, F3.denied.new-role, F8.new-instance.link
+  ' test: holder links a role to a certified license; creator policy denies a plain account for a licensed role
   usecase "Link a role to a\nparticipant license" as UC_Link
+  ' trust: choreography:setNodes, choreography:setRoles
+  ' evidence: F5.delta, F5.denied.task-limit, F3.denied.carrier-license
+  ' test: creator policy denies task count above limit; creator policy denies a license of another type
   usecase "Check domain constraints\n(Creator AND Holder)" as UC_Domain
+  ' trust: choreography:setHolderSmartPolicy
+  ' evidence: F7.holder.deny-all
+  ' test: holder installs restrictive policy; holder policy can deny further updates
   usecase "Install a Holder policy\n(e.g. DenyAllSmartPolicy)" as UC_Holder
+  ' trust: choreography:setLinked
+  ' evidence: test-only
+  ' test: holder links the asset; non-holder cannot link the asset
+  usecase "Link the asset\n(setLinked)" as UC_Linked <<test only>>
+  ' trust: choreography:tokenURI
+  ' evidence: F4.tokenURI, F8.tokenURI
   usecase "Read the model\n(tokenURI)" as UC_Read
+  ' trust: choreography:tokenURI
+  ' evidence: F4.tokenURI, F8.tokenURI
   usecase "Render the BPMN\n(off-chain)" as UC_Render
 }
-
-Authority --> UC_Mint
-Authority --> UC_Master
-Authority --> UC_Creator
-
+Creator --> UC_Mint
 Holder --> UC_Nodes
 Holder --> UC_Roles
 Holder --> UC_Holder
 Holder --> UC_Transfer
+Holder --> UC_Linked
 UC_Link .> UC_Roles : <<extend>>
 UC_Nodes ..> UC_Domain : <<include>>
 UC_Roles ..> UC_Domain : <<include>>
-
-Partner --> UC_Transfer : receives
-
 Anyone --> UC_Read
 Anyone --> UC_Render
 UC_Render ..> UC_Read : <<include>>
-
 note bottom of UC_Domain
   evaluateNodeUpdate / evaluateRoleUpdate
   of IChoreographyPolicy, asked of both
   the Creator and the Holder policy.
+end note
+note bottom of UC_Linked
+  <<test only>>: proved by test:policies,
+  not exercised by the experiment.
 end note
 @enduml

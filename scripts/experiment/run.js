@@ -13,7 +13,9 @@ import hre from "hardhat";
 import { Interface, keccak256 } from "ethers";
 import { importBpmnToNmt } from "../../bpmn-builder-js/scripts/import-bpmn.js";
 import { choreographyFromTokenURI } from "../../bpmn-builder-js/scripts/web3.js";
-import { deployChoreographyType, deployContract, mintAsset, readArtifact } from "../deploy-local.js";
+import { deployChoreographyType, deployContract, mintAsset } from "../deploy-local.js";
+import { ARTIFACTS, loadArtifacts } from "./contracts.js";
+import { loadTrustTables, trustRow } from "./trust-tables.js";
 import { applyAssetDelta } from "../apply-asset-delta.js";
 import { renderAsset } from "../render-asset.js";
 import { summarizeNodes } from "../evaluation/metrics.js";
@@ -25,59 +27,10 @@ const GAS_LIMIT = 10_000_000n;
 // The USD columns of the reports need a fixed price to be reproducible (D18).
 const ETH_USD_PRICE = Number(process.env.ETH_USD_PRICE) > 0 ? Number(process.env.ETH_USD_PRICE) : 3000;
 
-// Contract name in the evidence -> artifact, for ABIs and bytecode.
-const ARTIFACTS = {
-  MasterSmartPolicy: "MasterSmartPolicy",
-  CreatorSmartPolicy: "CreatorSmartPolicy",
-  HolderSmartPolicy: "HolderSmartPolicy",
-  ChoreographyTokenURIRenderer: "ChoreographyTokenURIRenderer",
-  ChoreographyNMT: "ChoreographyNMT",
-  ChoreographyMutableAsset: "ChoreographyMutableAsset",
-  ChoreographyParticipantAM: "ChoreographyParticipantAM",
-  CreatorSmartPolicyPaperScenario: "CreatorSmartPolicyPaperScenario",
-  DenyAllSmartPolicy: "DenyAllSmartPolicy",
-  ParticipantMasterSmartPolicy: "participant/ParticipantMasterSmartPolicy",
-  ParticipantTokenURIRenderer: "participant/ParticipantTokenURIRenderer",
-  ParticipantNMT: "participant/ParticipantNMT",
-  ParticipantCreatorSmartPolicy: "participant/CreatorSmartPolicy",
-  ParticipantHolderSmartPolicy: "participant/HolderSmartPolicy",
-  ParticipantMutableAsset: "participant/ParticipantMutableAsset"
-};
 const POLICY_LAYERS = ["CREATOR", "HOLDER"];
 
 const sha256 = (content) => createHash("sha256").update(content).digest("hex");
 const json = (value) => `${JSON.stringify(value, (_, item) => typeof item === "bigint" ? item.toString() : item, 2)}\n`;
-
-async function loadArtifacts() {
-  const artifacts = {};
-  for (const [name, file] of Object.entries(ARTIFACTS)) {
-    const artifact = await readArtifact(file);
-    artifacts[name] = { ...artifact, file, iface: new Interface(artifact.abi) };
-  }
-  return artifacts;
-}
-
-// Reads docs/choreography-policies.md: the functions named in each trust table, so every
-// transaction can point to the row that decides it.
-async function loadTrustTables() {
-  const text = await fs.readFile(path.join(root, INPUTS.trustTables), "utf8");
-  const tables = {};
-  for (const [table, heading] of [["choreography", "## Who can do what"], ["licenses", "## Role licenses"]]) {
-    const lines = text.slice(text.indexOf(heading)).split("\n");
-    const start = lines.findIndex((line) => line.startsWith("|"));
-    const end = lines.findIndex((line, index) => index > start && !line.startsWith("|"));
-    tables[table] = lines.slice(start + 2, end).map((row) => row.split("|")[1].trim());
-  }
-  return tables;
-}
-
-function trustRow(tables, trust) {
-  if (!trust) return null;
-  const [table, fn] = trust.split(":");
-  const row = tables[table]?.find((action) => action.includes(`\`${fn}\``));
-  assert.ok(row, `${trust}: no row of the ${table} trust table in docs/choreography-policies.md names ${fn}`);
-  return { table, action: row };
-}
 
 class Recorder {
   constructor({ ethers, artifacts, accounts, trustTables }) {
@@ -91,14 +44,15 @@ class Recorder {
     this.traces = {};
   }
 
-  name(address, contract) {
-    this.addressBook.set(address.toLowerCase(), contract);
+  // label: how the diagrams and tables name this contract when more than one has its type.
+  name(address, contract, label = contract) {
+    if (!this.addressBook.has(address.toLowerCase())) this.addressBook.set(address.toLowerCase(), { address, contract, label });
   }
 
   contractAt(address) {
     if (!address) return null;
     if (/^0x0{40}$/.test(address)) return "none";
-    return this.addressBook.get(address.toLowerCase()) ?? null;
+    return this.addressBook.get(address.toLowerCase())?.contract ?? null;
   }
 
   accountName(address) {
@@ -223,7 +177,7 @@ async function main() {
   const [carrierA, carrierB, carrierC, supplierCompany, authority] =
     ["Carrier A", "Carrier B", "Carrier C", "Supplier company", "Authority"].map(signer);
   const artifacts = await loadArtifacts();
-  const rec = new Recorder({ ethers, artifacts, accounts, trustTables: await loadTrustTables() });
+  const rec = new Recorder({ ethers, artifacts, accounts, trustTables: await loadTrustTables(path.join(root, INPUTS.trustTables)) });
   const readTokenURI = (address) => new ethers.Contract(address, ["function tokenURI() view returns (string)"], ethers.provider).tokenURI();
   const contract = (name, address, runner = administrator) => new ethers.Contract(address, artifacts[name].abi, runner);
   const phases = {};
@@ -277,7 +231,7 @@ async function main() {
     ["F1.deploy.model", type.model, "ChoreographyModel"],
     ["F1.deploy.nmt", type.choreographyNmt, "ChoreographyNMT"]
   ]) {
-    rec.name(part.receipt.contractAddress, name);
+    rec.name(part.receipt.contractAddress, name, name === "ChoreographyModel" ? "Model (SSTORE2)" : name);
     await rec.record(key, part.receipt);
   }
   const nmtAddress = type.choreographyNmt.contract.target;
@@ -292,6 +246,7 @@ async function main() {
   live.nmt = nmt;
   live.participantNmt = participantNmt;
   await endPhase("F1", {
+    offchain: [{ step: "import", function: "importBpmnToNmt", input: INPUTS.bpmn, output: "NMT dataset (roles and nodes)", sha256: sha256(JSON.stringify({ roles: dataset.roles, nodes: dataset.nodes })) }],
     model: {
       ...summarizeNodes(dataset.nodes, dataset.roles),
       roleNames: dataset.roles,
@@ -304,7 +259,7 @@ async function main() {
   assert.deepEqual([...roleAccounts].sort(), Object.keys(ROLE_ACCOUNTS).sort(), "phases.js must name an account for every role of the model except the licensed one");
   const roleAddresses = roleAccounts.map((role) => signer(ROLE_ACCOUNTS[role]).address);
   const instance = await mintAsset(nmtAddress, paperCreator.target, type.holder.contract.target, roleAccounts, { signer: administrator, roleAccounts: roleAddresses });
-  rec.name(instance.assetAddress, "ChoreographyMutableAsset");
+  rec.name(instance.assetAddress, "ChoreographyMutableAsset", "Instance");
   await rec.record("F2.mint", instance.receipts.mint);
   await rec.record("F2.roles", instance.receipts.setRoles);
   const asset = contract("ChoreographyMutableAsset", instance.assetAddress);
@@ -323,7 +278,7 @@ async function main() {
   const mintLicense = async (key, holder, participantType) => {
     const args = [holder.address, certifier.target, participantHolder.target, typeId(participantType)];
     const [licenseAddress] = await participantNmt.connect(authority).mintWithParticipantType.staticCall(...args);
-    rec.name(licenseAddress, "ParticipantMutableAsset");
+    rec.name(licenseAddress, "ParticipantMutableAsset", `${participantType} license`);
     await rec.allow(key, () => participantNmt.connect(authority).mintWithParticipantType(...args));
     return contract("ParticipantMutableAsset", licenseAddress, holder);
   };
@@ -350,10 +305,31 @@ async function main() {
   live.license = specialCarrierLicense;
   await endPhase("F3");
 
-  // F4 and F8 render through the render:asset function, reading tokenURI from this network.
+  // F4 and F8 render through the render:asset function, reading tokenURI from this network. The
+  // run traces the tokenURI call and hashes what each off-chain step wrote; the raw and normalized
+  // JSON are hashed without contractExport.exportedAt and rpcUrl, the only fields that change.
+  const stableHash = (text) => {
+    const data = JSON.parse(text);
+    if (data.contractExport) {
+      delete data.contractExport.exportedAt;
+      delete data.contractExport.rpcUrl;
+    }
+    return sha256(JSON.stringify(data));
+  };
   const render = async (id, configPath) => {
+    const tokenURIData = new Interface(["function tokenURI() view returns (string)"]).encodeFunctionData("tokenURI");
+    rec.traces[`${id}.tokenURI`] = await ethers.provider.send("debug_traceCall", [{ from: "0x0000000000000000000000000000000000000000", to: instance.assetAddress, data: tokenURIData }, "latest", { tracer: "callTracer" }]);
     const result = await renderAsset(instance.assetAddress, configPath, { readTokenURI });
-    await endPhase(id, { render: { xml: await fs.readFile(result.xmlPath, "utf8") } });
+    const xml = await fs.readFile(result.xmlPath, "utf8");
+    await endPhase(id, {
+      reads: [{ key: `${id}.tokenURI`, call: "ChoreographyMutableAsset.tokenURI", by: "eth_call (any account)" }],
+      offchain: [
+        { step: "export", function: "exportContractToJson", output: "raw JSON", sha256: stableHash(await fs.readFile(result.rawJsonPath, "utf8")), hashedWithout: ["contractExport.exportedAt", "contractExport.rpcUrl"] },
+        { step: "normalize", function: "normalizeInput", output: "normalized JSON", sha256: stableHash(await fs.readFile(result.normalizedPath, "utf8")), hashedWithout: ["contractExport.exportedAt", "contractExport.rpcUrl"] },
+        { step: "generate", function: "generateBpmnXml", output: "BPMN XML", sha256: sha256(xml) }
+      ],
+      render: { xml }
+    });
   };
   await render("F4", imported.outputPath);
 
@@ -425,11 +401,17 @@ async function main() {
   const denyAll = await rec.deploy("F7.deploy.deny-all", administrator, "DenyAllSmartPolicy");
   const defaultMint = [administrator.address, type.creator.contract.target, type.holder.contract.target];
   const [restrictedAddress] = await nmt.mint.staticCall(...defaultMint);
-  rec.name(restrictedAddress, "ChoreographyMutableAsset");
+  rec.name(restrictedAddress, "ChoreographyMutableAsset", "Second instance");
   await rec.allow("F7.mint", () => nmt.mint(...defaultMint));
-  const restricted = contract("ChoreographyMutableAsset", restrictedAddress);
+  const partner = signer("Partner");
+  const restrictedId = BigInt(restrictedAddress);
+  await rec.deny("F7.denied.transfer", administrator, {
+    to: nmtAddress, data: nmt.interface.encodeFunctionData("transferFrom", [administrator.address, signer("Ineligible holder").address, restrictedId])
+  });
+  await rec.allow("F7.transfer", () => nmt.transferFrom(administrator.address, partner.address, restrictedId));
+  const restricted = contract("ChoreographyMutableAsset", restrictedAddress, partner);
   await rec.allow("F7.holder.deny-all", () => restricted.setHolderSmartPolicy(denyAll.target));
-  await rec.deny("F7.denied.delta", administrator, { to: restrictedAddress, data: restricted.interface.encodeFunctionData("setNodes", toNodeUpdate(delta.nodes)) });
+  await rec.deny("F7.denied.delta", partner, { to: restrictedAddress, data: restricted.interface.encodeFunctionData("setNodes", toNodeUpdate(delta.nodes)) });
   // F7 reports the restricted instance, not the main one.
   finishPhase("F7", {
     policies: [
@@ -437,13 +419,13 @@ async function main() {
       await policyEntry("restricted instance", "Creator", await restricted.creatorSmartPolicy()),
       await policyEntry("restricted instance", "Holder", await restricted.holderSmartPolicy())
     ],
-    restrictedInstance: await instanceState(restrictedAddress)
+    restrictedInstance: { ...await instanceState(restrictedAddress), holder: rec.accountName(await nmt.ownerOf(restrictedId)) }
   });
 
   // F8: the final render, and the alternative to the delta: a new instance with the same roles.
   await render("F8", path.join(root, INPUTS.delta));
   const fresh = await mintAsset(nmtAddress, paperCreator.target, type.holder.contract.target, roleAccounts, { signer: administrator, roleAccounts: roleAddresses });
-  rec.name(fresh.assetAddress, "ChoreographyMutableAsset");
+  rec.name(fresh.assetAddress, "ChoreographyMutableAsset", "New instance");
   await rec.record("F8.new-instance.mint", fresh.receipts.mint);
   await rec.record("F8.new-instance.roles", fresh.receipts.setRoles);
   const freshAsset = contract("ChoreographyMutableAsset", fresh.assetAddress);
@@ -470,6 +452,7 @@ async function main() {
       repetitions: 1
     },
     accounts,
+    contracts: [...rec.addressBook.values()],
     inputs,
     phases: PHASES.map((phase) => ({
       id: phase.id,

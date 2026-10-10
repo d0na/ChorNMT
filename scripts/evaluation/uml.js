@@ -1,42 +1,67 @@
 import path from "node:path";
 
-// UML diagrams of docs/uml/ embedded in the evaluation reports, with the report rows each one
-// explains. Rendered with `npm run docs:uml`; see docs/uml.md.
+// UML diagrams embedded in the evaluation reports, with the report rows each one explains: the
+// use cases of docs/uml/ and the sequence diagrams generated per experiment phase in
+// evaluation/evidence/uml/ (decision D19). Rendered with `npm run docs:uml`; see docs/uml.md.
 export const UML_DIAGRAMS = {
   "use-case-choreography": {
     title: "Choreography use cases",
-    explains: "who may mint, transfer, edit, and replace policies: the actors behind every allowed and denied row"
+    explains: "who may mint, transfer, edit the model, assign and link roles, and install a Holder policy: the actors behind every allowed and denied row"
   },
   "use-case-participant-license": {
     title: "Participant license use cases",
     explains: "the license rows: issuing, declaring messages, updating organization data, selling, linking a role"
   },
-  "sequence-deploy-and-mint": {
-    title: "Deploy a choreography type and mint an instance",
-    explains: "the deployment rows, the model contract of the type, and the mint of an instance born with that model"
+  F1: {
+    title: "F1, deploy the choreography type and the license infrastructure",
+    explains: "the deployment rows and the model contract of the type, from the call traces of the experiment",
+    directory: "evidence"
   },
-  "sequence-import-and-render": {
-    title: "Import and render",
-    explains: "the import of the BPMN into the model of the type and the render phases, which read the asset with one tokenURI call and cost no gas"
+  F2: {
+    title: "F2, mint the instance and assign the role accounts",
+    explains: "the mint of an instance born with the model, the Master check, and the role accounts",
+    directory: "evidence"
   },
-  "sequence-apply-delta": {
-    title: "Apply a BPMN delta",
-    explains: "the modification phase and every Creator allow/deny row on setNodes: action check and domain check, each asked of the Creator AND the Holder policy"
+  F3: {
+    title: "F3, issue the licenses and link the Special Carrier role",
+    explains: "the role link through ChoreographyParticipantAM and the Creator denials of the wrong license types",
+    directory: "evidence"
   },
-  "sequence-role-license-sale": {
-    title: "Link a role to a license and sell it",
-    explains: "the Special Carrier rows: role link through ChoreographyParticipantAM, sale checked by the participant Master"
+  F4: {
+    title: "F4, render the baseline model",
+    explains: "the render phases: one tokenURI call, traced, and the off-chain pipeline that regenerates the BPMN XML",
+    directory: "evidence"
   },
-  "sequence-policy-replacement": {
-    title: "Replace a hardcoded policy",
-    explains: "the rows that deploy and install a policy: a rule change is a new policy, approved by the current one"
+  F5: {
+    title: "F5, apply the delta",
+    explains: "the modification phase and every Creator allow/deny row on setNodes: action check and domain check, each asked of the Creator AND the Holder policy",
+    directory: "evidence"
+  },
+  F6: {
+    title: "F6, sell the Special Carrier role",
+    explains: "the license sale checked by the participant Master, and the buyer and former holder rights after it",
+    directory: "evidence"
+  },
+  F7: {
+    title: "F7, transfer a second instance and restrict it",
+    explains: "the transfer checked by the Master and the asset, and a Holder policy that denies further updates",
+    directory: "evidence"
+  },
+  F8: {
+    title: "F8, render the final model and mint a new instance",
+    explains: "the final render and the new instance with the same roles that the delta is compared with",
+    directory: "evidence"
   }
 };
 
-const UML_DIRECTORY = path.join(process.cwd(), "docs", "uml");
+const UML_DIRECTORIES = {
+  docs: path.join(process.cwd(), "docs", "uml"),
+  evidence: path.join(process.cwd(), "evaluation", "evidence", "uml")
+};
 
 export function umlLink(name, reportPath) {
-  return path.relative(path.dirname(reportPath), path.join(UML_DIRECTORY, `${name}.svg`));
+  const directory = UML_DIRECTORIES[UML_DIAGRAMS[name].directory || "docs"];
+  return path.relative(path.dirname(reportPath), path.join(directory, `${name}.svg`));
 }
 
 // Markdown lines embedding one diagram with a caption naming the rows it explains.

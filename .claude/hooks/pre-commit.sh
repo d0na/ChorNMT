@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# PreToolUse Bash: before a git commit, check that the UML SVGs match their sources, that the
+# PreToolUse Bash: before a git commit, check that the UML SVGs match their sources, that the use
+# case diagrams agree with the trust tables, tests, and evidence, that the
 # contracts keep the design invariants, when contracts changed that they compile within the
 # size limits, and when contracts, scripts, or the docs quoting gas changed that the policy
 # tests and the lifecycle evaluation pass and the quoted gas figures match them. Denies the
@@ -9,7 +10,7 @@ command="$(jq -r '.tool_input.command // empty')"
 printf '%s' "$command" | grep -Eq '(^|[;&|[:space:]])git[[:space:]]+commit([[:space:]]|$)' || exit 0
 use_project_node
 cd "$ROOT" || exit 0
-checks=("npm run check:uml" "npm run check:invariants")
+checks=("npm run check:uml" "npm run check:use-cases" "npm run check:invariants")
 if [ -n "$(git status --porcelain -- contracts)" ]; then
   checks+=("npm run compile" "npm run check:size")
 fi

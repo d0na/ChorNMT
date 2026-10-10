@@ -93,6 +93,108 @@
       "address": "0x1CBd3b2770909D4e10f157cABC84C7264073C9Ec"
     }
   ],
+  "contracts": [
+    {
+      "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "contract": "MasterSmartPolicy",
+      "label": "MasterSmartPolicy"
+    },
+    {
+      "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      "contract": "CreatorSmartPolicy",
+      "label": "CreatorSmartPolicy"
+    },
+    {
+      "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      "contract": "HolderSmartPolicy",
+      "label": "HolderSmartPolicy"
+    },
+    {
+      "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+      "contract": "ChoreographyTokenURIRenderer",
+      "label": "ChoreographyTokenURIRenderer"
+    },
+    {
+      "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+      "contract": "ChoreographyModel",
+      "label": "Model (SSTORE2)"
+    },
+    {
+      "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+      "contract": "ChoreographyNMT",
+      "label": "ChoreographyNMT"
+    },
+    {
+      "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+      "contract": "ParticipantMasterSmartPolicy",
+      "label": "ParticipantMasterSmartPolicy"
+    },
+    {
+      "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+      "contract": "ParticipantTokenURIRenderer",
+      "label": "ParticipantTokenURIRenderer"
+    },
+    {
+      "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+      "contract": "ParticipantNMT",
+      "label": "ParticipantNMT"
+    },
+    {
+      "address": "0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35",
+      "contract": "ParticipantCreatorSmartPolicy",
+      "label": "ParticipantCreatorSmartPolicy"
+    },
+    {
+      "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+      "contract": "ParticipantHolderSmartPolicy",
+      "label": "ParticipantHolderSmartPolicy"
+    },
+    {
+      "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+      "contract": "ChoreographyParticipantAM",
+      "label": "ChoreographyParticipantAM"
+    },
+    {
+      "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+      "contract": "CreatorSmartPolicyPaperScenario",
+      "label": "CreatorSmartPolicyPaperScenario"
+    },
+    {
+      "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1",
+      "contract": "ChoreographyMutableAsset",
+      "label": "Instance"
+    },
+    {
+      "address": "0x94099942864EA81cCF197E9D71ac53310b1468D8",
+      "contract": "ParticipantMutableAsset",
+      "label": "SpecialCarrier license"
+    },
+    {
+      "address": "0x06B1D212B8da92b83AF328De5eef4E211Da02097",
+      "contract": "ParticipantMutableAsset",
+      "label": "Carrier license"
+    },
+    {
+      "address": "0xED179b78D5781f93eb169730D8ad1bE7313123F4",
+      "contract": "ParticipantMutableAsset",
+      "label": "Supplier license"
+    },
+    {
+      "address": "0x7a2088a1bFc9d81c55368AE168C2C02570cB814F",
+      "contract": "DenyAllSmartPolicy",
+      "label": "DenyAllSmartPolicy"
+    },
+    {
+      "address": "0x23dB4a08f2272df049a4932a4Cc3A6Dc1002B33E",
+      "contract": "ChoreographyMutableAsset",
+      "label": "Second instance"
+    },
+    {
+      "address": "0x8EFa1819Ff5B279077368d44B593a4543280e402",
+      "contract": "ChoreographyMutableAsset",
+      "label": "New instance"
+    }
+  ],
   "inputs": {
     "bpmn": {
       "path": "references/paper-example.bpmn",
@@ -104,7 +206,7 @@
     },
     "trustTables": {
       "path": "docs/choreography-policies.md",
-      "sha256": "1a14ebf528dc0195e3a15595ca68b4fc70c2053c3be897c8c4f934a0058aad98"
+      "sha256": "316ab1b2211b5cb6d4062c347079877b5a6cec1987c6b6db58c34077707f6ae1"
     }
   },
   "phases": [
@@ -152,6 +254,15 @@
           "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
           "source": "contracts/participant/ParticipantMasterSmartPolicy.sol",
           "bytecodeKeccak256": "0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13"
+        }
+      ],
+      "offchain": [
+        {
+          "step": "import",
+          "function": "importBpmnToNmt",
+          "input": "references/paper-example.bpmn",
+          "output": "NMT dataset (roles and nodes)",
+          "sha256": "4a02a2abe87c137f82f6831de15696a45eec1106ebc205a184f0e983166c4814"
         }
       ],
       "model": {
@@ -471,7 +582,42 @@
             "contract": "ParticipantMutableAsset"
           }
         ]
-      }
+      },
+      "reads": [
+        {
+          "key": "F4.tokenURI",
+          "call": "ChoreographyMutableAsset.tokenURI",
+          "by": "eth_call (any account)"
+        }
+      ],
+      "offchain": [
+        {
+          "step": "export",
+          "function": "exportContractToJson",
+          "output": "raw JSON",
+          "sha256": "dd6455b790a7debd1721499728a75af90192ecc5c37face0c3f9b148a1f4882b",
+          "hashedWithout": [
+            "contractExport.exportedAt",
+            "contractExport.rpcUrl"
+          ]
+        },
+        {
+          "step": "normalize",
+          "function": "normalizeInput",
+          "output": "normalized JSON",
+          "sha256": "b00084fa5ddcd14a7a0c4ee141dd3b2a6bb339a7e65d917c64ec0f846144e6ac",
+          "hashedWithout": [
+            "contractExport.exportedAt",
+            "contractExport.rpcUrl"
+          ]
+        },
+        {
+          "step": "generate",
+          "function": "generateBpmnXml",
+          "output": "BPMN XML",
+          "sha256": "d5f5a1d02813c172a1dd55c4ac16ade7520f97a17b3b044f76d7e596cc5471cc"
+        }
+      ]
     },
     {
       "id": "F5",
@@ -741,7 +887,7 @@
     },
     {
       "id": "F7",
-      "title": "Restrict a second instance through its Holder policy",
+      "title": "Transfer a second instance and restrict it through its Holder policy",
       "inputs": [
         {
           "path": "scripts/data/paper-example-parallel-transport-preparation.delta.json",
@@ -749,11 +895,14 @@
         }
       ],
       "actors": [
-        "Administrator"
+        "Administrator",
+        "Partner"
       ],
       "transactions": [
         "F7.deploy.deny-all",
         "F7.mint",
+        "F7.denied.transfer",
+        "F7.transfer",
         "F7.holder.deny-all",
         "F7.denied.delta"
       ],
@@ -822,7 +971,8 @@
             "account": null,
             "contract": "none"
           }
-        ]
+        ],
+        "holder": "Partner"
       }
     },
     {
@@ -928,6 +1078,41 @@
           }
         ]
       },
+      "reads": [
+        {
+          "key": "F8.tokenURI",
+          "call": "ChoreographyMutableAsset.tokenURI",
+          "by": "eth_call (any account)"
+        }
+      ],
+      "offchain": [
+        {
+          "step": "export",
+          "function": "exportContractToJson",
+          "output": "raw JSON",
+          "sha256": "dc0ec05c8bbae1c4834d06719fd5a3a2978e68bc6a4cf3f2eeda51fe0dc09fe1",
+          "hashedWithout": [
+            "contractExport.exportedAt",
+            "contractExport.rpcUrl"
+          ]
+        },
+        {
+          "step": "normalize",
+          "function": "normalizeInput",
+          "output": "normalized JSON",
+          "sha256": "f554401c2c56d65f5553794fe878e3f99c3994dc7fb753eb4a8ae163a1b14f35",
+          "hashedWithout": [
+            "contractExport.exportedAt",
+            "contractExport.rpcUrl"
+          ]
+        },
+        {
+          "step": "generate",
+          "function": "generateBpmnXml",
+          "output": "BPMN XML",
+          "sha256": "2f18c67a6da78d275690d5ad112e7ed981605069dfb2e6195b49ea37b632697e"
+        }
+      ],
       "newInstance": {
         "address": "0x8EFa1819Ff5B279077368d44B593a4543280e402",
         "roles": 5,
@@ -2127,12 +2312,64 @@
       "blockNumber": 46
     },
     {
-      "key": "F7.holder.deny-all",
+      "key": "F7.denied.transfer",
       "phase": "F7",
-      "label": "the holder installs the deny-all policy",
+      "label": "the Master policy denies a transfer to an ineligible holder",
       "from": {
         "account": "Administrator",
         "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyNMT",
+        "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      },
+      "created": null,
+      "call": "ChoreographyNMT.transferFrom",
+      "outcome": "denied",
+      "reason": "MasterDenied",
+      "trust": {
+        "table": "choreography",
+        "action": "`transferFrom` to an eligible holder"
+      },
+      "gasUsed": "30322",
+      "gasPriceWei": "2840019",
+      "costWei": "86115056118",
+      "transactionHash": "0x9d04d58c94f5d619a708e41e60ee9e4a1911c8722045b26c7ee05bb52403a7a5",
+      "blockNumber": 47
+    },
+    {
+      "key": "F7.transfer",
+      "phase": "F7",
+      "label": "the holder transfers the instance to the Partner",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyNMT",
+        "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      },
+      "created": null,
+      "call": "ChoreographyNMT.transferFrom",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "choreography",
+        "action": "`transferFrom` to an eligible holder"
+      },
+      "gasUsed": "106564",
+      "gasPriceWei": "2485376",
+      "costWei": "264851608064",
+      "transactionHash": "0xb7129c1c41f7b94636b3eb0f2a9dceffea5ca0e222b3468c0cdb89eddbdd8cea",
+      "blockNumber": 48
+    },
+    {
+      "key": "F7.holder.deny-all",
+      "phase": "F7",
+      "label": "the new holder installs the deny-all policy",
+      "from": {
+        "account": "Partner",
+        "address": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
       },
       "to": {
         "contract": "ChoreographyMutableAsset",
@@ -2146,19 +2383,19 @@
         "table": "choreography",
         "action": "`setHolderSmartPolicy`"
       },
-      "gasUsed": "32533",
-      "gasPriceWei": "2840019",
-      "costWei": "92394338127",
-      "transactionHash": "0xc2028ae7571aa731ae53cd753f532f011614f774e8117fa69b569c75f470e737",
-      "blockNumber": 47
+      "gasUsed": "49633",
+      "gasPriceWei": "2175808",
+      "costWei": "107991878464",
+      "transactionHash": "0x88340555b5dd69162392ecf4de02c4862e70d7c0b9bc1d358011706a7b1e46ad",
+      "blockNumber": 49
     },
     {
       "key": "F7.denied.delta",
       "phase": "F7",
       "label": "the Holder policy denies the delta",
       "from": {
-        "account": "Administrator",
-        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+        "account": "Partner",
+        "address": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
       },
       "to": {
         "contract": "ChoreographyMutableAsset",
@@ -2173,10 +2410,10 @@
         "action": "`setNodes`"
       },
       "gasUsed": "136179",
-      "gasPriceWei": "2485402",
-      "costWei": "338459558958",
-      "transactionHash": "0x7c2caa8b0752c9dfbbbd879409fb0ac465621ae4465ed150ac65213d03c8f6a6",
-      "blockNumber": 48
+      "gasPriceWei": "1904282",
+      "costWei": "259323218478",
+      "transactionHash": "0xc0808025a3fe836dac23d20d68b65caae8a286460f430a450fc9343168d337ce",
+      "blockNumber": 50
     },
     {
       "key": "F8.new-instance.mint",
@@ -2199,10 +2436,10 @@
         "action": "`mint` an instance of the choreography type to an eligible holder"
       },
       "gasUsed": "5625370",
-      "gasPriceWei": "2176138",
-      "costWei": "12241581421060",
-      "transactionHash": "0xd63f46069e8bcdc225eef1290b012eaf8be2f47ba7d570b61e97d9c2a22a68d7",
-      "blockNumber": 49
+      "gasPriceWei": "1667328",
+      "costWei": "9379336911360",
+      "transactionHash": "0x921e70394542b7de5a1da156fd82d8f0fba31ee7b377a575494e07c79c7c3112",
+      "blockNumber": 51
     },
     {
       "key": "F8.new-instance.roles",
@@ -2225,10 +2462,10 @@
         "action": "`setRoles`"
       },
       "gasUsed": "176849",
-      "gasPriceWei": "1955128",
-      "costWei": "345762431672",
-      "transactionHash": "0x4e16d57a57fe5123df1a9db89fb5080330c6fbdf979ce743ce3864288c46ae4a",
-      "blockNumber": 50
+      "gasPriceWei": "1497993",
+      "costWei": "264918564057",
+      "transactionHash": "0x3afbccdbf5f2990565eedc5522cc0a2ff16dd5219eddd73847f57e3af408f2e4",
+      "blockNumber": 52
     },
     {
       "key": "F8.new-instance.link",
@@ -2251,10 +2488,10 @@
         "action": "`setRoles`"
       },
       "gasUsed": "97276",
-      "gasPriceWei": "1712179",
-      "costWei": "166553924404",
-      "transactionHash": "0x9bfb8a90d0d84853da078455650792f948ce989c87a34ca9866a8a96ffbd943d",
-      "blockNumber": 51
+      "gasPriceWei": "1311849",
+      "costWei": "127611423324",
+      "transactionHash": "0xed92d988ee9a530d1205487a07f9b4bb24d758a8a181bc833c0175f8a7cbe640",
+      "blockNumber": 53
     }
   ]
 }

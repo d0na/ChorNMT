@@ -136,13 +136,15 @@ export const PHASES = [
   },
   {
     id: "F7",
-    title: "Restrict a second instance through its Holder policy",
+    title: "Transfer a second instance and restrict it through its Holder policy",
     inputs: ["delta"],
     transactions: [
       deploy("F7.deploy.deny-all", "deploy the deny-all policy", "Administrator", "DenyAllSmartPolicy"),
       tx("F7.mint", "mint a second instance with the default policies", "Administrator", "ChoreographyNMT.mint", "allowed", "choreography:mint"),
-      tx("F7.holder.deny-all", "the holder installs the deny-all policy", "Administrator", "ChoreographyMutableAsset.setHolderSmartPolicy", "allowed", "choreography:setHolderSmartPolicy"),
-      tx("F7.denied.delta", "the Holder policy denies the delta", "Administrator", "ChoreographyMutableAsset.setNodes", "denied", "choreography:setNodes", HOLDER_DENIED)
+      tx("F7.denied.transfer", "the Master policy denies a transfer to an ineligible holder", "Administrator", "ChoreographyNMT.transferFrom", "denied", "choreography:transferFrom", "MasterDenied"),
+      tx("F7.transfer", "the holder transfers the instance to the Partner", "Administrator", "ChoreographyNMT.transferFrom", "allowed", "choreography:transferFrom"),
+      tx("F7.holder.deny-all", "the new holder installs the deny-all policy", "Partner", "ChoreographyMutableAsset.setHolderSmartPolicy", "allowed", "choreography:setHolderSmartPolicy"),
+      tx("F7.denied.delta", "the Holder policy denies the delta", "Partner", "ChoreographyMutableAsset.setNodes", "denied", "choreography:setNodes", HOLDER_DENIED)
     ]
   },
   {

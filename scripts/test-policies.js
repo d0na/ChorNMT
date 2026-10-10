@@ -611,6 +611,20 @@ async function main() {
   ));
 
   report.push(await expectAllowed(
+    "holder links the asset",
+    () => asset.setLinked(nmtAddress)
+  ));
+  assert.equal(await asset.linked(), nmtAddress);
+  report.push(await expectDenied(
+    "non-holder cannot link the asset",
+    eligibleHolder,
+    {
+      to: assetAddress,
+      data: asset.interface.encodeFunctionData("setLinked", [eligibleHolder.address])
+    }
+  ));
+
+  report.push(await expectAllowed(
     "holder transfers to eligible holder",
     () => nmt.transferFrom(administrator.address, eligibleHolder.address, BigInt(assetAddress))
   ));

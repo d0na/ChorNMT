@@ -2,31 +2,56 @@
 !include style.iuml
 title ChorNMT - participant license use cases
 left to right direction
-
+' Every actor is a column of the "Role licenses" or the "Who can do what" table of
+' docs/choreography-policies.md, played by the experiment accounts listed; every use case names its
+' trust-table row, the experiment evidence, and the test:policies cases that prove it.
+' npm run check:use-cases checks all of them both ways. The participant Master and the certifier
+' policy are never replaced (open question in docs/decisions.md), so those use cases are not shown.
+' accounts: Authority
 actor "Authority\n(account 9)\nissuer and certifier" as Authority
-actor "License holder\n(Carrier A, B, C)" as LicenseHolder
-actor "Buyer organization" as Buyer
-actor "Choreography holder" as ChoreoHolder
-
+' accounts: Carrier A, Carrier B
+actor "License holder\n(Carrier A, then Carrier B)" as LicenseHolder
+' accounts: Carrier B
+actor "Buyer\n(Carrier B)" as Buyer
+' accounts: Administrator
+actor "Holder\n(of the choreography)" as ChoreoHolder
 rectangle "ParticipantNMT + ParticipantMutableAsset" {
+  ' trust: licenses:mintWithParticipantType
+  ' evidence: F3.license.special-carrier, F3.license.carrier, F3.license.supplier
+  ' test: unauthorized issuer cannot mint a participant license; participant license cannot be minted without a type
   usecase "Mint a typed license\n(mintWithParticipantType)" as UC_Mint
-  usecase "Replace the participant\nMaster policy" as UC_Master
-  usecase "Replace the certifier policy\n(setCreatorSmartPolicy)" as UC_Certifier
+  ' trust: licenses:setMessages
+  ' evidence: F3.license.messages, F3.denied.foreign-message, F6.buyer.messages
+  ' test: license holder declares messages allowed for its type; creator policy denies a message not allowed for the license type
   usecase "Declare the messages\nallowed for the type" as UC_Messages
+  ' trust: licenses:setName
+  ' evidence: F3.license.name, F6.buyer.name, F6.buyer.profile, F6.denied.buyer-without-policy, F6.denied.former-holder
+  ' test: license holder updates its organization data; former license holder cannot update the license
   usecase "Update organization data\n(name, profile)" as UC_Data
+  ' trust: licenses:transferFrom
+  ' evidence: F6.sale, F6.denied.carrier-buyer, F6.denied.supplier-buyer, F6.denied.without-seller
+  ' test: holder sells a license to a qualified buyer; buyer cannot take a license without the seller
   usecase "Sell the license" as UC_Sell
+  ' trust: licenses:transferFrom
+  ' evidence: F6.denied.carrier-buyer, F6.denied.supplier-buyer
+  ' test: participant master denies selling a license to an unqualified buyer
   usecase "Check the buyer is\nqualified for the type" as UC_Qualified
+  ' trust: licenses:setHolderSmartPolicy
+  ' evidence: F6.buyer.holder-policy
+  ' test: new license holder installs its Holder policy; former license holder cannot install a Holder policy
   usecase "Install a Holder policy\nafter the purchase" as UC_Holder
 }
-
 rectangle "Choreography" {
+  ' trust: choreography:setRoles
+  ' evidence: F3.link, F8.new-instance.link
+  ' test: holder links a role to a certified license
   usecase "Link a role to the license" as UC_Link
+  ' trust: choreography:setRoles
+  ' evidence: F3.denied.plain-account, F3.denied.carrier-license, F3.denied.supplier-license
+  ' test: creator policy denies a license of another type; creator policy denies a plain account for a licensed role
   usecase "Check the license type\n(ChoreographyParticipantAM)" as UC_Type
 }
-
 Authority --> UC_Mint
-Authority --> UC_Master
-Authority --> UC_Certifier
 LicenseHolder --> UC_Messages
 LicenseHolder --> UC_Data
 LicenseHolder --> UC_Sell
@@ -35,7 +60,6 @@ Buyer --> UC_Holder
 Buyer --> UC_Sell : receives
 ChoreoHolder --> UC_Link
 UC_Link ..> UC_Type : <<include>>
-
 note bottom of UC_Sell
   The sale clears name and profile and
   resets the Holder policy; the messages
