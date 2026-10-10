@@ -26,6 +26,7 @@ jobs:
       - run: npm run check:invariants
       - run: npm run check:uml
       - run: npm run check:use-cases
+      - run: npm run check:protocol
       - run: npm test
       - run: npm run evaluate:policies
       - run: npm run check:gas

@@ -1,0 +1,357 @@
+{
+  "summary": {
+    "allowedGas": "12608484",
+    "deniedGas": "2366193",
+    "caseCount": 58
+  },
+  "cases": [
+    {
+      "label": "authorized creator mints eligible holder",
+      "outcome": "allowed",
+      "gasUsed": "3173819",
+      "costWei": "1642656922973363"
+    },
+    {
+      "label": "creator and holder update roles",
+      "outcome": "allowed",
+      "gasUsed": "109294",
+      "costWei": "50243936558990"
+    },
+    {
+      "label": "creator and holder update nodes",
+      "outcome": "allowed",
+      "gasUsed": "224844",
+      "costWei": "90490432262028"
+    },
+    {
+      "label": "creator policy denies a flow declared on one endpoint",
+      "outcome": "denied",
+      "gasUsed": "121951",
+      "costWei": "42991195664489"
+    },
+    {
+      "label": "authorized creator mints with the test-scenario creator policy",
+      "outcome": "allowed",
+      "gasUsed": "3179419",
+      "costWei": "243961350542075"
+    },
+    {
+      "label": "creator policy allows approved task within limits",
+      "outcome": "allowed",
+      "gasUsed": "609279",
+      "costWei": "41526325991337"
+    },
+    {
+      "label": "creator policy allows second approved task within limits",
+      "outcome": "allowed",
+      "gasUsed": "601451",
+      "costWei": "35972764462117"
+    },
+    {
+      "label": "creator policy denies task count above limit",
+      "outcome": "denied",
+      "gasUsed": "164755",
+      "costWei": "8646936836040"
+    },
+    {
+      "label": "creator policy denies sequence flow count above limit",
+      "outcome": "denied",
+      "gasUsed": "324233",
+      "costWei": "14901485078571"
+    },
+    {
+      "label": "creator policy denies task outside name allowlist",
+      "outcome": "denied",
+      "gasUsed": "144822",
+      "costWei": "5832905759538"
+    },
+    {
+      "label": "creator policy denies flow to unknown node",
+      "outcome": "denied",
+      "gasUsed": "76086",
+      "costWei": "2683259147610"
+    },
+    {
+      "label": "creator policy denies protected node update",
+      "outcome": "denied",
+      "gasUsed": "167677",
+      "costWei": "5176029529173"
+    },
+    {
+      "label": "creator policy denies flow from unknown node",
+      "outcome": "denied",
+      "gasUsed": "93939",
+      "costWei": "2539357638915"
+    },
+    {
+      "label": "creator policy allows update keeping protected node links",
+      "outcome": "allowed",
+      "gasUsed": "231955",
+      "costWei": "5488883147395"
+    },
+    {
+      "label": "creator policy denies unlinking protected node",
+      "outcome": "denied",
+      "gasUsed": "127358",
+      "costWei": "2639939411494"
+    },
+    {
+      "label": "creator policy denies new link to protected node",
+      "outcome": "denied",
+      "gasUsed": "134415",
+      "costWei": "2439421487280"
+    },
+    {
+      "label": "creator policy allows unprotected role update",
+      "outcome": "allowed",
+      "gasUsed": "97958",
+      "costWei": "1556556832194"
+    },
+    {
+      "label": "creator policy allows the first assignment of a protected role",
+      "outcome": "allowed",
+      "gasUsed": "99718",
+      "costWei": "1387104702732"
+    },
+    {
+      "label": "creator policy denies protected role update",
+      "outcome": "denied",
+      "gasUsed": "58627",
+      "costWei": "713916808290"
+    },
+    {
+      "label": "unauthorized issuer cannot mint a participant license",
+      "outcome": "denied",
+      "gasUsed": "30360",
+      "costWei": "220508869680"
+    },
+    {
+      "label": "participant license cannot be minted without a type",
+      "outcome": "denied",
+      "gasUsed": "29817",
+      "costWei": "189521741988"
+    },
+    {
+      "label": "license holder declares messages allowed for its type",
+      "outcome": "allowed",
+      "gasUsed": "139736",
+      "costWei": "777272277424"
+    },
+    {
+      "label": "creator policy denies a message not allowed for the license type",
+      "outcome": "denied",
+      "gasUsed": "46603",
+      "costWei": "226973806507"
+    },
+    {
+      "label": "license holder updates its organization data",
+      "outcome": "allowed",
+      "gasUsed": "66674",
+      "costWei": "284199191806"
+    },
+    {
+      "label": "authorized creator mints a model whose Carrier role requires a SpecialCarrier license",
+      "outcome": "allowed",
+      "gasUsed": "3223648",
+      "costWei": "8273737589248"
+    },
+    {
+      "label": "holder assigns the accounts of the new instance",
+      "outcome": "allowed",
+      "gasUsed": "135868",
+      "costWei": "309810017904"
+    },
+    {
+      "label": "creator policy denies a plain account for a licensed role",
+      "outcome": "denied",
+      "gasUsed": "63657",
+      "costWei": "127090627587"
+    },
+    {
+      "label": "creator policy denies a license of another type",
+      "outcome": "denied",
+      "gasUsed": "69889",
+      "costWei": "122128301829"
+    },
+    {
+      "label": "creator policy denies a license from an untrusted certifier",
+      "outcome": "denied",
+      "gasUsed": "69240",
+      "costWei": "105905211120"
+    },
+    {
+      "label": "creator policy denies new role when known roles are enforced",
+      "outcome": "denied",
+      "gasUsed": "54893",
+      "costWei": "73490089684"
+    },
+    {
+      "label": "creator policy denies account already holding another role",
+      "outcome": "denied",
+      "gasUsed": "73824",
+      "costWei": "86502976704"
+    },
+    {
+      "label": "holder links a role to a certified license",
+      "outcome": "allowed",
+      "gasUsed": "120833",
+      "costWei": "123930916454"
+    },
+    {
+      "label": "participant master denies selling a license to an unqualified buyer",
+      "outcome": "denied",
+      "gasUsed": "37239",
+      "costWei": "33438760050"
+    },
+    {
+      "label": "buyer cannot take a license without the seller",
+      "outcome": "denied",
+      "gasUsed": "30168",
+      "costWei": "23707402128"
+    },
+    {
+      "label": "holder sells a license to a qualified buyer",
+      "outcome": "allowed",
+      "gasUsed": "106940",
+      "costWei": "73544242100"
+    },
+    {
+      "label": "former license holder cannot install a Holder policy",
+      "outcome": "denied",
+      "gasUsed": "27477",
+      "costWei": "16542720189"
+    },
+    {
+      "label": "new license holder installs its Holder policy",
+      "outcome": "allowed",
+      "gasUsed": "49611",
+      "costWei": "26138497959"
+    },
+    {
+      "label": "former license holder cannot update the license",
+      "outcome": "denied",
+      "gasUsed": "34894",
+      "costWei": "16090321280"
+    },
+    {
+      "label": "new license holder updates its data",
+      "outcome": "allowed",
+      "gasUsed": "66674",
+      "costWei": "26906159352"
+    },
+    {
+      "label": "new license holder rewrites the messages",
+      "outcome": "allowed",
+      "gasUsed": "62936",
+      "costWei": "22230002176"
+    },
+    {
+      "label": "unauthorized creator cannot mint",
+      "outcome": "denied",
+      "gasUsed": "29810",
+      "costWei": "9215999980"
+    },
+    {
+      "label": "authorized creator cannot assign an ineligible holder",
+      "outcome": "denied",
+      "gasUsed": "30099",
+      "costWei": "8143344648"
+    },
+    {
+      "label": "non-holder cannot update choreography",
+      "outcome": "denied",
+      "gasUsed": "39477",
+      "costWei": "9346890336"
+    },
+    {
+      "label": "holder links the asset",
+      "outcome": "allowed",
+      "gasUsed": "66238",
+      "costWei": "13725242218"
+    },
+    {
+      "label": "non-holder cannot link the asset",
+      "outcome": "denied",
+      "gasUsed": "35225",
+      "costWei": "6388652575"
+    },
+    {
+      "label": "holder transfers to eligible holder",
+      "outcome": "allowed",
+      "gasUsed": "113970",
+      "costWei": "18089774280"
+    },
+    {
+      "label": "holder cannot transfer to an ineligible holder",
+      "outcome": "denied",
+      "gasUsed": "30322",
+      "costWei": "4213545120"
+    },
+    {
+      "label": "holder cannot replace creator policy",
+      "outcome": "denied",
+      "gasUsed": "28929",
+      "costWei": "2738650572"
+    },
+    {
+      "label": "creator policy administrator replaces creator policy",
+      "outcome": "allowed",
+      "gasUsed": "29146",
+      "costWei": "2414658662"
+    },
+    {
+      "label": "holder installs restrictive policy",
+      "outcome": "allowed",
+      "gasUsed": "32533",
+      "costWei": "2095157733"
+    },
+    {
+      "label": "holder policy can deny further updates",
+      "outcome": "denied",
+      "gasUsed": "45904",
+      "costWei": "2587149440"
+    },
+    {
+      "label": "holder cannot replace master policy",
+      "outcome": "denied",
+      "gasUsed": "28800",
+      "costWei": "1420617600"
+    },
+    {
+      "label": "master administrator cannot remove master policy",
+      "outcome": "denied",
+      "gasUsed": "28595",
+      "costWei": "1234360365"
+    },
+    {
+      "label": "master administrator replaces master policy",
+      "outcome": "allowed",
+      "gasUsed": "32920",
+      "costWei": "1243618840"
+    },
+    {
+      "label": "replaced master policy governs minting",
+      "outcome": "denied",
+      "gasUsed": "29136",
+      "costWei": "963236160"
+    },
+    {
+      "label": "license holder cannot replace participant master policy",
+      "outcome": "denied",
+      "gasUsed": "28900",
+      "costWei": "836134800"
+    },
+    {
+      "label": "participant master administrator replaces participant master policy",
+      "outcome": "allowed",
+      "gasUsed": "33020",
+      "costWei": "836066400"
+    },
+    {
+      "label": "replaced participant master policy governs sales",
+      "outcome": "denied",
+      "gasUsed": "29072",
+      "costWei": "644206448"
+    }
+  ]
+}

@@ -10,7 +10,7 @@ command="$(jq -r '.tool_input.command // empty')"
 printf '%s' "$command" | grep -Eq '(^|[;&|[:space:]])git[[:space:]]+commit([[:space:]]|$)' || exit 0
 use_project_node
 cd "$ROOT" || exit 0
-checks=("npm run check:uml" "npm run check:use-cases" "npm run check:invariants")
+checks=("npm run check:uml" "npm run check:use-cases" "npm run check:protocol" "npm run check:invariants")
 if [ -n "$(git status --porcelain -- contracts)" ]; then
   checks+=("npm run compile" "npm run check:size")
 fi

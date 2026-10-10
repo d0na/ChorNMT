@@ -561,6 +561,7 @@ async function main() {
       memoryGiB: Math.round(os.totalmem() / 2 ** 30),
       node: process.versions.node
     },
+    total: statistics(measured.map((timing) => Object.values(timing.phases).reduce((sum, value) => sum + value, 0))),
     phases: Object.fromEntries(Object.keys(measured[0].phases).map((id) => [id, statistics(measured.map((timing) => timing.phases[id]))])),
     steps: Object.fromEntries(Object.keys(measured[0].steps).map((id) => [id, statistics(measured.map((timing) => timing.steps[id]))]))
   };

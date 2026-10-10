@@ -1,6 +1,6 @@
 # UML diagrams
 
-Use case and sequence diagrams of ChorNMT, in [PlantUML](https://plantuml.com) and rendered to SVG. The use cases are written by hand in `docs/uml/*.puml` (shared style in `docs/uml/style.iuml`) and checked against the trust tables, the tests, and the experiment evidence; the sequence diagrams are generated from the experiment run. Every SVG is versioned, so it shows up on GitHub and in the IDE without tools.
+The [experiment protocol](experiment.md) embeds these diagrams next to the phases they show. Use case and sequence diagrams of ChorNMT, in [PlantUML](https://plantuml.com) and rendered to SVG. The use cases are written by hand in `docs/uml/*.puml` (shared style in `docs/uml/style.iuml`) and checked against the trust tables, the tests, and the experiment evidence; the sequence diagrams are generated from the experiment run. Every SVG is versioned, so it shows up on GitHub and in the IDE without tools.
 
 The evaluation reports embed these diagrams next to the rows they explain (see [UML diagrams in the reports](../evaluation/README.md#uml-diagrams-in-the-reports); the mapping is `scripts/evaluation/uml.js`).
 

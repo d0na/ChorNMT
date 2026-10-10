@@ -740,6 +740,10 @@ async function main() {
     caseCount: report.length
   };
   const metricsPath = await writeMetrics("policy-tests", { summary: { ...summary, ethUsdPrice }, cases: report });
+  // evidence:update keeps the test matrix with the experiment evidence (decision D21).
+  if (process.env.POLICY_TESTS_OUT) {
+    await fs.writeFile(process.env.POLICY_TESTS_OUT, `${JSON.stringify({ summary, cases: report }, null, 2)}\n`);
+  }
   const markdownPath = path.join(process.cwd(), "evaluation", "policy-tests.generated.md");
   await fs.writeFile(markdownPath, [
     "# Policy integration test results",
