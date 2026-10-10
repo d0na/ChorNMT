@@ -233,7 +233,7 @@ async function main() {
   const protectedOrder = dataset.nodes.find((node) => node.name === "Order");
   await deny(policyResults, "creator denies paper-example protected node update", administrator, {
     to: populatedAssetAddress,
-    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([{ ...protectedOrder, outgoing: ["Order Intermediate"] }]))
+    data: populatedAsset.interface.encodeFunctionData("setNodes", toNodeUpdate([{ ...protectedOrder, initiatingMessage: "Modified order request" }]))
   });
 
   const carrierRole = "Special Carrier";

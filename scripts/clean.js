@@ -22,7 +22,9 @@ async function removeGeneratedFiles(directoryPath) {
       entry.name.endsWith(".generated.csv") ||
       entry.name.endsWith(".generated.md") ||
       entry.name.endsWith(".generated.bpmn.xml") ||
-      entry.name.endsWith(".generated.png")
+      entry.name.endsWith(".generated.png") ||
+      entry.name.endsWith(".generated.svg") ||
+      entry.name.endsWith(".nmt.json")
     ) {
       await fs.rm(path.join(directoryPath, entry.name), { force: true });
     }
@@ -41,6 +43,8 @@ async function main() {
   await removeGeneratedFiles(path.join(bpmnRoot, "example", "contract"));
   await removeGeneratedFiles(path.join(bpmnRoot, "example", "input"));
   await removeGeneratedFiles(path.join(bpmnRoot, "example", "output"));
+  await removeIfExists(path.join("/tmp", "chornmt-paper-example-policy-evaluation.nmt.json"));
+  await removeIfExists(path.join("/tmp", "chornmt-bpmn-image-viewer.html"));
 
   console.log("Cleaned Hardhat artifacts, generated BPMN files, evaluation reports, and metrics.");
 }
