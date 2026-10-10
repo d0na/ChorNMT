@@ -190,7 +190,11 @@ export function decodeTokenURI(tokenURI) {
 }
 
 export async function readChoreography(contract) {
-  const { choreography } = decodeTokenURI(await contract.methods.tokenURI().call());
+  return choreographyFromTokenURI(await contract.methods.tokenURI().call());
+}
+
+export function choreographyFromTokenURI(tokenURI) {
+  const { choreography } = decodeTokenURI(tokenURI);
   const nodes = choreography.nodes.map(normalizeNode);
   nodes.forEach((node, index) => {
     if (!node.name) {
@@ -200,13 +204,20 @@ export async function readChoreography(contract) {
   return { roles: choreography.roles, nodes };
 }
 
-export async function exportContractToJson(manifestArg, outputArg) {
+// readTokenURI, when given, reads the asset through the caller's provider (for example an
+// in-process Hardhat network) instead of the manifest RPC URL.
+export async function exportContractToJson(manifestArg, outputArg, { readTokenURI } = {}) {
   const manifestPath = path.resolve(process.cwd(), manifestArg);
   const manifest = await loadManifest(manifestPath);
-  const web3 = new Web3(manifest.rpcUrl);
-  const contract = new web3.eth.Contract(CONTRACT_ABI, manifest.contractAddress);
+  let choreography;
+  if (readTokenURI) {
+    choreography = choreographyFromTokenURI(await readTokenURI(manifest.contractAddress));
+  } else {
+    const web3 = new Web3(manifest.rpcUrl);
+    choreography = await readChoreography(new web3.eth.Contract(CONTRACT_ABI, manifest.contractAddress));
+  }
 
-  const { roles, nodes } = await readChoreography(contract);
+  const { roles, nodes } = choreography;
   const output = buildRawOutput(manifest, roles, nodes);
   const outputPath = resolveOutputPath(manifestPath, manifest, outputArg);
 

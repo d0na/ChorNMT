@@ -29,7 +29,7 @@ The docs are the source of truth and must stay in sync with the code:
 - `contracts/base/` — generic `NMT`, `MutableAsset`, `SmartPolicy`.
 - `contracts/choreography/` — `ChoreographyNMT`, `ChoreographyMutableAsset`, `ChoreographyTokenURIRenderer`, Master/Creator/Holder policies and their variants, `ChoreographyParticipantAM`, `DenyAllSmartPolicy`.
 - `contracts/participant/` — participant licenses (`ParticipantNMT`, `ParticipantMutableAsset`, `ParticipantTokenURIRenderer`) that choreography roles can be linked to.
-- `scripts/` — npm-command implementations (ESM, ethers v6); `scripts/evaluation/` metrics and reports; `scripts/data/` versioned deltas and legacy datasets.
+- `scripts/` — npm-command implementations (ESM, ethers v6); `scripts/evaluation/` metrics and reports; `scripts/experiment/` the experiment specification (`phases.js`) and its run (D16–D22, being implemented), writing the versioned `evaluation/evidence/`; `scripts/data/` versioned deltas and legacy datasets.
 - `bpmn-builder-js/` — separate npm package: BPMN→NMT importer, tokenURI reader (`scripts/web3.js`), `normalize` → `validation` → `process-mapper` → `moddle-generator`.
 - `references/` — source BPMN models (`paper-example.bpmn` is the supported one) and the original `BPMNChoreography.sol`.
 
@@ -44,6 +44,7 @@ npm run check:uml                                    # fail if a UML SVG is miss
 npm run check:invariants                             # fail if a contract breaks a design decision (grep, no compile)
 npm test                                             # = test:policies, ephemeral network, no node needed
 npm run evaluate:policies                            # lifecycle evaluation, ephemeral network
+npm run evidence:update [-- --out <dir>]             # experiment F1-F8, ephemeral network: evaluation/evidence/
 npm run check:gas                                    # fail if a gas figure in the docs differs from the last test/evaluation run
 npm run start:operations                             # compile + hardhat node on :8545 (long-running)
 npm run deploy:asset -- references/paper-example.bpmn  # needs the node: deploy the type, mint, print the asset

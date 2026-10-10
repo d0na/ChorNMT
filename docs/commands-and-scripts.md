@@ -18,6 +18,7 @@ These are the only commands intended for the normal `paper-example` workflow.
 | `npm run docs:uml` | Renders the UML diagrams `docs/uml/*.puml` to SVG next to their source, with PlantUML 1.2024.7 (downloaded once into `.cache/plantuml/`, checksum verified) and Graphviz. | Java and Graphviz (`dot`). | `docs/uml/*.svg`, shown in `docs/uml.md`. |
 | `npm run check:uml` | Fails if an SVG is missing or was rendered from another version of its source (a source hash is stored in the SVG). The GitHub Actions workflow runs it. | None; no Java needed. | Non-zero exit on a stale diagram. |
 | `npm run test:policies` (alias `npm test`) | Runs policy allow/deny integration tests, fails on any unexpected outcome, and prints receipt-derived gas costs. The GitHub Actions workflow runs it on every push. | None. | Policy matrix and per-type mint checks on an ephemeral Hardhat network. |
+| `npm run evidence:update [-- --out <dir>]` | Runs the experiment of `scripts/experiment/phases.js` (phases F1–F8, decision D17) on one ephemeral Hardhat network, through the same functions as `deploy:asset`, `modify:asset`, and `render:asset`, and fails if a transaction differs from the specification (order, sender, function, outcome, revert reason). Being implemented; the `evaluate:*` commands stay until it replaces them. | Reads the BPMN, the delta, and the trust tables of `docs/choreography-policies.md` (each transaction must name an existing row); `ETH_USD_PRICE` defaults to 3000. | `evaluation/evidence/` (or `<dir>`): `experiment.json`, `transactions.csv`, one call trace per transaction in `traces/`, baseline and final BPMN XML in `bpmn/`; identical across runs. |
 | `npm run evaluate:policies` | Runs the lifecycle cost evaluation for a new BPMN model. The GitHub Actions workflow runs it after `npm test`. | None. | JSON and Markdown reports with model-contract, mint, and policy-operation costs. |
 | `npm run evaluate:summary` | Collects generated experiment reports in one overview. | Existing evaluation reports. | `evaluation/summary.generated.md`. |
 | `npm run evaluate:all` | Cleans then executes paper, policy, and integration evaluations in the correct order. | Local operations node; Chromium installed. | Complete reports, graphs, BPMN SVG/PNG images, and unified overview. |
@@ -85,16 +86,18 @@ These scripts are used by public commands and are not intended as separate user-
 
 | Script | Used by | Responsibility |
 | --- | --- | --- |
-| `deploy-local.js` | `deploy:asset`, `evaluate:paper` | Imports the BPMN, deploys the policies, the renderer, the model contract, and the NMT of the type, mints an instance, and links its roles (`mintAsset`). |
+| `deploy-local.js` | `deploy:asset`, `evaluate:paper`, `evidence:update` | Imports the BPMN, deploys the policies, the renderer, the model contract, and the NMT of the type (`deployChoreographyType`), mints an instance, and links its roles (`mintAsset`); every function takes an optional signer, so the experiment runs it on an in-process network. |
 | `choreography-model.js` | `deploy:asset`, tests, evaluations | Builds the `InitialModel` of a type from an NMT dataset (roles without accounts), ABI-encodes it, and deploys it as the code of a data-only contract (SSTORE2). |
-| `render-asset.js` | `render:asset` | Reads render metadata and triggers contract export plus BPMN generation. |
+| `render-asset.js` | `render:asset`, `evidence:update` | Reads render metadata and triggers contract export plus BPMN generation; an optional `readTokenURI` reads the asset through another provider than `RPC_URL`. |
 | `render-local-support.js` | `render:asset`, `modify:asset` | Writes manifest and JSON artifacts, normalizes data, and generates BPMN XML. |
-| `apply-asset-delta.js` | `modify:asset` | Validates and applies delta roles and nodes. |
+| `apply-asset-delta.js` | `modify:asset`, `evidence:update` | Validates and applies delta roles and nodes; an optional signer replaces the `RPC_URL` wallet. |
 | `check-contract-size.js` | `check:size` | Reads `artifacts/contracts/` and enforces the contract size limits. |
 | `check-invariants.js` | `check:invariants` | Greps `contracts/` for violations of the design decisions in `docs/decisions.md`; each rule names its decision. |
 | `check-gas.js` | `check:gas` | Compares the gas figures listed in its `FIGURES` table with the newest metrics; a current figure added to a doc gets an entry there. |
 | `render-uml.js` | `docs:uml`, `check:uml` | Renders `docs/uml/*.puml` to SVG with a pinned PlantUML and stamps each SVG with the hash of its source; `--check` compares the hashes. |
 | `test-policies.js` | `test:policies` | Exercises policy allow/deny paths on one choreography type per fixture model. |
+| `experiment/phases.js` | `evidence:update` | The experiment specification: accounts, role accounts, inputs, phases, and every transaction with its sender, function, expected outcome, revert reason, and trust-table row. |
+| `experiment/run.js`, `experiment/update.js` | `evidence:update` | Executes the specification, checks each receipt and call trace against it, and writes the evidence; `update.js` passes `--out` to the Hardhat run. |
 | `evaluation/run-policy-lifecycle-evaluation.js` | `evaluate:policies` | Measures deployment (model contract included), the mint of an instance, and Master/Creator/Holder allow-deny operations. |
 
 ## Evaluation scripts

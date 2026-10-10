@@ -108,7 +108,8 @@ function validateDelta(delta) {
   }
 }
 
-export async function applyAssetDelta(assetAddress, deltaPath, { render = true } = {}) {
+// signer and readTokenURI, when given, replace the local RPC wallet (for example an in-process network).
+export async function applyAssetDelta(assetAddress, deltaPath, { render = true, signer, readTokenURI } = {}) {
   if (!assetAddress || !deltaPath) {
     throw new Error("Usage: npm run modify:asset -- <asset-address> <delta.json> [--no-render]");
   }
@@ -117,13 +118,13 @@ export async function applyAssetDelta(assetAddress, deltaPath, { render = true }
   const startedAt = performance.now();
   validateDelta(delta);
 
-  const provider = new JsonRpcProvider(RPC_URL);
-  const signer = new Wallet(DEPLOYER_PRIVATE_KEY, provider);
-  const asset = new Contract(assetAddress, CHOREOGRAPHY_MUTABLE_ASSET_ABI, signer);
+  const asset = new Contract(assetAddress, CHOREOGRAPHY_MUTABLE_ASSET_ABI, signer || new Wallet(DEPLOYER_PRIVATE_KEY, new JsonRpcProvider(RPC_URL)));
   const costs = [];
+  const receipts = {};
   if (delta.roles && Object.keys(delta.roles).length > 0) {
     const roleTransaction = await asset.setRoles(Object.keys(delta.roles), Object.values(delta.roles));
-    costs.push(reportTransactionCost("setRoles", await roleTransaction.wait()));
+    receipts.setRoles = await roleTransaction.wait();
+    costs.push(reportTransactionCost("setRoles", receipts.setRoles));
   }
   const payload = nodePayload(delta.nodes);
   const transaction = await asset.setNodes(
@@ -137,10 +138,11 @@ export async function applyAssetDelta(assetAddress, deltaPath, { render = true }
     payload.initiatingMessages,
     payload.returnMessages
   );
-  costs.push(reportTransactionCost("setNodes", await transaction.wait()));
+  receipts.setNodes = await transaction.wait();
+  costs.push(reportTransactionCost("setNodes", receipts.setNodes));
   const totalCost = reportTotalCost(costs);
 
-  const artifacts = render ? await renderAssetToBpmn({ assetAddress, ...delta.render }) : {};
+  const artifacts = render ? await renderAssetToBpmn({ assetAddress, readTokenURI, ...delta.render }) : {};
   const metricsPath = await writeMetrics("modify-asset", {
     assetAddress,
     deltaPath: resolvedDeltaPath,
@@ -149,7 +151,7 @@ export async function applyAssetDelta(assetAddress, deltaPath, { render = true }
     rendered: render,
     timingsMs: { total: performance.now() - startedAt }
   });
-  return { delta, resolvedDeltaPath, metricsPath, ...artifacts };
+  return { delta, resolvedDeltaPath, metricsPath, receipts, ...artifacts };
 }
 
 async function main() {

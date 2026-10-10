@@ -2,6 +2,17 @@
 
 Each `deploy:asset` (import, choreography type, and mint), `modify:asset`, and `render:asset` execution writes a JSON report under `metrics/`. The report records wall-clock duration and model/delta size: roles, nodes, tasks, gateways, sequence edges, and messages. On-chain commands also print receipt-derived gas and ETH cost in their console output.
 
+## Experiment evidence (being implemented)
+
+The evaluation is being replaced by one experiment whose evidence is versioned (decisions D16–D22 in [`docs/decisions.md`](../docs/decisions.md#experiment-and-evidence)). Its first step is in place:
+
+```bash
+npm run evidence:update                 # writes evaluation/evidence/
+npm run evidence:update -- --out <dir>  # exploratory run, elsewhere
+```
+
+It runs the phases of [`scripts/experiment/phases.js`](../scripts/experiment/phases.js) on one ephemeral Hardhat network, needs no node, and fails if a transaction differs from the specification. `evaluation/evidence/` holds `experiment.json` (provenance, accounts, inputs with SHA-256 — the BPMN, the delta, and `docs/choreography-policies.md`, whose trust-table rows every transaction must name — and per phase the actors, the policies in force with their bytecode hash, the instance state, and the transactions with outcome, revert reason, trust-table row, and gas), `transactions.csv`, one call trace per transaction in `traces/`, and the baseline and final BPMN XML in `bpmn/`. Two runs produce identical files. Until the next steps land (generated sequence diagrams, charts and BPMN images, the protocol, `check:evidence`), the commands below stay the source of the reports.
+
 ## Setup (once)
 
 Run once after cloning the repository:

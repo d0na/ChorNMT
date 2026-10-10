@@ -1,0 +1,2257 @@
+{
+  "experiment": "ChorNMT paper-example experiment",
+  "specification": "scripts/experiment/phases.js",
+  "provenance": {
+    "solc": "0.8.28",
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "node": "22",
+    "hardhat": "^3.9.0",
+    "network": "hardhat (edr-simulated, ephemeral)",
+    "ethUsdPrice": 3000,
+    "repetitions": 1
+  },
+  "accounts": [
+    {
+      "index": 0,
+      "name": "Administrator",
+      "plays": "Master administrator, authorized creator, holder of the instances",
+      "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+    },
+    {
+      "index": 1,
+      "name": "Partner",
+      "plays": "eligible holder",
+      "address": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+    },
+    {
+      "index": 2,
+      "name": "Unauthorized creator",
+      "plays": "an account the Master policy does not authorize to mint",
+      "address": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+    },
+    {
+      "index": 3,
+      "name": "Ineligible holder",
+      "plays": "an account the Master policy does not accept as holder",
+      "address": "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
+    },
+    {
+      "index": 5,
+      "name": "Carrier A",
+      "plays": "organization qualified for SpecialCarrier, first holder of its license",
+      "address": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"
+    },
+    {
+      "index": 6,
+      "name": "Carrier B",
+      "plays": "organization qualified for SpecialCarrier, buyer of the license",
+      "address": "0x976EA74026E726554dB657fA54763abd0C3a0aa9"
+    },
+    {
+      "index": 7,
+      "name": "Carrier C",
+      "plays": "organization qualified only for Carrier",
+      "address": "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955"
+    },
+    {
+      "index": 8,
+      "name": "Supplier company",
+      "plays": "organization qualified only for Supplier",
+      "address": "0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f"
+    },
+    {
+      "index": 9,
+      "name": "Authority",
+      "plays": "issuer of the license types and certifier of the licenses",
+      "address": "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"
+    },
+    {
+      "index": 10,
+      "name": "Bulk Buyer account",
+      "plays": "the Bulk Buyer role",
+      "address": "0xBcd4042DE499D14e55001CcbB24a551F3b954096"
+    },
+    {
+      "index": 11,
+      "name": "Manufacturer account",
+      "plays": "the Manufacturer role",
+      "address": "0x71bE63f3384f5fb98995898A86B02Fb2426c5788"
+    },
+    {
+      "index": 12,
+      "name": "Middleman account",
+      "plays": "the Middleman role",
+      "address": "0xFABB0ac9d68B0B445fB7357272Ff202C5651694a"
+    },
+    {
+      "index": 13,
+      "name": "Supplier account",
+      "plays": "the Supplier role",
+      "address": "0x1CBd3b2770909D4e10f157cABC84C7264073C9Ec"
+    }
+  ],
+  "inputs": {
+    "bpmn": {
+      "path": "references/paper-example.bpmn",
+      "sha256": "dc76537103877870ceae2e826f025dc6cebf018d46d22682d9a8c3f9776d477b"
+    },
+    "delta": {
+      "path": "scripts/data/paper-example-parallel-transport-preparation.delta.json",
+      "sha256": "0906afd9b88d63f815eaf4d89a1bdf304ef3379d7a737731568ed717c27cab99"
+    },
+    "trustTables": {
+      "path": "docs/choreography-policies.md",
+      "sha256": "06a0bb841e84b89bb0a97b28b42c65bb41d9ddd4c28c79a260932e6483912f9e"
+    }
+  },
+  "phases": [
+    {
+      "id": "F1",
+      "title": "Deploy the choreography type and the license infrastructure",
+      "inputs": [
+        {
+          "path": "references/paper-example.bpmn",
+          "sha256": "dc76537103877870ceae2e826f025dc6cebf018d46d22682d9a8c3f9776d477b"
+        }
+      ],
+      "actors": [
+        "Administrator",
+        "Authority"
+      ],
+      "transactions": [
+        "F1.deploy.master",
+        "F1.deploy.creator",
+        "F1.deploy.holder",
+        "F1.deploy.renderer",
+        "F1.deploy.model",
+        "F1.deploy.nmt",
+        "F1.deploy.participant-master",
+        "F1.deploy.participant-renderer",
+        "F1.deploy.participant-nmt",
+        "F1.deploy.certifier",
+        "F1.deploy.participant-holder",
+        "F1.deploy.participant-am",
+        "F1.deploy.paper-creator"
+      ],
+      "policies": [
+        {
+          "resource": "choreography type",
+          "layer": "Master",
+          "contract": "MasterSmartPolicy",
+          "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+          "source": "contracts/choreography/MasterSmartPolicy.sol",
+          "bytecodeKeccak256": "0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5"
+        },
+        {
+          "resource": "license type",
+          "layer": "Master",
+          "contract": "ParticipantMasterSmartPolicy",
+          "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+          "source": "contracts/participant/ParticipantMasterSmartPolicy.sol",
+          "bytecodeKeccak256": "0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13"
+        }
+      ],
+      "model": {
+        "roles": 5,
+        "nodes": 11,
+        "tasks": 9,
+        "gateways": 0,
+        "sequenceEdges": 10,
+        "messages": 9,
+        "roleNames": [
+          "Bulk Buyer",
+          "Manufacturer",
+          "Middleman",
+          "Supplier",
+          "Special Carrier"
+        ],
+        "modelBytes": 11136
+      }
+    },
+    {
+      "id": "F2",
+      "title": "Mint the instance and assign the role accounts",
+      "inputs": [],
+      "actors": [
+        "Administrator",
+        "Unauthorized creator"
+      ],
+      "transactions": [
+        "F2.mint",
+        "F2.roles",
+        "F2.denied.unauthorized-creator",
+        "F2.denied.ineligible-holder"
+      ],
+      "policies": [
+        {
+          "resource": "choreography type",
+          "layer": "Master",
+          "contract": "MasterSmartPolicy",
+          "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+          "source": "contracts/choreography/MasterSmartPolicy.sol",
+          "bytecodeKeccak256": "0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5"
+        },
+        {
+          "resource": "instance",
+          "layer": "Creator",
+          "contract": "CreatorSmartPolicyPaperScenario",
+          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+          "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
+          "bytecodeKeccak256": "0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d"
+        },
+        {
+          "resource": "instance",
+          "layer": "Holder",
+          "contract": "HolderSmartPolicy",
+          "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+          "source": "contracts/choreography/HolderSmartPolicy.sol",
+          "bytecodeKeccak256": "0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b"
+        },
+        {
+          "resource": "license type",
+          "layer": "Master",
+          "contract": "ParticipantMasterSmartPolicy",
+          "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+          "source": "contracts/participant/ParticipantMasterSmartPolicy.sol",
+          "bytecodeKeccak256": "0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13"
+        }
+      ],
+      "instance": {
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1",
+        "roles": 5,
+        "nodes": 11,
+        "tasks": 9,
+        "gateways": 0,
+        "sequenceEdges": 10,
+        "messages": 9,
+        "roleAssignments": [
+          {
+            "role": "Bulk Buyer",
+            "address": "0xBcd4042DE499D14e55001CcbB24a551F3b954096",
+            "account": "Bulk Buyer account",
+            "contract": null
+          },
+          {
+            "role": "Manufacturer",
+            "address": "0x71bE63f3384f5fb98995898A86B02Fb2426c5788",
+            "account": "Manufacturer account",
+            "contract": null
+          },
+          {
+            "role": "Middleman",
+            "address": "0xFABB0ac9d68B0B445fB7357272Ff202C5651694a",
+            "account": "Middleman account",
+            "contract": null
+          },
+          {
+            "role": "Supplier",
+            "address": "0x1CBd3b2770909D4e10f157cABC84C7264073C9Ec",
+            "account": "Supplier account",
+            "contract": null
+          },
+          {
+            "role": "Special Carrier",
+            "address": "0x0000000000000000000000000000000000000000",
+            "account": null,
+            "contract": "none"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F3",
+      "title": "Issue the participant licenses and link the Special Carrier role",
+      "inputs": [],
+      "actors": [
+        "Authority",
+        "Administrator",
+        "Carrier A"
+      ],
+      "transactions": [
+        "F3.license.special-carrier",
+        "F3.license.carrier",
+        "F3.license.supplier",
+        "F3.denied.plain-account",
+        "F3.denied.carrier-license",
+        "F3.denied.supplier-license",
+        "F3.link",
+        "F3.denied.new-role",
+        "F3.license.name",
+        "F3.license.messages",
+        "F3.denied.foreign-message"
+      ],
+      "policies": [
+        {
+          "resource": "choreography type",
+          "layer": "Master",
+          "contract": "MasterSmartPolicy",
+          "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+          "source": "contracts/choreography/MasterSmartPolicy.sol",
+          "bytecodeKeccak256": "0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5"
+        },
+        {
+          "resource": "instance",
+          "layer": "Creator",
+          "contract": "CreatorSmartPolicyPaperScenario",
+          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+          "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
+          "bytecodeKeccak256": "0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d"
+        },
+        {
+          "resource": "instance",
+          "layer": "Holder",
+          "contract": "HolderSmartPolicy",
+          "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+          "source": "contracts/choreography/HolderSmartPolicy.sol",
+          "bytecodeKeccak256": "0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b"
+        },
+        {
+          "resource": "license type",
+          "layer": "Master",
+          "contract": "ParticipantMasterSmartPolicy",
+          "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+          "source": "contracts/participant/ParticipantMasterSmartPolicy.sol",
+          "bytecodeKeccak256": "0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13"
+        },
+        {
+          "resource": "licensed role",
+          "layer": "Creator",
+          "contract": "ParticipantCreatorSmartPolicy",
+          "address": "0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35",
+          "source": "contracts/participant/CreatorSmartPolicy.sol",
+          "bytecodeKeccak256": "0x4d098019c20560369a6704135eed48691ee32450415386e62b410242325ffe13"
+        },
+        {
+          "resource": "licensed role",
+          "layer": "Holder",
+          "contract": "ParticipantHolderSmartPolicy",
+          "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+          "source": "contracts/participant/HolderSmartPolicy.sol",
+          "bytecodeKeccak256": "0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b"
+        }
+      ],
+      "instance": {
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1",
+        "roles": 5,
+        "nodes": 11,
+        "tasks": 9,
+        "gateways": 0,
+        "sequenceEdges": 10,
+        "messages": 9,
+        "roleAssignments": [
+          {
+            "role": "Bulk Buyer",
+            "address": "0xBcd4042DE499D14e55001CcbB24a551F3b954096",
+            "account": "Bulk Buyer account",
+            "contract": null
+          },
+          {
+            "role": "Manufacturer",
+            "address": "0x71bE63f3384f5fb98995898A86B02Fb2426c5788",
+            "account": "Manufacturer account",
+            "contract": null
+          },
+          {
+            "role": "Middleman",
+            "address": "0xFABB0ac9d68B0B445fB7357272Ff202C5651694a",
+            "account": "Middleman account",
+            "contract": null
+          },
+          {
+            "role": "Supplier",
+            "address": "0x1CBd3b2770909D4e10f157cABC84C7264073C9Ec",
+            "account": "Supplier account",
+            "contract": null
+          },
+          {
+            "role": "Special Carrier",
+            "address": "0x94099942864EA81cCF197E9D71ac53310b1468D8",
+            "account": null,
+            "contract": "ParticipantMutableAsset"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F4",
+      "title": "Render the baseline model from the chain",
+      "inputs": [],
+      "actors": [],
+      "transactions": [],
+      "policies": [
+        {
+          "resource": "choreography type",
+          "layer": "Master",
+          "contract": "MasterSmartPolicy",
+          "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+          "source": "contracts/choreography/MasterSmartPolicy.sol",
+          "bytecodeKeccak256": "0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5"
+        },
+        {
+          "resource": "instance",
+          "layer": "Creator",
+          "contract": "CreatorSmartPolicyPaperScenario",
+          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+          "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
+          "bytecodeKeccak256": "0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d"
+        },
+        {
+          "resource": "instance",
+          "layer": "Holder",
+          "contract": "HolderSmartPolicy",
+          "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+          "source": "contracts/choreography/HolderSmartPolicy.sol",
+          "bytecodeKeccak256": "0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b"
+        },
+        {
+          "resource": "license type",
+          "layer": "Master",
+          "contract": "ParticipantMasterSmartPolicy",
+          "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+          "source": "contracts/participant/ParticipantMasterSmartPolicy.sol",
+          "bytecodeKeccak256": "0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13"
+        },
+        {
+          "resource": "licensed role",
+          "layer": "Creator",
+          "contract": "ParticipantCreatorSmartPolicy",
+          "address": "0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35",
+          "source": "contracts/participant/CreatorSmartPolicy.sol",
+          "bytecodeKeccak256": "0x4d098019c20560369a6704135eed48691ee32450415386e62b410242325ffe13"
+        },
+        {
+          "resource": "licensed role",
+          "layer": "Holder",
+          "contract": "ParticipantHolderSmartPolicy",
+          "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+          "source": "contracts/participant/HolderSmartPolicy.sol",
+          "bytecodeKeccak256": "0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b"
+        }
+      ],
+      "instance": {
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1",
+        "roles": 5,
+        "nodes": 11,
+        "tasks": 9,
+        "gateways": 0,
+        "sequenceEdges": 10,
+        "messages": 9,
+        "roleAssignments": [
+          {
+            "role": "Bulk Buyer",
+            "address": "0xBcd4042DE499D14e55001CcbB24a551F3b954096",
+            "account": "Bulk Buyer account",
+            "contract": null
+          },
+          {
+            "role": "Manufacturer",
+            "address": "0x71bE63f3384f5fb98995898A86B02Fb2426c5788",
+            "account": "Manufacturer account",
+            "contract": null
+          },
+          {
+            "role": "Middleman",
+            "address": "0xFABB0ac9d68B0B445fB7357272Ff202C5651694a",
+            "account": "Middleman account",
+            "contract": null
+          },
+          {
+            "role": "Supplier",
+            "address": "0x1CBd3b2770909D4e10f157cABC84C7264073C9Ec",
+            "account": "Supplier account",
+            "contract": null
+          },
+          {
+            "role": "Special Carrier",
+            "address": "0x94099942864EA81cCF197E9D71ac53310b1468D8",
+            "account": null,
+            "contract": "ParticipantMutableAsset"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F5",
+      "title": "Apply the delta: one allowed update and five denied ones",
+      "inputs": [
+        {
+          "path": "scripts/data/paper-example-parallel-transport-preparation.delta.json",
+          "sha256": "0906afd9b88d63f815eaf4d89a1bdf304ef3379d7a737731568ed717c27cab99"
+        }
+      ],
+      "actors": [
+        "Administrator"
+      ],
+      "transactions": [
+        "F5.delta",
+        "F5.denied.task-limit",
+        "F5.denied.flow-limit",
+        "F5.denied.task-name",
+        "F5.denied.unknown-target",
+        "F5.denied.protected-node"
+      ],
+      "policies": [
+        {
+          "resource": "choreography type",
+          "layer": "Master",
+          "contract": "MasterSmartPolicy",
+          "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+          "source": "contracts/choreography/MasterSmartPolicy.sol",
+          "bytecodeKeccak256": "0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5"
+        },
+        {
+          "resource": "instance",
+          "layer": "Creator",
+          "contract": "CreatorSmartPolicyPaperScenario",
+          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+          "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
+          "bytecodeKeccak256": "0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d"
+        },
+        {
+          "resource": "instance",
+          "layer": "Holder",
+          "contract": "HolderSmartPolicy",
+          "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+          "source": "contracts/choreography/HolderSmartPolicy.sol",
+          "bytecodeKeccak256": "0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b"
+        },
+        {
+          "resource": "license type",
+          "layer": "Master",
+          "contract": "ParticipantMasterSmartPolicy",
+          "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+          "source": "contracts/participant/ParticipantMasterSmartPolicy.sol",
+          "bytecodeKeccak256": "0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13"
+        },
+        {
+          "resource": "licensed role",
+          "layer": "Creator",
+          "contract": "ParticipantCreatorSmartPolicy",
+          "address": "0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35",
+          "source": "contracts/participant/CreatorSmartPolicy.sol",
+          "bytecodeKeccak256": "0x4d098019c20560369a6704135eed48691ee32450415386e62b410242325ffe13"
+        },
+        {
+          "resource": "licensed role",
+          "layer": "Holder",
+          "contract": "ParticipantHolderSmartPolicy",
+          "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+          "source": "contracts/participant/HolderSmartPolicy.sol",
+          "bytecodeKeccak256": "0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b"
+        }
+      ],
+      "instance": {
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1",
+        "roles": 5,
+        "nodes": 14,
+        "tasks": 10,
+        "gateways": 2,
+        "sequenceEdges": 14,
+        "messages": 10,
+        "roleAssignments": [
+          {
+            "role": "Bulk Buyer",
+            "address": "0xBcd4042DE499D14e55001CcbB24a551F3b954096",
+            "account": "Bulk Buyer account",
+            "contract": null
+          },
+          {
+            "role": "Manufacturer",
+            "address": "0x71bE63f3384f5fb98995898A86B02Fb2426c5788",
+            "account": "Manufacturer account",
+            "contract": null
+          },
+          {
+            "role": "Middleman",
+            "address": "0xFABB0ac9d68B0B445fB7357272Ff202C5651694a",
+            "account": "Middleman account",
+            "contract": null
+          },
+          {
+            "role": "Supplier",
+            "address": "0x1CBd3b2770909D4e10f157cABC84C7264073C9Ec",
+            "account": "Supplier account",
+            "contract": null
+          },
+          {
+            "role": "Special Carrier",
+            "address": "0x94099942864EA81cCF197E9D71ac53310b1468D8",
+            "account": null,
+            "contract": "ParticipantMutableAsset"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F6",
+      "title": "Sell the Special Carrier role: Carrier A to Carrier B",
+      "inputs": [],
+      "actors": [
+        "Carrier A",
+        "Carrier B"
+      ],
+      "transactions": [
+        "F6.denied.carrier-buyer",
+        "F6.denied.supplier-buyer",
+        "F6.denied.without-seller",
+        "F6.sale",
+        "F6.denied.buyer-without-policy",
+        "F6.buyer.holder-policy",
+        "F6.denied.former-holder",
+        "F6.buyer.name",
+        "F6.buyer.profile",
+        "F6.buyer.messages"
+      ],
+      "policies": [
+        {
+          "resource": "choreography type",
+          "layer": "Master",
+          "contract": "MasterSmartPolicy",
+          "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+          "source": "contracts/choreography/MasterSmartPolicy.sol",
+          "bytecodeKeccak256": "0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5"
+        },
+        {
+          "resource": "instance",
+          "layer": "Creator",
+          "contract": "CreatorSmartPolicyPaperScenario",
+          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+          "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
+          "bytecodeKeccak256": "0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d"
+        },
+        {
+          "resource": "instance",
+          "layer": "Holder",
+          "contract": "HolderSmartPolicy",
+          "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+          "source": "contracts/choreography/HolderSmartPolicy.sol",
+          "bytecodeKeccak256": "0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b"
+        },
+        {
+          "resource": "license type",
+          "layer": "Master",
+          "contract": "ParticipantMasterSmartPolicy",
+          "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+          "source": "contracts/participant/ParticipantMasterSmartPolicy.sol",
+          "bytecodeKeccak256": "0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13"
+        },
+        {
+          "resource": "licensed role",
+          "layer": "Creator",
+          "contract": "ParticipantCreatorSmartPolicy",
+          "address": "0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35",
+          "source": "contracts/participant/CreatorSmartPolicy.sol",
+          "bytecodeKeccak256": "0x4d098019c20560369a6704135eed48691ee32450415386e62b410242325ffe13"
+        },
+        {
+          "resource": "licensed role",
+          "layer": "Holder",
+          "contract": "ParticipantHolderSmartPolicy",
+          "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+          "source": "contracts/participant/HolderSmartPolicy.sol",
+          "bytecodeKeccak256": "0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b"
+        }
+      ],
+      "instance": {
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1",
+        "roles": 5,
+        "nodes": 14,
+        "tasks": 10,
+        "gateways": 2,
+        "sequenceEdges": 14,
+        "messages": 10,
+        "roleAssignments": [
+          {
+            "role": "Bulk Buyer",
+            "address": "0xBcd4042DE499D14e55001CcbB24a551F3b954096",
+            "account": "Bulk Buyer account",
+            "contract": null
+          },
+          {
+            "role": "Manufacturer",
+            "address": "0x71bE63f3384f5fb98995898A86B02Fb2426c5788",
+            "account": "Manufacturer account",
+            "contract": null
+          },
+          {
+            "role": "Middleman",
+            "address": "0xFABB0ac9d68B0B445fB7357272Ff202C5651694a",
+            "account": "Middleman account",
+            "contract": null
+          },
+          {
+            "role": "Supplier",
+            "address": "0x1CBd3b2770909D4e10f157cABC84C7264073C9Ec",
+            "account": "Supplier account",
+            "contract": null
+          },
+          {
+            "role": "Special Carrier",
+            "address": "0x94099942864EA81cCF197E9D71ac53310b1468D8",
+            "account": null,
+            "contract": "ParticipantMutableAsset"
+          }
+        ]
+      },
+      "checks": {
+        "beforeSale": {
+          "licenseHolder": "Carrier A",
+          "roleLinkedTo": "ParticipantMutableAsset",
+          "roleLicense": "0x94099942864EA81cCF197E9D71ac53310b1468D8",
+          "licenseName": "Carrier A",
+          "messagesWriter": "Carrier A",
+          "holderPolicy": "ParticipantHolderSmartPolicy"
+        },
+        "afterSale": {
+          "licenseHolder": "Carrier B",
+          "roleLinkedTo": "ParticipantMutableAsset",
+          "roleLicense": "0x94099942864EA81cCF197E9D71ac53310b1468D8",
+          "licenseName": "",
+          "messagesWriter": "Carrier A",
+          "holderPolicy": "none"
+        },
+        "afterBuyerUpdates": {
+          "licenseHolder": "Carrier B",
+          "roleLinkedTo": "ParticipantMutableAsset",
+          "roleLicense": "0x94099942864EA81cCF197E9D71ac53310b1468D8",
+          "licenseName": "Carrier B",
+          "messagesWriter": "Carrier B",
+          "holderPolicy": "ParticipantHolderSmartPolicy"
+        }
+      },
+      "roleTasks": [
+        "Order Special Transport",
+        "Request Details",
+        "Transport Details",
+        "Waybill for Intermediate",
+        "Arrival Intermediate",
+        "Prepare Transport Documentation"
+      ],
+      "messages": [
+        "Message_0dai5by",
+        "Message_10n229k",
+        "Message_1325zdq",
+        "Message_1vaojlk",
+        "Message_11ex51i",
+        "Prepare transport documentation"
+      ]
+    },
+    {
+      "id": "F7",
+      "title": "Restrict a second instance through its Holder policy",
+      "inputs": [
+        {
+          "path": "scripts/data/paper-example-parallel-transport-preparation.delta.json",
+          "sha256": "0906afd9b88d63f815eaf4d89a1bdf304ef3379d7a737731568ed717c27cab99"
+        }
+      ],
+      "actors": [
+        "Administrator"
+      ],
+      "transactions": [
+        "F7.deploy.deny-all",
+        "F7.mint",
+        "F7.holder.deny-all",
+        "F7.denied.delta"
+      ],
+      "policies": [
+        {
+          "resource": "choreography type",
+          "layer": "Master",
+          "contract": "MasterSmartPolicy",
+          "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+          "source": "contracts/choreography/MasterSmartPolicy.sol",
+          "bytecodeKeccak256": "0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5"
+        },
+        {
+          "resource": "restricted instance",
+          "layer": "Creator",
+          "contract": "CreatorSmartPolicy",
+          "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+          "source": "contracts/choreography/CreatorSmartPolicy.sol",
+          "bytecodeKeccak256": "0x43492bed290349b36ee4209e036f71822a65418023ba5edd9e222d5e13406330"
+        },
+        {
+          "resource": "restricted instance",
+          "layer": "Holder",
+          "contract": "DenyAllSmartPolicy",
+          "address": "0x7a2088a1bFc9d81c55368AE168C2C02570cB814F",
+          "source": "contracts/choreography/DenyAllSmartPolicy.sol",
+          "bytecodeKeccak256": "0x9f03a9ce484e3bd5888dbcdf647bf64f9b80a32025b7548177e9283f625f21f1"
+        }
+      ],
+      "restrictedInstance": {
+        "address": "0x23dB4a08f2272df049a4932a4Cc3A6Dc1002B33E",
+        "roles": 5,
+        "nodes": 11,
+        "tasks": 9,
+        "gateways": 0,
+        "sequenceEdges": 10,
+        "messages": 9,
+        "roleAssignments": [
+          {
+            "role": "Bulk Buyer",
+            "address": "0x0000000000000000000000000000000000000000",
+            "account": null,
+            "contract": "none"
+          },
+          {
+            "role": "Manufacturer",
+            "address": "0x0000000000000000000000000000000000000000",
+            "account": null,
+            "contract": "none"
+          },
+          {
+            "role": "Middleman",
+            "address": "0x0000000000000000000000000000000000000000",
+            "account": null,
+            "contract": "none"
+          },
+          {
+            "role": "Supplier",
+            "address": "0x0000000000000000000000000000000000000000",
+            "account": null,
+            "contract": "none"
+          },
+          {
+            "role": "Special Carrier",
+            "address": "0x0000000000000000000000000000000000000000",
+            "account": null,
+            "contract": "none"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F8",
+      "title": "Render the final model and compare the delta with a new instance",
+      "inputs": [],
+      "actors": [
+        "Administrator"
+      ],
+      "transactions": [
+        "F8.new-instance.mint",
+        "F8.new-instance.roles",
+        "F8.new-instance.link"
+      ],
+      "policies": [
+        {
+          "resource": "choreography type",
+          "layer": "Master",
+          "contract": "MasterSmartPolicy",
+          "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+          "source": "contracts/choreography/MasterSmartPolicy.sol",
+          "bytecodeKeccak256": "0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5"
+        },
+        {
+          "resource": "instance",
+          "layer": "Creator",
+          "contract": "CreatorSmartPolicyPaperScenario",
+          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+          "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
+          "bytecodeKeccak256": "0x8275b4f71374b572d87afdc6c6df708c989e2d53826a5a33671a582fe06fa57d"
+        },
+        {
+          "resource": "instance",
+          "layer": "Holder",
+          "contract": "HolderSmartPolicy",
+          "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+          "source": "contracts/choreography/HolderSmartPolicy.sol",
+          "bytecodeKeccak256": "0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b"
+        },
+        {
+          "resource": "license type",
+          "layer": "Master",
+          "contract": "ParticipantMasterSmartPolicy",
+          "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+          "source": "contracts/participant/ParticipantMasterSmartPolicy.sol",
+          "bytecodeKeccak256": "0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13"
+        },
+        {
+          "resource": "licensed role",
+          "layer": "Creator",
+          "contract": "ParticipantCreatorSmartPolicy",
+          "address": "0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35",
+          "source": "contracts/participant/CreatorSmartPolicy.sol",
+          "bytecodeKeccak256": "0x4d098019c20560369a6704135eed48691ee32450415386e62b410242325ffe13"
+        },
+        {
+          "resource": "licensed role",
+          "layer": "Holder",
+          "contract": "ParticipantHolderSmartPolicy",
+          "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+          "source": "contracts/participant/HolderSmartPolicy.sol",
+          "bytecodeKeccak256": "0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b"
+        }
+      ],
+      "instance": {
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1",
+        "roles": 5,
+        "nodes": 14,
+        "tasks": 10,
+        "gateways": 2,
+        "sequenceEdges": 14,
+        "messages": 10,
+        "roleAssignments": [
+          {
+            "role": "Bulk Buyer",
+            "address": "0xBcd4042DE499D14e55001CcbB24a551F3b954096",
+            "account": "Bulk Buyer account",
+            "contract": null
+          },
+          {
+            "role": "Manufacturer",
+            "address": "0x71bE63f3384f5fb98995898A86B02Fb2426c5788",
+            "account": "Manufacturer account",
+            "contract": null
+          },
+          {
+            "role": "Middleman",
+            "address": "0xFABB0ac9d68B0B445fB7357272Ff202C5651694a",
+            "account": "Middleman account",
+            "contract": null
+          },
+          {
+            "role": "Supplier",
+            "address": "0x1CBd3b2770909D4e10f157cABC84C7264073C9Ec",
+            "account": "Supplier account",
+            "contract": null
+          },
+          {
+            "role": "Special Carrier",
+            "address": "0x94099942864EA81cCF197E9D71ac53310b1468D8",
+            "account": null,
+            "contract": "ParticipantMutableAsset"
+          }
+        ]
+      },
+      "newInstance": {
+        "address": "0x8EFa1819Ff5B279077368d44B593a4543280e402",
+        "roles": 5,
+        "nodes": 11,
+        "tasks": 9,
+        "gateways": 0,
+        "sequenceEdges": 10,
+        "messages": 9,
+        "roleAssignments": [
+          {
+            "role": "Bulk Buyer",
+            "address": "0xBcd4042DE499D14e55001CcbB24a551F3b954096",
+            "account": "Bulk Buyer account",
+            "contract": null
+          },
+          {
+            "role": "Manufacturer",
+            "address": "0x71bE63f3384f5fb98995898A86B02Fb2426c5788",
+            "account": "Manufacturer account",
+            "contract": null
+          },
+          {
+            "role": "Middleman",
+            "address": "0xFABB0ac9d68B0B445fB7357272Ff202C5651694a",
+            "account": "Middleman account",
+            "contract": null
+          },
+          {
+            "role": "Supplier",
+            "address": "0x1CBd3b2770909D4e10f157cABC84C7264073C9Ec",
+            "account": "Supplier account",
+            "contract": null
+          },
+          {
+            "role": "Special Carrier",
+            "address": "0x94099942864EA81cCF197E9D71ac53310b1468D8",
+            "account": null,
+            "contract": "ParticipantMutableAsset"
+          }
+        ]
+      }
+    }
+  ],
+  "transactions": [
+    {
+      "key": "F1.deploy.master",
+      "phase": "F1",
+      "label": "deploy the Master policy",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": null,
+      "created": {
+        "contract": "MasterSmartPolicy",
+        "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+      },
+      "call": "MasterSmartPolicy.constructor",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": null,
+      "gasUsed": "368379",
+      "gasPriceWei": "1107421875",
+      "costWei": "407950962890625",
+      "transactionHash": "0xa6817d3cdc04f2672cbc706b2b6f0833050caa040b8b80ca48e9681d47fcc29d",
+      "blockNumber": 1
+    },
+    {
+      "key": "F1.deploy.creator",
+      "phase": "F1",
+      "label": "deploy the default Creator policy",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": null,
+      "created": {
+        "contract": "CreatorSmartPolicy",
+        "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+      },
+      "call": "CreatorSmartPolicy.constructor",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": null,
+      "gasUsed": "1047571",
+      "gasPriceWei": "970693937",
+      "costWei": "1016870818277027",
+      "transactionHash": "0x02fd7cab8a66c184c396e1161df609a2936ac7aa016ad6b255323114a037185e",
+      "blockNumber": 2
+    },
+    {
+      "key": "F1.deploy.holder",
+      "phase": "F1",
+      "label": "deploy the Holder policy",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": null,
+      "created": {
+        "contract": "HolderSmartPolicy",
+        "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
+      },
+      "call": "HolderSmartPolicy.constructor",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": null,
+      "gasUsed": "391047",
+      "gasPriceWei": "853594156",
+      "costWei": "333795433921332",
+      "transactionHash": "0x23de496aaae7d2df07d8ec1cf09b30265a09887770ccd9263bd7e3b7896ddf6a",
+      "blockNumber": 3
+    },
+    {
+      "key": "F1.deploy.renderer",
+      "phase": "F1",
+      "label": "deploy the tokenURI renderer",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": null,
+      "created": {
+        "contract": "ChoreographyTokenURIRenderer",
+        "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+      },
+      "call": "ChoreographyTokenURIRenderer.constructor",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": null,
+      "gasUsed": "1236012",
+      "gasPriceWei": "748285702",
+      "costWei": "924890107100424",
+      "transactionHash": "0x408117383937fc664a523a412da91e88c6a44c14d5358462a7c40a111dfae439",
+      "blockNumber": 4
+    },
+    {
+      "key": "F1.deploy.model",
+      "phase": "F1",
+      "label": "deploy the paper-example model (SSTORE2)",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": null,
+      "created": {
+        "contract": "ChoreographyModel",
+        "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"
+      },
+      "call": "ChoreographyModel.constructor",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": null,
+      "gasUsed": "2343146",
+      "gasPriceWei": "658603698",
+      "costWei": "1543204620553908",
+      "transactionHash": "0x81cf1109e4a16f1ec7c333d73c8ab0f34057b2a0d4942ac819b3b23e378ee28b",
+      "blockNumber": 5
+    },
+    {
+      "key": "F1.deploy.nmt",
+      "phase": "F1",
+      "label": "deploy the choreography type",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": null,
+      "created": {
+        "contract": "ChoreographyNMT",
+        "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      },
+      "call": "ChoreographyNMT.constructor",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": null,
+      "gasUsed": "4815956",
+      "gasPriceWei": "582708256",
+      "costWei": "2806297321732736",
+      "transactionHash": "0x86738d5bf7865c89257a472136bddd3ad0301aafb572b062a1e74d3f3745999e",
+      "blockNumber": 6
+    },
+    {
+      "key": "F1.deploy.participant-master",
+      "phase": "F1",
+      "label": "deploy the participant Master policy",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": null,
+      "created": {
+        "contract": "ParticipantMasterSmartPolicy",
+        "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F"
+      },
+      "call": "ParticipantMasterSmartPolicy.constructor",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": null,
+      "gasUsed": "488974",
+      "gasPriceWei": "521562631",
+      "costWei": "255030565930594",
+      "transactionHash": "0x57b23d237b0053c34f4a2176edc4b110c60faff43f107d6b46726ca02ab1b19b",
+      "blockNumber": 7
+    },
+    {
+      "key": "F1.deploy.participant-renderer",
+      "phase": "F1",
+      "label": "deploy the license tokenURI renderer",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": null,
+      "created": {
+        "contract": "ParticipantTokenURIRenderer",
+        "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853"
+      },
+      "call": "ParticipantTokenURIRenderer.constructor",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": null,
+      "gasUsed": "983462",
+      "gasPriceWei": "457429930",
+      "costWei": "449864953817660",
+      "transactionHash": "0xf84ea3d057be4fda34fe3bf51fc3fa796c97d12d3641717c506c4d5e79301351",
+      "blockNumber": 8
+    },
+    {
+      "key": "F1.deploy.participant-nmt",
+      "phase": "F1",
+      "label": "deploy the license NMT",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": null,
+      "created": {
+        "contract": "ParticipantNMT",
+        "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+      },
+      "call": "ParticipantNMT.constructor",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": null,
+      "gasUsed": "2700510",
+      "gasPriceWei": "402125627",
+      "costWei": "1085944276969770",
+      "transactionHash": "0x6ab0d96f23ff1da0f9c8ff5a9f85ba255043c813b2a30647487919a5dd39ca8c",
+      "blockNumber": 9
+    },
+    {
+      "key": "F1.deploy.certifier",
+      "phase": "F1",
+      "label": "the Authority deploys the license Creator policy (certifier)",
+      "from": {
+        "account": "Authority",
+        "address": "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"
+      },
+      "to": null,
+      "created": {
+        "contract": "ParticipantCreatorSmartPolicy",
+        "address": "0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35"
+      },
+      "call": "ParticipantCreatorSmartPolicy.constructor",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": null,
+      "gasUsed": "502425",
+      "gasPriceWei": "356384692",
+      "costWei": "179056578878100",
+      "transactionHash": "0x4a9d0f7728ffb29913ca1b67c9aca6ab0f8adbcd4969d38f2242e52c556f3ad5",
+      "blockNumber": 10
+    },
+    {
+      "key": "F1.deploy.participant-holder",
+      "phase": "F1",
+      "label": "deploy the license Holder policy",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": null,
+      "created": {
+        "contract": "ParticipantHolderSmartPolicy",
+        "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318"
+      },
+      "call": "ParticipantHolderSmartPolicy.constructor",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": null,
+      "gasUsed": "323604",
+      "gasPriceWei": "312582675",
+      "costWei": "101153003960700",
+      "transactionHash": "0xdda3d545db967a8f5e726d43876e2d21261197680ec4806f04dae0ccc1b75d06",
+      "blockNumber": 11
+    },
+    {
+      "key": "F1.deploy.participant-am",
+      "phase": "F1",
+      "label": "deploy the participant attribute manager",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": null,
+      "created": {
+        "contract": "ChoreographyParticipantAM",
+        "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788"
+      },
+      "call": "ChoreographyParticipantAM.constructor",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": null,
+      "gasUsed": "229423",
+      "gasPriceWei": "273931313",
+      "costWei": "62846143622399",
+      "transactionHash": "0xf2b8f73cca05fed5868220707beaaaef68e3789b5be64cca9aaf646b30ba97a9",
+      "blockNumber": 12
+    },
+    {
+      "key": "F1.deploy.paper-creator",
+      "phase": "F1",
+      "label": "deploy the paper-scenario Creator policy",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": null,
+      "created": {
+        "contract": "CreatorSmartPolicyPaperScenario",
+        "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e"
+      },
+      "call": "CreatorSmartPolicyPaperScenario.constructor",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": null,
+      "gasUsed": "1790784",
+      "gasPriceWei": "239951758",
+      "costWei": "429701768998272",
+      "transactionHash": "0x8c298471b85c5150b96d43735c4e83d5d93ff69ab4eabdcca4fe34cebe748056",
+      "blockNumber": 13
+    },
+    {
+      "key": "F2.mint",
+      "phase": "F2",
+      "label": "mint the instance, born with the model and the paper-scenario Creator policy",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyNMT",
+        "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      },
+      "created": null,
+      "call": "ChoreographyNMT.mint",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "choreography",
+        "action": "`mint` an instance of the choreography type to an eligible holder"
+      },
+      "gasUsed": "5619770",
+      "gasPriceWei": "211748212",
+      "costWei": "1189976249351240",
+      "transactionHash": "0x4d9acf861876c7b7585f7d475ea041e2b3c6ca1c7e28842c85556cbc9365de8c",
+      "blockNumber": 14
+    },
+    {
+      "key": "F2.roles",
+      "phase": "F2",
+      "label": "assign an account to every role except Special Carrier",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyMutableAsset",
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1"
+      },
+      "created": null,
+      "call": "ChoreographyMutableAsset.setRoles",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "choreography",
+        "action": "`setRoles`"
+      },
+      "gasUsed": "176849",
+      "gasPriceWei": "190237921",
+      "costWei": "33643386090929",
+      "transactionHash": "0xecb264564b69b789f702da863b257adc6f06ba8a0d6812e06cff23e8eb794f86",
+      "blockNumber": 15
+    },
+    {
+      "key": "F2.denied.unauthorized-creator",
+      "phase": "F2",
+      "label": "the Master policy denies a mint by an unauthorized creator",
+      "from": {
+        "account": "Unauthorized creator",
+        "address": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+      },
+      "to": {
+        "contract": "ChoreographyNMT",
+        "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      },
+      "created": null,
+      "call": "ChoreographyNMT.mint",
+      "outcome": "denied",
+      "reason": "MasterDenied",
+      "trust": {
+        "table": "choreography",
+        "action": "`mint` an instance of the choreography type to an eligible holder"
+      },
+      "gasUsed": "29810",
+      "gasPriceWei": "166598362",
+      "costWei": "4966297171220",
+      "transactionHash": "0x10b4362a188cf3314b392cb0caeb1676521547882a451ede6c803369b03698a9",
+      "blockNumber": 16
+    },
+    {
+      "key": "F2.denied.ineligible-holder",
+      "phase": "F2",
+      "label": "the Master policy denies a mint to an ineligible holder",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyNMT",
+        "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      },
+      "created": null,
+      "call": "ChoreographyNMT.mint",
+      "outcome": "denied",
+      "reason": "MasterDenied",
+      "trust": {
+        "table": "choreography",
+        "action": "`mint` an instance of the choreography type to an eligible holder"
+      },
+      "gasUsed": "30099",
+      "gasPriceWei": "145794260",
+      "costWei": "4388261431740",
+      "transactionHash": "0x0054c24b782c8ec1d560e782f3f1374ead9eb3b3b3434ec6ccdfae4105c8d42e",
+      "blockNumber": 17
+    },
+    {
+      "key": "F3.license.special-carrier",
+      "phase": "F3",
+      "label": "the Authority issues a SpecialCarrier license to Carrier A",
+      "from": {
+        "account": "Authority",
+        "address": "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"
+      },
+      "to": {
+        "contract": "ParticipantNMT",
+        "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+      },
+      "created": null,
+      "call": "ParticipantNMT.mintWithParticipantType",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "licenses",
+        "action": "Mint a license of a type (`mintWithParticipantType`)"
+      },
+      "gasUsed": "1196735",
+      "gasPriceWei": "127588262",
+      "costWei": "152689338724570",
+      "transactionHash": "0xa27377885a72b2146dca4052c83bec5ac70014b0c8ea42065cf07130b59056f2",
+      "blockNumber": 18
+    },
+    {
+      "key": "F3.license.carrier",
+      "phase": "F3",
+      "label": "the Authority issues a Carrier license to Carrier C",
+      "from": {
+        "account": "Authority",
+        "address": "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"
+      },
+      "to": {
+        "contract": "ParticipantNMT",
+        "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+      },
+      "created": null,
+      "call": "ParticipantNMT.mintWithParticipantType",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "licenses",
+        "action": "Mint a license of a type (`mintWithParticipantType`)"
+      },
+      "gasUsed": "1199468",
+      "gasPriceWei": "112275936",
+      "costWei": "134671392402048",
+      "transactionHash": "0xde97a36b7463785d00ed967ab167cf91daca74dc2d44338c74cfdf6bc126af09",
+      "blockNumber": 19
+    },
+    {
+      "key": "F3.license.supplier",
+      "phase": "F3",
+      "label": "the Authority issues a Supplier license to the Supplier company",
+      "from": {
+        "account": "Authority",
+        "address": "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"
+      },
+      "to": {
+        "contract": "ParticipantNMT",
+        "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+      },
+      "created": null,
+      "call": "ParticipantNMT.mintWithParticipantType",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "licenses",
+        "action": "Mint a license of a type (`mintWithParticipantType`)"
+      },
+      "gasUsed": "1199497",
+      "gasPriceWei": "98802576",
+      "costWei": "118513393504272",
+      "transactionHash": "0x2cea79c66f3e7681b3f0283e2743ae8b1cbce2c05cebe0685e527fa34da64a95",
+      "blockNumber": 20
+    },
+    {
+      "key": "F3.denied.plain-account",
+      "phase": "F3",
+      "label": "the Creator policy denies linking Special Carrier to a plain account",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyMutableAsset",
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1"
+      },
+      "created": null,
+      "call": "ChoreographyMutableAsset.setRoles",
+      "outcome": "denied",
+      "reason": "OperationDenied(CREATOR)",
+      "trust": {
+        "table": "choreography",
+        "action": "`setRoles`"
+      },
+      "gasUsed": "63707",
+      "gasPriceWei": "86946060",
+      "costWei": "5539072644420",
+      "transactionHash": "0x09056bf2d6584b3aeb2744f94e55ba47f9bda90081785c7a489a56a44b991895",
+      "blockNumber": 21
+    },
+    {
+      "key": "F3.denied.carrier-license",
+      "phase": "F3",
+      "label": "the Creator policy denies linking Special Carrier to a Carrier license",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyMutableAsset",
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1"
+      },
+      "created": null,
+      "call": "ChoreographyMutableAsset.setRoles",
+      "outcome": "denied",
+      "reason": "OperationDenied(CREATOR)",
+      "trust": {
+        "table": "choreography",
+        "action": "`setRoles`"
+      },
+      "gasUsed": "69939",
+      "gasPriceWei": "76100883",
+      "costWei": "5322419656137",
+      "transactionHash": "0xc93e968c23d5d24733a19ca788c92f65291f947c3457470eb58eea71a110644c",
+      "blockNumber": 22
+    },
+    {
+      "key": "F3.denied.supplier-license",
+      "phase": "F3",
+      "label": "the Creator policy denies linking Special Carrier to a Supplier license",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyMutableAsset",
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1"
+      },
+      "created": null,
+      "call": "ChoreographyMutableAsset.setRoles",
+      "outcome": "denied",
+      "reason": "OperationDenied(CREATOR)",
+      "trust": {
+        "table": "choreography",
+        "action": "`setRoles`"
+      },
+      "gasUsed": "69939",
+      "gasPriceWei": "66610449",
+      "costWei": "4658668192611",
+      "transactionHash": "0xbc90670d26c7f98fe1c8e56ec5ef6fac179b8c95b3f8372461f2ee5dd9419d9d",
+      "blockNumber": 23
+    },
+    {
+      "key": "F3.link",
+      "phase": "F3",
+      "label": "link Special Carrier to the SpecialCarrier license held by Carrier A",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyMutableAsset",
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1"
+      },
+      "created": null,
+      "call": "ChoreographyMutableAsset.setRoles",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "choreography",
+        "action": "`setRoles`"
+      },
+      "gasUsed": "97276",
+      "gasPriceWei": "58303555",
+      "costWei": "5671536616180",
+      "transactionHash": "0xbf1cbbdcfb7392f133bb30ae28db495243bb21e4411644cceb52efba6d716966",
+      "blockNumber": 24
+    },
+    {
+      "key": "F3.denied.new-role",
+      "phase": "F3",
+      "label": "the Creator policy denies a new Backup Carrier role",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyMutableAsset",
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1"
+      },
+      "created": null,
+      "call": "ChoreographyMutableAsset.setRoles",
+      "outcome": "denied",
+      "reason": "OperationDenied(CREATOR)",
+      "trust": {
+        "table": "choreography",
+        "action": "`setRoles`"
+      },
+      "gasUsed": "54893",
+      "gasPriceWei": "51039242",
+      "costWei": "2801697111106",
+      "transactionHash": "0x7e60362265ec68a822afb004c7176c6c4a3406b59e800462dbd717f270a57e19",
+      "blockNumber": 25
+    },
+    {
+      "key": "F3.license.name",
+      "phase": "F3",
+      "label": "Carrier A updates the name on its license",
+      "from": {
+        "account": "Carrier A",
+        "address": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"
+      },
+      "to": {
+        "contract": "ParticipantMutableAsset",
+        "address": "0x94099942864EA81cCF197E9D71ac53310b1468D8"
+      },
+      "created": null,
+      "call": "ParticipantMutableAsset.setName",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "licenses",
+        "action": "Update the organization data (`setName`, `setProfile`, `setLinked`)"
+      },
+      "gasUsed": "66674",
+      "gasPriceWei": "44671011",
+      "costWei": "2978394987414",
+      "transactionHash": "0xb89b93e16bc1d15341218780f6233aa30930d7a21dde58fac49d1fb1dec8ba9a",
+      "blockNumber": 26
+    },
+    {
+      "key": "F3.license.messages",
+      "phase": "F3",
+      "label": "Carrier A declares the Special Carrier messages on its license",
+      "from": {
+        "account": "Carrier A",
+        "address": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"
+      },
+      "to": {
+        "contract": "ParticipantMutableAsset",
+        "address": "0x94099942864EA81cCF197E9D71ac53310b1468D8"
+      },
+      "created": null,
+      "call": "ParticipantMutableAsset.setMessages",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "licenses",
+        "action": "Declare messages (`setMessages`) allowed for the license type"
+      },
+      "gasUsed": "232409",
+      "gasPriceWei": "39099545",
+      "costWei": "9087086153905",
+      "transactionHash": "0x0813fa8d5ec6b7dd5b8bd4b5f5b1c20b97753bc84f7699e910c10c7439f709e1",
+      "blockNumber": 27
+    },
+    {
+      "key": "F3.denied.foreign-message",
+      "phase": "F3",
+      "label": "the certifier denies a message of another role",
+      "from": {
+        "account": "Carrier A",
+        "address": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"
+      },
+      "to": {
+        "contract": "ParticipantMutableAsset",
+        "address": "0x94099942864EA81cCF197E9D71ac53310b1468D8"
+      },
+      "created": null,
+      "call": "ParticipantMutableAsset.setMessages",
+      "outcome": "denied",
+      "reason": "OperationDenied(CREATOR)",
+      "trust": {
+        "table": "licenses",
+        "action": "Declare messages (`setMessages`) allowed for the license type"
+      },
+      "gasUsed": "46708",
+      "gasPriceWei": "34249965",
+      "costWei": "1599747365220",
+      "transactionHash": "0x029982ad8941f7b21796dbd441a2c9eb66806247e4f08b82b5af10e8f2d18f93",
+      "blockNumber": 28
+    },
+    {
+      "key": "F5.delta",
+      "phase": "F5",
+      "label": "apply the parallel transport preparation delta",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyMutableAsset",
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1"
+      },
+      "created": null,
+      "call": "ChoreographyMutableAsset.setNodes",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "choreography",
+        "action": "`setNodes`"
+      },
+      "gasUsed": "1866349",
+      "gasPriceWei": "29975386",
+      "costWei": "55944531685714",
+      "transactionHash": "0x65e7af0980f9d9b5ad2f6ee20622795b7d37391a7953c2ebfc748686d924a109",
+      "blockNumber": 29
+    },
+    {
+      "key": "F5.denied.task-limit",
+      "phase": "F5",
+      "label": "the Creator policy denies an update above the task limit",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyMutableAsset",
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1"
+      },
+      "created": null,
+      "call": "ChoreographyMutableAsset.setNodes",
+      "outcome": "denied",
+      "reason": "OperationDenied(CREATOR)",
+      "trust": {
+        "table": "choreography",
+        "action": "`setNodes`"
+      },
+      "gasUsed": "318816",
+      "gasPriceWei": "26461566",
+      "costWei": "8436370625856",
+      "transactionHash": "0xae4340478fecf9e33dba925d3d76369fdc4cf7b46fd9fb7906eabd3188fc899b",
+      "blockNumber": 30
+    },
+    {
+      "key": "F5.denied.flow-limit",
+      "phase": "F5",
+      "label": "the Creator policy denies an update above the sequence-flow limit",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyMutableAsset",
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1"
+      },
+      "created": null,
+      "call": "ChoreographyMutableAsset.setNodes",
+      "outcome": "denied",
+      "reason": "OperationDenied(CREATOR)",
+      "trust": {
+        "table": "choreography",
+        "action": "`setNodes`"
+      },
+      "gasUsed": "547091",
+      "gasPriceWei": "23189022",
+      "costWei": "12686505235002",
+      "transactionHash": "0x9afc1cd1421ca960337e0ebc4a7a780041c850288249a6c98b20fcc0c32d1d56",
+      "blockNumber": 31
+    },
+    {
+      "key": "F5.denied.task-name",
+      "phase": "F5",
+      "label": "the Creator policy denies a task name outside the allowlist",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyMutableAsset",
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1"
+      },
+      "created": null,
+      "call": "ChoreographyMutableAsset.setNodes",
+      "outcome": "denied",
+      "reason": "OperationDenied(CREATOR)",
+      "trust": {
+        "table": "choreography",
+        "action": "`setNodes`"
+      },
+      "gasUsed": "298426",
+      "gasPriceWei": "20343256",
+      "costWei": "6070956515056",
+      "transactionHash": "0xe8599c026825df812d3ec13fe955615385dd760c883248d29bd716cd14075d14",
+      "blockNumber": 32
+    },
+    {
+      "key": "F5.denied.unknown-target",
+      "phase": "F5",
+      "label": "the Creator policy denies a flow to an unknown node",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyMutableAsset",
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1"
+      },
+      "created": null,
+      "call": "ChoreographyMutableAsset.setNodes",
+      "outcome": "denied",
+      "reason": "OperationDenied(CREATOR)",
+      "trust": {
+        "table": "choreography",
+        "action": "`setNodes`"
+      },
+      "gasUsed": "76686",
+      "gasPriceWei": "17825645",
+      "costWei": "1366977412470",
+      "transactionHash": "0x37644ba51290dfe21a4608f1418cbe77d16d0b6b8e3c46b7d30e71c8b3ff3a3d",
+      "blockNumber": 33
+    },
+    {
+      "key": "F5.denied.protected-node",
+      "phase": "F5",
+      "label": "the Creator policy denies a change to the protected Order task",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyMutableAsset",
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1"
+      },
+      "created": null,
+      "call": "ChoreographyMutableAsset.setNodes",
+      "outcome": "denied",
+      "reason": "OperationDenied(CREATOR)",
+      "trust": {
+        "table": "choreography",
+        "action": "`setNodes`"
+      },
+      "gasUsed": "340491",
+      "gasPriceWei": "15603136",
+      "costWei": "5312727379776",
+      "transactionHash": "0xaf2221c3d8e3e79849750c9e5f11a4866eeb5b323fd6a050af504e47ff59033b",
+      "blockNumber": 34
+    },
+    {
+      "key": "F6.denied.carrier-buyer",
+      "phase": "F6",
+      "label": "the participant Master policy denies selling to Carrier C, not qualified for SpecialCarrier",
+      "from": {
+        "account": "Carrier A",
+        "address": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"
+      },
+      "to": {
+        "contract": "ParticipantNMT",
+        "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+      },
+      "created": null,
+      "call": "ParticipantNMT.transferFrom",
+      "outcome": "denied",
+      "reason": "MasterDenied",
+      "trust": {
+        "table": "licenses",
+        "action": "Sell the license (`transferFrom`) to an organization qualified for its type"
+      },
+      "gasUsed": "37239",
+      "gasPriceWei": "13674880",
+      "costWei": "509238856320",
+      "transactionHash": "0xadf626f3d5a251d88f8c1e1fab7d54812f923f2ec72b891510cbe735ecfd7e49",
+      "blockNumber": 35
+    },
+    {
+      "key": "F6.denied.supplier-buyer",
+      "phase": "F6",
+      "label": "the participant Master policy denies selling to the Supplier company",
+      "from": {
+        "account": "Carrier A",
+        "address": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"
+      },
+      "to": {
+        "contract": "ParticipantNMT",
+        "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+      },
+      "created": null,
+      "call": "ParticipantNMT.transferFrom",
+      "outcome": "denied",
+      "reason": "MasterDenied",
+      "trust": {
+        "table": "licenses",
+        "action": "Sell the license (`transferFrom`) to an organization qualified for its type"
+      },
+      "gasUsed": "37239",
+      "gasPriceWei": "11967643",
+      "costWei": "445663057677",
+      "transactionHash": "0x89d0125a3bafe09deea6307482bb2cf0aba67a90d03c00826488993062d410cb",
+      "blockNumber": 36
+    },
+    {
+      "key": "F6.denied.without-seller",
+      "phase": "F6",
+      "label": "the participant Master policy denies Carrier B taking the license without the seller",
+      "from": {
+        "account": "Carrier B",
+        "address": "0x976EA74026E726554dB657fA54763abd0C3a0aa9"
+      },
+      "to": {
+        "contract": "ParticipantNMT",
+        "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+      },
+      "created": null,
+      "call": "ParticipantNMT.transferFrom",
+      "outcome": "denied",
+      "reason": "MasterDenied",
+      "trust": {
+        "table": "licenses",
+        "action": "Sell the license (`transferFrom`) to an organization qualified for its type"
+      },
+      "gasUsed": "30168",
+      "gasPriceWei": "10473545",
+      "costWei": "315965905560",
+      "transactionHash": "0x17921f0416e5013496f4be5d8bb0e2726402ffba49b1d0a41e673251736a01ce",
+      "blockNumber": 37
+    },
+    {
+      "key": "F6.sale",
+      "phase": "F6",
+      "label": "Carrier A sells the SpecialCarrier license to Carrier B",
+      "from": {
+        "account": "Carrier A",
+        "address": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"
+      },
+      "to": {
+        "contract": "ParticipantNMT",
+        "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+      },
+      "created": null,
+      "call": "ParticipantNMT.transferFrom",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "licenses",
+        "action": "Sell the license (`transferFrom`) to an organization qualified for its type"
+      },
+      "gasUsed": "108940",
+      "gasPriceWei": "9165668",
+      "costWei": "998507871920",
+      "transactionHash": "0xc237e09b0cf6ad8936b745edf70203ff7221d23da94db027a394d3ef513cdf6b",
+      "blockNumber": 38
+    },
+    {
+      "key": "F6.denied.buyer-without-policy",
+      "phase": "F6",
+      "label": "Carrier B cannot update the license before installing a Holder policy",
+      "from": {
+        "account": "Carrier B",
+        "address": "0x976EA74026E726554dB657fA54763abd0C3a0aa9"
+      },
+      "to": {
+        "contract": "ParticipantMutableAsset",
+        "address": "0x94099942864EA81cCF197E9D71ac53310b1468D8"
+      },
+      "created": null,
+      "call": "ParticipantMutableAsset.setName",
+      "outcome": "denied",
+      "reason": "HolderPolicyDisabled",
+      "trust": {
+        "table": "licenses",
+        "action": "Update the organization data (`setName`, `setProfile`, `setLinked`)"
+      },
+      "gasUsed": "37003",
+      "gasPriceWei": "8024121",
+      "costWei": "296916549363",
+      "transactionHash": "0x5b753d523de51b902532601baa8f77445f7080c25ee8d49756d736c0478ddcb3",
+      "blockNumber": 39
+    },
+    {
+      "key": "F6.buyer.holder-policy",
+      "phase": "F6",
+      "label": "Carrier B installs its Holder policy on the license",
+      "from": {
+        "account": "Carrier B",
+        "address": "0x976EA74026E726554dB657fA54763abd0C3a0aa9"
+      },
+      "to": {
+        "contract": "ParticipantMutableAsset",
+        "address": "0x94099942864EA81cCF197E9D71ac53310b1468D8"
+      },
+      "created": null,
+      "call": "ParticipantMutableAsset.setHolderSmartPolicy",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": null,
+      "gasUsed": "49611",
+      "gasPriceWei": "7022344",
+      "costWei": "348385508184",
+      "transactionHash": "0x0017ec2bcc3b8e3c16d74e578349bcb7b32fe84d09f68ec2c1f391050efb90b9",
+      "blockNumber": 40
+    },
+    {
+      "key": "F6.denied.former-holder",
+      "phase": "F6",
+      "label": "Carrier A can no longer update the license",
+      "from": {
+        "account": "Carrier A",
+        "address": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"
+      },
+      "to": {
+        "contract": "ParticipantMutableAsset",
+        "address": "0x94099942864EA81cCF197E9D71ac53310b1468D8"
+      },
+      "created": null,
+      "call": "ParticipantMutableAsset.setName",
+      "outcome": "denied",
+      "reason": "OperationDenied(CREATOR)",
+      "trust": {
+        "table": "licenses",
+        "action": "Update the organization data (`setName`, `setProfile`, `setLinked`)"
+      },
+      "gasUsed": "34894",
+      "gasPriceWei": "6146004",
+      "costWei": "214458663576",
+      "transactionHash": "0x90e529c0bfd4c4d4c7e603064fe66daeec5f99e381893cb59aac31a5c70b55d0",
+      "blockNumber": 41
+    },
+    {
+      "key": "F6.buyer.name",
+      "phase": "F6",
+      "label": "Carrier B updates the name on the license",
+      "from": {
+        "account": "Carrier B",
+        "address": "0x976EA74026E726554dB657fA54763abd0C3a0aa9"
+      },
+      "to": {
+        "contract": "ParticipantMutableAsset",
+        "address": "0x94099942864EA81cCF197E9D71ac53310b1468D8"
+      },
+      "created": null,
+      "call": "ParticipantMutableAsset.setName",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "licenses",
+        "action": "Update the organization data (`setName`, `setProfile`, `setLinked`)"
+      },
+      "gasUsed": "66674",
+      "gasPriceWei": "5378648",
+      "costWei": "358615976752",
+      "transactionHash": "0x07ba52cbbe6577f55cf0525a2cc7862e5ae2dc7e4c178ea8bf1573341ebf923f",
+      "blockNumber": 42
+    },
+    {
+      "key": "F6.buyer.profile",
+      "phase": "F6",
+      "label": "Carrier B links its organization profile",
+      "from": {
+        "account": "Carrier B",
+        "address": "0x976EA74026E726554dB657fA54763abd0C3a0aa9"
+      },
+      "to": {
+        "contract": "ParticipantMutableAsset",
+        "address": "0x94099942864EA81cCF197E9D71ac53310b1468D8"
+      },
+      "created": null,
+      "call": "ParticipantMutableAsset.setProfile",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "licenses",
+        "action": "Update the organization data (`setName`, `setProfile`, `setLinked`)"
+      },
+      "gasUsed": "67102",
+      "gasPriceWei": "4707812",
+      "costWei": "315903600824",
+      "transactionHash": "0x94a6b2ada9ee6b8f8f1e3a453f3b2f1898c0690aa3efca7c4e3fb32593c1319c",
+      "blockNumber": 43
+    },
+    {
+      "key": "F6.buyer.messages",
+      "phase": "F6",
+      "label": "Carrier B confirms the Special Carrier messages",
+      "from": {
+        "account": "Carrier B",
+        "address": "0x976EA74026E726554dB657fA54763abd0C3a0aa9"
+      },
+      "to": {
+        "contract": "ParticipantMutableAsset",
+        "address": "0x94099942864EA81cCF197E9D71ac53310b1468D8"
+      },
+      "created": null,
+      "call": "ParticipantMutableAsset.setMessages",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "licenses",
+        "action": "Declare messages (`setMessages`) allowed for the license type"
+      },
+      "gasUsed": "76009",
+      "gasPriceWei": "4120652",
+      "costWei": "313206637868",
+      "transactionHash": "0xdb7a9b0a8c0ef5379ad16186d072deb57ef369621a6a7b557bd4846be332d596",
+      "blockNumber": 44
+    },
+    {
+      "key": "F7.deploy.deny-all",
+      "phase": "F7",
+      "label": "deploy the deny-all policy",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": null,
+      "created": {
+        "contract": "DenyAllSmartPolicy",
+        "address": "0x7a2088a1bFc9d81c55368AE168C2C02570cB814F"
+      },
+      "call": "DenyAllSmartPolicy.constructor",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": null,
+      "gasUsed": "335458",
+      "gasPriceWei": "3606876",
+      "costWei": "1209955409208",
+      "transactionHash": "0xfc3e2057a38ceffdbcf1e9fab5a56e74686c70335e42768e68660d141342b1d4",
+      "blockNumber": 45
+    },
+    {
+      "key": "F7.mint",
+      "phase": "F7",
+      "label": "mint a second instance with the default policies",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyNMT",
+        "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      },
+      "created": null,
+      "call": "ChoreographyNMT.mint",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "choreography",
+        "action": "`mint` an instance of the choreography type to an eligible holder"
+      },
+      "gasUsed": "5625370",
+      "gasPriceWei": "3161059",
+      "costWei": "17782126466830",
+      "transactionHash": "0x8cec176bce48d048819d72ea616ac0bff2cf315da4ede073f1e983e39167f606",
+      "blockNumber": 46
+    },
+    {
+      "key": "F7.holder.deny-all",
+      "phase": "F7",
+      "label": "the holder installs the deny-all policy",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyMutableAsset",
+        "address": "0x23dB4a08f2272df049a4932a4Cc3A6Dc1002B33E"
+      },
+      "created": null,
+      "call": "ChoreographyMutableAsset.setHolderSmartPolicy",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "choreography",
+        "action": "`setHolderSmartPolicy`"
+      },
+      "gasUsed": "32533",
+      "gasPriceWei": "2840019",
+      "costWei": "92394338127",
+      "transactionHash": "0xc2028ae7571aa731ae53cd753f532f011614f774e8117fa69b569c75f470e737",
+      "blockNumber": 47
+    },
+    {
+      "key": "F7.denied.delta",
+      "phase": "F7",
+      "label": "the Holder policy denies the delta",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyMutableAsset",
+        "address": "0x23dB4a08f2272df049a4932a4Cc3A6Dc1002B33E"
+      },
+      "created": null,
+      "call": "ChoreographyMutableAsset.setNodes",
+      "outcome": "denied",
+      "reason": "OperationDenied(HOLDER)",
+      "trust": {
+        "table": "choreography",
+        "action": "`setNodes`"
+      },
+      "gasUsed": "136179",
+      "gasPriceWei": "2485402",
+      "costWei": "338459558958",
+      "transactionHash": "0x7c2caa8b0752c9dfbbbd879409fb0ac465621ae4465ed150ac65213d03c8f6a6",
+      "blockNumber": 48
+    },
+    {
+      "key": "F8.new-instance.mint",
+      "phase": "F8",
+      "label": "mint a new instance, born with the whole model",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyNMT",
+        "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      },
+      "created": null,
+      "call": "ChoreographyNMT.mint",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "choreography",
+        "action": "`mint` an instance of the choreography type to an eligible holder"
+      },
+      "gasUsed": "5625370",
+      "gasPriceWei": "2176138",
+      "costWei": "12241581421060",
+      "transactionHash": "0xd63f46069e8bcdc225eef1290b012eaf8be2f47ba7d570b61e97d9c2a22a68d7",
+      "blockNumber": 49
+    },
+    {
+      "key": "F8.new-instance.roles",
+      "phase": "F8",
+      "label": "assign its role accounts except Special Carrier",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyMutableAsset",
+        "address": "0x8EFa1819Ff5B279077368d44B593a4543280e402"
+      },
+      "created": null,
+      "call": "ChoreographyMutableAsset.setRoles",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "choreography",
+        "action": "`setRoles`"
+      },
+      "gasUsed": "176849",
+      "gasPriceWei": "1955128",
+      "costWei": "345762431672",
+      "transactionHash": "0x4e16d57a57fe5123df1a9db89fb5080330c6fbdf979ce743ce3864288c46ae4a",
+      "blockNumber": 50
+    },
+    {
+      "key": "F8.new-instance.link",
+      "phase": "F8",
+      "label": "link its Special Carrier role to the SpecialCarrier license",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": {
+        "contract": "ChoreographyMutableAsset",
+        "address": "0x8EFa1819Ff5B279077368d44B593a4543280e402"
+      },
+      "created": null,
+      "call": "ChoreographyMutableAsset.setRoles",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": {
+        "table": "choreography",
+        "action": "`setRoles`"
+      },
+      "gasUsed": "97276",
+      "gasPriceWei": "1712179",
+      "costWei": "166553924404",
+      "transactionHash": "0x9bfb8a90d0d84853da078455650792f948ce989c87a34ca9866a8a96ffbd943d",
+      "blockNumber": 51
+    }
+  ]
+}

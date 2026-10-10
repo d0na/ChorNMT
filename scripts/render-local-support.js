@@ -75,7 +75,8 @@ export async function renderAssetToBpmn({
   choreographyName,
   definitionsId,
   targetNamespace,
-  outputBaseName
+  outputBaseName,
+  readTokenURI
 }) {
   const manifestPath = await writeManifest({
     assetAddress,
@@ -85,7 +86,7 @@ export async function renderAssetToBpmn({
     targetNamespace,
     outputBaseName
   });
-  const { outputPath: rawJsonPath } = await exportContractToJson(manifestPath);
+  const { outputPath: rawJsonPath } = await exportContractToJson(manifestPath, undefined, { readTokenURI });
   const normalizedPath = await writeNormalizedJson(rawJsonPath);
   const xmlPath = await generateXmlFromJson(normalizedPath);
 

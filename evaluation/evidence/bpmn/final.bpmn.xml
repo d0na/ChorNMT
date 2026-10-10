@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="PaperExampleParallelTransportPreparation_definitions" targetNamespace="http://example.com/paper-example/parallel-transport-preparation">
+  <bpmn:message id="Message_Order_initiating" name="Message_1xwxfgh" />
+  <bpmn:message id="Message_Order_Intermediate_initiating" name="Message_0zv34lb" />
+  <bpmn:message id="Message_FWD_Oder_Intermediate_initiating" name="Message_1o2ktar" />
+  <bpmn:message id="Message_Order_Special_Transport_initiating" name="Message_0dai5by" />
+  <bpmn:message id="Message_Request_Details_initiating" name="Message_10n229k" />
+  <bpmn:message id="Message_Transport_Details_initiating" name="Message_1325zdq" />
+  <bpmn:message id="Message_Waybill_for_Intermediate_initiating" name="Message_1vaojlk" />
+  <bpmn:message id="Message_Arrival_Intermediate_initiating" name="Message_11ex51i" />
+  <bpmn:message id="Message_Delivery_of_Product_initiating" name="Message_0t5qtd8" />
+  <bpmn:message id="Message_Prepare_Transport_Documentation_initiating" name="Prepare transport documentation" />
+  <bpmn:choreography id="PaperExampleParallelTransportPreparation" name="Paper Example — Parallel Transport Preparation">
+    <bpmn:participant id="Participant_Bulk_Buyer" name="Bulk Buyer" />
+    <bpmn:participant id="Participant_Manufacturer" name="Manufacturer" />
+    <bpmn:participant id="Participant_Middleman" name="Middleman" />
+    <bpmn:participant id="Participant_Supplier" name="Supplier" />
+    <bpmn:participant id="Participant_Special_Carrier" name="Special Carrier" />
+    <bpmn:messageFlow id="MessageFlow_Order_initiating" sourceRef="Participant_Bulk_Buyer" targetRef="Participant_Manufacturer" messageRef="Message_Order_initiating" />
+    <bpmn:messageFlow id="MessageFlow_Order_Intermediate_initiating" sourceRef="Participant_Manufacturer" targetRef="Participant_Middleman" messageRef="Message_Order_Intermediate_initiating" />
+    <bpmn:messageFlow id="MessageFlow_FWD_Oder_Intermediate_initiating" sourceRef="Participant_Middleman" targetRef="Participant_Supplier" messageRef="Message_FWD_Oder_Intermediate_initiating" />
+    <bpmn:messageFlow id="MessageFlow_Order_Special_Transport_initiating" sourceRef="Participant_Middleman" targetRef="Participant_Special_Carrier" messageRef="Message_Order_Special_Transport_initiating" />
+    <bpmn:messageFlow id="MessageFlow_Request_Details_initiating" sourceRef="Participant_Special_Carrier" targetRef="Participant_Supplier" messageRef="Message_Request_Details_initiating" />
+    <bpmn:messageFlow id="MessageFlow_Transport_Details_initiating" sourceRef="Participant_Supplier" targetRef="Participant_Special_Carrier" messageRef="Message_Transport_Details_initiating" />
+    <bpmn:messageFlow id="MessageFlow_Waybill_for_Intermediate_initiating" sourceRef="Participant_Supplier" targetRef="Participant_Special_Carrier" messageRef="Message_Waybill_for_Intermediate_initiating" />
+    <bpmn:messageFlow id="MessageFlow_Arrival_Intermediate_initiating" sourceRef="Participant_Special_Carrier" targetRef="Participant_Manufacturer" messageRef="Message_Arrival_Intermediate_initiating" />
+    <bpmn:messageFlow id="MessageFlow_Delivery_of_Product_initiating" sourceRef="Participant_Manufacturer" targetRef="Participant_Bulk_Buyer" messageRef="Message_Delivery_of_Product_initiating" />
+    <bpmn:messageFlow id="MessageFlow_Prepare_Transport_Documentation_initiating" sourceRef="Participant_Middleman" targetRef="Participant_Special_Carrier" messageRef="Message_Prepare_Transport_Documentation_initiating" />
+    <bpmn:startEvent id="StartEvent_Event_0amsrvp" name="Event_0amsrvp">
+      <bpmn:outgoing>Flow_Event_0amsrvp_Order</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:choreographyTask id="ChoreographyTask_Order" name="Order" initiatingParticipantRef="Participant_Bulk_Buyer">
+      <bpmn:incoming>Flow_Event_0amsrvp_Order</bpmn:incoming>
+      <bpmn:outgoing>Flow_Order_Order_Intermediate</bpmn:outgoing>
+      <bpmn:participantRef>Participant_Bulk_Buyer</bpmn:participantRef>
+      <bpmn:participantRef>Participant_Manufacturer</bpmn:participantRef>
+      <bpmn:messageFlowRef>MessageFlow_Order_initiating</bpmn:messageFlowRef>
+    </bpmn:choreographyTask>
+    <bpmn:choreographyTask id="ChoreographyTask_Order_Intermediate" name="Order Intermediate" initiatingParticipantRef="Participant_Manufacturer">
+      <bpmn:incoming>Flow_Order_Order_Intermediate</bpmn:incoming>
+      <bpmn:outgoing>Flow_Order_Intermediate_FWD_Oder_Intermediate</bpmn:outgoing>
+      <bpmn:participantRef>Participant_Manufacturer</bpmn:participantRef>
+      <bpmn:participantRef>Participant_Middleman</bpmn:participantRef>
+      <bpmn:messageFlowRef>MessageFlow_Order_Intermediate_initiating</bpmn:messageFlowRef>
+    </bpmn:choreographyTask>
+    <bpmn:choreographyTask id="ChoreographyTask_FWD_Oder_Intermediate" name="FWD Oder Intermediate" initiatingParticipantRef="Participant_Middleman">
+      <bpmn:incoming>Flow_Order_Intermediate_FWD_Oder_Intermediate</bpmn:incoming>
+      <bpmn:outgoing>Flow_FWD_Oder_Intermediate_Order_Special_Transport</bpmn:outgoing>
+      <bpmn:participantRef>Participant_Middleman</bpmn:participantRef>
+      <bpmn:participantRef>Participant_Supplier</bpmn:participantRef>
+      <bpmn:messageFlowRef>MessageFlow_FWD_Oder_Intermediate_initiating</bpmn:messageFlowRef>
+    </bpmn:choreographyTask>
+    <bpmn:choreographyTask id="ChoreographyTask_Order_Special_Transport" name="Order Special Transport" initiatingParticipantRef="Participant_Middleman">
+      <bpmn:incoming>Flow_FWD_Oder_Intermediate_Order_Special_Transport</bpmn:incoming>
+      <bpmn:outgoing>Flow_Order_Special_Transport_Parallel_Transport_Preparation_Split</bpmn:outgoing>
+      <bpmn:participantRef>Participant_Middleman</bpmn:participantRef>
+      <bpmn:participantRef>Participant_Special_Carrier</bpmn:participantRef>
+      <bpmn:messageFlowRef>MessageFlow_Order_Special_Transport_initiating</bpmn:messageFlowRef>
+    </bpmn:choreographyTask>
+    <bpmn:choreographyTask id="ChoreographyTask_Request_Details" name="Request Details" initiatingParticipantRef="Participant_Special_Carrier">
+      <bpmn:incoming>Flow_Parallel_Transport_Preparation_Split_Request_Details</bpmn:incoming>
+      <bpmn:outgoing>Flow_Request_Details_Transport_Details</bpmn:outgoing>
+      <bpmn:participantRef>Participant_Special_Carrier</bpmn:participantRef>
+      <bpmn:participantRef>Participant_Supplier</bpmn:participantRef>
+      <bpmn:messageFlowRef>MessageFlow_Request_Details_initiating</bpmn:messageFlowRef>
+    </bpmn:choreographyTask>
+    <bpmn:choreographyTask id="ChoreographyTask_Transport_Details" name="Transport Details" initiatingParticipantRef="Participant_Supplier">
+      <bpmn:incoming>Flow_Request_Details_Transport_Details</bpmn:incoming>
+      <bpmn:outgoing>Flow_Transport_Details_Parallel_Transport_Preparation_Join</bpmn:outgoing>
+      <bpmn:participantRef>Participant_Supplier</bpmn:participantRef>
+      <bpmn:participantRef>Participant_Special_Carrier</bpmn:participantRef>
+      <bpmn:messageFlowRef>MessageFlow_Transport_Details_initiating</bpmn:messageFlowRef>
+    </bpmn:choreographyTask>
+    <bpmn:choreographyTask id="ChoreographyTask_Waybill_for_Intermediate" name="Waybill for Intermediate" initiatingParticipantRef="Participant_Supplier">
+      <bpmn:incoming>Flow_Parallel_Transport_Preparation_Join_Waybill_for_Intermediate</bpmn:incoming>
+      <bpmn:outgoing>Flow_Waybill_for_Intermediate_Arrival_Intermediate</bpmn:outgoing>
+      <bpmn:participantRef>Participant_Supplier</bpmn:participantRef>
+      <bpmn:participantRef>Participant_Special_Carrier</bpmn:participantRef>
+      <bpmn:messageFlowRef>MessageFlow_Waybill_for_Intermediate_initiating</bpmn:messageFlowRef>
+    </bpmn:choreographyTask>
+    <bpmn:choreographyTask id="ChoreographyTask_Arrival_Intermediate" name="Arrival Intermediate" initiatingParticipantRef="Participant_Special_Carrier">
+      <bpmn:incoming>Flow_Waybill_for_Intermediate_Arrival_Intermediate</bpmn:incoming>
+      <bpmn:outgoing>Flow_Arrival_Intermediate_Delivery_of_Product</bpmn:outgoing>
+      <bpmn:participantRef>Participant_Special_Carrier</bpmn:participantRef>
+      <bpmn:participantRef>Participant_Manufacturer</bpmn:participantRef>
+      <bpmn:messageFlowRef>MessageFlow_Arrival_Intermediate_initiating</bpmn:messageFlowRef>
+    </bpmn:choreographyTask>
+    <bpmn:choreographyTask id="ChoreographyTask_Delivery_of_Product" name="Delivery of Product" initiatingParticipantRef="Participant_Manufacturer">
+      <bpmn:incoming>Flow_Arrival_Intermediate_Delivery_of_Product</bpmn:incoming>
+      <bpmn:outgoing>Flow_Delivery_of_Product_Event_10n27bz</bpmn:outgoing>
+      <bpmn:participantRef>Participant_Manufacturer</bpmn:participantRef>
+      <bpmn:participantRef>Participant_Bulk_Buyer</bpmn:participantRef>
+      <bpmn:messageFlowRef>MessageFlow_Delivery_of_Product_initiating</bpmn:messageFlowRef>
+    </bpmn:choreographyTask>
+    <bpmn:endEvent id="EndEvent_Event_10n27bz" name="Event_10n27bz">
+      <bpmn:incoming>Flow_Delivery_of_Product_Event_10n27bz</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:parallelGateway id="ParallelGateway_Parallel_Transport_Preparation_Split" name="Parallel Transport Preparation Split">
+      <bpmn:incoming>Flow_Order_Special_Transport_Parallel_Transport_Preparation_Split</bpmn:incoming>
+      <bpmn:outgoing>Flow_Parallel_Transport_Preparation_Split_Request_Details</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Parallel_Transport_Preparation_Split_Prepare_Transport_Documentation</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:choreographyTask id="ChoreographyTask_Prepare_Transport_Documentation" name="Prepare Transport Documentation" initiatingParticipantRef="Participant_Middleman">
+      <bpmn:incoming>Flow_Parallel_Transport_Preparation_Split_Prepare_Transport_Documentation</bpmn:incoming>
+      <bpmn:outgoing>Flow_Prepare_Transport_Documentation_Parallel_Transport_Preparation_Join</bpmn:outgoing>
+      <bpmn:participantRef>Participant_Middleman</bpmn:participantRef>
+      <bpmn:participantRef>Participant_Special_Carrier</bpmn:participantRef>
+      <bpmn:messageFlowRef>MessageFlow_Prepare_Transport_Documentation_initiating</bpmn:messageFlowRef>
+    </bpmn:choreographyTask>
+    <bpmn:parallelGateway id="ParallelGateway_Parallel_Transport_Preparation_Join" name="Parallel Transport Preparation Join">
+      <bpmn:incoming>Flow_Transport_Details_Parallel_Transport_Preparation_Join</bpmn:incoming>
+      <bpmn:incoming>Flow_Prepare_Transport_Documentation_Parallel_Transport_Preparation_Join</bpmn:incoming>
+      <bpmn:outgoing>Flow_Parallel_Transport_Preparation_Join_Waybill_for_Intermediate</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="Flow_Event_0amsrvp_Order" sourceRef="StartEvent_Event_0amsrvp" targetRef="ChoreographyTask_Order" />
+    <bpmn:sequenceFlow id="Flow_Order_Order_Intermediate" sourceRef="ChoreographyTask_Order" targetRef="ChoreographyTask_Order_Intermediate" />
+    <bpmn:sequenceFlow id="Flow_Order_Intermediate_FWD_Oder_Intermediate" sourceRef="ChoreographyTask_Order_Intermediate" targetRef="ChoreographyTask_FWD_Oder_Intermediate" />
+    <bpmn:sequenceFlow id="Flow_FWD_Oder_Intermediate_Order_Special_Transport" sourceRef="ChoreographyTask_FWD_Oder_Intermediate" targetRef="ChoreographyTask_Order_Special_Transport" />
+    <bpmn:sequenceFlow id="Flow_Order_Special_Transport_Parallel_Transport_Preparation_Split" sourceRef="ChoreographyTask_Order_Special_Transport" targetRef="ParallelGateway_Parallel_Transport_Preparation_Split" />
+    <bpmn:sequenceFlow id="Flow_Request_Details_Transport_Details" sourceRef="ChoreographyTask_Request_Details" targetRef="ChoreographyTask_Transport_Details" />
+    <bpmn:sequenceFlow id="Flow_Transport_Details_Parallel_Transport_Preparation_Join" sourceRef="ChoreographyTask_Transport_Details" targetRef="ParallelGateway_Parallel_Transport_Preparation_Join" />
+    <bpmn:sequenceFlow id="Flow_Waybill_for_Intermediate_Arrival_Intermediate" sourceRef="ChoreographyTask_Waybill_for_Intermediate" targetRef="ChoreographyTask_Arrival_Intermediate" />
+    <bpmn:sequenceFlow id="Flow_Arrival_Intermediate_Delivery_of_Product" sourceRef="ChoreographyTask_Arrival_Intermediate" targetRef="ChoreographyTask_Delivery_of_Product" />
+    <bpmn:sequenceFlow id="Flow_Delivery_of_Product_Event_10n27bz" sourceRef="ChoreographyTask_Delivery_of_Product" targetRef="EndEvent_Event_10n27bz" />
+    <bpmn:sequenceFlow id="Flow_Parallel_Transport_Preparation_Split_Request_Details" sourceRef="ParallelGateway_Parallel_Transport_Preparation_Split" targetRef="ChoreographyTask_Request_Details" />
+    <bpmn:sequenceFlow id="Flow_Parallel_Transport_Preparation_Split_Prepare_Transport_Documentation" sourceRef="ParallelGateway_Parallel_Transport_Preparation_Split" targetRef="ChoreographyTask_Prepare_Transport_Documentation" />
+    <bpmn:sequenceFlow id="Flow_Prepare_Transport_Documentation_Parallel_Transport_Preparation_Join" sourceRef="ChoreographyTask_Prepare_Transport_Documentation" targetRef="ParallelGateway_Parallel_Transport_Preparation_Join" />
+    <bpmn:sequenceFlow id="Flow_Parallel_Transport_Preparation_Join_Waybill_for_Intermediate" sourceRef="ParallelGateway_Parallel_Transport_Preparation_Join" targetRef="ChoreographyTask_Waybill_for_Intermediate" />
+  </bpmn:choreography>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_PaperExampleParallelTransportPreparation" bpmnElement="PaperExampleParallelTransportPreparation">
+      <bpmndi:BPMNShape id="StartEvent_Event_0amsrvp_di" bpmnElement="StartEvent_Event_0amsrvp">
+        <dc:Bounds x="234" y="350" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Order_di" bpmnElement="ChoreographyTask_Order">
+        <dc:Bounds x="352" y="328" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Order_Participant_Bulk_Buyer_band_di" bpmnElement="Participant_Bulk_Buyer" isMessageVisible="true" participantBandKind="top_initiating" choreographyActivityShape="ChoreographyTask_Order_di">
+        <dc:Bounds x="352" y="328" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Order_Participant_Manufacturer_band_di" bpmnElement="Participant_Manufacturer" isMessageVisible="true" participantBandKind="bottom_non_initiating" choreographyActivityShape="ChoreographyTask_Order_di">
+        <dc:Bounds x="352" y="388" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Order_Intermediate_di" bpmnElement="ChoreographyTask_Order_Intermediate">
+        <dc:Bounds x="502" y="328" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Order_Intermediate_Participant_Manufacturer_band_di" bpmnElement="Participant_Manufacturer" isMessageVisible="true" participantBandKind="top_initiating" choreographyActivityShape="ChoreographyTask_Order_Intermediate_di">
+        <dc:Bounds x="502" y="328" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Order_Intermediate_Participant_Middleman_band_di" bpmnElement="Participant_Middleman" isMessageVisible="true" participantBandKind="bottom_non_initiating" choreographyActivityShape="ChoreographyTask_Order_Intermediate_di">
+        <dc:Bounds x="502" y="388" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_FWD_Oder_Intermediate_di" bpmnElement="ChoreographyTask_FWD_Oder_Intermediate">
+        <dc:Bounds x="652" y="328" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_FWD_Oder_Intermediate_Participant_Middleman_band_di" bpmnElement="Participant_Middleman" isMessageVisible="true" participantBandKind="top_initiating" choreographyActivityShape="ChoreographyTask_FWD_Oder_Intermediate_di">
+        <dc:Bounds x="652" y="328" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_FWD_Oder_Intermediate_Participant_Supplier_band_di" bpmnElement="Participant_Supplier" isMessageVisible="true" participantBandKind="bottom_non_initiating" choreographyActivityShape="ChoreographyTask_FWD_Oder_Intermediate_di">
+        <dc:Bounds x="652" y="388" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Order_Special_Transport_di" bpmnElement="ChoreographyTask_Order_Special_Transport">
+        <dc:Bounds x="802" y="328" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Order_Special_Transport_Participant_Middleman_band_di" bpmnElement="Participant_Middleman" isMessageVisible="true" participantBandKind="top_initiating" choreographyActivityShape="ChoreographyTask_Order_Special_Transport_di">
+        <dc:Bounds x="802" y="328" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Order_Special_Transport_Participant_Special_Carrier_band_di" bpmnElement="Participant_Special_Carrier" isMessageVisible="true" participantBandKind="bottom_non_initiating" choreographyActivityShape="ChoreographyTask_Order_Special_Transport_di">
+        <dc:Bounds x="802" y="388" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Request_Details_di" bpmnElement="ChoreographyTask_Request_Details">
+        <dc:Bounds x="1102" y="238" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Request_Details_Participant_Special_Carrier_band_di" bpmnElement="Participant_Special_Carrier" isMessageVisible="true" participantBandKind="top_initiating" choreographyActivityShape="ChoreographyTask_Request_Details_di">
+        <dc:Bounds x="1102" y="238" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Request_Details_Participant_Supplier_band_di" bpmnElement="Participant_Supplier" isMessageVisible="true" participantBandKind="bottom_non_initiating" choreographyActivityShape="ChoreographyTask_Request_Details_di">
+        <dc:Bounds x="1102" y="298" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Transport_Details_di" bpmnElement="ChoreographyTask_Transport_Details">
+        <dc:Bounds x="1252" y="328" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Transport_Details_Participant_Supplier_band_di" bpmnElement="Participant_Supplier" isMessageVisible="true" participantBandKind="top_initiating" choreographyActivityShape="ChoreographyTask_Transport_Details_di">
+        <dc:Bounds x="1252" y="328" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Transport_Details_Participant_Special_Carrier_band_di" bpmnElement="Participant_Special_Carrier" isMessageVisible="true" participantBandKind="bottom_non_initiating" choreographyActivityShape="ChoreographyTask_Transport_Details_di">
+        <dc:Bounds x="1252" y="388" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Waybill_for_Intermediate_di" bpmnElement="ChoreographyTask_Waybill_for_Intermediate">
+        <dc:Bounds x="1552" y="328" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Waybill_for_Intermediate_Participant_Supplier_band_di" bpmnElement="Participant_Supplier" isMessageVisible="true" participantBandKind="top_initiating" choreographyActivityShape="ChoreographyTask_Waybill_for_Intermediate_di">
+        <dc:Bounds x="1552" y="328" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Waybill_for_Intermediate_Participant_Special_Carrier_band_di" bpmnElement="Participant_Special_Carrier" isMessageVisible="true" participantBandKind="bottom_non_initiating" choreographyActivityShape="ChoreographyTask_Waybill_for_Intermediate_di">
+        <dc:Bounds x="1552" y="388" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Arrival_Intermediate_di" bpmnElement="ChoreographyTask_Arrival_Intermediate">
+        <dc:Bounds x="1702" y="328" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Arrival_Intermediate_Participant_Special_Carrier_band_di" bpmnElement="Participant_Special_Carrier" isMessageVisible="true" participantBandKind="top_initiating" choreographyActivityShape="ChoreographyTask_Arrival_Intermediate_di">
+        <dc:Bounds x="1702" y="328" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Arrival_Intermediate_Participant_Manufacturer_band_di" bpmnElement="Participant_Manufacturer" isMessageVisible="true" participantBandKind="bottom_non_initiating" choreographyActivityShape="ChoreographyTask_Arrival_Intermediate_di">
+        <dc:Bounds x="1702" y="388" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Delivery_of_Product_di" bpmnElement="ChoreographyTask_Delivery_of_Product">
+        <dc:Bounds x="1852" y="328" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Delivery_of_Product_Participant_Manufacturer_band_di" bpmnElement="Participant_Manufacturer" isMessageVisible="true" participantBandKind="top_initiating" choreographyActivityShape="ChoreographyTask_Delivery_of_Product_di">
+        <dc:Bounds x="1852" y="328" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Delivery_of_Product_Participant_Bulk_Buyer_band_di" bpmnElement="Participant_Bulk_Buyer" isMessageVisible="true" participantBandKind="bottom_non_initiating" choreographyActivityShape="ChoreographyTask_Delivery_of_Product_di">
+        <dc:Bounds x="1852" y="388" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Event_10n27bz_di" bpmnElement="EndEvent_Event_10n27bz">
+        <dc:Bounds x="2034" y="350" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ParallelGateway_Parallel_Transport_Preparation_Split_di" bpmnElement="ParallelGateway_Parallel_Transport_Preparation_Split">
+        <dc:Bounds x="977" y="343" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Prepare_Transport_Documentation_di" bpmnElement="ChoreographyTask_Prepare_Transport_Documentation">
+        <dc:Bounds x="1102" y="418" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Prepare_Transport_Documentation_Participant_Middleman_band_di" bpmnElement="Participant_Middleman" isMessageVisible="true" participantBandKind="top_initiating" choreographyActivityShape="ChoreographyTask_Prepare_Transport_Documentation_di">
+        <dc:Bounds x="1102" y="418" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ChoreographyTask_Prepare_Transport_Documentation_Participant_Special_Carrier_band_di" bpmnElement="Participant_Special_Carrier" isMessageVisible="true" participantBandKind="bottom_non_initiating" choreographyActivityShape="ChoreographyTask_Prepare_Transport_Documentation_di">
+        <dc:Bounds x="1102" y="478" width="100" height="20" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ParallelGateway_Parallel_Transport_Preparation_Join_di" bpmnElement="ParallelGateway_Parallel_Transport_Preparation_Join">
+        <dc:Bounds x="1427" y="343" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Event_0amsrvp_Order_di" bpmnElement="Flow_Event_0amsrvp_Order">
+        <di:waypoint x="270" y="368" />
+        <di:waypoint x="352" y="368" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Order_Order_Intermediate_di" bpmnElement="Flow_Order_Order_Intermediate">
+        <di:waypoint x="452" y="368" />
+        <di:waypoint x="502" y="368" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Order_Intermediate_FWD_Oder_Intermediate_di" bpmnElement="Flow_Order_Intermediate_FWD_Oder_Intermediate">
+        <di:waypoint x="602" y="368" />
+        <di:waypoint x="652" y="368" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_FWD_Oder_Intermediate_Order_Special_Transport_di" bpmnElement="Flow_FWD_Oder_Intermediate_Order_Special_Transport">
+        <di:waypoint x="752" y="368" />
+        <di:waypoint x="802" y="368" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Order_Special_Transport_Parallel_Transport_Preparation_Split_di" bpmnElement="Flow_Order_Special_Transport_Parallel_Transport_Preparation_Split">
+        <di:waypoint x="902" y="368" />
+        <di:waypoint x="977" y="368" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Request_Details_Transport_Details_di" bpmnElement="Flow_Request_Details_Transport_Details">
+        <di:waypoint x="1202" y="278" />
+        <di:waypoint x="1227" y="278" />
+        <di:waypoint x="1227" y="368" />
+        <di:waypoint x="1252" y="368" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Transport_Details_Parallel_Transport_Preparation_Join_di" bpmnElement="Flow_Transport_Details_Parallel_Transport_Preparation_Join">
+        <di:waypoint x="1352" y="368" />
+        <di:waypoint x="1427" y="368" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Waybill_for_Intermediate_Arrival_Intermediate_di" bpmnElement="Flow_Waybill_for_Intermediate_Arrival_Intermediate">
+        <di:waypoint x="1652" y="368" />
+        <di:waypoint x="1702" y="368" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Arrival_Intermediate_Delivery_of_Product_di" bpmnElement="Flow_Arrival_Intermediate_Delivery_of_Product">
+        <di:waypoint x="1802" y="368" />
+        <di:waypoint x="1852" y="368" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Delivery_of_Product_Event_10n27bz_di" bpmnElement="Flow_Delivery_of_Product_Event_10n27bz">
+        <di:waypoint x="1952" y="368" />
+        <di:waypoint x="2034" y="368" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Parallel_Transport_Preparation_Split_Request_Details_di" bpmnElement="Flow_Parallel_Transport_Preparation_Split_Request_Details">
+        <di:waypoint x="1002" y="343" />
+        <di:waypoint x="1002" y="278" />
+        <di:waypoint x="1102" y="278" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Parallel_Transport_Preparation_Split_Prepare_Transport_Documentation_di" bpmnElement="Flow_Parallel_Transport_Preparation_Split_Prepare_Transport_Documentation">
+        <di:waypoint x="1002" y="393" />
+        <di:waypoint x="1002" y="458" />
+        <di:waypoint x="1102" y="458" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Prepare_Transport_Documentation_Parallel_Transport_Preparation_Join_di" bpmnElement="Flow_Prepare_Transport_Documentation_Parallel_Transport_Preparation_Join">
+        <di:waypoint x="1202" y="458" />
+        <di:waypoint x="1452" y="458" />
+        <di:waypoint x="1452" y="393" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Parallel_Transport_Preparation_Join_Waybill_for_Intermediate_di" bpmnElement="Flow_Parallel_Transport_Preparation_Join_Waybill_for_Intermediate">
+        <di:waypoint x="1477" y="368" />
+        <di:waypoint x="1552" y="368" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+    <bpmndi:BPMNLabelStyle id="BPMNLabelStyle_1">
+      <dc:Font name="arial" size="9" />
+    </bpmndi:BPMNLabelStyle>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

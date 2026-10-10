@@ -16,14 +16,16 @@ const DEPLOYER_PRIVATE_KEY =
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 const DEFAULT_BPMN = "references/paper-example.bpmn";
 
-async function readArtifact(fileName, contractName = fileName) {
+// fileName is relative to contracts/choreography/, or "participant/<File>" for another directory.
+export async function readArtifact(fileName, contractName = path.basename(fileName)) {
+  const source = fileName.includes("/") ? fileName : `choreography/${fileName}`;
   return JSON.parse(await fs.readFile(
-    path.join(__dirname, "..", "artifacts", "contracts", "choreography", `${fileName}.sol`, `${contractName}.json`),
+    path.join(__dirname, "..", "artifacts", "contracts", `${source}.sol`, `${contractName}.json`),
     "utf8"
   ));
 }
 
-async function deployContract(signer, fileName, args = []) {
+export async function deployContract(signer, fileName, args = []) {
   const artifact = await readArtifact(fileName);
   const contract = await new ContractFactory(artifact.abi, artifact.bytecode, signer).deploy(...args);
   await contract.waitForDeployment();
@@ -35,24 +37,28 @@ function connect() {
 }
 
 // Mints an instance of the choreography type, born with the type's model, and links its roles
-// to local accounts 1..n: the model keeps only the role names.
-export async function mintAsset(choreographyNmtAddress, creatorPolicyAddress, holderPolicyAddress, roleNames) {
-  const signer = connect();
+// to local accounts 1..n, or to roleAccounts when given: the model keeps only the role names.
+export async function mintAsset(choreographyNmtAddress, creatorPolicyAddress, holderPolicyAddress, roleNames, { signer = connect(), roleAccounts } = {}) {
   const deployerAddress = await signer.getAddress();
   const nmt = new Contract(choreographyNmtAddress, (await readArtifact("ChoreographyNMT")).abi, signer);
   const [assetAddress, tokenId] = await nmt.mint.staticCall(deployerAddress, creatorPolicyAddress, holderPolicyAddress);
   const mintReceipt = await (await nmt.mint(deployerAddress, creatorPolicyAddress, holderPolicyAddress)).wait();
 
-  const accounts = await signer.provider.send("eth_accounts", []);
-  if (accounts.length < roleNames.length + 1) {
-    throw new Error("Not enough local accounts to assign choreography roles.");
+  let accounts = roleAccounts;
+  if (!accounts) {
+    const localAccounts = await signer.provider.send("eth_accounts", []);
+    if (localAccounts.length < roleNames.length + 1) {
+      throw new Error("Not enough local accounts to assign choreography roles.");
+    }
+    accounts = roleNames.map((_, index) => localAccounts[index + 1]);
   }
   const asset = new Contract(assetAddress, (await readArtifact("ChoreographyMutableAsset")).abi, signer);
-  const rolesReceipt = await (await asset.setRoles(roleNames, roleNames.map((_, index) => accounts[index + 1]))).wait();
+  const rolesReceipt = await (await asset.setRoles(roleNames, accounts)).wait();
 
   return {
     assetAddress,
     tokenId,
+    receipts: { mint: mintReceipt, setRoles: rolesReceipt },
     costs: [
       reportTransactionCost("Mint ChoreographyMutableAsset", mintReceipt),
       reportTransactionCost("setRoles", rolesReceipt)
@@ -60,14 +66,9 @@ export async function mintAsset(choreographyNmtAddress, creatorPolicyAddress, ho
   };
 }
 
-// Deploys a choreography type from a BPMN model (policies, renderer, the model contract, and its
-// ChoreographyNMT) and mints one instance.
-export async function deployAsset(bpmnPath = DEFAULT_BPMN, outputPath) {
-  const startedAt = performance.now();
-  const { dataset, outputPath: nmtPath } = await importBpmnToNmt(bpmnPath, outputPath);
-  const importedAt = performance.now();
-
-  const signer = connect();
+// Deploys a choreography type for an imported model: policies, renderer, the model contract, and
+// its ChoreographyNMT.
+export async function deployChoreographyType(signer, dataset) {
   const master = await deployContract(signer, "MasterSmartPolicy");
   const creator = await deployContract(signer, "CreatorSmartPolicy");
   const holder = await deployContract(signer, "HolderSmartPolicy");
@@ -78,8 +79,18 @@ export async function deployAsset(bpmnPath = DEFAULT_BPMN, outputPath) {
     renderer.contract.target,
     model.address
   ]);
+  return { master, creator, holder, renderer, model, choreographyNmt };
+}
+
+// Deploys a choreography type from a BPMN model and mints one instance.
+export async function deployAsset(bpmnPath = DEFAULT_BPMN, outputPath, { signer = connect() } = {}) {
+  const startedAt = performance.now();
+  const { dataset, outputPath: nmtPath } = await importBpmnToNmt(bpmnPath, outputPath);
+  const importedAt = performance.now();
+
+  const { master, creator, holder, renderer, model, choreographyNmt } = await deployChoreographyType(signer, dataset);
   const deployedAt = performance.now();
-  const instance = await mintAsset(choreographyNmt.contract.target, creator.contract.target, holder.contract.target, dataset.roles);
+  const instance = await mintAsset(choreographyNmt.contract.target, creator.contract.target, holder.contract.target, dataset.roles, { signer });
   const mintedAt = performance.now();
 
   console.log(`ChoreographyNMT deployed to: ${choreographyNmt.contract.target}`);

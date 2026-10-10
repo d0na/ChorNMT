@@ -22,14 +22,14 @@ function renderMetadata(config, resolvedConfigPath) {
   return config;
 }
 
-export async function renderAsset(assetAddress, renderConfigPath) {
+export async function renderAsset(assetAddress, renderConfigPath, { readTokenURI } = {}) {
   if (!assetAddress || !renderConfigPath) {
     throw new Error("Usage: npm run render:asset -- <asset-address> <delta-or-nmt.json>");
   }
   const resolvedConfigPath = path.resolve(process.cwd(), renderConfigPath);
   const config = JSON.parse(await fs.readFile(resolvedConfigPath, "utf8"));
   const startedAt = performance.now();
-  const artifacts = await renderAssetToBpmn({ assetAddress, ...renderMetadata(config, resolvedConfigPath) });
+  const artifacts = await renderAssetToBpmn({ assetAddress, readTokenURI, ...renderMetadata(config, resolvedConfigPath) });
   const exported = JSON.parse(await fs.readFile(artifacts.rawJsonPath, "utf8"));
   const nodes = exported.choreography?.nodes || [];
   const model = {
