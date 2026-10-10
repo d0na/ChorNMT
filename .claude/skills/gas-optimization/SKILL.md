@@ -30,7 +30,9 @@ Rerun the same commands and compare per operation:
 | Operation | Before | After | Δ | Δ % |
 | --- | --- | --- | --- | --- |
 
-Include deploy of each contract, the model contract of a type, mint, `setRoles`, `setNodes` (delta), and the denied cases the change touches. Also report `check:size` for `ChoreographyNMT` and `ParticipantNMT`.
+Include deploy of each contract, the model contract of a type, mint, `setRoles`, `setNodes` (delta), and the denied cases the change touches. Also report `check:size` for `ChoreographyNMT` and `ParticipantNMT`. The `test-runner` agent returns these deltas from the metrics without the full tables.
+
+Then update the current figures quoted in the docs and run `npm run check:gas`: it names every doc text that no longer matches the measurements.
 
 ## 4. Decide
 

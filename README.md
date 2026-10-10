@@ -123,7 +123,7 @@ Files with a `.generated.*` suffix and imported `*.nmt.json` files are local art
 
 ## Claude Code
 
-The repository ships project instructions (`CLAUDE.md`), hooks (`.claude/settings.json`, `.claude/hooks/`), and skills (`.claude/skills/`). The `grill-me` and `grilling` skills come from skills.sh and are tracked in `skills-lock.json`:
+The repository ships project instructions (`CLAUDE.md`), hooks (`.claude/settings.json`, `.claude/hooks/`), skills (`.claude/skills/`), and subagents (`.claude/agents/`: `test-runner` runs the checks and tests, `docs-reviewer` checks a change against the docs). The `grill-me` and `grilling` skills come from skills.sh and are tracked in `skills-lock.json`:
 
 ```bash
 npx skills add https://github.com/mattpocock/skills --skill grill-me --skill grilling -a claude-code --copy

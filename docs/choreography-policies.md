@@ -57,7 +57,7 @@ The model keeps only the role names: every role is born with no account, and the
 | --- | ---: |
 | Deploy the paper-example model contract (once per type) | 2,343,146 |
 | Mint a paper-example instance, born with the model | 5,619,770 |
-| Link its five role accounts (`setRoles`) | 198,112 |
+| Link its five role accounts (`setRoles`) | 198,244 |
 | Mint a three-node test instance | 3,173,819 |
 
 The values are reproducible local gas measurements, not public-network prices. Storage writes in the asset dominate the mint. In the same run, an allowed constrained update (three whole nodes) used 609,279 gas and structural deny paths used 76,086--324,233 gas; the paper delta used 1,866,349 gas.

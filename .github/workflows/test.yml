@@ -26,6 +26,8 @@ jobs:
       - run: npm run check:invariants
       - run: npm run check:uml
       - run: npm test
+      - run: npm run evaluate:policies
+      - run: npm run check:gas
       - name: Import reference BPMN models
         run: |
           node bpmn-builder-js/scripts/import-bpmn.js references/paper-example.bpmn "$RUNNER_TEMP/paper-example.nmt.json"

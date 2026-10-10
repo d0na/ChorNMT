@@ -43,6 +43,8 @@ npm run docs:uml                                     # render docs/uml/*.puml to
 npm run check:uml                                    # fail if a UML SVG is missing or stale
 npm run check:invariants                             # fail if a contract breaks a design decision (grep, no compile)
 npm test                                             # = test:policies, ephemeral network, no node needed
+npm run evaluate:policies                            # lifecycle evaluation, ephemeral network
+npm run check:gas                                    # fail if a gas figure in the docs differs from the last test/evaluation run
 npm run start:operations                             # compile + hardhat node on :8545 (long-running)
 npm run deploy:asset -- references/paper-example.bpmn  # needs the node: deploy the type, mint, print the asset
 npm run render:asset -- <asset> <nmt-or-delta.json>
@@ -50,15 +52,15 @@ npm run modify:asset -- <asset> <delta.json> [--no-render]
 npm run clean
 ```
 
-CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:invariants`, `check:uml`, `npm test`, and the BPMN importer on both reference models. Run the same before declaring work done. Set `ETH_USD_PRICE=3000` to avoid the live Coinbase price fetch in tests/evaluation.
+CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:invariants`, `check:uml`, `npm test`, `evaluate:policies`, `check:gas`, and the BPMN importer on both reference models. Run the same before declaring work done. Set `ETH_USD_PRICE=3000` to avoid the live Coinbase price fetch in tests/evaluation.
 
 ## Invariants and gotchas
 
-- **Docs at every level.** Every change is reflected, in the same commit, in every doc it touches: `CLAUDE.md`, the docs above (including `decisions.md` for a design change), `evaluation/README.md`, the report text in `scripts/evaluation/`, code comments, `.claude/skills/`, and the UML diagrams (`uml-diagrams` skill; CI fails on a stale SVG).
+- **Docs at every level.** Every change is reflected, in the same commit, in every doc it touches: `CLAUDE.md`, the docs above (including `decisions.md` for a design change), `evaluation/README.md`, the report text in `scripts/evaluation/`, code comments, `.claude/skills/` and `.claude/agents/`, and the UML diagrams (`uml-diagrams` skill; CI fails on a stale SVG).
 - **Contract structure.** Every contract follows `docs/contract-structure.md`; a change that has to break a rule records it in its "Known deviations" table.
 - **Policies are hardcoded** (XACML translations): rules are literals, no runtime setters; a rule change is a new policy. Choreography policies use Hardhat accounts 0–1, participant ones 5–9.
 - **Trust table ↔ tests ↔ spec.** A policy change keeps `docs/choreography-policies.md`, `scripts/test-policies.js` (`expectAllowed`/`expectDenied`), and `docs/policy-test-specification.md` in agreement (`policy-change` skill).
-- **Gas.** Report before/after gas for every contract change (`gas-optimization` skill). Never change an allow/deny outcome to save gas.
+- **Gas.** Report before/after gas for every contract change (`gas-optimization` skill). Never change an allow/deny outcome to save gas. The current figures quoted in the docs are listed in `scripts/check-gas.js`; a new current figure in a doc gets an entry there, a historical before/after figure does not.
 - **Bytecode limit.** `ChoreographyNMT` embeds the asset bytecode (`new`) and is close to the 24,576-byte limit. Put new logic in the renderer or a policy, not in `ChoreographyMutableAsset` or `ChoreographyNMT`, and run `npm run check:size`.
 - **Identity by name.** Nodes and roles are keyed by name; BPMN IDs are not stored on-chain. Nodes are never deleted, only overwritten; an asset never clears its name lists — mint a new instance for a clean model.
 - **One NMT, one choreography type.** `ChoreographyNMT` fixes its model (ABI-encoded `InitialModel` as the code of an SSTORE2 contract, `scripts/choreography-model.js`); every asset decodes it in its constructor, roles born without accounts. Another model is another NMT.
@@ -77,6 +79,11 @@ CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:invariant
 - No AI attribution anywhere: commit messages, PR titles and descriptions, tags, release notes, and code comments never mention Claude or Claude Code (no `Co-Authored-By: Claude …` trailer, no "Generated with Claude Code" line).
 - Docs: `architettura.md` and `rendering.md` are in Italian, everything else in English; keep each file's language.
 
-## Hooks and skills
+## Hooks, skills, and agents
 
-Hooks (`.claude/settings.json`, `.claude/hooks/`) block edits to generated files and SVGs, ask the user before an edit to `docs/requirements.md`, `docs/decisions.md`, `references/`, or `scripts/data/`, rerun `docs:uml` after a `.puml` edit and `compile` + `check:size` + `check:invariants` after a `.sol` edit, and check UML, invariants, compile, and size before `git commit`. Tests and evaluations are not hooks: run them through the skills and CI. Project skills are in `.claude/skills/`; `grill-me` comes from skills.sh (see `README.md`).
+Hooks (`.claude/settings.json`, `.claude/hooks/`) block edits to generated files and SVGs, ask the user before an edit to `docs/requirements.md`, `docs/decisions.md`, `references/`, or `scripts/data/`, rerun `docs:uml` after a `.puml` edit and `compile` + `check:size` + `check:invariants` after a `.sol` edit, and check UML, invariants, compile, and size before `git commit`, plus `test:policies`, `evaluate:policies`, and `check:gas` when contracts, scripts, or the docs quoting gas changed. `evaluate:paper` and `evaluate:all` need a node or Chromium and are not hooks: run them through the `evaluate` skill. Project skills are in `.claude/skills/`; `grill-me` comes from skills.sh (see `README.md`).
+
+Subagents are in `.claude/agents/`:
+
+- `test-runner` (Haiku) runs the checks, tests, and evaluations and returns only failures, changed allow/deny outcomes, and gas deltas. Use it instead of reading the full test tables in the main session.
+- `docs-reviewer` (Sonnet, read-only) checks a change against every doc level above and lists the mismatches. Run it before committing a change to contracts, scripts, or `bpmn-builder-js/`; the session that made the change writes the fixes.

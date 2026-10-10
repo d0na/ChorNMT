@@ -34,7 +34,7 @@
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pre-commit.sh",
             "timeout": 180,
-            "statusMessage": "Checking UML diagrams, design invariants, and contract sizes before commit..."
+            "statusMessage": "Checking UML diagrams, design invariants, contract sizes, policy tests, and gas figures before commit..."
           }
         ]
       }
