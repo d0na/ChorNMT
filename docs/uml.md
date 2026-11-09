@@ -13,6 +13,10 @@ npm run check:use-cases   # fail if a use case disagrees with the trust tables, 
 npm run evidence:update   # rerun the experiment: evidence, timings, sequence diagrams and their SVG, charts, BPMN drawings
 ```
 
+## Classes
+
+[`uml/class-diagram.mmd`](uml/class-diagram.mmd) is a hand-written Mermaid class diagram of the contract hierarchy, with the internal structure of `ChoreographyMutableAsset` (the `Descriptor`, `Node`, and `InitialModel` structs and the `NodeType` enum) and `ParticipantMutableAsset`. It is not generated nor checked by `check:uml`, so it has no versioned SVG: render it with `npx @mermaid-js/mermaid-cli -i docs/uml/class-diagram.mmd -o <out>.svg`, and update it by hand when a contract changes. The summary diagram in [Architettura](architettura.md) shows only the hierarchy.
+
 ## Use cases
 
 ### Choreography
