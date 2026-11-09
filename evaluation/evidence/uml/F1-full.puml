@@ -78,5 +78,5 @@ A0 -> C11 : constructor
 C11 --> A0 : allowed · 229,423 gas
 == F1.deploy.paper-creator · allowed ==
 A0 -> C12 : constructor
-C12 --> A0 : allowed · 1,790,784 gas
+C12 --> A0 : allowed · 1,790,772 gas
 @enduml

@@ -311,7 +311,7 @@
           "contract": "CreatorSmartPolicyPaperScenario",
           "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b"
+          "bytecodeKeccak256": "0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602"
         },
         {
           "resource": "instance",
@@ -409,7 +409,7 @@
           "contract": "CreatorSmartPolicyPaperScenario",
           "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b"
+          "bytecodeKeccak256": "0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602"
         },
         {
           "resource": "instance",
@@ -507,7 +507,7 @@
           "contract": "CreatorSmartPolicyPaperScenario",
           "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b"
+          "bytecodeKeccak256": "0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602"
         },
         {
           "resource": "instance",
@@ -654,7 +654,7 @@
           "contract": "CreatorSmartPolicyPaperScenario",
           "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b"
+          "bytecodeKeccak256": "0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602"
         },
         {
           "resource": "instance",
@@ -766,7 +766,7 @@
           "contract": "CreatorSmartPolicyPaperScenario",
           "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b"
+          "bytecodeKeccak256": "0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602"
         },
         {
           "resource": "instance",
@@ -1002,7 +1002,7 @@
           "contract": "CreatorSmartPolicyPaperScenario",
           "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x3ec79da4bfa22e31b540a827f9bead4cc1e6c48213c74460a6383b5f48c1fa6b"
+          "bytecodeKeccak256": "0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602"
         },
         {
           "resource": "instance",
@@ -1450,10 +1450,10 @@
       "outcome": "allowed",
       "reason": null,
       "trust": null,
-      "gasUsed": "1790784",
+      "gasUsed": "1790772",
       "gasPriceWei": "239951758",
-      "costWei": "429701768998272",
-      "transactionHash": "0xe67d7532f7cfe59b59805157c0e81b3d344c84b3bfac913bdfa8902a6001eaeb",
+      "costWei": "429698889577176",
+      "transactionHash": "0xb8944ff768b5a9a22362d701091a001d9c2cc25f7865b08ad12174466e2f36cb",
       "blockNumber": 13
     },
     {
@@ -1477,9 +1477,9 @@
         "action": "`mint` an instance of the choreography type to an eligible holder"
       },
       "gasUsed": "5619770",
-      "gasPriceWei": "211748212",
-      "costWei": "1189976249351240",
-      "transactionHash": "0x4d9acf861876c7b7585f7d475ea041e2b3c6ca1c7e28842c85556cbc9365de8c",
+      "gasPriceWei": "211748201",
+      "costWei": "1189976187533770",
+      "transactionHash": "0xc29773d9b7b91bd09e1d9c1fd3d592a421c031835ee1f3d78ba16f6c81c17036",
       "blockNumber": 14
     },
     {
@@ -1503,9 +1503,9 @@
         "action": "`setRoles`"
       },
       "gasUsed": "176849",
-      "gasPriceWei": "190237921",
-      "costWei": "33643386090929",
-      "transactionHash": "0xecb264564b69b789f702da863b257adc6f06ba8a0d6812e06cff23e8eb794f86",
+      "gasPriceWei": "190237911",
+      "costWei": "33643384322439",
+      "transactionHash": "0xfb155bd77fd0bc08362fc62bcce434958d747b2e5f884b2e7ee5f0f007e35831",
       "blockNumber": 15
     },
     {
@@ -1529,9 +1529,9 @@
         "action": "`mint` an instance of the choreography type to an eligible holder"
       },
       "gasUsed": "29810",
-      "gasPriceWei": "166598362",
-      "costWei": "4966297171220",
-      "transactionHash": "0x10b4362a188cf3314b392cb0caeb1676521547882a451ede6c803369b03698a9",
+      "gasPriceWei": "166598353",
+      "costWei": "4966296902930",
+      "transactionHash": "0xcbe8361fca0d235b6a8a1235f93b5429d3544db5728aa0991de6a912f0893a11",
       "blockNumber": 16
     },
     {
@@ -1555,9 +1555,9 @@
         "action": "`mint` an instance of the choreography type to an eligible holder"
       },
       "gasUsed": "30099",
-      "gasPriceWei": "145794260",
-      "costWei": "4388261431740",
-      "transactionHash": "0x0054c24b782c8ec1d560e782f3f1374ead9eb3b3b3434ec6ccdfae4105c8d42e",
+      "gasPriceWei": "145794252",
+      "costWei": "4388261190948",
+      "transactionHash": "0xeb08d24786885df7c7d113d05b5b0c218f7b0a82e97c8a8d9582680d33d19d92",
       "blockNumber": 17
     },
     {
@@ -1581,9 +1581,9 @@
         "action": "Mint a license of a type (`mintWithParticipantType`)"
       },
       "gasUsed": "1196735",
-      "gasPriceWei": "127588262",
-      "costWei": "152689338724570",
-      "transactionHash": "0xa27377885a72b2146dca4052c83bec5ac70014b0c8ea42065cf07130b59056f2",
+      "gasPriceWei": "127588256",
+      "costWei": "152689331544160",
+      "transactionHash": "0xd83e58910a5247effe3d1c7b318fae14d57b6321843041054d3c51f702d47c52",
       "blockNumber": 18
     },
     {
@@ -1607,9 +1607,9 @@
         "action": "Mint a license of a type (`mintWithParticipantType`)"
       },
       "gasUsed": "1199468",
-      "gasPriceWei": "112275936",
-      "costWei": "134671392402048",
-      "transactionHash": "0xde97a36b7463785d00ed967ab167cf91daca74dc2d44338c74cfdf6bc126af09",
+      "gasPriceWei": "112275930",
+      "costWei": "134671385205240",
+      "transactionHash": "0x95fbb8659f1f591afa50e3d629de2a8dc638cba52c72112757b1b5c62e7f28d4",
       "blockNumber": 19
     },
     {
@@ -1633,9 +1633,9 @@
         "action": "Mint a license of a type (`mintWithParticipantType`)"
       },
       "gasUsed": "1199497",
-      "gasPriceWei": "98802576",
-      "costWei": "118513393504272",
-      "transactionHash": "0x2cea79c66f3e7681b3f0283e2743ae8b1cbce2c05cebe0685e527fa34da64a95",
+      "gasPriceWei": "98802569",
+      "costWei": "118513385107793",
+      "transactionHash": "0xae82a75288e6c471b283be91d024a8b6853909e08b9640addc8482f37e58fabe",
       "blockNumber": 20
     },
     {
@@ -1659,9 +1659,9 @@
         "action": "`setRoles`"
       },
       "gasUsed": "63707",
-      "gasPriceWei": "86946060",
-      "costWei": "5539072644420",
-      "transactionHash": "0x09056bf2d6584b3aeb2744f94e55ba47f9bda90081785c7a489a56a44b991895",
+      "gasPriceWei": "86946055",
+      "costWei": "5539072325885",
+      "transactionHash": "0x726cf677d5628bb8ae416273a7fdbe7bdb13a40642897d431e9b541a95d94062",
       "blockNumber": 21
     },
     {
@@ -1685,9 +1685,9 @@
         "action": "`setRoles`"
       },
       "gasUsed": "69939",
-      "gasPriceWei": "76100883",
-      "costWei": "5322419656137",
-      "transactionHash": "0xc93e968c23d5d24733a19ca788c92f65291f947c3457470eb58eea71a110644c",
+      "gasPriceWei": "76100878",
+      "costWei": "5322419306442",
+      "transactionHash": "0x9f01bca6fb033c0aba85ef5e5e4207ac63a8ab2a0d46f307a373d2360e7a1827",
       "blockNumber": 22
     },
     {
@@ -1711,9 +1711,9 @@
         "action": "`setRoles`"
       },
       "gasUsed": "69939",
-      "gasPriceWei": "66610449",
-      "costWei": "4658668192611",
-      "transactionHash": "0xbc90670d26c7f98fe1c8e56ec5ef6fac179b8c95b3f8372461f2ee5dd9419d9d",
+      "gasPriceWei": "66610446",
+      "costWei": "4658667982794",
+      "transactionHash": "0x6fab6defe0df375d3ca33e834cbb0cf27179c55812f7caacc464aeb2edcc824d",
       "blockNumber": 23
     },
     {
@@ -1737,9 +1737,9 @@
         "action": "`setRoles`"
       },
       "gasUsed": "97276",
-      "gasPriceWei": "58303555",
-      "costWei": "5671536616180",
-      "transactionHash": "0xbf1cbbdcfb7392f133bb30ae28db495243bb21e4411644cceb52efba6d716966",
+      "gasPriceWei": "58303551",
+      "costWei": "5671536227076",
+      "transactionHash": "0x22d77d6e65e157c397fd73389aea7fcf9ecc6bea8a3a91f6e6dd71d76c7663fd",
       "blockNumber": 24
     },
     {
@@ -1763,9 +1763,9 @@
         "action": "`setRoles`"
       },
       "gasUsed": "54893",
-      "gasPriceWei": "51039242",
-      "costWei": "2801697111106",
-      "transactionHash": "0x7e60362265ec68a822afb004c7176c6c4a3406b59e800462dbd717f270a57e19",
+      "gasPriceWei": "51039240",
+      "costWei": "2801697001320",
+      "transactionHash": "0xaec329f796e5c4bb57cdc7027ddb8b36755dd707d70ac0dd57e93ff31cd2b4c8",
       "blockNumber": 25
     },
     {
@@ -1789,9 +1789,9 @@
         "action": "Update the organization data (`setName`, `setProfile`, `setLinked`)"
       },
       "gasUsed": "66674",
-      "gasPriceWei": "44671011",
-      "costWei": "2978394987414",
-      "transactionHash": "0xb89b93e16bc1d15341218780f6233aa30930d7a21dde58fac49d1fb1dec8ba9a",
+      "gasPriceWei": "44671010",
+      "costWei": "2978394920740",
+      "transactionHash": "0xcba4080854078045b7bbb28f981b7b0851e04742150f6c1bf6c0699995af49d8",
       "blockNumber": 26
     },
     {
@@ -1815,9 +1815,9 @@
         "action": "Declare messages (`setMessages`) allowed for the license type"
       },
       "gasUsed": "232409",
-      "gasPriceWei": "39099545",
-      "costWei": "9087086153905",
-      "transactionHash": "0x0813fa8d5ec6b7dd5b8bd4b5f5b1c20b97753bc84f7699e910c10c7439f709e1",
+      "gasPriceWei": "39099544",
+      "costWei": "9087085921496",
+      "transactionHash": "0x061546bf4e773121a3450850ee7d84fa52a4eab93743ad096dc09ae817d88bb0",
       "blockNumber": 27
     },
     {
@@ -1841,9 +1841,9 @@
         "action": "Declare messages (`setMessages`) allowed for the license type"
       },
       "gasUsed": "46708",
-      "gasPriceWei": "34249965",
-      "costWei": "1599747365220",
-      "transactionHash": "0x029982ad8941f7b21796dbd441a2c9eb66806247e4f08b82b5af10e8f2d18f93",
+      "gasPriceWei": "34249964",
+      "costWei": "1599747318512",
+      "transactionHash": "0x24ebb3423354a86bc4c2271a542b73e14f0b8f4159ad818cf2213cc6c362f564",
       "blockNumber": 28
     },
     {
@@ -1867,9 +1867,9 @@
         "action": "`setNodes`"
       },
       "gasUsed": "1866349",
-      "gasPriceWei": "29975386",
-      "costWei": "55944531685714",
-      "transactionHash": "0x65e7af0980f9d9b5ad2f6ee20622795b7d37391a7953c2ebfc748686d924a109",
+      "gasPriceWei": "29975385",
+      "costWei": "55944529819365",
+      "transactionHash": "0xdde92687be3b87c970cb4f851417ad8a75b90feb006a9bf528d4f7e319385765",
       "blockNumber": 29
     },
     {
@@ -1893,9 +1893,9 @@
         "action": "`setNodes`"
       },
       "gasUsed": "318816",
-      "gasPriceWei": "26461566",
-      "costWei": "8436370625856",
-      "transactionHash": "0xae4340478fecf9e33dba925d3d76369fdc4cf7b46fd9fb7906eabd3188fc899b",
+      "gasPriceWei": "26461564",
+      "costWei": "8436369988224",
+      "transactionHash": "0x469103ac459526b60bf3447bd5b4e87f9911e179ccf98ab3aeb40b8dcd0e3286",
       "blockNumber": 30
     },
     {
@@ -1919,9 +1919,9 @@
         "action": "`setNodes`"
       },
       "gasUsed": "547091",
-      "gasPriceWei": "23189022",
-      "costWei": "12686505235002",
-      "transactionHash": "0x9afc1cd1421ca960337e0ebc4a7a780041c850288249a6c98b20fcc0c32d1d56",
+      "gasPriceWei": "23189021",
+      "costWei": "12686504687911",
+      "transactionHash": "0x3ab749c9a14982ee947ae23f7da74fb90d05b71a0535075d89c30c37ea0940ea",
       "blockNumber": 31
     },
     {
@@ -1945,9 +1945,9 @@
         "action": "`setNodes`"
       },
       "gasUsed": "298426",
-      "gasPriceWei": "20343256",
-      "costWei": "6070956515056",
-      "transactionHash": "0xe8599c026825df812d3ec13fe955615385dd760c883248d29bd716cd14075d14",
+      "gasPriceWei": "20343255",
+      "costWei": "6070956216630",
+      "transactionHash": "0x93853ac8425060a914ecc63ec27c575b14a60b32fe2b1aa53e911c4fa6e62310",
       "blockNumber": 32
     },
     {
@@ -1971,9 +1971,9 @@
         "action": "`setNodes`"
       },
       "gasUsed": "76686",
-      "gasPriceWei": "17825645",
-      "costWei": "1366977412470",
-      "transactionHash": "0x37644ba51290dfe21a4608f1418cbe77d16d0b6b8e3c46b7d30e71c8b3ff3a3d",
+      "gasPriceWei": "17825644",
+      "costWei": "1366977335784",
+      "transactionHash": "0x7a08b6631511569543cf7f5792a23c09cc5afb445cc386e249e3099454f1b9b8",
       "blockNumber": 33
     },
     {
@@ -1997,9 +1997,9 @@
         "action": "`setNodes`"
       },
       "gasUsed": "340491",
-      "gasPriceWei": "15603136",
-      "costWei": "5312727379776",
-      "transactionHash": "0xaf2221c3d8e3e79849750c9e5f11a4866eeb5b323fd6a050af504e47ff59033b",
+      "gasPriceWei": "15603135",
+      "costWei": "5312727039285",
+      "transactionHash": "0x4ba4f3bf0493885aed126343ef3c3190628ad9398631b1e858b850bc02f4f840",
       "blockNumber": 34
     },
     {
