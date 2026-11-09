@@ -19,6 +19,10 @@ The off-chain JavaScript pipeline (import, model encoding, BPMN updates applied 
 
 ![Architecture overview](uml/architecture-overview.svg)
 
+The same overview extended with the role license path of the running example, in purple: ① the authority mints the `SpecialCarrier` license for Carrier A with `mintWithParticipantType` (the `ParticipantMasterSmartPolicy` checks the issuer); ② `setRoles` binds the Special Carrier role to the license; ③ the choreography Creator policy asks `ChoreographyParticipantAM.participantTypeOf` for the license type; ④ Carrier A transfers the license to Carrier B; ⑤ the participant Master checks that Carrier B is qualified for the type; ⑥ the transfer clears `name` and `profile` and resets the Holder policy to `address(0)`. Written by hand in `docs/uml/architecture-participants.mmd`, rendered like the overview.
+
+![Architecture with role licenses](uml/architecture-participants.svg)
+
 ## Classes
 
 The contract hierarchy with the internal structure of the two mutable assets: the state and functions of `ChoreographyMutableAsset` (the `Descriptor`, `Node`, and `InitialModel` structs and the `NodeType` enum) and of `ParticipantMutableAsset`. Written by hand in `docs/uml/class-diagram.puml` and rendered by `docs:uml` like the use cases; update it when a contract changes its state or functions. The summary diagram in [Architettura](architettura.md) shows only the hierarchy.
