@@ -1,22 +1,46 @@
-flowchart LR
-  subgraph offchain[Off-chain · JavaScript]
-    B[Source BPMN] --> I[Importer<br/>import-bpmn.js]
-    I --> D[NMT dataset<br/>.nmt.json]
-    D --> M[choreography-model.js<br/>abi.encode]
-    U[BPMN updates] --> A[apply-asset-delta.js]
-    J[/tokenURI metadata<br/>JSON: roles + nodes/] -->|decode| R[Render<br/>web3.js + bpmn-builder-js]
-    R --> X[Regenerated BPMN]
-  end
+flowchart BT
   subgraph onchain[On-chain · Solidity]
-    NMT[ChoreographyNMT<br/>ERC-721] -->|creates and owns| CMA[ChoreographyMutableAsset]
-    MP[MasterSmartPolicy] -->|authorizes mint| NMT
+    direction LR
+    MP[MasterSmartPolicy] -->|authorizes mint| NMT[ChoreographyNMT<br/>ERC-721]
+    NMT -->|creates and owns| CMA[ChoreographyMutableAsset]
+    NMT -->|tokenURI| TR[ChoreographyTokenURIRenderer]
+    TR -->|reads| CMA
+    NMT -.->|immutable| MC[Model contract<br/>SSTORE2]
+    MC -->|read at mint| CMA
     CP[CreatorSmartPolicy] -->|authorizes and constrains<br/>updates| CMA
     HP[HolderSmartPolicy] -->|second approval| CMA
-    TR[ChoreographyTokenURIRenderer] -->|reads| CMA
-    NMT -->|tokenURI| TR
-    MC[Model contract<br/>SSTORE2] -->|read at mint| CMA
-    NMT -.->|immutable| MC
   end
-  M -->|deploys the code| MC
-  A -->|setRoles + setNodes| CMA
-  CMA -->|tokenURI| J
+
+  subgraph offchain[Off-chain · JavaScript]
+    direction TB
+    subgraph render[Render]
+      direction LR
+      R[web3.js +<br/>bpmn-builder-js] --> X[Regenerated BPMN]
+    end
+    subgraph update[Update]
+      direction LR
+      U[BPMN updates] --> A[apply-asset-delta.js]
+    end
+    subgraph init[Init]
+      direction LR
+      B[Source BPMN] --> I[Importer<br/>import-bpmn.js]
+      I --> D[NMT dataset<br/>.nmt.json]
+      D --> M[choreography-model.js<br/>abi.encode]
+    end
+  end
+
+  init ~~~ update
+  init ~~~ render
+  init -->|deploys the model contract| onchain
+  update -->|setRoles + setNodes on the asset| onchain
+  render -->|"reads tokenURI: JSON (roles + nodes)"| onchain
+
+  classDef initNode fill:#E3F0FB,stroke:#3A6EA5
+  classDef updateNode fill:#FFF1DB,stroke:#C98A1B
+  classDef renderNode fill:#E6F4EA,stroke:#3C8D50
+  class B,I,D,M initNode
+  class U,A updateNode
+  class R,X renderNode
+  style init fill:#F2F8FD,stroke:#3A6EA5
+  style update fill:#FFF8EC,stroke:#C98A1B
+  style render fill:#F1F9F3,stroke:#3C8D50
