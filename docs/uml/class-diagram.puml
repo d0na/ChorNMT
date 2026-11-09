@@ -149,8 +149,8 @@ SmartPolicy <|-- DenyAllSmartPolicy
 
 ' ---------- internal structure ----------
 ChoreographyMutableAsset *-- Descriptor
-Descriptor *-- "*" Node : nodesByName
-Node --> NodeType
+Descriptor *-right- "*" Node : nodesByName
+Node -right-> NodeType
 ChoreographyMutableAsset ..> InitialModel : decodes in constructor
 
 ' ---------- dependencies ----------
