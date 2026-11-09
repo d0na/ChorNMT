@@ -1,0 +1,162 @@
+@startuml class-diagram
+' Contract hierarchy of ChorNMT with the internal structure of the two mutable assets.
+' Hand-written: update it when a contract changes (state, functions, structs).
+!include style.iuml
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #F4F8FB
+  BorderColor #3A6EA5
+  ArrowColor #2F4F6F
+}
+hide empty members
+
+class ERC721Enumerable
+
+abstract class NMT {
+  + mint(to, creatorPolicy, holderPolicy)
+  + transferFrom(from, to, tokenId)
+  + getMutableAssetAddress(tokenId)
+  # {abstract} _mint(to, creatorPolicy, holderPolicy)
+}
+
+class ChoreographyNMT
+class ParticipantNMT
+
+abstract class MutableAsset {
+  + nmt : address
+  + linked : bool
+  + creatorSmartPolicy : address
+  + holderSmartPolicy : address
+  + getHolder()
+  + setHolderSmartPolicy()
+  + setCreatorSmartPolicy()
+  + setLinked()
+  + transferFrom(from, to)
+}
+
+abstract class SmartPolicy {
+  + evaluate(subject, action, resource) : bool
+}
+
+class MasterSmartPolicy
+class CreatorSmartPolicy
+class HolderSmartPolicy
+class DenyAllSmartPolicy
+class ChoreographyTokenURIRenderer
+
+' ---------- ChoreographyMutableAsset ----------
+class ChoreographyMutableAsset {
+  - descriptor : Descriptor
+  + constructor(nmt, creatorPolicy, holderPolicy, model)
+  + setRoles(roleNames, addresses)
+  + setNodes(names, nodeTypes, incoming, outgoing, conditions, ...)
+  + tokenURI() : string
+  + getNode(name) : Node
+  + getNodeNames() : string[]
+  + hasNode(name) : bool
+  + getNodeTypeAndOutgoing(name) : (uint8, string[])
+  + getNodeTypeAndEdges(name) : (uint8, string[], string[])
+  + getRole(role) : address
+  + hasRole(role) : bool
+  + getRoleNames() : string[]
+  - _evaluateRoleUpdate(roleNames, addresses)
+  - _evaluateNodeUpdate(names, nodeTypes, incoming, outgoing)
+  - _evaluateDomainUpdate(domainCall)
+  - _approves(policy, domainCall) : bool
+  - _setRoles(roleNames, addresses)
+  - _setNodes(...)
+}
+
+class Descriptor <<struct>> {
+  {field} nodesByName : mapping(string => Node)
+  {field} hasNode : mapping(string => bool)
+  nodeNames : string[]
+  {field} roles : mapping(string => address)
+  {field} hasRole : mapping(string => bool)
+  roleNames : string[]
+}
+
+class Node <<struct>> {
+  name : string
+  nodeType : NodeType
+  incoming : string[]
+  outgoing : string[]
+  conditions : string[]
+  initiatorRole : string
+  participantRole : string
+  initiatingMessage : string
+  returnMessage : string
+}
+
+enum NodeType {
+  START_EVENT
+  END_EVENT
+  TASK
+  EXCLUSIVE_SPLIT
+  EXCLUSIVE_JOIN
+  PARALLEL_SPLIT
+  PARALLEL_JOIN
+  EVENT_BASED_GATEWAY
+}
+
+class InitialModel <<struct>> {
+  roleNames : string[]
+  roleAddresses : address[]
+  names : string[]
+  nodeTypes : NodeType[]
+  incoming : string[][]
+  outgoing : string[][]
+  conditions : string[][]
+  initiatorRoles : string[]
+  participantRoles : string[]
+  initiatingMessages : string[]
+  returnMessages : string[]
+}
+
+' ---------- ParticipantMutableAsset ----------
+class ParticipantMutableAsset {
+  + participantType : bytes32 {immutable}
+  - name : bytes32
+  - profile : bytes32
+  - messagesWriter : address
+  - messages : bytes32[]
+  + constructor(nmt, creatorPolicy, holderPolicy, participantType)
+  + setName(name)
+  + setProfile(profile)
+  + setMessages(messages)
+  + transferFrom(from, to) : bool
+  + getName() : bytes32
+  + getProfile() : bytes32
+  + getMessages() : bytes32[]
+  + getMessagesWriter() : address
+  + tokenURI() : string
+  - _setName(name)
+  - _setProfile(profile)
+  - _setMessages(messages)
+  - _evaluateMessagesUpdate(messages)
+}
+
+' ---------- inheritance ----------
+ERC721Enumerable <|-- NMT
+NMT <|-- ChoreographyNMT
+NMT <|-- ParticipantNMT
+MutableAsset <|-- ChoreographyMutableAsset
+MutableAsset <|-- ParticipantMutableAsset
+SmartPolicy <|-- MasterSmartPolicy
+SmartPolicy <|-- CreatorSmartPolicy
+SmartPolicy <|-- HolderSmartPolicy
+SmartPolicy <|-- DenyAllSmartPolicy
+
+' ---------- internal structure ----------
+ChoreographyMutableAsset *-- Descriptor
+Descriptor *-- "*" Node : nodesByName
+Node --> NodeType
+ChoreographyMutableAsset ..> InitialModel : decodes in constructor
+
+' ---------- dependencies ----------
+ChoreographyNMT ..> ChoreographyMutableAsset : creates
+ChoreographyNMT ..> MasterSmartPolicy : consults
+ChoreographyNMT ..> ChoreographyTokenURIRenderer : tokenURI
+ChoreographyMutableAsset ..> CreatorSmartPolicy : consults
+ChoreographyMutableAsset ..> HolderSmartPolicy : consults
+@enduml

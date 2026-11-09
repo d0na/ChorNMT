@@ -15,7 +15,9 @@ npm run evidence:update   # rerun the experiment: evidence, timings, sequence di
 
 ## Classes
 
-[`uml/class-diagram.mmd`](uml/class-diagram.mmd) is a hand-written Mermaid class diagram of the contract hierarchy, with the internal structure of `ChoreographyMutableAsset` (the `Descriptor`, `Node`, and `InitialModel` structs and the `NodeType` enum) and `ParticipantMutableAsset`. It is not generated nor checked by `check:uml`, so it has no versioned SVG: render it with `npx @mermaid-js/mermaid-cli -i docs/uml/class-diagram.mmd -o <out>.svg`, and update it by hand when a contract changes. The summary diagram in [Architettura](architettura.md) shows only the hierarchy.
+The contract hierarchy with the internal structure of the two mutable assets: the state and functions of `ChoreographyMutableAsset` (the `Descriptor`, `Node`, and `InitialModel` structs and the `NodeType` enum) and of `ParticipantMutableAsset`. Written by hand in `docs/uml/class-diagram.puml` and rendered by `docs:uml` like the use cases; update it when a contract changes its state or functions. The summary diagram in [Architettura](architettura.md) shows only the hierarchy.
+
+![Class diagram](uml/class-diagram.svg)
 
 ## Use cases
 
