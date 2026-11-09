@@ -7,7 +7,7 @@ description: Update, add, and render the ChorNMT UML class, use case, and sequen
 
 Three kinds of diagram, with their rules:
 
-- **Architecture overview** (`docs/uml/architecture-overview.puml`) is written by hand and not checked: the off-chain pipeline and the on-chain contracts, the English counterpart of the Mermaid overview in `docs/architettura.md` (keep the two in agreement).
+- **Architecture overview** (`docs/uml/architecture-overview.mmd`, Mermaid, the only diagram not in PlantUML) is written by hand and not checked; rerender its SVG with mermaid-cli (command in `docs/uml.md`): the off-chain pipeline and the on-chain contracts, the English counterpart of the Mermaid overview in `docs/architettura.md` (keep the two in agreement).
 - **Class diagram** (`docs/uml/class-diagram.puml`) is written by hand and not checked against the code: it shows the contract hierarchy and the state, functions, and structs of `ChoreographyMutableAsset` and `ParticipantMutableAsset`, with the real names.
 - **Use case diagrams** (`docs/uml/use-case-*.puml`) are written by hand and checked by `npm run check:use-cases` against the trust tables of `docs/choreography-policies.md`, the cases of `scripts/test-policies.js`, and the experiment evidence, both ways.
 - **Sequence diagrams** are generated, one per experiment phase, from the call traces (`scripts/experiment/sequence.js`, into `evaluation/evidence/uml/F<n>.puml` filtered and `F<n>-full.puml` complete). Never write or edit one by hand: change the experiment (`scripts/experiment/phases.js`, `run.js`) or the code it runs, then `npm run evidence:update`.

@@ -15,7 +15,7 @@ npm run evidence:update   # rerun the experiment: evidence, timings, sequence di
 
 ## Architecture overview
 
-The off-chain JavaScript pipeline (import, model encoding, BPMN updates applied with `setRoles` and `setNodes`, render) and the on-chain contracts it talks to. The render reads `tokenURI`, a base64 `data:application/json` URI whose `choreography` field holds the roles and the nodes, and regenerates the BPMN from that JSON. Written by hand in `docs/uml/architecture-overview.puml` (the English counterpart of the overview in [Architettura](architettura.md)); update it when a component, a script, or a data flow changes.
+The off-chain JavaScript pipeline (import, model encoding, BPMN updates applied with `setRoles` and `setNodes`, render) and the on-chain contracts it talks to. The render reads `tokenURI`, a base64 `data:application/json` URI whose `choreography` field holds the roles and the nodes, and regenerates the BPMN from that JSON. Written by hand in Mermaid in `docs/uml/architecture-overview.mmd` (the English counterpart of the overview in [Architettura](architettura.md)) and not checked by `check:uml`: after a change, rerender the SVG with `npx @mermaid-js/mermaid-cli -t neutral -b white -i docs/uml/architecture-overview.mmd -o docs/uml/architecture-overview.svg` and commit both. Update it when a component, a script, or a data flow changes.
 
 ![Architecture overview](uml/architecture-overview.svg)
 
