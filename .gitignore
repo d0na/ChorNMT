@@ -6,3 +6,7 @@ metrics/*.generated.json
 metrics/*.generated.csv
 .claude/*.local.md
 .cache/
+
+# generated outputs and IDE config
+*.generated.*
+.idea/
