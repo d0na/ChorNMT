@@ -13,6 +13,12 @@ npm run check:use-cases   # fail if a use case disagrees with the trust tables, 
 npm run evidence:update   # rerun the experiment: evidence, timings, sequence diagrams and their SVG, charts, BPMN drawings
 ```
 
+## Architecture overview
+
+The off-chain JavaScript pipeline (import, model encoding, BPMN updates applied with `setRoles` and `setNodes`, render) and the on-chain contracts it talks to. The render reads `tokenURI`, a base64 `data:application/json` URI whose `choreography` field holds the roles and the nodes, and regenerates the BPMN from that JSON. Written by hand in `docs/uml/architecture-overview.puml` (the English counterpart of the overview in [Architettura](architettura.md)); update it when a component, a script, or a data flow changes.
+
+![Architecture overview](uml/architecture-overview.svg)
+
 ## Classes
 
 The contract hierarchy with the internal structure of the two mutable assets: the state and functions of `ChoreographyMutableAsset` (the `Descriptor`, `Node`, and `InitialModel` structs and the `NodeType` enum) and of `ParticipantMutableAsset`. Written by hand in `docs/uml/class-diagram.puml` and rendered by `docs:uml` like the use cases; update it when a contract changes its state or functions. The summary diagram in [Architettura](architettura.md) shows only the hierarchy.

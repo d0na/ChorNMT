@@ -23,7 +23,7 @@ The docs are the source of truth and must stay in sync with the code:
 | Participant license: fields, hardcoded policies, gas | `docs/participant-license-design.md` |
 | **Experiment protocol: phases, actors, policies, evidence (generated blocks, never edit them)** | `docs/experiment.md` |
 | Evaluation: setup, runs, evidence layout | `evaluation/README.md` |
-| UML class, use case, and sequence diagrams | `docs/uml.md`, `docs/uml/` |
+| UML architecture overview, class, use case, and sequence diagrams | `docs/uml.md`, `docs/uml/` |
 
 ## Layout
 
