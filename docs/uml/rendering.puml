@@ -1,0 +1,60 @@
+@startuml rendering
+' How the rendering works: the on-chain tokenURI computation and the off-chain pipeline that
+' regenerates the BPMN from it (docs/rendering.md). Steps 1-4 are one eth_call, 5-10 run off-chain.
+' Hand-written: update it when a render step, a script, a read function, or an output file changes.
+!include style.iuml
+skinparam ArrowColor #2F4F6F
+skinparam component {
+  BackgroundColor #F4F8FB
+  BorderColor #3A6EA5
+}
+skinparam artifact {
+  BackgroundColor #FFFFFF
+  BorderColor #8AA9C8
+}
+skinparam rectangle {
+  BorderColor #8AA9C8
+}
+
+rectangle "On-chain · one eth_call, nothing stored" as chain #F2F8FD {
+  component "ChoreographyMutableAsset" <<contract>> as asset
+  component "ChoreographyNMT" <<contract>> as nmt
+  component "ChoreographyTokenURIRenderer" <<contract, stateless>> as renderer
+}
+
+rectangle "Off-chain · JavaScript · npm run render:asset" as js #F1F9F3 {
+  component "web3.js" <<reader>> as web3
+  component "normalize.js" as normalize
+  component "validation.js" as validation
+  component "process-mapper.js" as mapper
+  component "moddle-generator.js" as generator
+  component "render-bpmn-images.js" <<optional>> as images
+
+  artifact "~*.raw.generated.json" as raw
+  artifact "~*.normalized.generated.json" as normalized
+  artifact "~*.generated.bpmn.xml" as xml
+  artifact "BPMN drawing (SVG)" as svg
+}
+
+' ---------- on-chain: the asset describes itself ----------
+asset -right-> nmt : 2. tokenURI(tokenId)
+nmt -right-> renderer : 3. tokenURI(asset)
+renderer .left.> asset : 4. reads roles and nodes
+
+' ---------- the single read ----------
+web3 -up-> asset : 1. eth_call\ntokenURI()
+asset .down.> web3 : 5. base64 JSON\n(roles + nodes)
+
+' ---------- off-chain pipeline ----------
+web3 -right-> normalize : 6. model\nby names
+normalize -right-> validation : 7. BPMN ids,\nresolved\nreferences
+validation -right-> mapper : 8. checked\nmodel
+mapper -right-> generator : 9. BPMN elements\n+ computed\nlayout (DI)
+generator -right-> images : 10. BPMN\nXML
+
+' ---------- files written ----------
+web3 .down.> raw
+normalize .down.> normalized
+generator .down.> xml
+images .down.> svg
+@enduml

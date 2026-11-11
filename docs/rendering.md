@@ -42,6 +42,10 @@ flowchart LR
   CMA -->|eth_call| W
 ```
 
+Lo stesso percorso come diagramma UML dei componenti, con i passi numerati (sorgente `docs/uml/rendering.puml`, descritto in [UML diagrams](uml.md#rendering)):
+
+![Rendering](uml/rendering.svg)
+
 ## Il renderer on-chain
 
 `contracts/choreography/ChoreographyTokenURIRenderer.sol` è un contratto **senza stato**. Legge l'asset solo tramite le sue funzioni pubbliche di lettura, dichiarate nell'interfaccia condivisa `IChoreographyAsset` (`contracts/choreography/IChoreographyAsset.sol`). L'asset la implementa (`is IChoreographyAsset`), quindi il compilatore garantisce che le firme usate dal renderer siano quelle dell'asset. Il renderer usa:

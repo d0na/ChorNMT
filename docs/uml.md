@@ -23,6 +23,12 @@ The same overview extended with the role license path of the running example, in
 
 ![Architecture with role licenses](uml/architecture-participants.svg)
 
+## Rendering
+
+How a choreography asset becomes a BPMN diagram, left to right, in numbered steps. Steps 1–5 are one `eth_call`: `web3.js` calls `tokenURI()` on the asset, the asset asks its `ChoreographyNMT`, the NMT delegates to the stateless `ChoreographyTokenURIRenderer`, which reads the roles and the nodes through the public getters of the asset (`getRoleNames`, `getRole`, `getNodeNames`, `getNode`) and returns them as a base64 `data:application/json` URI; nothing is stored. Steps 6–10 are the off-chain pipeline of `npm run render:asset`: `normalize.js` derives the BPMN ids from the names, `validation.js` checks the references, `process-mapper.js` builds the BPMN elements and computes the layout, `moddle-generator.js` writes the XML, and `render-bpmn-images.js` (optional, used by the experiment) draws it. Details in [Rendering](rendering.md). Written by hand in `docs/uml/rendering.puml` and rendered by `docs:uml`; update it when a render step, a script, a read function, or an output file changes.
+
+![Rendering](uml/rendering.svg)
+
 ## Classes
 
 The contract hierarchy with the internal structure of the two mutable assets: the state and functions of `ChoreographyMutableAsset` (the `Descriptor`, `Node`, and `InitialModel` structs and the `NodeType` enum) and of `ParticipantMutableAsset`. Written by hand in `docs/uml/class-diagram.puml` and rendered by `docs:uml` like the use cases; update it when a contract changes its state or functions. The summary diagram in [Architettura](architettura.md) shows only the hierarchy.
