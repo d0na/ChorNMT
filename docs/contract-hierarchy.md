@@ -62,12 +62,15 @@ HolderSmartPolicy  : SmartPolicy
 
 ```text
 ParticipantNMT : NMT
+  - one license type: participantType immutable, set in the constructor
+    (one ParticipantNMT per type, as one ChoreographyNMT per model)
   -> uses ParticipantMasterSmartPolicy as its Master policy
-  -> deploys ParticipantMutableAsset on mint
+  -> deploys ParticipantMutableAsset on mint (the public mint of NMT),
+     passing its type
 
 ParticipantMutableAsset : MutableAsset
   - a role license
-  - participantType: immutable, set at mint
+  - participantType: immutable, the type of the ParticipantNMT that mints it
   - holder data: name and profile (cleared on sale),
     messages with the address of the holder who wrote them
   - tokenURI computed by ParticipantTokenURIRenderer

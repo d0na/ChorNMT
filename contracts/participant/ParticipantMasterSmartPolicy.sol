@@ -3,14 +3,15 @@ pragma solidity ^0.8.20;
 
 import "../base/SmartPolicy.sol";
 import "./IParticipantAsset.sol";
+import "./IParticipantNMT.sol";
 
 // The authority's policy over role licenses. It stands for a policy translated from XACML:
-// license types, their issuers, and the organizations qualified for each type are written
+// license types (one ParticipantNMT each), their issuers, and the organizations qualified for each type are written
 // here, not set at runtime. Change them by deploying a new policy and installing it with
 // setMasterSmartPolicy. Accounts are the default Hardhat accounts used by the test and
 // evaluation scenarios.
 contract ParticipantMasterSmartPolicy is SmartPolicy {
-    bytes4 private constant MINT_WITH_PARTICIPANT_TYPE = bytes4(keccak256("mintWithParticipantType(address,address,address,bytes32)"));
+    bytes4 private constant MINT = bytes4(keccak256("mint(address,address,address)"));
     bytes4 private constant TRANSFER = bytes4(keccak256("transferFrom(address,address)"));
     bytes4 private constant SET_MASTER_SMART_POLICY = bytes4(keccak256("setMasterSmartPolicy(address)"));
 
@@ -34,8 +35,9 @@ contract ParticipantMasterSmartPolicy is SmartPolicy {
     ) public view override returns (bool) {
         bytes4 signature = decodeSignature(action);
 
-        if (signature == MINT_WITH_PARTICIPANT_TYPE) {
-            return isIssuerOf(subject, _wordAt(action, 100));
+        // The resource is the license NMT, which fixes the type of the licenses it mints.
+        if (signature == MINT) {
+            return isIssuerOf(subject, IParticipantNMT(resource).participantType());
         }
 
         if (signature == TRANSFER) {

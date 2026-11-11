@@ -11,9 +11,9 @@ flowchart BT
     HP[HolderSmartPolicy] -->|second approval| CMA
 
     subgraph part[Participant licenses]
-      PMP[ParticipantMasterSmartPolicy] -->|"① mint: issuer<br/>⑤ transfer: buyer qualified"| PNMT[ParticipantNMT<br/>ERC-721]
+      PMP[ParticipantMasterSmartPolicy] -->|"① mint: issuer of the type<br/>⑤ transfer: buyer qualified"| PNMT[ParticipantNMT<br/>ERC-721, type SpecialCarrier]
       PNMT -->|"① creates<br/>④ transfers A → B"| LIC["ParticipantMutableAsset<br/>SpecialCarrier license<br/><i>⑥ on transfer: name, profile := 0,<br/>holder policy := address(0)</i>"]
-      AM[ChoreographyParticipantAM] -->|"③ type of the license"| LIC
+      AM[ChoreographyParticipantAM<br/>SpecialCarrier licenses] -->|"③ type of the license"| LIC
     end
     CMA -->|"② role Special Carrier = license"| LIC
     CP -->|"③ participantTypeOf"| AM
@@ -47,7 +47,7 @@ flowchart BT
   init -->|deploys the model contract| onchain
   update -->|"setRoles + setNodes on the asset<br/>(② links the license)"| onchain
   render -->|"reads tokenURI: JSON (roles + nodes)"| onchain
-  roles -->|"① mintWithParticipantType<br/>④ transferFrom(A, B)"| onchain
+  roles -->|"① mint<br/>④ transferFrom(A, B)"| onchain
 
   classDef initNode fill:#E3F0FB,stroke:#3A6EA5
   classDef updateNode fill:#FFF1DB,stroke:#C98A1B

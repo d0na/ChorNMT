@@ -6,7 +6,7 @@ import "../base/NMT.sol";
 import "./IParticipantAsset.sol";
 import "./IParticipantPolicy.sol";
 
-/// A role license. Its type is fixed at mint; the holder's organization data (name, profile)
+/// A role license. Its type is the type of the ParticipantNMT that mints it, fixed at birth; the holder's organization data (name, profile)
 /// is cleared when the license is sold, while its messages stay, marked with their writer.
 contract ParticipantMutableAsset is MutableAsset, IParticipantAsset {
     bytes32 public immutable participantType;

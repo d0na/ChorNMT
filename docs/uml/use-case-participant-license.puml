@@ -15,11 +15,11 @@ actor "License holder\n(Carrier A, then Carrier B)" as LicenseHolder
 actor "Buyer\n(Carrier B)" as Buyer
 ' accounts: Administrator
 actor "Holder\n(of the choreography)" as ChoreoHolder
-rectangle "ParticipantNMT + ParticipantMutableAsset" {
-  ' trust: licenses:mintWithParticipantType
+rectangle "ParticipantNMT (one per type) + ParticipantMutableAsset" {
+  ' trust: licenses:mint
   ' evidence: F3.license.special-carrier, F3.license.carrier, F3.license.supplier
-  ' test: unauthorized issuer cannot mint a participant license; participant license cannot be minted without a type
-  usecase "Mint a typed license\n(mintWithParticipantType)" as UC_Mint
+  ' test: unauthorized issuer cannot mint a participant license; issuer cannot mint a license of a type the Master does not define
+  usecase "Mint a license\n(mint on the NMT of its type)" as UC_Mint
   ' trust: licenses:setMessages
   ' evidence: F3.license.messages, F3.denied.foreign-message, F6.buyer.messages
   ' test: license holder declares messages allowed for its type; creator policy denies a message not allowed for the license type

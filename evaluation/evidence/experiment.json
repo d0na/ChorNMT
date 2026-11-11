@@ -137,7 +137,17 @@
     {
       "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
       "contract": "ParticipantNMT",
-      "label": "ParticipantNMT"
+      "label": "SpecialCarrier NMT"
+    },
+    {
+      "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+      "contract": "ParticipantNMT",
+      "label": "Carrier NMT"
+    },
+    {
+      "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+      "contract": "ParticipantNMT",
+      "label": "Supplier NMT"
     },
     {
       "address": "0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35",
@@ -145,17 +155,17 @@
       "label": "ParticipantCreatorSmartPolicy"
     },
     {
-      "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+      "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
       "contract": "ParticipantHolderSmartPolicy",
       "label": "ParticipantHolderSmartPolicy"
     },
     {
-      "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+      "address": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0",
       "contract": "ChoreographyParticipantAM",
       "label": "ChoreographyParticipantAM"
     },
     {
-      "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+      "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
       "contract": "CreatorSmartPolicyPaperScenario",
       "label": "CreatorSmartPolicyPaperScenario"
     },
@@ -170,17 +180,17 @@
       "label": "SpecialCarrier license"
     },
     {
-      "address": "0x06B1D212B8da92b83AF328De5eef4E211Da02097",
+      "address": "0x8aCd85898458400f7Db866d53FCFF6f0D49741FF",
       "contract": "ParticipantMutableAsset",
       "label": "Carrier license"
     },
     {
-      "address": "0xED179b78D5781f93eb169730D8ad1bE7313123F4",
+      "address": "0x6F1216D1BFe15c98520CA1434FC1d9D57AC95321",
       "contract": "ParticipantMutableAsset",
       "label": "Supplier license"
     },
     {
-      "address": "0x7a2088a1bFc9d81c55368AE168C2C02570cB814F",
+      "address": "0xc5a5C42992dECbae36851359345FE25997F5C42d",
       "contract": "DenyAllSmartPolicy",
       "label": "DenyAllSmartPolicy"
     },
@@ -206,7 +216,7 @@
     },
     "trustTables": {
       "path": "docs/choreography-policies.md",
-      "sha256": "fa3d8e400fee3226fc70e197e84906862b592336995166adbd8db9b1abaea5b5"
+      "sha256": "f85c3c3df3ef99549eb42811e905312eb35219d01c91cd0b824875915c6faa05"
     }
   },
   "phases": [
@@ -232,10 +242,12 @@
         "F1.deploy.nmt",
         "F1.deploy.participant-master",
         "F1.deploy.participant-renderer",
-        "F1.deploy.participant-nmt",
+        "F1.deploy.special-carrier-nmt",
+        "F1.deploy.carrier-nmt",
+        "F1.deploy.supplier-nmt",
         "F1.deploy.certifier",
         "F1.deploy.participant-holder",
-        "F1.deploy.participant-am",
+        "F1.deploy.special-carrier-am",
         "F1.deploy.paper-creator"
       ],
       "policies": [
@@ -253,7 +265,7 @@
           "contract": "ParticipantMasterSmartPolicy",
           "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
           "source": "contracts/participant/ParticipantMasterSmartPolicy.sol",
-          "bytecodeKeccak256": "0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13"
+          "bytecodeKeccak256": "0xcc47fe9fe8a9a7f547b6a36a4596cee4e307553fb3b664f0f2b07bc655dcfd91"
         }
       ],
       "offchain": [
@@ -309,9 +321,9 @@
           "resource": "instance",
           "layer": "Creator",
           "contract": "CreatorSmartPolicyPaperScenario",
-          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+          "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602"
+          "bytecodeKeccak256": "0x4177df840b6de3c172f569b758c0739c358988a3266c1b323bf168aaec4d835c"
         },
         {
           "resource": "instance",
@@ -327,7 +339,7 @@
           "contract": "ParticipantMasterSmartPolicy",
           "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
           "source": "contracts/participant/ParticipantMasterSmartPolicy.sol",
-          "bytecodeKeccak256": "0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13"
+          "bytecodeKeccak256": "0xcc47fe9fe8a9a7f547b6a36a4596cee4e307553fb3b664f0f2b07bc655dcfd91"
         }
       ],
       "instance": {
@@ -407,9 +419,9 @@
           "resource": "instance",
           "layer": "Creator",
           "contract": "CreatorSmartPolicyPaperScenario",
-          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+          "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602"
+          "bytecodeKeccak256": "0x4177df840b6de3c172f569b758c0739c358988a3266c1b323bf168aaec4d835c"
         },
         {
           "resource": "instance",
@@ -425,7 +437,7 @@
           "contract": "ParticipantMasterSmartPolicy",
           "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
           "source": "contracts/participant/ParticipantMasterSmartPolicy.sol",
-          "bytecodeKeccak256": "0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13"
+          "bytecodeKeccak256": "0xcc47fe9fe8a9a7f547b6a36a4596cee4e307553fb3b664f0f2b07bc655dcfd91"
         },
         {
           "resource": "licensed role",
@@ -439,7 +451,7 @@
           "resource": "licensed role",
           "layer": "Holder",
           "contract": "ParticipantHolderSmartPolicy",
-          "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
           "source": "contracts/participant/HolderSmartPolicy.sol",
           "bytecodeKeccak256": "0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b"
         }
@@ -505,9 +517,9 @@
           "resource": "instance",
           "layer": "Creator",
           "contract": "CreatorSmartPolicyPaperScenario",
-          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+          "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602"
+          "bytecodeKeccak256": "0x4177df840b6de3c172f569b758c0739c358988a3266c1b323bf168aaec4d835c"
         },
         {
           "resource": "instance",
@@ -523,7 +535,7 @@
           "contract": "ParticipantMasterSmartPolicy",
           "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
           "source": "contracts/participant/ParticipantMasterSmartPolicy.sol",
-          "bytecodeKeccak256": "0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13"
+          "bytecodeKeccak256": "0xcc47fe9fe8a9a7f547b6a36a4596cee4e307553fb3b664f0f2b07bc655dcfd91"
         },
         {
           "resource": "licensed role",
@@ -537,7 +549,7 @@
           "resource": "licensed role",
           "layer": "Holder",
           "contract": "ParticipantHolderSmartPolicy",
-          "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
           "source": "contracts/participant/HolderSmartPolicy.sol",
           "bytecodeKeccak256": "0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b"
         }
@@ -652,9 +664,9 @@
           "resource": "instance",
           "layer": "Creator",
           "contract": "CreatorSmartPolicyPaperScenario",
-          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+          "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602"
+          "bytecodeKeccak256": "0x4177df840b6de3c172f569b758c0739c358988a3266c1b323bf168aaec4d835c"
         },
         {
           "resource": "instance",
@@ -670,7 +682,7 @@
           "contract": "ParticipantMasterSmartPolicy",
           "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
           "source": "contracts/participant/ParticipantMasterSmartPolicy.sol",
-          "bytecodeKeccak256": "0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13"
+          "bytecodeKeccak256": "0xcc47fe9fe8a9a7f547b6a36a4596cee4e307553fb3b664f0f2b07bc655dcfd91"
         },
         {
           "resource": "licensed role",
@@ -684,7 +696,7 @@
           "resource": "licensed role",
           "layer": "Holder",
           "contract": "ParticipantHolderSmartPolicy",
-          "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
           "source": "contracts/participant/HolderSmartPolicy.sol",
           "bytecodeKeccak256": "0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b"
         }
@@ -764,9 +776,9 @@
           "resource": "instance",
           "layer": "Creator",
           "contract": "CreatorSmartPolicyPaperScenario",
-          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+          "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602"
+          "bytecodeKeccak256": "0x4177df840b6de3c172f569b758c0739c358988a3266c1b323bf168aaec4d835c"
         },
         {
           "resource": "instance",
@@ -782,7 +794,7 @@
           "contract": "ParticipantMasterSmartPolicy",
           "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
           "source": "contracts/participant/ParticipantMasterSmartPolicy.sol",
-          "bytecodeKeccak256": "0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13"
+          "bytecodeKeccak256": "0xcc47fe9fe8a9a7f547b6a36a4596cee4e307553fb3b664f0f2b07bc655dcfd91"
         },
         {
           "resource": "licensed role",
@@ -796,7 +808,7 @@
           "resource": "licensed role",
           "layer": "Holder",
           "contract": "ParticipantHolderSmartPolicy",
-          "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
           "source": "contracts/participant/HolderSmartPolicy.sol",
           "bytecodeKeccak256": "0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b"
         }
@@ -927,7 +939,7 @@
           "resource": "restricted instance",
           "layer": "Holder",
           "contract": "DenyAllSmartPolicy",
-          "address": "0x7a2088a1bFc9d81c55368AE168C2C02570cB814F",
+          "address": "0xc5a5C42992dECbae36851359345FE25997F5C42d",
           "source": "contracts/choreography/DenyAllSmartPolicy.sol",
           "bytecodeKeccak256": "0x9f03a9ce484e3bd5888dbcdf647bf64f9b80a32025b7548177e9283f625f21f1"
         }
@@ -1000,9 +1012,9 @@
           "resource": "instance",
           "layer": "Creator",
           "contract": "CreatorSmartPolicyPaperScenario",
-          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+          "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
           "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
-          "bytecodeKeccak256": "0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602"
+          "bytecodeKeccak256": "0x4177df840b6de3c172f569b758c0739c358988a3266c1b323bf168aaec4d835c"
         },
         {
           "resource": "instance",
@@ -1018,7 +1030,7 @@
           "contract": "ParticipantMasterSmartPolicy",
           "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
           "source": "contracts/participant/ParticipantMasterSmartPolicy.sol",
-          "bytecodeKeccak256": "0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13"
+          "bytecodeKeccak256": "0xcc47fe9fe8a9a7f547b6a36a4596cee4e307553fb3b664f0f2b07bc655dcfd91"
         },
         {
           "resource": "licensed role",
@@ -1032,7 +1044,7 @@
           "resource": "licensed role",
           "layer": "Holder",
           "contract": "ParticipantHolderSmartPolicy",
-          "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
           "source": "contracts/participant/HolderSmartPolicy.sol",
           "bytecodeKeccak256": "0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b"
         }
@@ -1312,10 +1324,10 @@
       "outcome": "allowed",
       "reason": null,
       "trust": null,
-      "gasUsed": "488974",
+      "gasUsed": "495871",
       "gasPriceWei": "521562631",
-      "costWei": "255030565930594",
-      "transactionHash": "0x57b23d237b0053c34f4a2176edc4b110c60faff43f107d6b46726ca02ab1b19b",
+      "costWei": "258627783396601",
+      "transactionHash": "0xd228509fb14437b5508b308b5fda55a8b41d6a1f86b3e9d924bd6c4816edd52f",
       "blockNumber": 7
     },
     {
@@ -1336,15 +1348,15 @@
       "reason": null,
       "trust": null,
       "gasUsed": "983462",
-      "gasPriceWei": "457429930",
-      "costWei": "449864953817660",
-      "transactionHash": "0xf84ea3d057be4fda34fe3bf51fc3fa796c97d12d3641717c506c4d5e79301351",
+      "gasPriceWei": "457444918",
+      "costWei": "449879693946116",
+      "transactionHash": "0x547b3e3ead5448cdb904c5ea85f113df264e0ebd2fb2e2bb66f9c8b319b65650",
       "blockNumber": 8
     },
     {
-      "key": "F1.deploy.participant-nmt",
+      "key": "F1.deploy.special-carrier-nmt",
       "phase": "F1",
-      "label": "deploy the license NMT",
+      "label": "deploy the SpecialCarrier license NMT",
       "from": {
         "account": "Administrator",
         "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
@@ -1358,11 +1370,57 @@
       "outcome": "allowed",
       "reason": null,
       "trust": null,
-      "gasUsed": "2700510",
-      "gasPriceWei": "402125627",
-      "costWei": "1085944276969770",
-      "transactionHash": "0x6ab0d96f23ff1da0f9c8ff5a9f85ba255043c813b2a30647487919a5dd39ca8c",
+      "gasUsed": "2639234",
+      "gasPriceWei": "402138802",
+      "costWei": "1061338398957668",
+      "transactionHash": "0x7736a678a6e4e4033fa10bd1a5bcbd291c982e397e8c142031b702234126692a",
       "blockNumber": 9
+    },
+    {
+      "key": "F1.deploy.carrier-nmt",
+      "phase": "F1",
+      "label": "deploy the Carrier license NMT",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": null,
+      "created": {
+        "contract": "ParticipantNMT",
+        "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318"
+      },
+      "call": "ParticipantNMT.constructor",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": null,
+      "gasUsed": "2639150",
+      "gasPriceWei": "356293696",
+      "costWei": "940312507798400",
+      "transactionHash": "0xb90299a359835ff4a2785a52e833eb5968941701f8068c801297df3e0f79d561",
+      "blockNumber": 10
+    },
+    {
+      "key": "F1.deploy.supplier-nmt",
+      "phase": "F1",
+      "label": "deploy the Supplier license NMT",
+      "from": {
+        "account": "Administrator",
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      "to": null,
+      "created": {
+        "contract": "ParticipantNMT",
+        "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788"
+      },
+      "call": "ParticipantNMT.constructor",
+      "outcome": "allowed",
+      "reason": null,
+      "trust": null,
+      "gasUsed": "2639162",
+      "gasPriceWei": "315674954",
+      "costWei": "833117342948548",
+      "transactionHash": "0x34ba6a7281c0f975f3810bf1afda2c7b2d8a4c9feb1f66213c9b944970e8ea05",
+      "blockNumber": 11
     },
     {
       "key": "F1.deploy.certifier",
@@ -1382,10 +1440,10 @@
       "reason": null,
       "trust": null,
       "gasUsed": "502425",
-      "gasPriceWei": "356384692",
-      "costWei": "179056578878100",
-      "transactionHash": "0x4a9d0f7728ffb29913ca1b67c9aca6ab0f8adbcd4969d38f2242e52c556f3ad5",
-      "blockNumber": 10
+      "gasPriceWei": "279686907",
+      "costWei": "140521694249475",
+      "transactionHash": "0xbd621ef65c5bde0a724cbdc59f0eff0ac24747dbcffa49d74351ea8394fc5d6f",
+      "blockNumber": 12
     },
     {
       "key": "F1.deploy.participant-holder",
@@ -1398,22 +1456,22 @@
       "to": null,
       "created": {
         "contract": "ParticipantHolderSmartPolicy",
-        "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318"
+        "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e"
       },
       "call": "ParticipantHolderSmartPolicy.constructor",
       "outcome": "allowed",
       "reason": null,
       "trust": null,
       "gasUsed": "323604",
-      "gasPriceWei": "312582675",
-      "costWei": "101153003960700",
-      "transactionHash": "0xdda3d545db967a8f5e726d43876e2d21261197680ec4806f04dae0ccc1b75d06",
-      "blockNumber": 11
+      "gasPriceWei": "245311551",
+      "costWei": "79383799149804",
+      "transactionHash": "0x8ad79af762d99af8624154fe3c77171393bd10156df2dcb332f204467e92c0b7",
+      "blockNumber": 13
     },
     {
-      "key": "F1.deploy.participant-am",
+      "key": "F1.deploy.special-carrier-am",
       "phase": "F1",
-      "label": "deploy the participant attribute manager",
+      "label": "deploy the attribute manager of the SpecialCarrier licenses",
       "from": {
         "account": "Administrator",
         "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
@@ -1421,17 +1479,17 @@
       "to": null,
       "created": {
         "contract": "ChoreographyParticipantAM",
-        "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788"
+        "address": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0"
       },
       "call": "ChoreographyParticipantAM.constructor",
       "outcome": "allowed",
       "reason": null,
       "trust": null,
       "gasUsed": "229423",
-      "gasPriceWei": "273931313",
-      "costWei": "62846143622399",
-      "transactionHash": "0xf2b8f73cca05fed5868220707beaaaef68e3789b5be64cca9aaf646b30ba97a9",
-      "blockNumber": 12
+      "gasPriceWei": "214978374",
+      "costWei": "49320983498202",
+      "transactionHash": "0xdee6c1a4ee5d4287234d031cd1d0157ca0cdf5e2a283b09ef27f3c51e0e367c9",
+      "blockNumber": 14
     },
     {
       "key": "F1.deploy.paper-creator",
@@ -1444,17 +1502,17 @@
       "to": null,
       "created": {
         "contract": "CreatorSmartPolicyPaperScenario",
-        "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e"
+        "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
       },
       "call": "CreatorSmartPolicyPaperScenario.constructor",
       "outcome": "allowed",
       "reason": null,
       "trust": null,
-      "gasUsed": "1790772",
-      "gasPriceWei": "239951758",
-      "costWei": "429698889577176",
-      "transactionHash": "0xb8944ff768b5a9a22362d701091a001d9c2cc25f7865b08ad12174466e2f36cb",
-      "blockNumber": 13
+      "gasUsed": "1790747",
+      "gasPriceWei": "188311581",
+      "costWei": "337218398741007",
+      "transactionHash": "0x4f47c900ef77d9066a09766bed9d1bac46ba57d5a8eb5047a6220aa61e8648b8",
+      "blockNumber": 15
     },
     {
       "key": "F2.mint",
@@ -1477,10 +1535,10 @@
         "action": "`mint` an instance of the choreography type to an eligible holder"
       },
       "gasUsed": "5619770",
-      "gasPriceWei": "211748201",
-      "costWei": "1189976187533770",
-      "transactionHash": "0xc29773d9b7b91bd09e1d9c1fd3d592a421c031835ee1f3d78ba16f6c81c17036",
-      "blockNumber": 14
+      "gasPriceWei": "166177711",
+      "costWei": "933880514946470",
+      "transactionHash": "0x1a65a98508d68b35db269cd51ed2f1860e672eb7d54fa32051dc00b7a3a6e7ff",
+      "blockNumber": 16
     },
     {
       "key": "F2.roles",
@@ -1503,10 +1561,10 @@
         "action": "`setRoles`"
       },
       "gasUsed": "176849",
-      "gasPriceWei": "190237911",
-      "costWei": "33643384322439",
-      "transactionHash": "0xfb155bd77fd0bc08362fc62bcce434958d747b2e5f884b2e7ee5f0f007e35831",
-      "blockNumber": 15
+      "gasPriceWei": "149296667",
+      "costWei": "26402966262283",
+      "transactionHash": "0xe389c9e153152d31a2b52ed92efdaaa851cb536d8010c3252f0208a45dfe7d28",
+      "blockNumber": 17
     },
     {
       "key": "F2.denied.unauthorized-creator",
@@ -1529,10 +1587,10 @@
         "action": "`mint` an instance of the choreography type to an eligible holder"
       },
       "gasUsed": "29810",
-      "gasPriceWei": "166598353",
-      "costWei": "4966296902930",
-      "transactionHash": "0xcbe8361fca0d235b6a8a1235f93b5429d3544db5728aa0991de6a912f0893a11",
-      "blockNumber": 16
+      "gasPriceWei": "130744597",
+      "costWei": "3897496436570",
+      "transactionHash": "0xcd72afb85bd9a3325c24868ef73d8c3c88afe8dbde717217aaa8a6dfc43c121c",
+      "blockNumber": 18
     },
     {
       "key": "F2.denied.ineligible-holder",
@@ -1555,10 +1613,10 @@
         "action": "`mint` an instance of the choreography type to an eligible holder"
       },
       "gasUsed": "30099",
-      "gasPriceWei": "145794252",
-      "costWei": "4388261190948",
-      "transactionHash": "0xeb08d24786885df7c7d113d05b5b0c218f7b0a82e97c8a8d9582680d33d19d92",
-      "blockNumber": 17
+      "gasPriceWei": "114417762",
+      "costWei": "3443860218438",
+      "transactionHash": "0xf30e13c57172055469d7f2257d747421428262e99d10d522f667d24b411634b4",
+      "blockNumber": 19
     },
     {
       "key": "F3.license.special-carrier",
@@ -1573,18 +1631,18 @@
         "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
       },
       "created": null,
-      "call": "ParticipantNMT.mintWithParticipantType",
+      "call": "ParticipantNMT.mint",
       "outcome": "allowed",
       "reason": null,
       "trust": {
         "table": "licenses",
-        "action": "Mint a license of a type (`mintWithParticipantType`)"
+        "action": "Mint a license (`mint` on the `ParticipantNMT` of its type)"
       },
-      "gasUsed": "1196735",
-      "gasPriceWei": "127588256",
-      "costWei": "152689331544160",
-      "transactionHash": "0xd83e58910a5247effe3d1c7b318fae14d57b6321843041054d3c51f702d47c52",
-      "blockNumber": 18
+      "gasUsed": "1196907",
+      "gasPriceWei": "100129892",
+      "costWei": "119846168644044",
+      "transactionHash": "0x35ac03b978286c51c51bd3f4b0dcca8efd872c635e3b87afeeb1ac072c24d6ea",
+      "blockNumber": 20
     },
     {
       "key": "F3.license.carrier",
@@ -1596,21 +1654,21 @@
       },
       "to": {
         "contract": "ParticipantNMT",
-        "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+        "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318"
       },
       "created": null,
-      "call": "ParticipantNMT.mintWithParticipantType",
+      "call": "ParticipantNMT.mint",
       "outcome": "allowed",
       "reason": null,
       "trust": {
         "table": "licenses",
-        "action": "Mint a license of a type (`mintWithParticipantType`)"
+        "action": "Mint a license (`mint` on the `ParticipantNMT` of its type)"
       },
-      "gasUsed": "1199468",
-      "gasPriceWei": "112275930",
-      "costWei": "134671385205240",
-      "transactionHash": "0x95fbb8659f1f591afa50e3d629de2a8dc638cba52c72112757b1b5c62e7f28d4",
-      "blockNumber": 19
+      "gasUsed": "1196924",
+      "gasPriceWei": "88113016",
+      "costWei": "105464583562784",
+      "transactionHash": "0x8a25ad7c56f678856eb94cdc7634b7271927ca4bfccc7df3d16612b69e0e495d",
+      "blockNumber": 21
     },
     {
       "key": "F3.license.supplier",
@@ -1622,21 +1680,21 @@
       },
       "to": {
         "contract": "ParticipantNMT",
-        "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+        "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788"
       },
       "created": null,
-      "call": "ParticipantNMT.mintWithParticipantType",
+      "call": "ParticipantNMT.mint",
       "outcome": "allowed",
       "reason": null,
       "trust": {
         "table": "licenses",
-        "action": "Mint a license of a type (`mintWithParticipantType`)"
+        "action": "Mint a license (`mint` on the `ParticipantNMT` of its type)"
       },
-      "gasUsed": "1199497",
-      "gasPriceWei": "98802569",
-      "costWei": "118513385107793",
-      "transactionHash": "0xae82a75288e6c471b283be91d024a8b6853909e08b9640addc8482f37e58fabe",
-      "blockNumber": 20
+      "gasUsed": "1196941",
+      "gasPriceWei": "77538325",
+      "costWei": "92808800263825",
+      "transactionHash": "0x56dad57211510961f3aece239bef22c18eb61179bfb4aa634557ba1a141f455d",
+      "blockNumber": 22
     },
     {
       "key": "F3.denied.plain-account",
@@ -1659,10 +1717,10 @@
         "action": "`setRoles`"
       },
       "gasUsed": "63707",
-      "gasPriceWei": "86946055",
-      "costWei": "5539072325885",
-      "transactionHash": "0x726cf677d5628bb8ae416273a7fdbe7bdb13a40642897d431e9b541a95d94062",
-      "blockNumber": 21
+      "gasPriceWei": "68232739",
+      "costWei": "4346903103473",
+      "transactionHash": "0x809e83ff952564b4a5a4a005f790d336d4185629ee920c8b7e80eb85a2df11a2",
+      "blockNumber": 23
     },
     {
       "key": "F3.denied.carrier-license",
@@ -1684,11 +1742,11 @@
         "table": "choreography",
         "action": "`setRoles`"
       },
-      "gasUsed": "69939",
-      "gasPriceWei": "76100878",
-      "costWei": "5322419306442",
-      "transactionHash": "0x9f01bca6fb033c0aba85ef5e5e4207ac63a8ab2a0d46f307a373d2360e7a1827",
-      "blockNumber": 22
+      "gasUsed": "63707",
+      "gasPriceWei": "59721759",
+      "costWei": "3804694100613",
+      "transactionHash": "0xf76bf8321dfe08f9ef3f509f4522f4586cd8e10feef7ad7478769f6203f754f3",
+      "blockNumber": 24
     },
     {
       "key": "F3.denied.supplier-license",
@@ -1710,11 +1768,11 @@
         "table": "choreography",
         "action": "`setRoles`"
       },
-      "gasUsed": "69939",
-      "gasPriceWei": "66610446",
-      "costWei": "4658667982794",
-      "transactionHash": "0x6fab6defe0df375d3ca33e834cbb0cf27179c55812f7caacc464aeb2edcc824d",
-      "blockNumber": 23
+      "gasUsed": "63707",
+      "gasPriceWei": "52272393",
+      "costWei": "3330117340851",
+      "transactionHash": "0x712aaa00512cb1f7ffb2296e7c65ca6c618832312a985bbae205f0d486a5a83f",
+      "blockNumber": 25
     },
     {
       "key": "F3.link",
@@ -1737,10 +1795,10 @@
         "action": "`setRoles`"
       },
       "gasUsed": "97276",
-      "gasPriceWei": "58303551",
-      "costWei": "5671536227076",
-      "transactionHash": "0x22d77d6e65e157c397fd73389aea7fcf9ecc6bea8a3a91f6e6dd71d76c7663fd",
-      "blockNumber": 24
+      "gasPriceWei": "45752219",
+      "costWei": "4450592855444",
+      "transactionHash": "0x59ff9c98e3bf30d25fdfc99af109f36988407fe0f9bf87e51b4f579834a4f0b5",
+      "blockNumber": 26
     },
     {
       "key": "F3.denied.new-role",
@@ -1763,10 +1821,10 @@
         "action": "`setRoles`"
       },
       "gasUsed": "54893",
-      "gasPriceWei": "51039240",
-      "costWei": "2801697001320",
-      "transactionHash": "0xaec329f796e5c4bb57cdc7027ddb8b36755dd707d70ac0dd57e93ff31cd2b4c8",
-      "blockNumber": 25
+      "gasPriceWei": "40051737",
+      "costWei": "2198559999141",
+      "transactionHash": "0x2958f5ce978bc44a5844bd4195ff1fa58c2d9341b09c3f6fe9b74da3dcdd2715",
+      "blockNumber": 27
     },
     {
       "key": "F3.license.name",
@@ -1789,10 +1847,10 @@
         "action": "Update the organization data (`setName`, `setProfile`, `setLinked`)"
       },
       "gasUsed": "66674",
-      "gasPriceWei": "44671010",
-      "costWei": "2978394920740",
-      "transactionHash": "0xcba4080854078045b7bbb28f981b7b0851e04742150f6c1bf6c0699995af49d8",
-      "blockNumber": 26
+      "gasPriceWei": "35054430",
+      "costWei": "2337219065820",
+      "transactionHash": "0x6e16f7a163507030a89b71342a81eaa3daf129a22202bacf5d7b3747837cd526",
+      "blockNumber": 28
     },
     {
       "key": "F3.license.messages",
@@ -1815,10 +1873,10 @@
         "action": "Declare messages (`setMessages`) allowed for the license type"
       },
       "gasUsed": "232409",
-      "gasPriceWei": "39099544",
-      "costWei": "9087085921496",
-      "transactionHash": "0x061546bf4e773121a3450850ee7d84fa52a4eab93743ad096dc09ae817d88bb0",
-      "blockNumber": 27
+      "gasPriceWei": "30682365",
+      "costWei": "7130857767285",
+      "transactionHash": "0x504906ea6ac6e97723fa5e3d694a637349e3586d45b33238cde5bd1e83cebaeb",
+      "blockNumber": 29
     },
     {
       "key": "F3.denied.foreign-message",
@@ -1841,10 +1899,10 @@
         "action": "Declare messages (`setMessages`) allowed for the license type"
       },
       "gasUsed": "46708",
-      "gasPriceWei": "34249964",
-      "costWei": "1599747318512",
-      "transactionHash": "0x24ebb3423354a86bc4c2271a542b73e14f0b8f4159ad818cf2213cc6c362f564",
-      "blockNumber": 28
+      "gasPriceWei": "26876782",
+      "costWei": "1255360733656",
+      "transactionHash": "0x1be7787bd8d892d92bf9822fc3b3503277fb0b1fd9a56f3955a7846c1b173476",
+      "blockNumber": 30
     },
     {
       "key": "F5.delta",
@@ -1867,10 +1925,10 @@
         "action": "`setNodes`"
       },
       "gasUsed": "1866349",
-      "gasPriceWei": "29975385",
-      "costWei": "55944529819365",
-      "transactionHash": "0xdde92687be3b87c970cb4f851417ad8a75b90feb006a9bf528d4f7e319385765",
-      "blockNumber": 29
+      "gasPriceWei": "23522415",
+      "costWei": "43901035712835",
+      "transactionHash": "0x0c43fdda95299c4933c20ef5250b4459637a289849828bcebddca4b15db2d523",
+      "blockNumber": 31
     },
     {
       "key": "F5.denied.task-limit",
@@ -1893,10 +1951,10 @@
         "action": "`setNodes`"
       },
       "gasUsed": "318816",
-      "gasPriceWei": "26461564",
-      "costWei": "8436369988224",
-      "transactionHash": "0x469103ac459526b60bf3447bd5b4e87f9911e179ccf98ab3aeb40b8dcd0e3286",
-      "blockNumber": 30
+      "gasPriceWei": "20765034",
+      "costWei": "6620225079744",
+      "transactionHash": "0xa2a2e0b20bbc063aa67fdb644724ca5c8e268ff7ecedc56528adcf01faad31f1",
+      "blockNumber": 32
     },
     {
       "key": "F5.denied.flow-limit",
@@ -1919,10 +1977,10 @@
         "action": "`setNodes`"
       },
       "gasUsed": "547091",
-      "gasPriceWei": "23189021",
-      "costWei": "12686504687911",
-      "transactionHash": "0x3ab749c9a14982ee947ae23f7da74fb90d05b71a0535075d89c30c37ea0940ea",
-      "blockNumber": 31
+      "gasPriceWei": "18196990",
+      "costWei": "9955409456090",
+      "transactionHash": "0x4bafd643205b8b43713d6303e4e12d4ff18b14c626dfc4cb5dca1085414f555c",
+      "blockNumber": 33
     },
     {
       "key": "F5.denied.task-name",
@@ -1945,10 +2003,10 @@
         "action": "`setNodes`"
       },
       "gasUsed": "298426",
-      "gasPriceWei": "20343255",
-      "costWei": "6070956216630",
-      "transactionHash": "0x93853ac8425060a914ecc63ec27c575b14a60b32fe2b1aa53e911c4fa6e62310",
-      "blockNumber": 32
+      "gasPriceWei": "15963848",
+      "costWei": "4764027303248",
+      "transactionHash": "0x4c8288faa1649340efb758613e43ee0e2f7e1797e9895bc1c7024a4b73afe939",
+      "blockNumber": 34
     },
     {
       "key": "F5.denied.unknown-target",
@@ -1971,10 +2029,10 @@
         "action": "`setNodes`"
       },
       "gasUsed": "76686",
-      "gasPriceWei": "17825644",
-      "costWei": "1366977335784",
-      "transactionHash": "0x7a08b6631511569543cf7f5792a23c09cc5afb445cc386e249e3099454f1b9b8",
-      "blockNumber": 33
+      "gasPriceWei": "13988217",
+      "costWei": "1072700408862",
+      "transactionHash": "0xaa702d3ec40ddfd7db3314fb139111be88b707742542319ecde9479f323eb2b3",
+      "blockNumber": 35
     },
     {
       "key": "F5.denied.protected-node",
@@ -1997,10 +2055,10 @@
         "action": "`setNodes`"
       },
       "gasUsed": "340491",
-      "gasPriceWei": "15603135",
-      "costWei": "5312727039285",
-      "transactionHash": "0x4ba4f3bf0493885aed126343ef3c3190628ad9398631b1e858b850bc02f4f840",
-      "blockNumber": 34
+      "gasPriceWei": "12244161",
+      "costWei": "4169026623051",
+      "transactionHash": "0xff2e28e2291b5997f4940d3535f51cb2bb45875387e6bb7dd44f72f84a1946ee",
+      "blockNumber": 36
     },
     {
       "key": "F6.denied.carrier-buyer",
@@ -2023,10 +2081,10 @@
         "action": "Sell the license (`transferFrom`) to an organization qualified for its type"
       },
       "gasUsed": "37239",
-      "gasPriceWei": "13674880",
-      "costWei": "509238856320",
-      "transactionHash": "0xadf626f3d5a251d88f8c1e1fab7d54812f923f2ec72b891510cbe735ecfd7e49",
-      "blockNumber": 35
+      "gasPriceWei": "10731012",
+      "costWei": "399612155868",
+      "transactionHash": "0xe4244542c0d866cd3c1ecc7370a7349dad318f59ab5b4ac70426d1d181a78797",
+      "blockNumber": 37
     },
     {
       "key": "F6.denied.supplier-buyer",
@@ -2049,10 +2107,10 @@
         "action": "Sell the license (`transferFrom`) to an organization qualified for its type"
       },
       "gasUsed": "37239",
-      "gasPriceWei": "11967643",
-      "costWei": "445663057677",
-      "transactionHash": "0x89d0125a3bafe09deea6307482bb2cf0aba67a90d03c00826488993062d410cb",
-      "blockNumber": 36
+      "gasPriceWei": "9391302",
+      "costWei": "349722695178",
+      "transactionHash": "0x70fe25869b548b417426c554eb6833e070a7d3af343cfa0b5b373394215f0b0d",
+      "blockNumber": 38
     },
     {
       "key": "F6.denied.without-seller",
@@ -2075,10 +2133,10 @@
         "action": "Sell the license (`transferFrom`) to an organization qualified for its type"
       },
       "gasUsed": "30168",
-      "gasPriceWei": "10473545",
-      "costWei": "315965905560",
-      "transactionHash": "0x17921f0416e5013496f4be5d8bb0e2726402ffba49b1d0a41e673251736a01ce",
-      "blockNumber": 37
+      "gasPriceWei": "8218847",
+      "costWei": "247946176296",
+      "transactionHash": "0x933903a61a2e8af223e7c40529372e45a69405a231a6b2a3c9fa7b0b981cde69",
+      "blockNumber": 39
     },
     {
       "key": "F6.sale",
@@ -2101,10 +2159,10 @@
         "action": "Sell the license (`transferFrom`) to an organization qualified for its type"
       },
       "gasUsed": "108940",
-      "gasPriceWei": "9165668",
-      "costWei": "998507871920",
-      "transactionHash": "0xc237e09b0cf6ad8936b745edf70203ff7221d23da94db027a394d3ef513cdf6b",
-      "blockNumber": 38
+      "gasPriceWei": "7192525",
+      "costWei": "783553673500",
+      "transactionHash": "0xe423cd838efa203d558489711f1998eda90e627247614f7a4e210ed80a22e802",
+      "blockNumber": 40
     },
     {
       "key": "F6.denied.buyer-without-policy",
@@ -2127,10 +2185,10 @@
         "action": "Update the organization data (`setName`, `setProfile`, `setLinked`)"
       },
       "gasUsed": "37003",
-      "gasPriceWei": "8024121",
-      "costWei": "296916549363",
-      "transactionHash": "0x5b753d523de51b902532601baa8f77445f7080c25ee8d49756d736c0478ddcb3",
-      "blockNumber": 39
+      "gasPriceWei": "6296724",
+      "costWei": "232997678172",
+      "transactionHash": "0xdab98201bad1bc176b251bf28b1f6298b6773df5f968ab50b11a0948d94099f6",
+      "blockNumber": 41
     },
     {
       "key": "F6.buyer.holder-policy",
@@ -2153,10 +2211,10 @@
         "action": "Install a Holder policy on the license (`setHolderSmartPolicy`; not a policy decision, only the current holder)"
       },
       "gasUsed": "49611",
-      "gasPriceWei": "7022344",
-      "costWei": "348385508184",
-      "transactionHash": "0x0017ec2bcc3b8e3c16d74e578349bcb7b32fe84d09f68ec2c1f391050efb90b9",
-      "blockNumber": 40
+      "gasPriceWei": "5510605",
+      "costWei": "273386624655",
+      "transactionHash": "0x98a49469cc2f9cd220a8b600928d86d0bd7cd96a28a789bb615c5dc56f13ed6c",
+      "blockNumber": 42
     },
     {
       "key": "F6.denied.former-holder",
@@ -2179,10 +2237,10 @@
         "action": "Update the organization data (`setName`, `setProfile`, `setLinked`)"
       },
       "gasUsed": "34894",
-      "gasPriceWei": "6146004",
-      "costWei": "214458663576",
-      "transactionHash": "0x90e529c0bfd4c4d4c7e603064fe66daeec5f99e381893cb59aac31a5c70b55d0",
-      "blockNumber": 41
+      "gasPriceWei": "4822919",
+      "costWei": "168290935586",
+      "transactionHash": "0xf31a94e0736343bbbb82fd5b8ecc0bb04e0fec0963de72f874415b008bcee084",
+      "blockNumber": 43
     },
     {
       "key": "F6.buyer.name",
@@ -2205,10 +2263,10 @@
         "action": "Update the organization data (`setName`, `setProfile`, `setLinked`)"
       },
       "gasUsed": "66674",
-      "gasPriceWei": "5378648",
-      "costWei": "358615976752",
-      "transactionHash": "0x07ba52cbbe6577f55cf0525a2cc7862e5ae2dc7e4c178ea8bf1573341ebf923f",
-      "blockNumber": 42
+      "gasPriceWei": "4220756",
+      "costWei": "281414685544",
+      "transactionHash": "0xcdd45dc12a30c0d1dd66332a83ad401beecff6936fecb4a613bffd1050ca7235",
+      "blockNumber": 44
     },
     {
       "key": "F6.buyer.profile",
@@ -2231,10 +2289,10 @@
         "action": "Update the organization data (`setName`, `setProfile`, `setLinked`)"
       },
       "gasUsed": "67102",
-      "gasPriceWei": "4707812",
-      "costWei": "315903600824",
-      "transactionHash": "0x94a6b2ada9ee6b8f8f1e3a453f3b2f1898c0690aa3efca7c4e3fb32593c1319c",
-      "blockNumber": 43
+      "gasPriceWei": "3694335",
+      "costWei": "247897267170",
+      "transactionHash": "0xe14f1b45ac8a34fab654e6d40875decf1c7968baa89ee8bdec7d3f0878821b06",
+      "blockNumber": 45
     },
     {
       "key": "F6.buyer.messages",
@@ -2257,10 +2315,10 @@
         "action": "Declare messages (`setMessages`) allowed for the license type"
       },
       "gasUsed": "76009",
-      "gasPriceWei": "4120652",
-      "costWei": "313206637868",
-      "transactionHash": "0xdb7a9b0a8c0ef5379ad16186d072deb57ef369621a6a7b557bd4846be332d596",
-      "blockNumber": 44
+      "gasPriceWei": "3233576",
+      "costWei": "245780878184",
+      "transactionHash": "0x6fd139ef56dbf33893e3d3baa2540f0e7213037ee0f6489a429e2146af874d7b",
+      "blockNumber": 46
     },
     {
       "key": "F7.deploy.deny-all",
@@ -2273,17 +2331,17 @@
       "to": null,
       "created": {
         "contract": "DenyAllSmartPolicy",
-        "address": "0x7a2088a1bFc9d81c55368AE168C2C02570cB814F"
+        "address": "0xc5a5C42992dECbae36851359345FE25997F5C42d"
       },
       "call": "DenyAllSmartPolicy.constructor",
       "outcome": "allowed",
       "reason": null,
       "trust": null,
       "gasUsed": "335458",
-      "gasPriceWei": "3606876",
-      "costWei": "1209955409208",
-      "transactionHash": "0xfc3e2057a38ceffdbcf1e9fab5a56e74686c70335e42768e68660d141342b1d4",
-      "blockNumber": 45
+      "gasPriceWei": "2830404",
+      "costWei": "949481665032",
+      "transactionHash": "0xb7eac524780adceb45b05a30f85666b8c3265e42cd2a0e8595966bd7338b3b7e",
+      "blockNumber": 47
     },
     {
       "key": "F7.mint",
@@ -2306,10 +2364,10 @@
         "action": "`mint` an instance of the choreography type to an eligible holder"
       },
       "gasUsed": "5625370",
-      "gasPriceWei": "3161059",
-      "costWei": "17782126466830",
-      "transactionHash": "0x8cec176bce48d048819d72ea616ac0bff2cf315da4ede073f1e983e39167f606",
-      "blockNumber": 46
+      "gasPriceWei": "2480560",
+      "costWei": "13954067807200",
+      "transactionHash": "0xceaf95786f1b222bb22ecf96045c934839e439d6e5014f99227f58aeb0b99362",
+      "blockNumber": 48
     },
     {
       "key": "F7.denied.transfer",
@@ -2332,10 +2390,10 @@
         "action": "`transferFrom` to an eligible holder"
       },
       "gasUsed": "30322",
-      "gasPriceWei": "2840019",
-      "costWei": "86115056118",
-      "transactionHash": "0x9d04d58c94f5d619a708e41e60ee9e4a1911c8722045b26c7ee05bb52403a7a5",
-      "blockNumber": 47
+      "gasPriceWei": "2228632",
+      "costWei": "67576579504",
+      "transactionHash": "0xb565335a5347e4a7b2d2ddab46791ffa410d31709e7813f8a20a9076e2cb240e",
+      "blockNumber": 49
     },
     {
       "key": "F7.transfer",
@@ -2358,10 +2416,10 @@
         "action": "`transferFrom` to an eligible holder"
       },
       "gasUsed": "106564",
-      "gasPriceWei": "2485376",
-      "costWei": "264851608064",
-      "transactionHash": "0xb7129c1c41f7b94636b3eb0f2a9dceffea5ca0e222b3468c0cdb89eddbdd8cea",
-      "blockNumber": 48
+      "gasPriceWei": "1950335",
+      "costWei": "207835498940",
+      "transactionHash": "0x7d7183a1d06e631bb2c2a351f02e650f0e3fadcae6e179faaec0fe0cbee8f740",
+      "blockNumber": 50
     },
     {
       "key": "F7.holder.deny-all",
@@ -2384,10 +2442,10 @@
         "action": "`setHolderSmartPolicy`"
       },
       "gasUsed": "49633",
-      "gasPriceWei": "2175808",
-      "costWei": "107991878464",
-      "transactionHash": "0x88340555b5dd69162392ecf4de02c4862e70d7c0b9bc1d358011706a7b1e46ad",
-      "blockNumber": 49
+      "gasPriceWei": "1707410",
+      "costWei": "84743880530",
+      "transactionHash": "0xa9f706d6c01e8d95113e6c93b52d46a31372cc85a0453f6984d987f20f78d531",
+      "blockNumber": 51
     },
     {
       "key": "F7.denied.delta",
@@ -2410,10 +2468,10 @@
         "action": "`setNodes`"
       },
       "gasUsed": "136179",
-      "gasPriceWei": "1904282",
-      "costWei": "259323218478",
-      "transactionHash": "0xc0808025a3fe836dac23d20d68b65caae8a286460f430a450fc9343168d337ce",
-      "blockNumber": 50
+      "gasPriceWei": "1494337",
+      "costWei": "203497318323",
+      "transactionHash": "0x84f2703833b7840f8c5dde7e93e7b25f7956e6138c7356ee50550f50d68c4612",
+      "blockNumber": 52
     },
     {
       "key": "F8.new-instance.mint",
@@ -2436,10 +2494,10 @@
         "action": "`mint` an instance of the choreography type to an eligible holder"
       },
       "gasUsed": "5625370",
-      "gasPriceWei": "1667328",
-      "costWei": "9379336911360",
-      "transactionHash": "0x921e70394542b7de5a1da156fd82d8f0fba31ee7b377a575494e07c79c7c3112",
-      "blockNumber": 51
+      "gasPriceWei": "1308394",
+      "costWei": "7360200355780",
+      "transactionHash": "0x2c60b14620714d86ba199baa66a7f9b83a5ad4893da7648aca86ff55bddbd6d7",
+      "blockNumber": 53
     },
     {
       "key": "F8.new-instance.roles",
@@ -2462,10 +2520,10 @@
         "action": "`setRoles`"
       },
       "gasUsed": "176849",
-      "gasPriceWei": "1497993",
-      "costWei": "264918564057",
-      "transactionHash": "0x3afbccdbf5f2990565eedc5522cc0a2ff16dd5219eddd73847f57e3af408f2e4",
-      "blockNumber": 52
+      "gasPriceWei": "1175512",
+      "costWei": "207888121688",
+      "transactionHash": "0x877ba16406e381f7c23317b69df7be2706d78e1afd413df4d3f525c11078c60c",
+      "blockNumber": 54
     },
     {
       "key": "F8.new-instance.link",
@@ -2488,10 +2546,10 @@
         "action": "`setRoles`"
       },
       "gasUsed": "97276",
-      "gasPriceWei": "1311849",
-      "costWei": "127611423324",
-      "transactionHash": "0xed92d988ee9a530d1205487a07f9b4bb24d758a8a181bc833c0175f8a7cbe640",
-      "blockNumber": 53
+      "gasPriceWei": "1029440",
+      "costWei": "100139805440",
+      "transactionHash": "0x1adba5af4a134520604731ce0d62876871b5c3a6bf069ad854619115dab27c76",
+      "blockNumber": 55
     }
   ]
 }

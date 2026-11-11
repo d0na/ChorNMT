@@ -288,8 +288,8 @@ sequenceDiagram
 | --- | --- | --- |
 | `MasterSmartPolicy` | nessuno: regole **hardcoded**, come una policy tradotta da XACML (`administrator` e unico creator autorizzato = account 0, holder ammessi = account 0 e 1) | Operazioni dell'NMT: mint, mint con modello, trasferimenti, propria sostituzione (solo `administrator`). |
 | `CreatorSmartPolicy` | nessuno: regole **hardcoded** (`administrator` = account 0) | Modifiche dell'holder e propria sostituzione (solo `administrator`). Nessun vincolo BPMN: rifiuta solo aggiornamenti malformati (array di lunghezze diverse, nomi vuoti o duplicati, sequence flow dichiarati su un solo estremo: nel modello dopo l'aggiornamento `B` sta in `A.outgoing` se e solo se `A` sta in `B.incoming`). Un modello così non si potrebbe più disegnare. |
-| `ConstrainedCreatorSmartPolicy` (abstract) | `participants`: l'attribute manager, `immutable` dal costruttore | Le regole dei vincoli strutturali e dei ruoli. I dati (limiti, task ammessi, nodi e ruoli protetti, tipi richiesti) sono letterali scritti da ogni scenario: `CreatorSmartPolicyTestScenario` (fixture dei test) e `CreatorSmartPolicyPaperScenario` (paper example). |
-| `ChoreographyParticipantAM` | `participantNmt`, `participantCertifier` (`immutable`) | Non è una policy ma un attribute manager: restituisce il tipo di una licenza emessa dal participant NMT e certificata dalla participant Creator policy, zero per ogni altro indirizzo. |
+| `ConstrainedCreatorSmartPolicy` (abstract) | nessuno | Le regole dei vincoli strutturali e dei ruoli. I dati (limiti, task ammessi, nodi e ruoli protetti, tipi richiesti) sono letterali scritti da ogni scenario; ogni scenario lega, `immutable` dal costruttore, l'attribute manager di ciascun tipo che richiede (`specialCarrierParticipants`) e lo restituisce dall'hook `_participantAttributeManager(tipo)`: `CreatorSmartPolicyTestScenario` (fixture dei test) e `CreatorSmartPolicyPaperScenario` (paper example). |
+| `ChoreographyParticipantAM` | `participantNmt`, `participantCertifier` (`immutable`) | Non è una policy ma un attribute manager: restituisce il tipo di una licenza emessa dal participant NMT a cui è legato e certificata dalla participant Creator policy, zero per ogni altro indirizzo. Un participant NMT conia un solo tipo, quindi c'è un attribute manager per tipo; la Creator policy vincolata sceglie quello del tipo richiesto dal ruolo. |
 | `HolderSmartPolicy` | nessuno | Seconda approvazione: consente all'holder `setRoles`, `setNodes` e `setLinked`. Implementa `IChoreographyPolicy` senza vincoli: `evaluateNodeUpdate` ed `evaluateRoleUpdate` rispondono `true` senza leggere l'asset. |
 | `DenyAllSmartPolicy` | nessuno | Nega tutto, anche i controlli di dominio (`IChoreographyPolicy`). Installata come Holder policy, blocca l'asset finché l'holder non la sostituisce. |
 
@@ -322,7 +322,7 @@ Un `ParticipantMutableAsset` è la **licenza di un ruolo**. La coreografia colle
 
 | Contratto | Ruolo |
 | --- | --- |
-| `ParticipantNMT` | Conia le licenze con `mintWithParticipantType(to, creator, holder, tipo)`: il tipo è obbligatorio, e il `mint` senza tipo fallisce. Espone `tokenURI` tramite un `ParticipantTokenURIRenderer` fissato nel costruttore. |
+| `ParticipantNMT` | Un NMT per tipo di licenza: il tipo (`participantType`, `immutable`) è fissato nel costruttore, e il `mint(to, creator, holder)` pubblico della base `NMT` lo passa, tramite l'`_mint` interno, a ogni licenza creata. La Master policy consente il mint solo a un emittente del tipo dell'NMT. Espone `tokenURI` tramite un `ParticipantTokenURIRenderer` fissato nel costruttore. |
 | `ParticipantMasterSmartPolicy` | Valuta mint, transfer e sostituzione della Master (`setMasterSmartPolicy`, solo all'autorità) del `ParticipantNMT`. È **hardcoded**, come una policy tradotta da XACML: per ogni tipo (`SpecialCarrier`, `Carrier`, `Supplier`) scrive nel codice chi lo emette e quali organizzazioni sono qualificate. Una licenza si vende solo a un'organizzazione qualificata per il suo tipo. |
 | `CreatorSmartPolicy` (participant) | Il suo `administrator` è il certificatore: solo lui sostituisce la Creator policy. All'holder consente solo le azioni elencate (`setName`, `setProfile`, `setMessages`, `setLinked`, `transferFrom`); ogni altra azione è negata. Con `evaluateMessagesUpdate` ammette solo i messaggi previsti per il tipo della licenza, scritti nel codice. |
 | `HolderSmartPolicy` (participant) | Seconda approvazione: consente all'holder le stesse azioni sui propri dati, e nega tutto il resto. Su `evaluateMessagesUpdate` non aggiunge vincoli. |
@@ -335,7 +335,7 @@ Un transfer azzera la Holder policy della licenza e cancella nome e profilo del 
 `deploy:asset` assegna ancora ai ruoli gli account del nodo locale. Le licenze le usano per ora `test:policies` e l'esperimento (fasi F3 e F6, `npm run evidence:update`).
 
 ```solidity
-bytes32 public immutable participantType; // tipo del ruolo, fissato al mint
+bytes32 public immutable participantType; // tipo del ruolo, quello del ParticipantNMT che la conia
 bytes32 private name;                     // nome dell'organizzazione holder
 bytes32 private profile;                  // hash o CID del profilo off-chain
 address private messagesWriter;           // holder che ha scritto i messaggi

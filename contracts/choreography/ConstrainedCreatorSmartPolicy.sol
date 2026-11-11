@@ -14,15 +14,10 @@ import "./IChoreographyParticipantAM.sol";
 // update, and no protected node may change or gain or lose a link. On setRoles a role must
 // exist, a protected role is assigned once (only while it has no account), a role with a required type must be linked to a certified
 // license of that type, and, when the scenario asks for it, no account plays two roles.
+// Licenses of a type come from one ParticipantNMT, so each required type has its own
+// attribute manager, chosen by the scenario policy.
 abstract contract ConstrainedCreatorSmartPolicy is CreatorSmartPolicy {
     uint8 private constant TASK = uint8(IChoreographyAsset.NodeType.TASK);
-
-    IChoreographyParticipantAM private immutable participants;
-
-    constructor(address participantAttributeManager) {
-        if (participantAttributeManager == address(0)) revert InvalidAddress();
-        participants = IChoreographyParticipantAM(participantAttributeManager);
-    }
 
     function evaluateNodeUpdate(
         address asset,
@@ -91,7 +86,10 @@ abstract contract ConstrainedCreatorSmartPolicy is CreatorSmartPolicy {
                 return false;
             }
             bytes32 requiredType = _requiredParticipantType(nameHash);
-            if (requiredType != bytes32(0) && participants.participantTypeOf(addresses[i]) != requiredType) {
+            if (
+                requiredType != bytes32(0) &&
+                _participantAttributeManager(requiredType).participantTypeOf(addresses[i]) != requiredType
+            ) {
                 return false;
             }
         }
@@ -106,6 +104,8 @@ abstract contract ConstrainedCreatorSmartPolicy is CreatorSmartPolicy {
     function _isProtectedRole(bytes32 nameHash) internal pure virtual returns (bool);
     // The license type a role requires; zero when the role takes any account.
     function _requiredParticipantType(bytes32 nameHash) internal pure virtual returns (bytes32);
+    // The attribute manager of the licenses of a required type (bound at deploy time).
+    function _participantAttributeManager(bytes32 participantType) internal view virtual returns (IChoreographyParticipantAM);
     function _distinctRoleAccountsRequired() internal pure virtual returns (bool);
 
     function _hasDistinctRoleAccounts(

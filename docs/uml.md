@@ -19,7 +19,7 @@ The off-chain JavaScript pipeline (import, model encoding, BPMN updates applied 
 
 ![Architecture overview](uml/architecture-overview.svg)
 
-The same overview extended with the role license path of the running example, in purple: ① the authority mints the `SpecialCarrier` license for Carrier A with `mintWithParticipantType` (the `ParticipantMasterSmartPolicy` checks the issuer); ② `setRoles` binds the Special Carrier role to the license; ③ the choreography Creator policy asks `ChoreographyParticipantAM.participantTypeOf` for the license type; ④ Carrier A transfers the license to Carrier B; ⑤ the participant Master checks that Carrier B is qualified for the type; ⑥ the transfer clears `name` and `profile` and resets the Holder policy to `address(0)`. Written by hand in `docs/uml/architecture-participants.mmd`, rendered like the overview.
+The same overview extended with the role license path of the running example, in purple: ① the authority mints the `SpecialCarrier` license for Carrier A with `mint` on the `ParticipantNMT` of that type (the `ParticipantMasterSmartPolicy` checks the issuer of the type); ② `setRoles` binds the Special Carrier role to the license; ③ the choreography Creator policy asks the `ChoreographyParticipantAM` of the SpecialCarrier licenses (`participantTypeOf`) for the license type; ④ Carrier A transfers the license to Carrier B; ⑤ the participant Master checks that Carrier B is qualified for the type; ⑥ the transfer clears `name` and `profile` and resets the Holder policy to `address(0)`. Written by hand in `docs/uml/architecture-participants.mmd`, rendered like the overview.
 
 ![Architecture with role licenses](uml/architecture-participants.svg)
 

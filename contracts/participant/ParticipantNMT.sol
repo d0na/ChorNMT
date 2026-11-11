@@ -3,16 +3,23 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../base/NMT.sol";
+import "./IParticipantNMT.sol";
 import "./ParticipantMutableAsset.sol";
 import "./ParticipantTokenURIRenderer.sol";
 
-contract ParticipantNMT is NMT {
+// One license type: the type is fixed at deploy time and every license minted here gets it.
+// Another type is another ParticipantNMT, as another choreography model is another ChoreographyNMT.
+contract ParticipantNMT is NMT, IParticipantNMT {
+    bytes32 public immutable participantType;
     address public immutable tokenURIRenderer;
 
-    // A license is always minted with its type: use mintWithParticipantType.
     error ParticipantTypeRequired();
 
-    constructor(address masterSmartPolicyAddress, address tokenURIRendererAddress)
+    constructor(
+        address masterSmartPolicyAddress,
+        address tokenURIRendererAddress,
+        bytes32 participantTypeValue
+    )
         ERC721(
             "Mutable Participant for a PUB Decentraland UniPi Project",
             "PUBMNTPARTICIPANT"
@@ -20,31 +27,9 @@ contract ParticipantNMT is NMT {
         NMT(masterSmartPolicyAddress)
     {
         if (tokenURIRendererAddress == address(0)) revert InvalidAddress();
+        if (participantTypeValue == bytes32(0)) revert ParticipantTypeRequired();
         tokenURIRenderer = tokenURIRendererAddress;
-    }
-
-    function mintWithParticipantType(
-        address to,
-        address creatorSmartPolicy,
-        address holderSmartPolicy,
-        bytes32 participantType
-    )
-        external
-        evaluatedByMaster(msg.data, address(this))
-        returns (address, uint256)
-    {
-        if (to == address(0)) revert InvalidAddress();
-        ParticipantMutableAsset participant = new ParticipantMutableAsset(
-            address(this),
-            creatorSmartPolicy,
-            holderSmartPolicy,
-            participantType
-        );
-
-        uint256 tokenId = uint160(address(participant));
-        _mint(to, tokenId);
-
-        return (address(participant), tokenId);
+        participantType = participantTypeValue;
     }
 
     function tokenURI(
@@ -57,11 +42,22 @@ contract ParticipantNMT is NMT {
             );
     }
 
+    // Called by the public mint of NMT, after the Master check: the license gets the type of this NMT.
     function _mint(
-        address,
-        address,
-        address
-    ) internal pure override returns (address, uint256) {
-        revert ParticipantTypeRequired();
+        address to,
+        address creatorSmartPolicy,
+        address holderSmartPolicy
+    ) internal override returns (address, uint256) {
+        ParticipantMutableAsset participant = new ParticipantMutableAsset(
+            address(this),
+            creatorSmartPolicy,
+            holderSmartPolicy,
+            participantType
+        );
+
+        uint256 tokenId = uint160(address(participant));
+        _mint(to, tokenId);
+
+        return (address(participant), tokenId);
     }
 }

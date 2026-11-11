@@ -30,12 +30,14 @@ participant "Model (SSTORE2)\n<<ChoreographyModel>>" as C4
 participant "ChoreographyNMT" as C5
 participant "ParticipantMasterSmartPolicy" as C6
 participant "ParticipantTokenURIRenderer" as C7
-participant "ParticipantNMT" as C8
+participant "SpecialCarrier NMT\n<<ParticipantNMT>>" as C8
+participant "Carrier NMT\n<<ParticipantNMT>>" as C9
+participant "Supplier NMT\n<<ParticipantNMT>>" as C10
 actor "Authority\n(account 9)" as A9
-participant "ParticipantCreatorSmartPolicy" as C9
-participant "ParticipantHolderSmartPolicy" as C10
-participant "ChoreographyParticipantAM" as C11
-participant "CreatorSmartPolicyPaperScenario" as C12
+participant "ParticipantCreatorSmartPolicy" as C11
+participant "ParticipantHolderSmartPolicy" as C12
+participant "ChoreographyParticipantAM" as C13
+participant "CreatorSmartPolicyPaperScenario" as C14
 participant "Off-chain pipeline\n(bpmn-builder-js)" as OffChain
 == off-chain: import ==
 A0 -> OffChain : importBpmnToNmt(references/paper-example.bpmn)
@@ -60,23 +62,29 @@ A0 -> C5 : constructor
 C5 --> A0 : allowed · 4,815,956 gas
 == F1.deploy.participant-master · allowed ==
 A0 -> C6 : constructor
-C6 --> A0 : allowed · 488,974 gas
+C6 --> A0 : allowed · 495,871 gas
 == F1.deploy.participant-renderer · allowed ==
 A0 -> C7 : constructor
 C7 --> A0 : allowed · 983,462 gas
-== F1.deploy.participant-nmt · allowed ==
+== F1.deploy.special-carrier-nmt · allowed ==
 A0 -> C8 : constructor
-C8 --> A0 : allowed · 2,700,510 gas
-== F1.deploy.certifier · allowed ==
-A9 -> C9 : constructor
-C9 --> A9 : allowed · 502,425 gas
-== F1.deploy.participant-holder · allowed ==
+C8 --> A0 : allowed · 2,639,234 gas
+== F1.deploy.carrier-nmt · allowed ==
+A0 -> C9 : constructor
+C9 --> A0 : allowed · 2,639,150 gas
+== F1.deploy.supplier-nmt · allowed ==
 A0 -> C10 : constructor
-C10 --> A0 : allowed · 323,604 gas
-== F1.deploy.participant-am · allowed ==
-A0 -> C11 : constructor
-C11 --> A0 : allowed · 229,423 gas
-== F1.deploy.paper-creator · allowed ==
+C10 --> A0 : allowed · 2,639,162 gas
+== F1.deploy.certifier · allowed ==
+A9 -> C11 : constructor
+C11 --> A9 : allowed · 502,425 gas
+== F1.deploy.participant-holder · allowed ==
 A0 -> C12 : constructor
-C12 --> A0 : allowed · 1,790,772 gas
+C12 --> A0 : allowed · 323,604 gas
+== F1.deploy.special-carrier-am · allowed ==
+A0 -> C13 : constructor
+C13 --> A0 : allowed · 229,423 gas
+== F1.deploy.paper-creator · allowed ==
+A0 -> C14 : constructor
+C14 --> A0 : allowed · 1,790,747 gas
 @enduml

@@ -7,6 +7,7 @@ import "./IChoreographyParticipantAM.sol";
 
 // Attribute manager of the role licenses, as a policy information point: it answers which
 // license type an address holds, and leaves to the Creator policy which type a role requires.
+// A license NMT mints one type, so there is one attribute manager per license type.
 // The registry and the certifier are deployed contracts, so they are bound at deploy time.
 contract ChoreographyParticipantAM is IChoreographyParticipantAM {
     error InvalidAddress();

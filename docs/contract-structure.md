@@ -64,13 +64,13 @@ The order follows the Solidity style guide:
 
 - `address public masterSmartPolicy`, declared in the base `NMT` — required, non-zero, checked in the base constructor (`NMT(masterSmartPolicyAddress)`). It is storage, not `immutable`, because it is replaceable: `setMasterSmartPolicy(address)` is `evaluatedByMaster` with the current Master, rejects the zero address, and emits `MasterSmartPolicyChanged`. Concrete Tokens do not redeclare it.
 - Other immutables for stateless collaborators (e.g. `tokenURIRenderer`), non-zero.
-- A domain Token whose assets start from a fixed model holds the address of that model as an `immutable` (e.g. `ChoreographyNMT.model`, a data-only SSTORE2 contract), checked to have code: the Token is then one type of asset, not a generic container.
+- A domain Token whose assets start from a fixed model holds the address of that model as an `immutable` (e.g. `ChoreographyNMT.model`, a data-only SSTORE2 contract), checked to have code: the Token is then one type of asset, not a generic container. Likewise `ParticipantNMT.participantType`, non-zero: one license type per Token.
 - No domain data and no version registry: the model lives in the asset, and its history is the chain itself (transactions and events).
 
 **Public functions**
 
 - `mint(to, creatorSmartPolicy, holderSmartPolicy)` is defined once in the base `NMT`, `evaluatedByMaster(abi.encodeWithSignature("mint(address,address,address)", ...), address(this))`.
-- Every other minting entry point (e.g. `ParticipantNMT.mintWithParticipantType`) is `evaluatedByMaster` with its exact signature, then calls the internal `_mint`. A Token whose assets need data at birth passes it to the asset constructor in `_mint` (e.g. the model address), not as a mint argument.
+- `mint` is the only minting entry point. A Token whose assets need data at birth fixes it at its own deploy, as an `immutable`, and passes it to the asset constructor in `_mint` (the model address in `ChoreographyNMT`, the license type in `ParticipantNMT`), never as a mint argument: another value is another Token.
 - `transferFrom(from, to, tokenId)` is defined once in the base `NMT`: `evaluatedByMaster(abi.encodeWithSignature("transferFrom(address,address)", from, to), getMutableAssetAddress(tokenId))`, then the asset's Creator check, then the ERC-721 transfer.
 - `tokenURI(tokenId)` calls `_requireOwned(tokenId)`, then delegates: to the renderer, or to the asset.
 
@@ -125,7 +125,7 @@ function _evaluateThingUpdate(T calldata value) private view {
   2. the domain check (e.g. BPMN structure, role constraints): Creator `evaluate<Thing>Update` AND Holder `evaluate<Thing>Update`, through the same domain interface.
   The Creator sets the outer bounds the holder cannot remove; the Holder can only restrict further. Neither approval can override a denial by the other.
 - Single-layer checks are exceptions, allowed only where the trust table in `docs/choreography-policies.md` requires them, and each must be listed there:
-  - `evaluatedByCreator` only: `setCreatorSmartPolicy` (the holder must not escape the Creator constraint) and the asset side of `transferFrom` (the Holder policy is reset by the transfer). Certified data the holder must not change is not a mutator at all: it is an `immutable` set at mint (e.g. `participantType`);
+  - `evaluatedByCreator` only: `setCreatorSmartPolicy` (the holder must not escape the Creator constraint) and the asset side of `transferFrom` (the Holder policy is reset by the transfer). Certified data the holder must not change is not a mutator at all: it is an `immutable` set at birth from the Token (e.g. `participantType`);
   - `onlyHolder` only: `setHolderSmartPolicy`.
 - The action passed to the policies is `msg.data` (see [Gas](#gas)). The policies' selector constants use the exact canonical signature, with enums as `uint8` and structs as tuples. The asset mutators pass `msg.data`; the NMT mutators still re-encode with `abi.encodeWithSignature` and the same signature string (remaining part of G2).
 - No logic between the policy check and the private setter, except the domain check.
@@ -152,7 +152,7 @@ function _evaluateThingUpdate(T calldata value) private view {
 - **Configuration is hardcoded.** A policy stands for a policy translated from XACML, so its rules and their data (accounts, types, allowed values, limits, switches) are `private constant`s and literal conditions in the source, edited by hand when the scenarios change. There is one policy per role, tuned to the current test and evaluation scenarios. Changing a rule means deploying a new policy and installing it through the policy it replaces (`setMasterSmartPolicy`, `setCreatorSmartPolicy`), never a runtime setter. Literals are also the cheapest form: no storage at deploy, no `SLOAD` at evaluation.
 - `administrator`: the account that may replace the policy, hardcoded as a `constant` (Master policies and the choreography Creator policies) or the deployer stored as an `immutable` (participant Creator policies, whose deployer is the certifier).
 - **Rule variants are policies.** A variant of a rule (e.g. a stricter constraint set) is a separate contract, named `<Policy><Variant>`, that may extend the policy it varies and override `evaluate`. When several policies share rules and differ only in data, the rules live in an abstract policy with `internal pure virtual` hooks, and each scenario policy implements the hooks with literals (`ConstrainedCreatorSmartPolicy` → `CreatorSmartPolicyTestScenario`, `CreatorSmartPolicyPaperScenario`).
-- **Attributes of other contracts come from an attribute manager.** When a rule needs an attribute held by contracts deployed at runtime (e.g. the type of a role license), the policy reads it through an attribute manager (`ChoreographyParticipantAM`), bound as an `immutable` constructor argument. The attribute manager only answers about attributes; which value a rule requires stays in the policy. Deploy-time bindings of contract addresses are not runtime configuration.
+- **Attributes of other contracts come from an attribute manager.** When a rule needs an attribute held by contracts deployed at runtime (e.g. the type of a role license), the policy reads it through an attribute manager (`ChoreographyParticipantAM`, one per license type), bound as an `immutable` constructor argument. The attribute manager only answers about attributes; which value a rule requires stays in the policy. Deploy-time bindings of contract addresses are not runtime configuration.
 
 **Public functions**
 
@@ -180,7 +180,8 @@ function _evaluateThingUpdate(T calldata value) private view {
 - Each asset kind declares the views other contracts may use in one shared interface, and the asset declares `is` that interface so the compiler checks that views and interface agree:
   - `base/IMutableAsset.sol`: `nmt`, `linked`, `creatorSmartPolicy`, `holderSmartPolicy`, `getHolder`; implemented by `MutableAsset`;
   - `choreography/IChoreographyAsset.sol`: node and role views and `tokenURI`, plus the `NodeType` enum; implemented by `ChoreographyMutableAsset`;
-  - `participant/IParticipantAsset.sol`: `participantType`, `getName`, `getProfile`, `getMessages`, `getMessagesWriter`, `tokenURI`; implemented by `ParticipantMutableAsset`.
+  - `participant/IParticipantAsset.sol`: `participantType`, `getName`, `getProfile`, `getMessages`, `getMessagesWriter`, `tokenURI`; implemented by `ParticipantMutableAsset`;
+  - `participant/IParticipantNMT.sol`: `participantType`, read by the participant Master on `mint`; implemented by `ParticipantNMT`.
 - Policies and renderers type their calls with these interfaces (`IMutableAsset(resource).getHolder()`), not with the concrete asset contracts. A view a policy needs is added to the interface first.
 - Shared enums used across contracts live in the interface (e.g. `IChoreographyAsset.NodeType`).
 - Domain policy extensions live in their own file and are layer-neutral, because both Creator and Holder implement them: `participant/IParticipantPolicy.sol` (`evaluateMessagesUpdate`) and `choreography/IChoreographyPolicy.sol` (`evaluateNodeUpdate`, `evaluateRoleUpdate`). A permissive implementation takes `calldata` parameters it does not name, so it decodes nothing.
@@ -188,7 +189,7 @@ function _evaluateThingUpdate(T calldata value) private view {
 ## Errors and checks
 
 - Every contract uses **custom errors**, never `require` strings: `if (!condition) revert Error();`. A policy denial reverts with `OperationDenied(layer)` in the asset (`CREATOR` = 0, `HOLDER` = 1, also for the domain checks) and `MasterDenied()` in the Token; the other errors name the failed check (`CallerNotHolder`, `CallerNotNMT`, `HolderPolicyDisabled`, `InvalidAddress`, `ArraySizeMismatch`, `NameRequired`, `TransferDenied`, `MalformedAction`). They are cheaper to deploy and to revert than `require` strings, and the Token embeds the Asset bytecode, so every string counts twice.
-- Errors shared by a kind are declared once in its base (`MutableAsset`, `NMT`, `SmartPolicy`); an error used by one contract only is declared there (`ParticipantTypeRequired` in `ParticipantNMT`).
+- Errors shared by a kind are declared once in its base (`MutableAsset`, `NMT`, `SmartPolicy`); an error used by one contract only is declared there (`ParticipantTypeRequired` in the `ParticipantNMT` constructor).
 - Constructors reject the zero address for every required collaborator.
 - Every allow and deny path of a public mutator is covered in `scripts/test-policies.js`. The tests check revert status, not revert messages, so switching to custom errors does not change them.
 

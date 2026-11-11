@@ -16,7 +16,13 @@ contract CreatorSmartPolicyTestScenario is ConstrainedCreatorSmartPolicy {
     bytes32 private constant CARRIER = keccak256("Carrier");
     bytes32 private constant SPECIAL_CARRIER_LICENSE = "SpecialCarrier";
 
-    constructor(address participantAttributeManager) ConstrainedCreatorSmartPolicy(participantAttributeManager) {}
+    // Attribute manager of the SpecialCarrier licenses, the only type this scenario requires.
+    IChoreographyParticipantAM private immutable specialCarrierParticipants;
+
+    constructor(address specialCarrierAttributeManagerAddress) {
+        if (specialCarrierAttributeManagerAddress == address(0)) revert InvalidAddress();
+        specialCarrierParticipants = IChoreographyParticipantAM(specialCarrierAttributeManagerAddress);
+    }
 
     function _maxTaskCount() internal pure override returns (uint256) {
         return 4;
@@ -45,6 +51,10 @@ contract CreatorSmartPolicyTestScenario is ConstrainedCreatorSmartPolicy {
 
     function _requiredParticipantType(bytes32 nameHash) internal pure override returns (bytes32) {
         return nameHash == CARRIER ? SPECIAL_CARRIER_LICENSE : bytes32(0);
+    }
+
+    function _participantAttributeManager(bytes32) internal view override returns (IChoreographyParticipantAM) {
+        return specialCarrierParticipants;
     }
 
     function _distinctRoleAccountsRequired() internal pure override returns (bool) {

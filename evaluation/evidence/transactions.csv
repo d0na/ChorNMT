@@ -5,50 +5,52 @@ F1.deploy.holder,F1,Administrator,HolderSmartPolicy.constructor,allowed,,391047,
 F1.deploy.renderer,F1,Administrator,ChoreographyTokenURIRenderer.constructor,allowed,,1236012,748285702,924890107100424
 F1.deploy.model,F1,Administrator,ChoreographyModel.constructor,allowed,,2343146,658603698,1543204620553908
 F1.deploy.nmt,F1,Administrator,ChoreographyNMT.constructor,allowed,,4815956,582708256,2806297321732736
-F1.deploy.participant-master,F1,Administrator,ParticipantMasterSmartPolicy.constructor,allowed,,488974,521562631,255030565930594
-F1.deploy.participant-renderer,F1,Administrator,ParticipantTokenURIRenderer.constructor,allowed,,983462,457429930,449864953817660
-F1.deploy.participant-nmt,F1,Administrator,ParticipantNMT.constructor,allowed,,2700510,402125627,1085944276969770
-F1.deploy.certifier,F1,Authority,ParticipantCreatorSmartPolicy.constructor,allowed,,502425,356384692,179056578878100
-F1.deploy.participant-holder,F1,Administrator,ParticipantHolderSmartPolicy.constructor,allowed,,323604,312582675,101153003960700
-F1.deploy.participant-am,F1,Administrator,ChoreographyParticipantAM.constructor,allowed,,229423,273931313,62846143622399
-F1.deploy.paper-creator,F1,Administrator,CreatorSmartPolicyPaperScenario.constructor,allowed,,1790772,239951758,429698889577176
-F2.mint,F2,Administrator,ChoreographyNMT.mint,allowed,,5619770,211748201,1189976187533770
-F2.roles,F2,Administrator,ChoreographyMutableAsset.setRoles,allowed,,176849,190237911,33643384322439
-F2.denied.unauthorized-creator,F2,Unauthorized creator,ChoreographyNMT.mint,denied,MasterDenied,29810,166598353,4966296902930
-F2.denied.ineligible-holder,F2,Administrator,ChoreographyNMT.mint,denied,MasterDenied,30099,145794252,4388261190948
-F3.license.special-carrier,F3,Authority,ParticipantNMT.mintWithParticipantType,allowed,,1196735,127588256,152689331544160
-F3.license.carrier,F3,Authority,ParticipantNMT.mintWithParticipantType,allowed,,1199468,112275930,134671385205240
-F3.license.supplier,F3,Authority,ParticipantNMT.mintWithParticipantType,allowed,,1199497,98802569,118513385107793
-F3.denied.plain-account,F3,Administrator,ChoreographyMutableAsset.setRoles,denied,OperationDenied(CREATOR),63707,86946055,5539072325885
-F3.denied.carrier-license,F3,Administrator,ChoreographyMutableAsset.setRoles,denied,OperationDenied(CREATOR),69939,76100878,5322419306442
-F3.denied.supplier-license,F3,Administrator,ChoreographyMutableAsset.setRoles,denied,OperationDenied(CREATOR),69939,66610446,4658667982794
-F3.link,F3,Administrator,ChoreographyMutableAsset.setRoles,allowed,,97276,58303551,5671536227076
-F3.denied.new-role,F3,Administrator,ChoreographyMutableAsset.setRoles,denied,OperationDenied(CREATOR),54893,51039240,2801697001320
-F3.license.name,F3,Carrier A,ParticipantMutableAsset.setName,allowed,,66674,44671010,2978394920740
-F3.license.messages,F3,Carrier A,ParticipantMutableAsset.setMessages,allowed,,232409,39099544,9087085921496
-F3.denied.foreign-message,F3,Carrier A,ParticipantMutableAsset.setMessages,denied,OperationDenied(CREATOR),46708,34249964,1599747318512
-F5.delta,F5,Administrator,ChoreographyMutableAsset.setNodes,allowed,,1866349,29975385,55944529819365
-F5.denied.task-limit,F5,Administrator,ChoreographyMutableAsset.setNodes,denied,OperationDenied(CREATOR),318816,26461564,8436369988224
-F5.denied.flow-limit,F5,Administrator,ChoreographyMutableAsset.setNodes,denied,OperationDenied(CREATOR),547091,23189021,12686504687911
-F5.denied.task-name,F5,Administrator,ChoreographyMutableAsset.setNodes,denied,OperationDenied(CREATOR),298426,20343255,6070956216630
-F5.denied.unknown-target,F5,Administrator,ChoreographyMutableAsset.setNodes,denied,OperationDenied(CREATOR),76686,17825644,1366977335784
-F5.denied.protected-node,F5,Administrator,ChoreographyMutableAsset.setNodes,denied,OperationDenied(CREATOR),340491,15603135,5312727039285
-F6.denied.carrier-buyer,F6,Carrier A,ParticipantNMT.transferFrom,denied,MasterDenied,37239,13674880,509238856320
-F6.denied.supplier-buyer,F6,Carrier A,ParticipantNMT.transferFrom,denied,MasterDenied,37239,11967643,445663057677
-F6.denied.without-seller,F6,Carrier B,ParticipantNMT.transferFrom,denied,MasterDenied,30168,10473545,315965905560
-F6.sale,F6,Carrier A,ParticipantNMT.transferFrom,allowed,,108940,9165668,998507871920
-F6.denied.buyer-without-policy,F6,Carrier B,ParticipantMutableAsset.setName,denied,HolderPolicyDisabled,37003,8024121,296916549363
-F6.buyer.holder-policy,F6,Carrier B,ParticipantMutableAsset.setHolderSmartPolicy,allowed,,49611,7022344,348385508184
-F6.denied.former-holder,F6,Carrier A,ParticipantMutableAsset.setName,denied,OperationDenied(CREATOR),34894,6146004,214458663576
-F6.buyer.name,F6,Carrier B,ParticipantMutableAsset.setName,allowed,,66674,5378648,358615976752
-F6.buyer.profile,F6,Carrier B,ParticipantMutableAsset.setProfile,allowed,,67102,4707812,315903600824
-F6.buyer.messages,F6,Carrier B,ParticipantMutableAsset.setMessages,allowed,,76009,4120652,313206637868
-F7.deploy.deny-all,F7,Administrator,DenyAllSmartPolicy.constructor,allowed,,335458,3606876,1209955409208
-F7.mint,F7,Administrator,ChoreographyNMT.mint,allowed,,5625370,3161059,17782126466830
-F7.denied.transfer,F7,Administrator,ChoreographyNMT.transferFrom,denied,MasterDenied,30322,2840019,86115056118
-F7.transfer,F7,Administrator,ChoreographyNMT.transferFrom,allowed,,106564,2485376,264851608064
-F7.holder.deny-all,F7,Partner,ChoreographyMutableAsset.setHolderSmartPolicy,allowed,,49633,2175808,107991878464
-F7.denied.delta,F7,Partner,ChoreographyMutableAsset.setNodes,denied,OperationDenied(HOLDER),136179,1904282,259323218478
-F8.new-instance.mint,F8,Administrator,ChoreographyNMT.mint,allowed,,5625370,1667328,9379336911360
-F8.new-instance.roles,F8,Administrator,ChoreographyMutableAsset.setRoles,allowed,,176849,1497993,264918564057
-F8.new-instance.link,F8,Administrator,ChoreographyMutableAsset.setRoles,allowed,,97276,1311849,127611423324
+F1.deploy.participant-master,F1,Administrator,ParticipantMasterSmartPolicy.constructor,allowed,,495871,521562631,258627783396601
+F1.deploy.participant-renderer,F1,Administrator,ParticipantTokenURIRenderer.constructor,allowed,,983462,457444918,449879693946116
+F1.deploy.special-carrier-nmt,F1,Administrator,ParticipantNMT.constructor,allowed,,2639234,402138802,1061338398957668
+F1.deploy.carrier-nmt,F1,Administrator,ParticipantNMT.constructor,allowed,,2639150,356293696,940312507798400
+F1.deploy.supplier-nmt,F1,Administrator,ParticipantNMT.constructor,allowed,,2639162,315674954,833117342948548
+F1.deploy.certifier,F1,Authority,ParticipantCreatorSmartPolicy.constructor,allowed,,502425,279686907,140521694249475
+F1.deploy.participant-holder,F1,Administrator,ParticipantHolderSmartPolicy.constructor,allowed,,323604,245311551,79383799149804
+F1.deploy.special-carrier-am,F1,Administrator,ChoreographyParticipantAM.constructor,allowed,,229423,214978374,49320983498202
+F1.deploy.paper-creator,F1,Administrator,CreatorSmartPolicyPaperScenario.constructor,allowed,,1790747,188311581,337218398741007
+F2.mint,F2,Administrator,ChoreographyNMT.mint,allowed,,5619770,166177711,933880514946470
+F2.roles,F2,Administrator,ChoreographyMutableAsset.setRoles,allowed,,176849,149296667,26402966262283
+F2.denied.unauthorized-creator,F2,Unauthorized creator,ChoreographyNMT.mint,denied,MasterDenied,29810,130744597,3897496436570
+F2.denied.ineligible-holder,F2,Administrator,ChoreographyNMT.mint,denied,MasterDenied,30099,114417762,3443860218438
+F3.license.special-carrier,F3,Authority,ParticipantNMT.mint,allowed,,1196907,100129892,119846168644044
+F3.license.carrier,F3,Authority,ParticipantNMT.mint,allowed,,1196924,88113016,105464583562784
+F3.license.supplier,F3,Authority,ParticipantNMT.mint,allowed,,1196941,77538325,92808800263825
+F3.denied.plain-account,F3,Administrator,ChoreographyMutableAsset.setRoles,denied,OperationDenied(CREATOR),63707,68232739,4346903103473
+F3.denied.carrier-license,F3,Administrator,ChoreographyMutableAsset.setRoles,denied,OperationDenied(CREATOR),63707,59721759,3804694100613
+F3.denied.supplier-license,F3,Administrator,ChoreographyMutableAsset.setRoles,denied,OperationDenied(CREATOR),63707,52272393,3330117340851
+F3.link,F3,Administrator,ChoreographyMutableAsset.setRoles,allowed,,97276,45752219,4450592855444
+F3.denied.new-role,F3,Administrator,ChoreographyMutableAsset.setRoles,denied,OperationDenied(CREATOR),54893,40051737,2198559999141
+F3.license.name,F3,Carrier A,ParticipantMutableAsset.setName,allowed,,66674,35054430,2337219065820
+F3.license.messages,F3,Carrier A,ParticipantMutableAsset.setMessages,allowed,,232409,30682365,7130857767285
+F3.denied.foreign-message,F3,Carrier A,ParticipantMutableAsset.setMessages,denied,OperationDenied(CREATOR),46708,26876782,1255360733656
+F5.delta,F5,Administrator,ChoreographyMutableAsset.setNodes,allowed,,1866349,23522415,43901035712835
+F5.denied.task-limit,F5,Administrator,ChoreographyMutableAsset.setNodes,denied,OperationDenied(CREATOR),318816,20765034,6620225079744
+F5.denied.flow-limit,F5,Administrator,ChoreographyMutableAsset.setNodes,denied,OperationDenied(CREATOR),547091,18196990,9955409456090
+F5.denied.task-name,F5,Administrator,ChoreographyMutableAsset.setNodes,denied,OperationDenied(CREATOR),298426,15963848,4764027303248
+F5.denied.unknown-target,F5,Administrator,ChoreographyMutableAsset.setNodes,denied,OperationDenied(CREATOR),76686,13988217,1072700408862
+F5.denied.protected-node,F5,Administrator,ChoreographyMutableAsset.setNodes,denied,OperationDenied(CREATOR),340491,12244161,4169026623051
+F6.denied.carrier-buyer,F6,Carrier A,ParticipantNMT.transferFrom,denied,MasterDenied,37239,10731012,399612155868
+F6.denied.supplier-buyer,F6,Carrier A,ParticipantNMT.transferFrom,denied,MasterDenied,37239,9391302,349722695178
+F6.denied.without-seller,F6,Carrier B,ParticipantNMT.transferFrom,denied,MasterDenied,30168,8218847,247946176296
+F6.sale,F6,Carrier A,ParticipantNMT.transferFrom,allowed,,108940,7192525,783553673500
+F6.denied.buyer-without-policy,F6,Carrier B,ParticipantMutableAsset.setName,denied,HolderPolicyDisabled,37003,6296724,232997678172
+F6.buyer.holder-policy,F6,Carrier B,ParticipantMutableAsset.setHolderSmartPolicy,allowed,,49611,5510605,273386624655
+F6.denied.former-holder,F6,Carrier A,ParticipantMutableAsset.setName,denied,OperationDenied(CREATOR),34894,4822919,168290935586
+F6.buyer.name,F6,Carrier B,ParticipantMutableAsset.setName,allowed,,66674,4220756,281414685544
+F6.buyer.profile,F6,Carrier B,ParticipantMutableAsset.setProfile,allowed,,67102,3694335,247897267170
+F6.buyer.messages,F6,Carrier B,ParticipantMutableAsset.setMessages,allowed,,76009,3233576,245780878184
+F7.deploy.deny-all,F7,Administrator,DenyAllSmartPolicy.constructor,allowed,,335458,2830404,949481665032
+F7.mint,F7,Administrator,ChoreographyNMT.mint,allowed,,5625370,2480560,13954067807200
+F7.denied.transfer,F7,Administrator,ChoreographyNMT.transferFrom,denied,MasterDenied,30322,2228632,67576579504
+F7.transfer,F7,Administrator,ChoreographyNMT.transferFrom,allowed,,106564,1950335,207835498940
+F7.holder.deny-all,F7,Partner,ChoreographyMutableAsset.setHolderSmartPolicy,allowed,,49633,1707410,84743880530
+F7.denied.delta,F7,Partner,ChoreographyMutableAsset.setNodes,denied,OperationDenied(HOLDER),136179,1494337,203497318323
+F8.new-instance.mint,F8,Administrator,ChoreographyNMT.mint,allowed,,5625370,1308394,7360200355780
+F8.new-instance.roles,F8,Administrator,ChoreographyMutableAsset.setRoles,allowed,,176849,1175512,207888121688
+F8.new-instance.link,F8,Administrator,ChoreographyMutableAsset.setRoles,allowed,,97276,1029440,100139805440

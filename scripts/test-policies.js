@@ -192,12 +192,20 @@ async function main() {
   assert.deepEqual(modelFromTokenURI(await escapedNmt.tokenURI(BigInt(escapedAssetAddress))), escapedModel);
 
   // Creator constraints are hardcoded: the constrained assets are minted with the test-scenario
-  // Creator policy, which reads role licenses through the participant attribute manager.
+  // Creator policy, which reads SpecialCarrier licenses through their attribute manager.
   const participantMaster = await (await ethers.getContractFactory("ParticipantMasterSmartPolicy")).deploy();
   const participantRenderer = await (await ethers.getContractFactory("ParticipantTokenURIRenderer")).deploy();
   await Promise.all([participantMaster.waitForDeployment(), participantRenderer.waitForDeployment()]);
-  const participantNmt = await (await ethers.getContractFactory("ParticipantNMT"))
-    .deploy(participantMaster.target, participantRenderer.target);
+  // One license NMT per type; each fixes the type of the licenses it mints.
+  const SPECIAL_CARRIER = ethers.encodeBytes32String("SpecialCarrier");
+  const CARRIER = ethers.encodeBytes32String("Carrier");
+  const participantNmtFactory = await ethers.getContractFactory("ParticipantNMT");
+  const specialCarrierNmt = await participantNmtFactory
+    .deploy(participantMaster.target, participantRenderer.target, SPECIAL_CARRIER);
+  const carrierLicenseNmt = await participantNmtFactory
+    .deploy(participantMaster.target, participantRenderer.target, CARRIER);
+  const unknownTypeNmt = await participantNmtFactory
+    .deploy(participantMaster.target, participantRenderer.target, ethers.encodeBytes32String("Unknown"));
   const participantCreatorFactory = await ethers.getContractFactory(
     "contracts/participant/CreatorSmartPolicy.sol:CreatorSmartPolicy"
   );
@@ -207,13 +215,15 @@ async function main() {
   )).deploy();
   const selfCertifier = await participantCreatorFactory.connect(carrierC).deploy();
   await Promise.all([
-    participantNmt.waitForDeployment(),
+    specialCarrierNmt.waitForDeployment(),
+    carrierLicenseNmt.waitForDeployment(),
+    unknownTypeNmt.waitForDeployment(),
     participantCertifier.waitForDeployment(),
     participantHolderPolicy.waitForDeployment(),
     selfCertifier.waitForDeployment()
   ]);
   const participantAM = await (await ethers.getContractFactory("ChoreographyParticipantAM"))
-    .deploy(participantNmt.target, participantCertifier.target);
+    .deploy(specialCarrierNmt.target, participantCertifier.target);
   await participantAM.waitForDeployment();
   const scenarioCreatorPolicy = await (await ethers.getContractFactory("CreatorSmartPolicyTestScenario"))
     .deploy(participantAM.target);
@@ -356,41 +366,38 @@ async function main() {
 
   // Participant licenses. The participant policies hardcode their configuration (license types,
   // issuers, qualified organizations, allowed messages) for default Hardhat accounts 5-9.
-  const SPECIAL_CARRIER = ethers.encodeBytes32String("SpecialCarrier");
-  const CARRIER = ethers.encodeBytes32String("Carrier");
   const specialCarrierMessages = ["Message_0dai5by", "Message_10n229k"].map(ethers.encodeBytes32String);
-  const mintLicense = async (holder, certifierPolicy, participantType) => {
-    const licenseArguments = [holder.address, certifierPolicy.target, participantHolderPolicy.target, participantType];
-    const [licenseAddress] = await participantNmt.connect(authority).mintWithParticipantType.staticCall(...licenseArguments);
-    await (await participantNmt.connect(authority).mintWithParticipantType(...licenseArguments)).wait();
+  const mintLicense = async (holder, certifierPolicy, licenseNmt) => {
+    const licenseArguments = [holder.address, certifierPolicy.target, participantHolderPolicy.target];
+    const [licenseAddress] = await licenseNmt.connect(authority).mint.staticCall(...licenseArguments);
+    await (await licenseNmt.connect(authority).mint(...licenseArguments)).wait();
     return ethers.getContractAt("ParticipantMutableAsset", licenseAddress, holder);
   };
   const licenseMetadata = async (license) =>
     JSON.parse(Buffer.from((await license.tokenURI()).split(",")[1], "base64").toString("utf8")).participant;
-  const carrierLicense = await mintLicense(carrierA, participantCertifier, SPECIAL_CARRIER);
-  const plainCarrierLicense = await mintLicense(carrierC, participantCertifier, CARRIER);
-  const selfCertifiedLicense = await mintLicense(carrierC, selfCertifier, SPECIAL_CARRIER);
+  const carrierLicense = await mintLicense(carrierA, participantCertifier, specialCarrierNmt);
+  const plainCarrierLicense = await mintLicense(carrierC, participantCertifier, carrierLicenseNmt);
+  const selfCertifiedLicense = await mintLicense(carrierC, selfCertifier, specialCarrierNmt);
   assert.equal(await carrierLicense.participantType(), SPECIAL_CARRIER);
 
   report.push(await expectDenied(
     "unauthorized issuer cannot mint a participant license",
     carrierC,
     {
-      to: participantNmt.target,
-      data: participantNmt.interface.encodeFunctionData("mintWithParticipantType", [
+      to: specialCarrierNmt.target,
+      data: specialCarrierNmt.interface.encodeFunctionData("mint", [
         carrierC.address,
         participantCertifier.target,
-        participantHolderPolicy.target,
-        SPECIAL_CARRIER
+        participantHolderPolicy.target
       ])
     }
   ));
   report.push(await expectDenied(
-    "participant license cannot be minted without a type",
+    "issuer cannot mint a license of a type the Master does not define",
     authority,
     {
-      to: participantNmt.target,
-      data: participantNmt.interface.encodeFunctionData("mint", [
+      to: unknownTypeNmt.target,
+      data: unknownTypeNmt.interface.encodeFunctionData("mint", [
         carrierA.address,
         participantCertifier.target,
         participantHolderPolicy.target
@@ -468,8 +475,8 @@ async function main() {
   ));
 
   const sellLicense = (to) => ({
-    to: participantNmt.target,
-    data: participantNmt.interface.encodeFunctionData("transferFrom", [carrierA.address, to.address, BigInt(carrierLicense.target)])
+    to: specialCarrierNmt.target,
+    data: specialCarrierNmt.interface.encodeFunctionData("transferFrom", [carrierA.address, to.address, BigInt(carrierLicense.target)])
   });
   report.push(await expectDenied(
     "participant master denies selling a license to an unqualified buyer",
@@ -483,9 +490,9 @@ async function main() {
   ));
   report.push(await expectAllowed(
     "holder sells a license to a qualified buyer",
-    () => participantNmt.connect(carrierA).transferFrom(carrierA.address, carrierB.address, BigInt(carrierLicense.target))
+    () => specialCarrierNmt.connect(carrierA).transferFrom(carrierA.address, carrierB.address, BigInt(carrierLicense.target))
   ));
-  assert.equal(await participantNmt.ownerOf(BigInt(carrierLicense.target)), carrierB.address);
+  assert.equal(await specialCarrierNmt.ownerOf(BigInt(carrierLicense.target)), carrierB.address);
   assert.equal(await carrierAsset.getRole("Carrier"), carrierLicense.target);
   // The sold license still meets the role requirement: relinking it is allowed.
   await carrierAsset.setRoles.staticCall(["Carrier"], [carrierLicense.target]);
@@ -713,20 +720,20 @@ async function main() {
     "license holder cannot replace participant master policy",
     carrierB,
     {
-      to: participantNmt.target,
-      data: participantNmt.interface.encodeFunctionData("setMasterSmartPolicy", [denyAllPolicy.target])
+      to: specialCarrierNmt.target,
+      data: specialCarrierNmt.interface.encodeFunctionData("setMasterSmartPolicy", [denyAllPolicy.target])
     }
   ));
   report.push(await expectAllowed(
     "participant master administrator replaces participant master policy",
-    () => participantNmt.connect(authority).setMasterSmartPolicy(denyAllPolicy.target)
+    () => specialCarrierNmt.connect(authority).setMasterSmartPolicy(denyAllPolicy.target)
   ));
   report.push(await expectDenied(
     "replaced participant master policy governs sales",
     carrierB,
     {
-      to: participantNmt.target,
-      data: participantNmt.interface.encodeFunctionData("transferFrom", [carrierB.address, carrierA.address, BigInt(carrierLicense.target)])
+      to: specialCarrierNmt.target,
+      data: specialCarrierNmt.interface.encodeFunctionData("transferFrom", [carrierB.address, carrierA.address, BigInt(carrierLicense.target)])
     }
   ));
 

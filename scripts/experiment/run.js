@@ -150,8 +150,9 @@ class Recorder {
     return this.record(key, receipt);
   }
 
-  async deploy(key, signer, contract, args = []) {
+  async deploy(key, signer, contract, args = [], label = contract) {
     const { contract: deployed, receipt } = await deployContract(signer, ARTIFACTS[contract], args);
+    this.name(receipt.contractAddress, contract, label);
     await this.record(key, receipt);
     return deployed;
   }
@@ -272,10 +273,20 @@ async function runExperiment() {
   const nmt = contract("ChoreographyNMT", nmtAddress);
   const participantMaster = await rec.deploy("F1.deploy.participant-master", administrator, "ParticipantMasterSmartPolicy");
   const participantRenderer = await rec.deploy("F1.deploy.participant-renderer", administrator, "ParticipantTokenURIRenderer");
-  const participantNmt = await rec.deploy("F1.deploy.participant-nmt", administrator, "ParticipantNMT", [participantMaster.target, participantRenderer.target]);
+  // One license NMT per type: the type is fixed at deploy time, and mint takes no type.
+  const typeId = (name) => ethers.encodeBytes32String(name);
+  const licenseNmt = (key, participantType) =>
+    rec.deploy(key, administrator, "ParticipantNMT", [participantMaster.target, participantRenderer.target, typeId(participantType)], `${participantType} NMT`);
+  const licenseNmts = {
+    SpecialCarrier: await licenseNmt("F1.deploy.special-carrier-nmt", "SpecialCarrier"),
+    Carrier: await licenseNmt("F1.deploy.carrier-nmt", "Carrier"),
+    Supplier: await licenseNmt("F1.deploy.supplier-nmt", "Supplier")
+  };
+  const participantNmt = licenseNmts.SpecialCarrier;
   const certifier = await rec.deploy("F1.deploy.certifier", authority, "ParticipantCreatorSmartPolicy");
   const participantHolder = await rec.deploy("F1.deploy.participant-holder", administrator, "ParticipantHolderSmartPolicy");
-  const participantAM = await rec.deploy("F1.deploy.participant-am", administrator, "ChoreographyParticipantAM", [participantNmt.target, certifier.target]);
+  // The paper scenario requires only the SpecialCarrier type, so only its attribute manager is deployed.
+  const participantAM = await rec.deploy("F1.deploy.special-carrier-am", administrator, "ChoreographyParticipantAM", [participantNmt.target, certifier.target]);
   const paperCreator = await rec.deploy("F1.deploy.paper-creator", administrator, "CreatorSmartPolicyPaperScenario", [participantAM.target]);
   live.nmt = nmt;
   live.participantNmt = participantNmt;
@@ -310,12 +321,12 @@ async function runExperiment() {
   lap("F2");
 
   // F3: licenses of three types; only a SpecialCarrier license can play the Special Carrier role.
-  const typeId = (name) => ethers.encodeBytes32String(name);
   const mintLicense = async (key, holder, participantType) => {
-    const args = [holder.address, certifier.target, participantHolder.target, typeId(participantType)];
-    const [licenseAddress] = await participantNmt.connect(authority).mintWithParticipantType.staticCall(...args);
+    const args = [holder.address, certifier.target, participantHolder.target];
+    const typeNmt = licenseNmts[participantType];
+    const [licenseAddress] = await typeNmt.connect(authority).mint.staticCall(...args);
     rec.name(licenseAddress, "ParticipantMutableAsset", `${participantType} license`);
-    await rec.allow(key, () => participantNmt.connect(authority).mintWithParticipantType(...args));
+    await rec.allow(key, () => typeNmt.connect(authority).mint(...args));
     return contract("ParticipantMutableAsset", licenseAddress, holder);
   };
   const specialCarrierLicense = await mintLicense("F3.license.special-carrier", carrierA, "SpecialCarrier");

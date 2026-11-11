@@ -20,7 +20,11 @@ abstract class NMT {
 }
 
 class ChoreographyNMT
-class ParticipantNMT
+class ParticipantNMT {
+  + participantType : bytes32 {immutable}
+  + constructor(masterPolicy, renderer, participantType)
+  # _mint(to, creatorPolicy, holderPolicy)
+}
 
 abstract class MutableAsset {
   + nmt : address
@@ -121,6 +125,7 @@ class ParticipantMutableAsset {
   - messagesWriter : address
   - messages : bytes32[]
   + constructor(nmt, creatorPolicy, holderPolicy, participantType)
+  ' participantType: the type of the ParticipantNMT that creates it
   + setName(name)
   + setProfile(profile)
   + setMessages(messages)

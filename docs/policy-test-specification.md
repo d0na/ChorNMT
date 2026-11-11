@@ -92,7 +92,7 @@ the constraints it is subject to.
 | Consistent flows | always (also the default Creator policy) | always | `setNodes`: in the post-update model every flow is declared on both endpoints, `B` in `A.outgoing` if and only if `A` in `B.incoming`; a delta that changes a flow carries both endpoints. |
 | Protected node | `Start` | `Order` | `setNodes`: a protected node cannot be changed, and no other node may add or remove a sequence flow to or from it. |
 | Protected role | `Buyer` | none | `setRoles`: a protected role is assigned once, while it has no account, and cannot be reassigned. |
-| Role license requirement | `Carrier` → `SpecialCarrier` | `Special Carrier` → `SpecialCarrier` | `setRoles`: the role can be linked only to a license whose type, read from `ChoreographyParticipantAM`, is the required one: minted by the participant NMT and certified by the participant Creator policy bound to the attribute manager. |
+| Role license requirement | `Carrier` → `SpecialCarrier` | `Special Carrier` → `SpecialCarrier` | `setRoles`: the role can be linked only to a license whose type, read from `ChoreographyParticipantAM`, is the required one: minted by the license NMT of that type and certified by the participant Creator policy, both bound to the attribute manager of that type. |
 | Known roles | always | always | `setRoles`: only existing roles can be reassigned; new roles are rejected. |
 | Distinct role accounts | yes | no | `setRoles`: after the update, no account plays two roles. |
 
@@ -138,7 +138,8 @@ policies translated from XACML would be: Carrier A and Carrier B (Hardhat
 accounts 5 and 6) are qualified for `SpecialCarrier` and `Carrier`, Carrier C
 (account 7) for `Carrier` only, and the Supplier company (account 8) for
 `Supplier`; the authority is account 9. The authority mints the `Special
-Carrier` license to Carrier A with type `SpecialCarrier`, fixed at mint. The
+Carrier` license to Carrier A with `mint` on the `ParticipantNMT` of type
+`SpecialCarrier`, which fixes the type of every license it mints. The
 certifier's policy allows a `SpecialCarrier` license to declare the messages
 of the Special Carrier tasks of the paper example, including the one added by
 the delta.
@@ -166,7 +167,8 @@ After the sale the experiment checks that the license belongs to Carrier B,
 that `getRole("Special Carrier")` still returns the license, that every task
 of the role still references it, and that the messages survived the sale with
 Carrier A as writer. `npm run test:policies` covers the same rules on the
-small fixture, plus an unauthorized issuer, a mint without a type, a license
+small fixture, plus an unauthorized issuer, a mint on the NMT of a type the Master
+does not define, a license
 certified by an untrusted policy, an account playing two roles, the computed
 license `tokenURI` before and after the sale, and the replacement of the
 participant Master policy.

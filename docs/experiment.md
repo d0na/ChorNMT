@@ -86,7 +86,7 @@ The accounts are the default Hardhat ones. The choreography policies name the ad
 | --- | --- | --- |
 | bpmn | [references/paper-example.bpmn](../references/paper-example.bpmn) | `dc76537103877870ceae2e826f025dc6cebf018d46d22682d9a8c3f9776d477b` |
 | delta | [scripts/data/paper-example-parallel-transport-preparation.delta.json](../scripts/data/paper-example-parallel-transport-preparation.delta.json) | `0906afd9b88d63f815eaf4d89a1bdf304ef3379d7a737731568ed717c27cab99` |
-| trustTables | [docs/choreography-policies.md](../docs/choreography-policies.md) | `fa3d8e400fee3226fc70e197e84906862b592336995166adbd8db9b1abaea5b5` |
+| trustTables | [docs/choreography-policies.md](../docs/choreography-policies.md) | `f85c3c3df3ef99549eb42811e905312eb35219d01c91cd0b824875915c6faa05` |
 <!-- /evidence:inputs -->
 
 <!-- narrative:policies -->
@@ -114,21 +114,21 @@ The experiment is one run, on one ephemeral network, through the same functions 
 <!-- evidence:phases-overview -->
 | Phase | Title | Transactions | Allowed | Denied | Gas allowed | Gas denied | Cost (ETH) | Median (ms) | Nodes | Tasks | Edges | Gateways | Messages |
 | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| [F1](#f1) | Deploy the choreography type and the license infrastructure | 13 | 13 | 0 | 17,221,281 | 0 | 0.009596603677232451 | 31.733 | — | — | — | — | — |
-| [F2](#f2) | Mint the instance and assign the role accounts | 4 | 2 | 2 | 5,796,619 | 59,909 | 0.001232974129950087 | 13.522 | 11 | 9 | 10 | 0 | 9 |
-| [F3](#f3) | Issue the participant licenses and link the Special Carrier role | 11 | 6 | 5 | 3,992,059 | 305,186 | 0.000443532722861458 | 17.052 | 11 | 9 | 10 | 0 | 9 |
-| [F4](#f4) | Render the baseline model from the chain | 0 | 0 | 0 | 0 | 0 | 0.0 | 15.638 | 11 | 9 | 10 | 0 | 9 |
-| [F5](#f5) | Apply the delta: one allowed update and five denied ones | 6 | 1 | 5 | 1,866,349 | 1,581,510 | 0.000089818065087199 | 111.377 | 14 | 10 | 14 | 2 | 10 |
-| [F6](#f6) | Sell the Special Carrier role: Carrier A to Carrier B | 10 | 5 | 5 | 368,336 | 176,543 | 0.000004116862628044 | 13.882 | 14 | 10 | 14 | 2 | 10 |
-| [F7](#f7) | Transfer a second instance and restrict it through its Holder policy | 6 | 4 | 2 | 6,117,025 | 166,501 | 0.000019710363637162 | 19.931 | — | — | — | — | — |
-| [F8](#f8) | Render the final model and compare the delta with a new instance | 3 | 3 | 0 | 5,899,495 | 0 | 0.000009771866898741 | 34.012 | 14 | 10 | 14 | 2 | 10 |
+| [F1](#f1) | Deploy the choreography type and the license infrastructure | 15 | 15 | 0 | 22,445,189 | 0 | 0.011182729867161873 | 37.014 | — | — | — | — | — |
+| [F2](#f2) | Mint the instance and assign the role accounts | 4 | 2 | 2 | 5,796,619 | 59,909 | 0.000967624837863761 | 12.893 | 11 | 9 | 10 | 0 | 9 |
+| [F3](#f3) | Issue the participant licenses and link the Special Carrier role | 11 | 6 | 5 | 3,987,131 | 292,722 | 0.000346973857436936 | 14.686 | 11 | 9 | 10 | 0 | 9 |
+| [F4](#f4) | Render the baseline model from the chain | 0 | 0 | 0 | 0 | 0 | 0.0 | 14.412 | 11 | 9 | 10 | 0 | 9 |
+| [F5](#f5) | Apply the delta: one allowed update and five denied ones | 6 | 1 | 5 | 1,866,349 | 1,581,510 | 0.00007048242458383 | 101.554 | 14 | 10 | 14 | 2 | 10 |
+| [F6](#f6) | Sell the Special Carrier role: Carrier A to Carrier B | 10 | 5 | 5 | 368,336 | 176,543 | 0.000003230602770153 | 12.793 | 14 | 10 | 14 | 2 | 10 |
+| [F7](#f7) | Transfer a second instance and restrict it through its Holder policy | 6 | 4 | 2 | 6,117,025 | 166,501 | 0.000015467202749529 | 17.536 | — | — | — | — | — |
+| [F8](#f8) | Render the final model and compare the delta with a new instance | 3 | 3 | 0 | 5,899,495 | 0 | 0.000007668228282908 | 30.225 | 14 | 10 | 14 | 2 | 10 |
 
 | Whole experiment | Value |
 | --- | --- |
-| Transactions | 53 |
-| Allowed transactions, gas | 34, 41,261,164 |
-| Denied transactions, gas | 19, 2,289,649 |
-| Duration of a run, median (min–max), ms | 258.504 (242.259–327.995) |
+| Transactions | 55 |
+| Allowed transactions, gas | 36, 46,480,144 |
+| Denied transactions, gas | 19, 2,277,185 |
+| Duration of a run, median (min–max), ms | 249.347 (227.329–299.735) |
 
 Nodes to messages: the main instance at the end of the phase (F7 works on a second instance). Durations leave out the time the run spends tracing and checking.
 <!-- /evidence:phases-overview -->
@@ -140,7 +140,7 @@ Nodes to messages: the main instance at the end of the phase (F7 works on a seco
 <!-- /evidence:phase-title:F1 -->
 
 <!-- narrative:F1 -->
-The administrator imports the BPMN into the model of a choreography type, off-chain, and deploys the type: the Master, the default Creator, and the Holder policy, the renderer of `tokenURI`, the model as the code of a data-only contract (SSTORE2), and the `ChoreographyNMT` that fixes it. The license infrastructure follows: the participant NMT and its Master policy, the certifier deployed by the authority, the license Holder policy, the attribute manager, and the paper-scenario Creator policy the instance will be born with.
+The administrator imports the BPMN into the model of a choreography type, off-chain, and deploys the type: the Master, the default Creator, and the Holder policy, the renderer of `tokenURI`, the model as the code of a data-only contract (SSTORE2), and the `ChoreographyNMT` that fixes it. The license infrastructure follows. Each license type (SpecialCarrier, Carrier, Supplier) has its own license NMT, which fixes the type of every license it mints; the three share the participant Master policy, which names the issuer of each type. The authority deploys the certifier, the Creator policy of the licenses; a license Holder policy follows. The attribute manager tells a choreography Creator policy which license type an address holds: it is bound to the SpecialCarrier NMT and to the certifier, since SpecialCarrier is the only type the scenario requires. Last comes the paper-scenario Creator policy the instance will be born with, which reads licenses through that attribute manager.
 
 <!-- evidence:phase:F1 -->
 **Actors**
@@ -172,13 +172,15 @@ The administrator imports the BPMN into the model of a choreography type, off-ch
 | `F1.deploy.renderer` | deploy the tokenURI renderer | Administrator | `ChoreographyTokenURIRenderer.constructor` | ChoreographyTokenURIRenderer `0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9` | allowed | — | 1,236,012 |
 | `F1.deploy.model` | deploy the paper-example model (SSTORE2) | Administrator | `ChoreographyModel.constructor` | ChoreographyModel `0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9` | allowed | — | 2,343,146 |
 | `F1.deploy.nmt` | deploy the choreography type | Administrator | `ChoreographyNMT.constructor` | ChoreographyNMT `0x5FC8d32690cc91D4c39d9d3abcBD16989F875707` | allowed | — | 4,815,956 |
-| `F1.deploy.participant-master` | deploy the participant Master policy | Administrator | `ParticipantMasterSmartPolicy.constructor` | ParticipantMasterSmartPolicy `0x0165878A594ca255338adfa4d48449f69242Eb8F` | allowed | — | 488,974 |
+| `F1.deploy.participant-master` | deploy the participant Master policy | Administrator | `ParticipantMasterSmartPolicy.constructor` | ParticipantMasterSmartPolicy `0x0165878A594ca255338adfa4d48449f69242Eb8F` | allowed | — | 495,871 |
 | `F1.deploy.participant-renderer` | deploy the license tokenURI renderer | Administrator | `ParticipantTokenURIRenderer.constructor` | ParticipantTokenURIRenderer `0xa513E6E4b8f2a923D98304ec87F64353C4D5C853` | allowed | — | 983,462 |
-| `F1.deploy.participant-nmt` | deploy the license NMT | Administrator | `ParticipantNMT.constructor` | ParticipantNMT `0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6` | allowed | — | 2,700,510 |
+| `F1.deploy.special-carrier-nmt` | deploy the SpecialCarrier license NMT | Administrator | `ParticipantNMT.constructor` | ParticipantNMT `0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6` | allowed | — | 2,639,234 |
+| `F1.deploy.carrier-nmt` | deploy the Carrier license NMT | Administrator | `ParticipantNMT.constructor` | ParticipantNMT `0x8A791620dd6260079BF849Dc5567aDC3F2FdC318` | allowed | — | 2,639,150 |
+| `F1.deploy.supplier-nmt` | deploy the Supplier license NMT | Administrator | `ParticipantNMT.constructor` | ParticipantNMT `0x610178dA211FEF7D417bC0e6FeD39F05609AD788` | allowed | — | 2,639,162 |
 | `F1.deploy.certifier` | the Authority deploys the license Creator policy (certifier) | Authority | `ParticipantCreatorSmartPolicy.constructor` | ParticipantCreatorSmartPolicy `0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35` | allowed | — | 502,425 |
-| `F1.deploy.participant-holder` | deploy the license Holder policy | Administrator | `ParticipantHolderSmartPolicy.constructor` | ParticipantHolderSmartPolicy `0x8A791620dd6260079BF849Dc5567aDC3F2FdC318` | allowed | — | 323,604 |
-| `F1.deploy.participant-am` | deploy the participant attribute manager | Administrator | `ChoreographyParticipantAM.constructor` | ChoreographyParticipantAM `0x610178dA211FEF7D417bC0e6FeD39F05609AD788` | allowed | — | 229,423 |
-| `F1.deploy.paper-creator` | deploy the paper-scenario Creator policy | Administrator | `CreatorSmartPolicyPaperScenario.constructor` | CreatorSmartPolicyPaperScenario `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | allowed | — | 1,790,772 |
+| `F1.deploy.participant-holder` | deploy the license Holder policy | Administrator | `ParticipantHolderSmartPolicy.constructor` | ParticipantHolderSmartPolicy `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | allowed | — | 323,604 |
+| `F1.deploy.special-carrier-am` | deploy the attribute manager of the SpecialCarrier licenses | Administrator | `ChoreographyParticipantAM.constructor` | ChoreographyParticipantAM `0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0` | allowed | — | 229,423 |
+| `F1.deploy.paper-creator` | deploy the paper-scenario Creator policy | Administrator | `CreatorSmartPolicyPaperScenario.constructor` | CreatorSmartPolicyPaperScenario `0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82` | allowed | — | 1,790,747 |
 
 **Costs**
 
@@ -190,14 +192,16 @@ The administrator imports the BPMN into the model of a choreography type, off-ch
 | `F1.deploy.renderer` | 1,236,012 | 0.000924890107100424 | $37.0804 | $111.2411 | $370.8036 |
 | `F1.deploy.model` | 2,343,146 | 0.001543204620553908 | $70.2944 | $210.8831 | $702.9438 |
 | `F1.deploy.nmt` | 4,815,956 | 0.002806297321732736 | $144.4787 | $433.4360 | $1444.7868 |
-| `F1.deploy.participant-master` | 488,974 | 0.000255030565930594 | $14.6692 | $44.0077 | $146.6922 |
-| `F1.deploy.participant-renderer` | 983,462 | 0.00044986495381766 | $29.5039 | $88.5116 | $295.0386 |
-| `F1.deploy.participant-nmt` | 2,700,510 | 0.00108594427696977 | $81.0153 | $243.0459 | $810.1530 |
-| `F1.deploy.certifier` | 502,425 | 0.0001790565788781 | $15.0728 | $45.2182 | $150.7275 |
-| `F1.deploy.participant-holder` | 323,604 | 0.0001011530039607 | $9.7081 | $29.1244 | $97.0812 |
-| `F1.deploy.participant-am` | 229,423 | 0.000062846143622399 | $6.8827 | $20.6481 | $68.8269 |
-| `F1.deploy.paper-creator` | 1,790,772 | 0.000429698889577176 | $53.7232 | $161.1695 | $537.2316 |
-| **phase total** | 17,221,281 | 0.009596603677232451 | $516.6384 | $1549.9153 | $5166.3843 |
+| `F1.deploy.participant-master` | 495,871 | 0.000258627783396601 | $14.8761 | $44.6284 | $148.7613 |
+| `F1.deploy.participant-renderer` | 983,462 | 0.000449879693946116 | $29.5039 | $88.5116 | $295.0386 |
+| `F1.deploy.special-carrier-nmt` | 2,639,234 | 0.001061338398957668 | $79.1770 | $237.5311 | $791.7702 |
+| `F1.deploy.carrier-nmt` | 2,639,150 | 0.0009403125077984 | $79.1745 | $237.5235 | $791.7450 |
+| `F1.deploy.supplier-nmt` | 2,639,162 | 0.000833117342948548 | $79.1749 | $237.5246 | $791.7486 |
+| `F1.deploy.certifier` | 502,425 | 0.000140521694249475 | $15.0728 | $45.2182 | $150.7275 |
+| `F1.deploy.participant-holder` | 323,604 | 0.000079383799149804 | $9.7081 | $29.1244 | $97.0812 |
+| `F1.deploy.special-carrier-am` | 229,423 | 0.000049320983498202 | $6.8827 | $20.6481 | $68.8269 |
+| `F1.deploy.paper-creator` | 1,790,747 | 0.000337218398741007 | $53.7224 | $161.1672 | $537.2241 |
+| **phase total** | 22,445,189 | 0.011182729867161873 | $673.3557 | $2020.0670 | $6733.5567 |
 
 **The model of the type**
 
@@ -212,14 +216,14 @@ Role names: `Bulk Buyer`, `Manufacturer`, `Middleman`, `Supplier`, `Special Carr
 | Resource | Layer | Contract | Address | Source | Bytecode keccak256 |
 | --- | --- | --- | --- | --- | --- |
 | choreography type | Master | MasterSmartPolicy | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | [MasterSmartPolicy.sol](../contracts/choreography/MasterSmartPolicy.sol) | `0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5` |
-| license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13` |
+| license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xcc47fe9fe8a9a7f547b6a36a4596cee4e307553fb3b664f0f2b07bc655dcfd91` |
 
 **Duration (ms)**
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F1 | 31.733 | 29.301 | 32.916 | 1.071 |
-| step `F1.import` | 3.322 | 2.389 | 4.486 | 0.704 |
+| phase F1 | 37.014 | 33.293 | 45.821 | 4.047 |
+| step `F1.import` | 3.196 | 2.201 | 10.959 | 2.601 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F1-full.svg))
 
@@ -256,11 +260,11 @@ The administrator mints the instance, which decodes the model of the type in its
 
 | Key | Gas | Cost (ETH) | USD @10 gwei | USD @30 gwei | USD @100 gwei |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `F2.mint` | 5,619,770 | 0.00118997618753377 | $168.5931 | $505.7793 | $1685.9310 |
-| `F2.roles` | 176,849 | 0.000033643384322439 | $5.3055 | $15.9164 | $53.0547 |
-| `F2.denied.unauthorized-creator` | 29,810 | 0.00000496629690293 | $0.8943 | $2.6829 | $8.9430 |
-| `F2.denied.ineligible-holder` | 30,099 | 0.000004388261190948 | $0.9030 | $2.7089 | $9.0297 |
-| **phase total** | 5,856,528 | 0.001232974129950087 | $175.6958 | $527.0875 | $1756.9584 |
+| `F2.mint` | 5,619,770 | 0.00093388051494647 | $168.5931 | $505.7793 | $1685.9310 |
+| `F2.roles` | 176,849 | 0.000026402966262283 | $5.3055 | $15.9164 | $53.0547 |
+| `F2.denied.unauthorized-creator` | 29,810 | 0.00000389749643657 | $0.8943 | $2.6829 | $8.9430 |
+| `F2.denied.ineligible-holder` | 30,099 | 0.000003443860218438 | $0.9030 | $2.7089 | $9.0297 |
+| **phase total** | 5,856,528 | 0.000967624837863761 | $175.6958 | $527.0875 | $1756.9584 |
 
 **Trust-table rows**
 
@@ -290,15 +294,15 @@ The administrator mints the instance, which decodes the model of the type in its
 | Resource | Layer | Contract | Address | Source | Bytecode keccak256 |
 | --- | --- | --- | --- | --- | --- |
 | choreography type | Master | MasterSmartPolicy | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | [MasterSmartPolicy.sol](../contracts/choreography/MasterSmartPolicy.sol) | `0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5` |
-| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602` |
+| instance | Creator | CreatorSmartPolicyPaperScenario | `0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x4177df840b6de3c172f569b758c0739c358988a3266c1b323bf168aaec4d835c` |
 | instance | Holder | HolderSmartPolicy | `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` | [HolderSmartPolicy.sol](../contracts/choreography/HolderSmartPolicy.sol) | `0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b` |
-| license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13` |
+| license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xcc47fe9fe8a9a7f547b6a36a4596cee4e307553fb3b664f0f2b07bc655dcfd91` |
 
 **Duration (ms)**
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F2 | 13.522 | 12.163 | 14.044 | 0.627 |
+| phase F2 | 12.893 | 11.800 | 14.327 | 0.710 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F2-full.svg))
 
@@ -312,7 +316,7 @@ The administrator mints the instance, which decodes the model of the type in its
 <!-- /evidence:phase-title:F3 -->
 
 <!-- narrative:F3 -->
-The authority issues three licenses: a SpecialCarrier license to Carrier A, a Carrier license to Carrier C, and a Supplier license to the supplier company. Linking the Special Carrier role to a plain account is <!-- outcome:F3.denied.plain-account -->denied<!-- /outcome -->, and so does linking it to the Carrier license (<!-- outcome:F3.denied.carrier-license -->denied<!-- /outcome -->) or to the Supplier license (<!-- outcome:F3.denied.supplier-license -->denied<!-- /outcome -->); linking it to the SpecialCarrier license is <!-- outcome:F3.link -->allowed<!-- /outcome -->. A new role outside the model is <!-- outcome:F3.denied.new-role -->denied<!-- /outcome -->. Carrier A then writes its name and the messages of the Special Carrier tasks on its license; a message of another role is <!-- outcome:F3.denied.foreign-message -->denied<!-- /outcome --> by the certifier.
+The authority issues three licenses, each by calling `mint` on the NMT of its type: a SpecialCarrier license to Carrier A, a Carrier license to Carrier C, and a Supplier license to the supplier company. The participant Master policy lets the authority mint because it is the issuer of the type each NMT fixes. Linking the Special Carrier role to a plain account is <!-- outcome:F3.denied.plain-account -->denied<!-- /outcome -->. Linking it to the Carrier license is <!-- outcome:F3.denied.carrier-license -->denied<!-- /outcome -->, and so is linking it to the Supplier license (<!-- outcome:F3.denied.supplier-license -->denied<!-- /outcome -->): both were minted by another NMT, so the attribute manager of the SpecialCarrier licenses does not recognize them, and the Creator policy sees no SpecialCarrier license. Linking it to the SpecialCarrier license is <!-- outcome:F3.link -->allowed<!-- /outcome -->. A new role outside the model is <!-- outcome:F3.denied.new-role -->denied<!-- /outcome -->. Carrier A then writes its name and the messages of the Special Carrier tasks on its license; a message of another role is <!-- outcome:F3.denied.foreign-message -->denied<!-- /outcome --> by the certifier.
 
 <!-- evidence:phase:F3 -->
 **Actors**
@@ -327,12 +331,12 @@ The authority issues three licenses: a SpecialCarrier license to Carrier A, a Ca
 
 | Key | Operation | From | Call | Contract | Outcome | Reason | Gas |
 | --- | --- | --- | --- | --- | --- | --- | ---: |
-| `F3.license.special-carrier` | the Authority issues a SpecialCarrier license to Carrier A | Authority | `ParticipantNMT.mintWithParticipantType` | ParticipantNMT `0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6` | allowed | — | 1,196,735 |
-| `F3.license.carrier` | the Authority issues a Carrier license to Carrier C | Authority | `ParticipantNMT.mintWithParticipantType` | ParticipantNMT `0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6` | allowed | — | 1,199,468 |
-| `F3.license.supplier` | the Authority issues a Supplier license to the Supplier company | Authority | `ParticipantNMT.mintWithParticipantType` | ParticipantNMT `0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6` | allowed | — | 1,199,497 |
+| `F3.license.special-carrier` | the Authority issues a SpecialCarrier license to Carrier A | Authority | `ParticipantNMT.mint` | ParticipantNMT `0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6` | allowed | — | 1,196,907 |
+| `F3.license.carrier` | the Authority issues a Carrier license to Carrier C | Authority | `ParticipantNMT.mint` | ParticipantNMT `0x8A791620dd6260079BF849Dc5567aDC3F2FdC318` | allowed | — | 1,196,924 |
+| `F3.license.supplier` | the Authority issues a Supplier license to the Supplier company | Authority | `ParticipantNMT.mint` | ParticipantNMT `0x610178dA211FEF7D417bC0e6FeD39F05609AD788` | allowed | — | 1,196,941 |
 | `F3.denied.plain-account` | the Creator policy denies linking Special Carrier to a plain account | Administrator | `ChoreographyMutableAsset.setRoles` | ChoreographyMutableAsset `0x61c36a8d610163660E21a8b7359e1Cac0C9133e1` | denied | `OperationDenied(CREATOR)` | 63,707 |
-| `F3.denied.carrier-license` | the Creator policy denies linking Special Carrier to a Carrier license | Administrator | `ChoreographyMutableAsset.setRoles` | ChoreographyMutableAsset `0x61c36a8d610163660E21a8b7359e1Cac0C9133e1` | denied | `OperationDenied(CREATOR)` | 69,939 |
-| `F3.denied.supplier-license` | the Creator policy denies linking Special Carrier to a Supplier license | Administrator | `ChoreographyMutableAsset.setRoles` | ChoreographyMutableAsset `0x61c36a8d610163660E21a8b7359e1Cac0C9133e1` | denied | `OperationDenied(CREATOR)` | 69,939 |
+| `F3.denied.carrier-license` | the Creator policy denies linking Special Carrier to a Carrier license | Administrator | `ChoreographyMutableAsset.setRoles` | ChoreographyMutableAsset `0x61c36a8d610163660E21a8b7359e1Cac0C9133e1` | denied | `OperationDenied(CREATOR)` | 63,707 |
+| `F3.denied.supplier-license` | the Creator policy denies linking Special Carrier to a Supplier license | Administrator | `ChoreographyMutableAsset.setRoles` | ChoreographyMutableAsset `0x61c36a8d610163660E21a8b7359e1Cac0C9133e1` | denied | `OperationDenied(CREATOR)` | 63,707 |
 | `F3.link` | link Special Carrier to the SpecialCarrier license held by Carrier A | Administrator | `ChoreographyMutableAsset.setRoles` | ChoreographyMutableAsset `0x61c36a8d610163660E21a8b7359e1Cac0C9133e1` | allowed | — | 97,276 |
 | `F3.denied.new-role` | the Creator policy denies a new Backup Carrier role | Administrator | `ChoreographyMutableAsset.setRoles` | ChoreographyMutableAsset `0x61c36a8d610163660E21a8b7359e1Cac0C9133e1` | denied | `OperationDenied(CREATOR)` | 54,893 |
 | `F3.license.name` | Carrier A updates the name on its license | Carrier A | `ParticipantMutableAsset.setName` | ParticipantMutableAsset `0x94099942864EA81cCF197E9D71ac53310b1468D8` | allowed | — | 66,674 |
@@ -343,26 +347,26 @@ The authority issues three licenses: a SpecialCarrier license to Carrier A, a Ca
 
 | Key | Gas | Cost (ETH) | USD @10 gwei | USD @30 gwei | USD @100 gwei |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `F3.license.special-carrier` | 1,196,735 | 0.00015268933154416 | $35.9021 | $107.7061 | $359.0205 |
-| `F3.license.carrier` | 1,199,468 | 0.00013467138520524 | $35.9840 | $107.9521 | $359.8404 |
-| `F3.license.supplier` | 1,199,497 | 0.000118513385107793 | $35.9849 | $107.9547 | $359.8491 |
-| `F3.denied.plain-account` | 63,707 | 0.000005539072325885 | $1.9112 | $5.7336 | $19.1121 |
-| `F3.denied.carrier-license` | 69,939 | 0.000005322419306442 | $2.0982 | $6.2945 | $20.9817 |
-| `F3.denied.supplier-license` | 69,939 | 0.000004658667982794 | $2.0982 | $6.2945 | $20.9817 |
-| `F3.link` | 97,276 | 0.000005671536227076 | $2.9183 | $8.7548 | $29.1828 |
-| `F3.denied.new-role` | 54,893 | 0.00000280169700132 | $1.6468 | $4.9404 | $16.4679 |
-| `F3.license.name` | 66,674 | 0.00000297839492074 | $2.0002 | $6.0007 | $20.0022 |
-| `F3.license.messages` | 232,409 | 0.000009087085921496 | $6.9723 | $20.9168 | $69.7227 |
-| `F3.denied.foreign-message` | 46,708 | 0.000001599747318512 | $1.4012 | $4.2037 | $14.0124 |
-| **phase total** | 4,297,245 | 0.000443532722861458 | $128.9173 | $386.7521 | $1289.1735 |
+| `F3.license.special-carrier` | 1,196,907 | 0.000119846168644044 | $35.9072 | $107.7216 | $359.0721 |
+| `F3.license.carrier` | 1,196,924 | 0.000105464583562784 | $35.9077 | $107.7232 | $359.0772 |
+| `F3.license.supplier` | 1,196,941 | 0.000092808800263825 | $35.9082 | $107.7247 | $359.0823 |
+| `F3.denied.plain-account` | 63,707 | 0.000004346903103473 | $1.9112 | $5.7336 | $19.1121 |
+| `F3.denied.carrier-license` | 63,707 | 0.000003804694100613 | $1.9112 | $5.7336 | $19.1121 |
+| `F3.denied.supplier-license` | 63,707 | 0.000003330117340851 | $1.9112 | $5.7336 | $19.1121 |
+| `F3.link` | 97,276 | 0.000004450592855444 | $2.9183 | $8.7548 | $29.1828 |
+| `F3.denied.new-role` | 54,893 | 0.000002198559999141 | $1.6468 | $4.9404 | $16.4679 |
+| `F3.license.name` | 66,674 | 0.00000233721906582 | $2.0002 | $6.0007 | $20.0022 |
+| `F3.license.messages` | 232,409 | 0.000007130857767285 | $6.9723 | $20.9168 | $69.7227 |
+| `F3.denied.foreign-message` | 46,708 | 0.000001255360733656 | $1.4012 | $4.2037 | $14.0124 |
+| **phase total** | 4,279,853 | 0.000346973857436936 | $128.3956 | $385.1868 | $1283.9559 |
 
 **Trust-table rows**
 
 | Key | Table | Row of docs/choreography-policies.md |
 | --- | --- | --- |
-| `F3.license.special-carrier` | licenses | Mint a license of a type (`mintWithParticipantType`) |
-| `F3.license.carrier` | licenses | Mint a license of a type (`mintWithParticipantType`) |
-| `F3.license.supplier` | licenses | Mint a license of a type (`mintWithParticipantType`) |
+| `F3.license.special-carrier` | licenses | Mint a license (`mint` on the `ParticipantNMT` of its type) |
+| `F3.license.carrier` | licenses | Mint a license (`mint` on the `ParticipantNMT` of its type) |
+| `F3.license.supplier` | licenses | Mint a license (`mint` on the `ParticipantNMT` of its type) |
 | `F3.denied.plain-account` | choreography | `setRoles` |
 | `F3.denied.carrier-license` | choreography | `setRoles` |
 | `F3.denied.supplier-license` | choreography | `setRoles` |
@@ -391,17 +395,17 @@ The authority issues three licenses: a SpecialCarrier license to Carrier A, a Ca
 | Resource | Layer | Contract | Address | Source | Bytecode keccak256 |
 | --- | --- | --- | --- | --- | --- |
 | choreography type | Master | MasterSmartPolicy | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | [MasterSmartPolicy.sol](../contracts/choreography/MasterSmartPolicy.sol) | `0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5` |
-| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602` |
+| instance | Creator | CreatorSmartPolicyPaperScenario | `0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x4177df840b6de3c172f569b758c0739c358988a3266c1b323bf168aaec4d835c` |
 | instance | Holder | HolderSmartPolicy | `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` | [HolderSmartPolicy.sol](../contracts/choreography/HolderSmartPolicy.sol) | `0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b` |
-| license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13` |
+| license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xcc47fe9fe8a9a7f547b6a36a4596cee4e307553fb3b664f0f2b07bc655dcfd91` |
 | licensed role | Creator | ParticipantCreatorSmartPolicy | `0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35` | [CreatorSmartPolicy.sol](../contracts/participant/CreatorSmartPolicy.sol) | `0x4d098019c20560369a6704135eed48691ee32450415386e62b410242325ffe13` |
-| licensed role | Holder | ParticipantHolderSmartPolicy | `0x8A791620dd6260079BF849Dc5567aDC3F2FdC318` | [HolderSmartPolicy.sol](../contracts/participant/HolderSmartPolicy.sol) | `0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b` |
+| licensed role | Holder | ParticipantHolderSmartPolicy | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [HolderSmartPolicy.sol](../contracts/participant/HolderSmartPolicy.sol) | `0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b` |
 
 **Duration (ms)**
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F3 | 17.052 | 15.320 | 20.975 | 1.585 |
+| phase F3 | 14.686 | 13.522 | 16.364 | 0.837 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F3-full.svg))
 
@@ -456,18 +460,18 @@ Anyone can read the model: the render reads the instance with one `tokenURI` cal
 | Resource | Layer | Contract | Address | Source | Bytecode keccak256 |
 | --- | --- | --- | --- | --- | --- |
 | choreography type | Master | MasterSmartPolicy | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | [MasterSmartPolicy.sol](../contracts/choreography/MasterSmartPolicy.sol) | `0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5` |
-| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602` |
+| instance | Creator | CreatorSmartPolicyPaperScenario | `0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x4177df840b6de3c172f569b758c0739c358988a3266c1b323bf168aaec4d835c` |
 | instance | Holder | HolderSmartPolicy | `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` | [HolderSmartPolicy.sol](../contracts/choreography/HolderSmartPolicy.sol) | `0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b` |
-| license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13` |
+| license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xcc47fe9fe8a9a7f547b6a36a4596cee4e307553fb3b664f0f2b07bc655dcfd91` |
 | licensed role | Creator | ParticipantCreatorSmartPolicy | `0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35` | [CreatorSmartPolicy.sol](../contracts/participant/CreatorSmartPolicy.sol) | `0x4d098019c20560369a6704135eed48691ee32450415386e62b410242325ffe13` |
-| licensed role | Holder | ParticipantHolderSmartPolicy | `0x8A791620dd6260079BF849Dc5567aDC3F2FdC318` | [HolderSmartPolicy.sol](../contracts/participant/HolderSmartPolicy.sol) | `0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b` |
+| licensed role | Holder | ParticipantHolderSmartPolicy | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [HolderSmartPolicy.sol](../contracts/participant/HolderSmartPolicy.sol) | `0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b` |
 
 **Duration (ms)**
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F4 | 15.638 | 14.186 | 21.996 | 2.676 |
-| step `F4.render` | 15.079 | 13.713 | 21.398 | 2.544 |
+| phase F4 | 14.412 | 13.749 | 19.421 | 1.997 |
+| step `F4.render` | 13.932 | 13.322 | 18.979 | 1.992 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F4-full.svg))
 
@@ -515,13 +519,13 @@ Split transport preparation into parallel detail collection and documentation pr
 
 | Key | Gas | Cost (ETH) | USD @10 gwei | USD @30 gwei | USD @100 gwei |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `F5.delta` | 1,866,349 | 0.000055944529819365 | $55.9905 | $167.9714 | $559.9047 |
-| `F5.denied.task-limit` | 318,816 | 0.000008436369988224 | $9.5645 | $28.6934 | $95.6448 |
-| `F5.denied.flow-limit` | 547,091 | 0.000012686504687911 | $16.4127 | $49.2382 | $164.1273 |
-| `F5.denied.task-name` | 298,426 | 0.00000607095621663 | $8.9528 | $26.8583 | $89.5278 |
-| `F5.denied.unknown-target` | 76,686 | 0.000001366977335784 | $2.3006 | $6.9017 | $23.0058 |
-| `F5.denied.protected-node` | 340,491 | 0.000005312727039285 | $10.2147 | $30.6442 | $102.1473 |
-| **phase total** | 3,447,859 | 0.000089818065087199 | $103.4358 | $310.3073 | $1034.3577 |
+| `F5.delta` | 1,866,349 | 0.000043901035712835 | $55.9905 | $167.9714 | $559.9047 |
+| `F5.denied.task-limit` | 318,816 | 0.000006620225079744 | $9.5645 | $28.6934 | $95.6448 |
+| `F5.denied.flow-limit` | 547,091 | 0.00000995540945609 | $16.4127 | $49.2382 | $164.1273 |
+| `F5.denied.task-name` | 298,426 | 0.000004764027303248 | $8.9528 | $26.8583 | $89.5278 |
+| `F5.denied.unknown-target` | 76,686 | 0.000001072700408862 | $2.3006 | $6.9017 | $23.0058 |
+| `F5.denied.protected-node` | 340,491 | 0.000004169026623051 | $10.2147 | $30.6442 | $102.1473 |
+| **phase total** | 3,447,859 | 0.00007048242458383 | $103.4358 | $310.3073 | $1034.3577 |
 
 **Trust-table rows**
 
@@ -553,18 +557,18 @@ Split transport preparation into parallel detail collection and documentation pr
 | Resource | Layer | Contract | Address | Source | Bytecode keccak256 |
 | --- | --- | --- | --- | --- | --- |
 | choreography type | Master | MasterSmartPolicy | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | [MasterSmartPolicy.sol](../contracts/choreography/MasterSmartPolicy.sol) | `0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5` |
-| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602` |
+| instance | Creator | CreatorSmartPolicyPaperScenario | `0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x4177df840b6de3c172f569b758c0739c358988a3266c1b323bf168aaec4d835c` |
 | instance | Holder | HolderSmartPolicy | `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` | [HolderSmartPolicy.sol](../contracts/choreography/HolderSmartPolicy.sol) | `0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b` |
-| license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13` |
+| license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xcc47fe9fe8a9a7f547b6a36a4596cee4e307553fb3b664f0f2b07bc655dcfd91` |
 | licensed role | Creator | ParticipantCreatorSmartPolicy | `0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35` | [CreatorSmartPolicy.sol](../contracts/participant/CreatorSmartPolicy.sol) | `0x4d098019c20560369a6704135eed48691ee32450415386e62b410242325ffe13` |
-| licensed role | Holder | ParticipantHolderSmartPolicy | `0x8A791620dd6260079BF849Dc5567aDC3F2FdC318` | [HolderSmartPolicy.sol](../contracts/participant/HolderSmartPolicy.sol) | `0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b` |
+| licensed role | Holder | ParticipantHolderSmartPolicy | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [HolderSmartPolicy.sol](../contracts/participant/HolderSmartPolicy.sol) | `0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b` |
 
 **Duration (ms)**
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F5 | 111.377 | 104.790 | 174.467 | 26.435 |
-| step `F5.delta` | 63.456 | 62.339 | 111.919 | 15.256 |
+| phase F5 | 101.554 | 93.551 | 116.244 | 6.538 |
+| step `F5.delta` | 61.225 | 55.603 | 71.161 | 4.532 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F5-full.svg))
 
@@ -607,17 +611,17 @@ The organization behind the Special Carrier role changes by selling the license,
 
 | Key | Gas | Cost (ETH) | USD @10 gwei | USD @30 gwei | USD @100 gwei |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `F6.denied.carrier-buyer` | 37,239 | 0.00000050923885632 | $1.1172 | $3.3515 | $11.1717 |
-| `F6.denied.supplier-buyer` | 37,239 | 0.000000445663057677 | $1.1172 | $3.3515 | $11.1717 |
-| `F6.denied.without-seller` | 30,168 | 0.00000031596590556 | $0.9050 | $2.7151 | $9.0504 |
-| `F6.sale` | 108,940 | 0.00000099850787192 | $3.2682 | $9.8046 | $32.6820 |
-| `F6.denied.buyer-without-policy` | 37,003 | 0.000000296916549363 | $1.1101 | $3.3303 | $11.1009 |
-| `F6.buyer.holder-policy` | 49,611 | 0.000000348385508184 | $1.4883 | $4.4650 | $14.8833 |
-| `F6.denied.former-holder` | 34,894 | 0.000000214458663576 | $1.0468 | $3.1405 | $10.4682 |
-| `F6.buyer.name` | 66,674 | 0.000000358615976752 | $2.0002 | $6.0007 | $20.0022 |
-| `F6.buyer.profile` | 67,102 | 0.000000315903600824 | $2.0131 | $6.0392 | $20.1306 |
-| `F6.buyer.messages` | 76,009 | 0.000000313206637868 | $2.2803 | $6.8408 | $22.8027 |
-| **phase total** | 544,879 | 0.000004116862628044 | $16.3464 | $49.0391 | $163.4637 |
+| `F6.denied.carrier-buyer` | 37,239 | 0.000000399612155868 | $1.1172 | $3.3515 | $11.1717 |
+| `F6.denied.supplier-buyer` | 37,239 | 0.000000349722695178 | $1.1172 | $3.3515 | $11.1717 |
+| `F6.denied.without-seller` | 30,168 | 0.000000247946176296 | $0.9050 | $2.7151 | $9.0504 |
+| `F6.sale` | 108,940 | 0.0000007835536735 | $3.2682 | $9.8046 | $32.6820 |
+| `F6.denied.buyer-without-policy` | 37,003 | 0.000000232997678172 | $1.1101 | $3.3303 | $11.1009 |
+| `F6.buyer.holder-policy` | 49,611 | 0.000000273386624655 | $1.4883 | $4.4650 | $14.8833 |
+| `F6.denied.former-holder` | 34,894 | 0.000000168290935586 | $1.0468 | $3.1405 | $10.4682 |
+| `F6.buyer.name` | 66,674 | 0.000000281414685544 | $2.0002 | $6.0007 | $20.0022 |
+| `F6.buyer.profile` | 67,102 | 0.00000024789726717 | $2.0131 | $6.0392 | $20.1306 |
+| `F6.buyer.messages` | 76,009 | 0.000000245780878184 | $2.2803 | $6.8408 | $22.8027 |
+| **phase total** | 544,879 | 0.000003230602770153 | $16.3464 | $49.0391 | $163.4637 |
 
 **Trust-table rows**
 
@@ -677,17 +681,17 @@ Messages declared on the license: `Message_0dai5by`, `Message_10n229k`, `Message
 | Resource | Layer | Contract | Address | Source | Bytecode keccak256 |
 | --- | --- | --- | --- | --- | --- |
 | choreography type | Master | MasterSmartPolicy | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | [MasterSmartPolicy.sol](../contracts/choreography/MasterSmartPolicy.sol) | `0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5` |
-| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602` |
+| instance | Creator | CreatorSmartPolicyPaperScenario | `0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x4177df840b6de3c172f569b758c0739c358988a3266c1b323bf168aaec4d835c` |
 | instance | Holder | HolderSmartPolicy | `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` | [HolderSmartPolicy.sol](../contracts/choreography/HolderSmartPolicy.sol) | `0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b` |
-| license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13` |
+| license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xcc47fe9fe8a9a7f547b6a36a4596cee4e307553fb3b664f0f2b07bc655dcfd91` |
 | licensed role | Creator | ParticipantCreatorSmartPolicy | `0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35` | [CreatorSmartPolicy.sol](../contracts/participant/CreatorSmartPolicy.sol) | `0x4d098019c20560369a6704135eed48691ee32450415386e62b410242325ffe13` |
-| licensed role | Holder | ParticipantHolderSmartPolicy | `0x8A791620dd6260079BF849Dc5567aDC3F2FdC318` | [HolderSmartPolicy.sol](../contracts/participant/HolderSmartPolicy.sol) | `0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b` |
+| licensed role | Holder | ParticipantHolderSmartPolicy | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [HolderSmartPolicy.sol](../contracts/participant/HolderSmartPolicy.sol) | `0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b` |
 
 **Duration (ms)**
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F6 | 13.882 | 12.710 | 22.808 | 2.890 |
+| phase F6 | 12.793 | 11.211 | 13.968 | 0.757 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F6-full.svg))
 
@@ -721,7 +725,7 @@ A second instance, with the default policies, shows the transfer and the Holder 
 
 | Key | Operation | From | Call | Contract | Outcome | Reason | Gas |
 | --- | --- | --- | --- | --- | --- | --- | ---: |
-| `F7.deploy.deny-all` | deploy the deny-all policy | Administrator | `DenyAllSmartPolicy.constructor` | DenyAllSmartPolicy `0x7a2088a1bFc9d81c55368AE168C2C02570cB814F` | allowed | — | 335,458 |
+| `F7.deploy.deny-all` | deploy the deny-all policy | Administrator | `DenyAllSmartPolicy.constructor` | DenyAllSmartPolicy `0xc5a5C42992dECbae36851359345FE25997F5C42d` | allowed | — | 335,458 |
 | `F7.mint` | mint a second instance with the default policies | Administrator | `ChoreographyNMT.mint` | ChoreographyNMT `0x5FC8d32690cc91D4c39d9d3abcBD16989F875707` | allowed | — | 5,625,370 |
 | `F7.denied.transfer` | the Master policy denies a transfer to an ineligible holder | Administrator | `ChoreographyNMT.transferFrom` | ChoreographyNMT `0x5FC8d32690cc91D4c39d9d3abcBD16989F875707` | denied | `MasterDenied` | 30,322 |
 | `F7.transfer` | the holder transfers the instance to the Partner | Administrator | `ChoreographyNMT.transferFrom` | ChoreographyNMT `0x5FC8d32690cc91D4c39d9d3abcBD16989F875707` | allowed | — | 106,564 |
@@ -732,13 +736,13 @@ A second instance, with the default policies, shows the transfer and the Holder 
 
 | Key | Gas | Cost (ETH) | USD @10 gwei | USD @30 gwei | USD @100 gwei |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `F7.deploy.deny-all` | 335,458 | 0.000001209955409208 | $10.0637 | $30.1912 | $100.6374 |
-| `F7.mint` | 5,625,370 | 0.00001778212646683 | $168.7611 | $506.2833 | $1687.6110 |
-| `F7.denied.transfer` | 30,322 | 0.000000086115056118 | $0.9097 | $2.7290 | $9.0966 |
-| `F7.transfer` | 106,564 | 0.000000264851608064 | $3.1969 | $9.5908 | $31.9692 |
-| `F7.holder.deny-all` | 49,633 | 0.000000107991878464 | $1.4890 | $4.4670 | $14.8899 |
-| `F7.denied.delta` | 136,179 | 0.000000259323218478 | $4.0854 | $12.2561 | $40.8537 |
-| **phase total** | 6,283,526 | 0.000019710363637162 | $188.5058 | $565.5173 | $1885.0578 |
+| `F7.deploy.deny-all` | 335,458 | 0.000000949481665032 | $10.0637 | $30.1912 | $100.6374 |
+| `F7.mint` | 5,625,370 | 0.0000139540678072 | $168.7611 | $506.2833 | $1687.6110 |
+| `F7.denied.transfer` | 30,322 | 0.000000067576579504 | $0.9097 | $2.7290 | $9.0966 |
+| `F7.transfer` | 106,564 | 0.00000020783549894 | $3.1969 | $9.5908 | $31.9692 |
+| `F7.holder.deny-all` | 49,633 | 0.00000008474388053 | $1.4890 | $4.4670 | $14.8899 |
+| `F7.denied.delta` | 136,179 | 0.000000203497318323 | $4.0854 | $12.2561 | $40.8537 |
+| **phase total** | 6,283,526 | 0.000015467202749529 | $188.5058 | $565.5173 | $1885.0578 |
 
 **Trust-table rows**
 
@@ -779,13 +783,13 @@ Holder: Partner.
 | --- | --- | --- | --- | --- | --- |
 | choreography type | Master | MasterSmartPolicy | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | [MasterSmartPolicy.sol](../contracts/choreography/MasterSmartPolicy.sol) | `0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5` |
 | restricted instance | Creator | CreatorSmartPolicy | `0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512` | [CreatorSmartPolicy.sol](../contracts/choreography/CreatorSmartPolicy.sol) | `0x43492bed290349b36ee4209e036f71822a65418023ba5edd9e222d5e13406330` |
-| restricted instance | Holder | DenyAllSmartPolicy | `0x7a2088a1bFc9d81c55368AE168C2C02570cB814F` | [DenyAllSmartPolicy.sol](../contracts/choreography/DenyAllSmartPolicy.sol) | `0x9f03a9ce484e3bd5888dbcdf647bf64f9b80a32025b7548177e9283f625f21f1` |
+| restricted instance | Holder | DenyAllSmartPolicy | `0xc5a5C42992dECbae36851359345FE25997F5C42d` | [DenyAllSmartPolicy.sol](../contracts/choreography/DenyAllSmartPolicy.sol) | `0x9f03a9ce484e3bd5888dbcdf647bf64f9b80a32025b7548177e9283f625f21f1` |
 
 **Duration (ms)**
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F7 | 19.931 | 18.318 | 21.183 | 0.880 |
+| phase F7 | 17.536 | 16.399 | 20.981 | 1.595 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F7-full.svg))
 
@@ -834,10 +838,10 @@ The render reads the instance again and regenerates the BPMN of the changed mode
 
 | Key | Gas | Cost (ETH) | USD @10 gwei | USD @30 gwei | USD @100 gwei |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `F8.new-instance.mint` | 5,625,370 | 0.00000937933691136 | $168.7611 | $506.2833 | $1687.6110 |
-| `F8.new-instance.roles` | 176,849 | 0.000000264918564057 | $5.3055 | $15.9164 | $53.0547 |
-| `F8.new-instance.link` | 97,276 | 0.000000127611423324 | $2.9183 | $8.7548 | $29.1828 |
-| **phase total** | 5,899,495 | 0.000009771866898741 | $176.9848 | $530.9546 | $1769.8485 |
+| `F8.new-instance.mint` | 5,625,370 | 0.00000736020035578 | $168.7611 | $506.2833 | $1687.6110 |
+| `F8.new-instance.roles` | 176,849 | 0.000000207888121688 | $5.3055 | $15.9164 | $53.0547 |
+| `F8.new-instance.link` | 97,276 | 0.00000010013980544 | $2.9183 | $8.7548 | $29.1828 |
+| **phase total** | 5,899,495 | 0.000007668228282908 | $176.9848 | $530.9546 | $1769.8485 |
 
 **Trust-table rows**
 
@@ -872,18 +876,18 @@ The render reads the instance again and regenerates the BPMN of the changed mode
 | Resource | Layer | Contract | Address | Source | Bytecode keccak256 |
 | --- | --- | --- | --- | --- | --- |
 | choreography type | Master | MasterSmartPolicy | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | [MasterSmartPolicy.sol](../contracts/choreography/MasterSmartPolicy.sol) | `0x6a27d43e7031776b97c80ef69e68e0a1e5400105b61c6574c1fce04c4bbbc1a5` |
-| instance | Creator | CreatorSmartPolicyPaperScenario | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x8ccc76183e7b01c27a944ef8ef6b8b3430e558a11ac85585e45e02fdfd6dd602` |
+| instance | Creator | CreatorSmartPolicyPaperScenario | `0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x4177df840b6de3c172f569b758c0739c358988a3266c1b323bf168aaec4d835c` |
 | instance | Holder | HolderSmartPolicy | `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` | [HolderSmartPolicy.sol](../contracts/choreography/HolderSmartPolicy.sol) | `0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b` |
-| license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xd90bd67ad225d75183d46666712a0e2cfaa1c9ced3d4e1b51034e69cdc511d13` |
+| license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xcc47fe9fe8a9a7f547b6a36a4596cee4e307553fb3b664f0f2b07bc655dcfd91` |
 | licensed role | Creator | ParticipantCreatorSmartPolicy | `0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35` | [CreatorSmartPolicy.sol](../contracts/participant/CreatorSmartPolicy.sol) | `0x4d098019c20560369a6704135eed48691ee32450415386e62b410242325ffe13` |
-| licensed role | Holder | ParticipantHolderSmartPolicy | `0x8A791620dd6260079BF849Dc5567aDC3F2FdC318` | [HolderSmartPolicy.sol](../contracts/participant/HolderSmartPolicy.sol) | `0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b` |
+| licensed role | Holder | ParticipantHolderSmartPolicy | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | [HolderSmartPolicy.sol](../contracts/participant/HolderSmartPolicy.sol) | `0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b` |
 
 **Duration (ms)**
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F8 | 34.012 | 32.276 | 39.856 | 2.420 |
-| step `F8.render` | 18.740 | 17.649 | 21.134 | 1.216 |
+| phase F8 | 30.225 | 27.774 | 97.127 | 21.111 |
+| step `F8.render` | 17.455 | 15.490 | 82.300 | 20.509 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F8-full.svg))
 
@@ -898,8 +902,8 @@ A choreography type fixes its model, so the alternative to a delta is a new inst
 <!-- evidence:comparison -->
 | Strategy | Transactions | Gas | Cost (ETH) | USD @10 gwei | USD @30 gwei | USD @100 gwei | Relative gas saving |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Delta update, 7 nodes written | `F5.delta` | 1,866,349 | 0.000055944529819365 | $55.9905 | $167.9714 | $559.9047 | 68.36% |
-| New instance, 11 nodes | `F8.new-instance.mint`, `F8.new-instance.roles`, `F8.new-instance.link` | 5,899,495 | 0.000009771866898741 | $176.9848 | $530.9546 | $1769.8485 | 0.00% |
+| Delta update, 7 nodes written | `F5.delta` | 1,866,349 | 0.000043901035712835 | $55.9905 | $167.9714 | $559.9047 | 68.36% |
+| New instance, 11 nodes | `F8.new-instance.mint`, `F8.new-instance.roles`, `F8.new-instance.link` | 5,899,495 | 0.000007668228282908 | $176.9848 | $530.9546 | $1769.8485 | 0.00% |
 <!-- /evidence:comparison -->
 
 ## Public-network cost scenarios
@@ -907,7 +911,7 @@ A choreography type fixes its model, so the alternative to a delta is a new inst
 The measured gas of a choreography type and its first instance, priced at three public-network gas prices.
 
 <!-- evidence:scenarios -->
-The gas of a choreography type and its first complete instance: `F1.deploy.master`, `F1.deploy.creator`, `F1.deploy.holder`, `F1.deploy.renderer`, `F1.deploy.model`, `F1.deploy.nmt`, `F2.mint`, `F2.roles`, `F3.link`, 16,096,006 gas in all, 0.008262300372559337 ETH at the local gas price of the receipts.
+The gas of a choreography type and its first complete instance: `F1.deploy.master`, `F1.deploy.creator`, `F1.deploy.holder`, `F1.deploy.renderer`, `F1.deploy.model`, `F1.deploy.nmt`, `F2.mint`, `F2.roles`, `F3.link`, 16,096,006 gas in all, 0.007997743338540249 ETH at the local gas price of the receipts.
 
 | Network condition | Gas price | Meaning | Gas | Estimated ETH cost | Estimated USD cost |
 | --- | ---: | --- | ---: | --- | --- |
@@ -980,7 +984,7 @@ The experiment exercises the policies on the paper example; `npm test` exercises
 | --- | --- |
 | Cases | 58 |
 | Gas of the allowed cases | 12,608,484 |
-| Gas of the denied cases | 2,366,193 |
+| Gas of the denied cases | 2,360,802 |
 
 | Case | Outcome | Gas | Cost (wei) | USD @10 gwei | USD @30 gwei | USD @100 gwei |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
@@ -988,60 +992,60 @@ The experiment exercises the policies on the paper example; `npm test` exercises
 | creator and holder update roles | allowed | 109,294 | 50,243,936,558,990 | $3.2788 | $9.8365 | $32.7882 |
 | creator and holder update nodes | allowed | 224,844 | 90,490,432,262,028 | $6.7453 | $20.2360 | $67.4532 |
 | creator policy denies a flow declared on one endpoint | denied | 121,951 | 42,991,195,664,489 | $3.6585 | $10.9756 | $36.5853 |
-| authorized creator mints with the test-scenario creator policy | allowed | 3,179,419 | 243,961,350,542,075 | $95.3826 | $286.1477 | $953.8257 |
-| creator policy allows approved task within limits | allowed | 609,279 | 41,526,325,991,337 | $18.2784 | $54.8351 | $182.7837 |
-| creator policy allows second approved task within limits | allowed | 601,451 | 35,972,764,462,117 | $18.0435 | $54.1306 | $180.4353 |
-| creator policy denies task count above limit | denied | 164,755 | 8,646,936,836,040 | $4.9427 | $14.8279 | $49.4265 |
-| creator policy denies sequence flow count above limit | denied | 324,233 | 14,901,485,078,571 | $9.7270 | $29.1810 | $97.2699 |
-| creator policy denies task outside name allowlist | denied | 144,822 | 5,832,905,759,538 | $4.3447 | $13.0340 | $43.4466 |
-| creator policy denies flow to unknown node | denied | 76,086 | 2,683,259,147,610 | $2.2826 | $6.8477 | $22.8258 |
-| creator policy denies protected node update | denied | 167,677 | 5,176,029,529,173 | $5.0303 | $15.0909 | $50.3031 |
-| creator policy denies flow from unknown node | denied | 93,939 | 2,539,357,638,915 | $2.8182 | $8.4545 | $28.1817 |
-| creator policy allows update keeping protected node links | allowed | 231,955 | 5,488,883,147,395 | $6.9587 | $20.8759 | $69.5865 |
-| creator policy denies unlinking protected node | denied | 127,358 | 2,639,939,411,494 | $3.8207 | $11.4622 | $38.2074 |
-| creator policy denies new link to protected node | denied | 134,415 | 2,439,421,487,280 | $4.0324 | $12.0974 | $40.3245 |
-| creator policy allows unprotected role update | allowed | 97,958 | 1,556,556,832,194 | $2.9387 | $8.8162 | $29.3874 |
-| creator policy allows the first assignment of a protected role | allowed | 99,718 | 1,387,104,702,732 | $2.9915 | $8.9746 | $29.9154 |
-| creator policy denies protected role update | denied | 58,627 | 713,916,808,290 | $1.7588 | $5.2764 | $17.5881 |
-| unauthorized issuer cannot mint a participant license | denied | 30,360 | 220,508,869,680 | $0.9108 | $2.7324 | $9.1080 |
-| participant license cannot be minted without a type | denied | 29,817 | 189,521,741,988 | $0.8945 | $2.6835 | $8.9451 |
-| license holder declares messages allowed for its type | allowed | 139,736 | 777,272,277,424 | $4.1921 | $12.5762 | $41.9208 |
-| creator policy denies a message not allowed for the license type | denied | 46,603 | 226,973,806,507 | $1.3981 | $4.1943 | $13.9809 |
-| license holder updates its organization data | allowed | 66,674 | 284,199,191,806 | $2.0002 | $6.0007 | $20.0022 |
-| authorized creator mints a model whose Carrier role requires a SpecialCarrier license | allowed | 3,223,648 | 8,273,737,589,248 | $96.7094 | $290.1283 | $967.0944 |
-| holder assigns the accounts of the new instance | allowed | 135,868 | 309,810,017,904 | $4.0760 | $12.2281 | $40.7604 |
-| creator policy denies a plain account for a licensed role | denied | 63,657 | 127,090,627,587 | $1.9097 | $5.7291 | $19.0971 |
-| creator policy denies a license of another type | denied | 69,889 | 122,128,301,829 | $2.0967 | $6.2900 | $20.9667 |
-| creator policy denies a license from an untrusted certifier | denied | 69,240 | 105,905,211,120 | $2.0772 | $6.2316 | $20.7720 |
-| creator policy denies new role when known roles are enforced | denied | 54,893 | 73,490,089,684 | $1.6468 | $4.9404 | $16.4679 |
-| creator policy denies account already holding another role | denied | 73,824 | 86,502,976,704 | $2.2147 | $6.6442 | $22.1472 |
-| holder links a role to a certified license | allowed | 120,833 | 123,930,916,454 | $3.6250 | $10.8750 | $36.2499 |
-| participant master denies selling a license to an unqualified buyer | denied | 37,239 | 33,438,760,050 | $1.1172 | $3.3515 | $11.1717 |
-| buyer cannot take a license without the seller | denied | 30,168 | 23,707,402,128 | $0.9050 | $2.7151 | $9.0504 |
-| holder sells a license to a qualified buyer | allowed | 106,940 | 73,544,242,100 | $3.2082 | $9.6246 | $32.0820 |
-| former license holder cannot install a Holder policy | denied | 27,477 | 16,542,720,189 | $0.8243 | $2.4729 | $8.2431 |
-| new license holder installs its Holder policy | allowed | 49,611 | 26,138,497,959 | $1.4883 | $4.4650 | $14.8833 |
-| former license holder cannot update the license | denied | 34,894 | 16,090,321,280 | $1.0468 | $3.1405 | $10.4682 |
-| new license holder updates its data | allowed | 66,674 | 26,906,159,352 | $2.0002 | $6.0007 | $20.0022 |
-| new license holder rewrites the messages | allowed | 62,936 | 22,230,002,176 | $1.8881 | $5.6642 | $18.8808 |
-| unauthorized creator cannot mint | denied | 29,810 | 9,215,999,980 | $0.8943 | $2.6829 | $8.9430 |
-| authorized creator cannot assign an ineligible holder | denied | 30,099 | 8,143,344,648 | $0.9030 | $2.7089 | $9.0297 |
-| non-holder cannot update choreography | denied | 39,477 | 9,346,890,336 | $1.1843 | $3.5529 | $11.8431 |
-| holder links the asset | allowed | 66,238 | 13,725,242,218 | $1.9871 | $5.9614 | $19.8714 |
-| non-holder cannot link the asset | denied | 35,225 | 6,388,652,575 | $1.0568 | $3.1702 | $10.5675 |
-| holder transfers to eligible holder | allowed | 113,970 | 18,089,774,280 | $3.4191 | $10.2573 | $34.1910 |
-| holder cannot transfer to an ineligible holder | denied | 30,322 | 4,213,545,120 | $0.9097 | $2.7290 | $9.0966 |
-| holder cannot replace creator policy | denied | 28,929 | 2,738,650,572 | $0.8679 | $2.6036 | $8.6787 |
-| creator policy administrator replaces creator policy | allowed | 29,146 | 2,414,658,662 | $0.8744 | $2.6231 | $8.7438 |
-| holder installs restrictive policy | allowed | 32,533 | 2,095,157,733 | $0.9760 | $2.9280 | $9.7599 |
-| holder policy can deny further updates | denied | 45,904 | 2,587,149,440 | $1.3771 | $4.1314 | $13.7712 |
-| holder cannot replace master policy | denied | 28,800 | 1,420,617,600 | $0.8640 | $2.5920 | $8.6400 |
-| master administrator cannot remove master policy | denied | 28,595 | 1,234,360,365 | $0.8579 | $2.5736 | $8.5785 |
-| master administrator replaces master policy | allowed | 32,920 | 1,243,618,840 | $0.9876 | $2.9628 | $9.8760 |
-| replaced master policy governs minting | denied | 29,136 | 963,236,160 | $0.8741 | $2.6222 | $8.7408 |
-| license holder cannot replace participant master policy | denied | 28,900 | 836,134,800 | $0.8670 | $2.6010 | $8.6700 |
-| participant master administrator replaces participant master policy | allowed | 33,020 | 836,066,400 | $0.9906 | $2.9718 | $9.9060 |
-| replaced participant master policy governs sales | denied | 29,072 | 644,206,448 | $0.8722 | $2.6165 | $8.7216 |
+| authorized creator mints with the test-scenario creator policy | allowed | 3,179,419 | 191,458,227,906,648 | $95.3826 | $286.1477 | $953.8257 |
+| creator policy allows approved task within limits | allowed | 609,279 | 32,589,411,261,594 | $18.2784 | $54.8351 | $182.7837 |
+| creator policy allows second approved task within limits | allowed | 601,451 | 28,231,036,349,965 | $18.0435 | $54.1306 | $180.4353 |
+| creator policy denies task count above limit | denied | 164,755 | 6,786,022,520,840 | $4.9427 | $14.8279 | $49.4265 |
+| creator policy denies sequence flow count above limit | denied | 324,233 | 11,694,524,359,609 | $9.7270 | $29.1810 | $97.2699 |
+| creator policy denies task outside name allowlist | denied | 144,822 | 4,577,601,263,052 | $4.3447 | $13.0340 | $43.4466 |
+| creator policy denies flow to unknown node | denied | 76,086 | 2,105,792,809,452 | $2.2826 | $6.8477 | $22.8258 |
+| creator policy denies protected node update | denied | 167,677 | 4,062,092,028,192 | $5.0303 | $15.0909 | $50.3031 |
+| creator policy denies flow from unknown node | denied | 93,939 | 1,992,860,460,990 | $2.8182 | $8.4545 | $28.1817 |
+| creator policy allows update keeping protected node links | allowed | 231,955 | 4,307,616,124,915 | $6.9587 | $20.8759 | $69.5865 |
+| creator policy denies unlinking protected node | denied | 127,358 | 2,071,796,010,284 | $3.8207 | $11.4622 | $38.2074 |
+| creator policy denies new link to protected node | denied | 134,415 | 1,914,431,714,010 | $4.0324 | $12.0974 | $40.3245 |
+| creator policy allows unprotected role update | allowed | 97,958 | 1,221,568,977,972 | $2.9387 | $8.8162 | $29.3874 |
+| creator policy allows the first assignment of a protected role | allowed | 99,718 | 1,088,584,809,494 | $2.9915 | $8.9746 | $29.9154 |
+| creator policy denies protected role update | denied | 58,627 | 560,274,201,930 | $1.7588 | $5.2764 | $17.5881 |
+| unauthorized issuer cannot mint a participant license | denied | 30,467 | 173,658,761,899 | $0.9140 | $2.7420 | $9.1401 |
+| issuer cannot mint a license of a type the Master does not define | denied | 30,551 | 152,392,481,834 | $0.9165 | $2.7496 | $9.1653 |
+| license holder declares messages allowed for its type | allowed | 139,736 | 609,982,993,208 | $4.1921 | $12.5762 | $41.9208 |
+| creator policy denies a message not allowed for the license type | denied | 46,603 | 178,123,143,817 | $1.3981 | $4.1943 | $13.9809 |
+| license holder updates its organization data | allowed | 66,674 | 223,032,197,510 | $2.0002 | $6.0007 | $20.0022 |
+| authorized creator mints a model whose Carrier role requires a SpecialCarrier license | allowed | 3,223,648 | 6,493,013,775,936 | $96.7094 | $290.1283 | $967.0944 |
+| holder assigns the accounts of the new instance | allowed | 135,868 | 243,130,894,752 | $4.0760 | $12.2281 | $40.7604 |
+| creator policy denies a plain account for a licensed role | denied | 63,657 | 99,737,469,315 | $1.9097 | $5.7291 | $19.0971 |
+| creator policy denies a license of another type | denied | 63,657 | 87,296,790,834 | $1.9097 | $5.7291 | $19.0971 |
+| creator policy denies a license from an untrusted certifier | denied | 69,240 | 83,109,256,680 | $2.0772 | $6.2316 | $20.7720 |
+| creator policy denies new role when known roles are enforced | denied | 54,893 | 57,671,409,195 | $1.6468 | $4.9404 | $16.4679 |
+| creator policy denies account already holding another role | denied | 73,824 | 67,883,308,896 | $2.2147 | $6.6442 | $22.1472 |
+| holder links a role to a certified license | allowed | 120,833 | 97,254,977,543 | $3.6250 | $10.8750 | $36.2499 |
+| participant master denies selling a license to an unqualified buyer | denied | 37,239 | 26,241,131,652 | $1.1172 | $3.3515 | $11.1717 |
+| buyer cannot take a license without the seller | denied | 30,168 | 18,604,424,592 | $0.9050 | $2.7151 | $9.0504 |
+| holder sells a license to a qualified buyer | allowed | 106,940 | 57,714,020,840 | $3.2082 | $9.6246 | $32.0820 |
+| former license holder cannot install a Holder policy | denied | 27,477 | 12,981,948,282 | $0.8243 | $2.4729 | $8.2431 |
+| new license holder installs its Holder policy | allowed | 49,611 | 20,512,312,893 | $1.4883 | $4.4650 | $14.8833 |
+| former license holder cannot update the license | denied | 34,894 | 12,626,952,204 | $1.0468 | $3.1405 | $10.4682 |
+| new license holder updates its data | allowed | 66,674 | 21,114,655,690 | $2.0002 | $6.0007 | $20.0022 |
+| new license holder rewrites the messages | allowed | 62,936 | 17,445,103,968 | $1.8881 | $5.6642 | $18.8808 |
+| unauthorized creator cannot mint | denied | 29,810 | 7,232,263,720 | $0.8943 | $2.6829 | $8.9430 |
+| authorized creator cannot assign an ineligible holder | denied | 30,099 | 6,390,529,383 | $0.9030 | $2.7089 | $9.0297 |
+| non-holder cannot update choreography | denied | 39,477 | 7,335,023,985 | $1.1843 | $3.5529 | $11.8431 |
+| holder links the asset | allowed | 66,238 | 10,771,027,418 | $1.9871 | $5.9614 | $19.8714 |
+| non-holder cannot link the asset | denied | 35,225 | 5,013,574,250 | $1.0568 | $3.1702 | $10.5675 |
+| holder transfers to eligible holder | allowed | 113,970 | 14,196,217,170 | $3.4191 | $10.2573 | $34.1910 |
+| holder cannot transfer to an ineligible holder | denied | 30,322 | 3,306,644,422 | $0.9097 | $2.7290 | $9.0966 |
+| holder cannot replace creator policy | denied | 28,929 | 2,149,193,268 | $0.8679 | $2.6036 | $8.6787 |
+| creator policy administrator replaces creator policy | allowed | 29,146 | 1,894,927,190 | $0.8744 | $2.6231 | $8.7438 |
+| holder installs restrictive policy | allowed | 32,533 | 1,644,152,754 | $0.9760 | $2.9280 | $9.7599 |
+| holder policy can deny further updates | denied | 45,904 | 2,030,242,112 | $1.3771 | $4.1314 | $13.7712 |
+| holder cannot replace master policy | denied | 28,800 | 1,114,819,200 | $0.8640 | $2.5920 | $8.6400 |
+| master administrator cannot remove master policy | denied | 28,595 | 968,655,625 | $0.8579 | $2.5736 | $8.5785 |
+| master administrator replaces master policy | allowed | 32,920 | 975,946,320 | $0.9876 | $2.9628 | $9.8760 |
+| replaced master policy governs minting | denied | 29,136 | 755,933,520 | $0.8741 | $2.6222 | $8.7408 |
+| license holder cannot replace participant master policy | denied | 28,900 | 656,174,500 | $0.8670 | $2.6010 | $8.6700 |
+| participant master administrator replaces participant master policy | allowed | 33,020 | 656,107,400 | $0.9906 | $2.9718 | $9.9060 |
+| replaced participant master policy governs sales | denied | 29,072 | 505,533,008 | $0.8722 | $2.6165 | $8.7216 |
 <!-- /evidence:tests -->
 
 ## Evidence files

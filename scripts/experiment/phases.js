@@ -61,10 +61,12 @@ export const PHASES = [
       deploy("F1.deploy.nmt", "deploy the choreography type", "Administrator", "ChoreographyNMT"),
       deploy("F1.deploy.participant-master", "deploy the participant Master policy", "Administrator", "ParticipantMasterSmartPolicy"),
       deploy("F1.deploy.participant-renderer", "deploy the license tokenURI renderer", "Administrator", "ParticipantTokenURIRenderer"),
-      deploy("F1.deploy.participant-nmt", "deploy the license NMT", "Administrator", "ParticipantNMT"),
+      deploy("F1.deploy.special-carrier-nmt", "deploy the SpecialCarrier license NMT", "Administrator", "ParticipantNMT"),
+      deploy("F1.deploy.carrier-nmt", "deploy the Carrier license NMT", "Administrator", "ParticipantNMT"),
+      deploy("F1.deploy.supplier-nmt", "deploy the Supplier license NMT", "Administrator", "ParticipantNMT"),
       deploy("F1.deploy.certifier", "the Authority deploys the license Creator policy (certifier)", "Authority", "ParticipantCreatorSmartPolicy"),
       deploy("F1.deploy.participant-holder", "deploy the license Holder policy", "Administrator", "ParticipantHolderSmartPolicy"),
-      deploy("F1.deploy.participant-am", "deploy the participant attribute manager", "Administrator", "ChoreographyParticipantAM"),
+      deploy("F1.deploy.special-carrier-am", "deploy the attribute manager of the SpecialCarrier licenses", "Administrator", "ChoreographyParticipantAM"),
       deploy("F1.deploy.paper-creator", "deploy the paper-scenario Creator policy", "Administrator", "CreatorSmartPolicyPaperScenario")
     ]
   },
@@ -84,9 +86,9 @@ export const PHASES = [
     title: `Issue the participant licenses and link the ${LICENSED_ROLE} role`,
     inputs: [],
     transactions: [
-      tx("F3.license.special-carrier", "the Authority issues a SpecialCarrier license to Carrier A", "Authority", "ParticipantNMT.mintWithParticipantType", "allowed", "licenses:mintWithParticipantType"),
-      tx("F3.license.carrier", "the Authority issues a Carrier license to Carrier C", "Authority", "ParticipantNMT.mintWithParticipantType", "allowed", "licenses:mintWithParticipantType"),
-      tx("F3.license.supplier", "the Authority issues a Supplier license to the Supplier company", "Authority", "ParticipantNMT.mintWithParticipantType", "allowed", "licenses:mintWithParticipantType"),
+      tx("F3.license.special-carrier", "the Authority issues a SpecialCarrier license to Carrier A", "Authority", "ParticipantNMT.mint", "allowed", "licenses:mint"),
+      tx("F3.license.carrier", "the Authority issues a Carrier license to Carrier C", "Authority", "ParticipantNMT.mint", "allowed", "licenses:mint"),
+      tx("F3.license.supplier", "the Authority issues a Supplier license to the Supplier company", "Authority", "ParticipantNMT.mint", "allowed", "licenses:mint"),
       tx("F3.denied.plain-account", `the Creator policy denies linking ${LICENSED_ROLE} to a plain account`, "Administrator", "ChoreographyMutableAsset.setRoles", "denied", "choreography:setRoles", CREATOR_DENIED),
       tx("F3.denied.carrier-license", `the Creator policy denies linking ${LICENSED_ROLE} to a Carrier license`, "Administrator", "ChoreographyMutableAsset.setRoles", "denied", "choreography:setRoles", CREATOR_DENIED),
       tx("F3.denied.supplier-license", `the Creator policy denies linking ${LICENSED_ROLE} to a Supplier license`, "Administrator", "ChoreographyMutableAsset.setRoles", "denied", "choreography:setRoles", CREATOR_DENIED),
