@@ -17,8 +17,8 @@
       "conditions": [""],
       "initiatorRole": "Middleman",
       "participantRole": "Special Carrier",
-      "initiatingMessage": "Message_0dai5by",
-      "returnMessage": ""
+      "initiatingMessage": "Transport Order",
+      "returnMessage": "Pickup Schedule"
     },
     {
       "name": "Parallel Transport Preparation Split",
@@ -39,8 +39,8 @@
       "conditions": [""],
       "initiatorRole": "Special Carrier",
       "participantRole": "Supplier",
-      "initiatingMessage": "Message_10n229k",
-      "returnMessage": ""
+      "initiatingMessage": "Cargo Details Request",
+      "returnMessage": "Loading Slot"
     },
     {
       "name": "Transport Details",
@@ -50,8 +50,8 @@
       "conditions": [""],
       "initiatorRole": "Supplier",
       "participantRole": "Special Carrier",
-      "initiatingMessage": "Message_1325zdq",
-      "returnMessage": ""
+      "initiatingMessage": "Cargo Specification",
+      "returnMessage": "Vehicle Assignment"
     },
     {
       "name": "Prepare Transport Documentation",
@@ -83,8 +83,8 @@
       "conditions": [""],
       "initiatorRole": "Supplier",
       "participantRole": "Special Carrier",
-      "initiatingMessage": "Message_1vaojlk",
-      "returnMessage": ""
+      "initiatingMessage": "Waybill",
+      "returnMessage": "Signed Waybill"
     }
   ]
 }

@@ -29,7 +29,7 @@ flowchart LR
   end
   M -->|deploy del codice| MC
   A -->|setRoles + setNodes| CMA
-  CMA -->|tokenURI| R
+  NMT -->|tokenURI tokenId| R
 ```
 
 Il ciclo di vita tipico ha quattro passi: **import** di un BPMN nel modello di un tipo di coreografia; **deploy** di policy, renderer, contratto del modello e NMT, e mint di un'istanza che nasce con quel modello; **modifica** tramite delta JSON; **render** del BPMN dallo stato corrente. Il BPMN rigenerato è una vista: le modifiche passano sempre dall'asset, mai dal file XML. Comandi e formati sono in [Commands and scripts](commands-and-scripts.md) e [BPMN to NMT workflow](bpmn-to-nmt-workflow.md).
@@ -286,7 +286,7 @@ sequenceDiagram
 
 | Policy | Stato interno | Decide |
 | --- | --- | --- |
-| `MasterSmartPolicy` | nessuno: regole **hardcoded**, come una policy tradotta da XACML (`administrator` e unico creator autorizzato = account 0, holder ammessi = account 0 e 1) | Operazioni dell'NMT: mint, mint con modello, trasferimenti, propria sostituzione (solo `administrator`). |
+| `MasterSmartPolicy` | nessuno: regole **hardcoded**, come una policy tradotta da XACML (`administrator` = account 0, unico creator autorizzato = account 4, holder ammessi = account 0 e 1: l'`administrator` non può fare mint) | Operazioni dell'NMT: mint, mint con modello, trasferimenti, propria sostituzione (solo `administrator`). |
 | `CreatorSmartPolicy` | nessuno: regole **hardcoded** (`administrator` = account 0) | Modifiche dell'holder e propria sostituzione (solo `administrator`). Nessun vincolo BPMN: rifiuta solo aggiornamenti malformati (array di lunghezze diverse, nomi vuoti o duplicati, sequence flow dichiarati su un solo estremo: nel modello dopo l'aggiornamento `B` sta in `A.outgoing` se e solo se `A` sta in `B.incoming`). Un modello così non si potrebbe più disegnare. |
 | `ConstrainedCreatorSmartPolicy` (abstract) | nessuno | Le regole dei vincoli strutturali e dei ruoli. I dati (limiti, task ammessi, nodi e ruoli protetti, tipi richiesti) sono letterali scritti da ogni scenario; ogni scenario lega, `immutable` dal costruttore, l'attribute manager di ciascun tipo che richiede (`specialCarrierParticipants`) e lo restituisce dall'hook `_participantAttributeManager(tipo)`: `CreatorSmartPolicyTestScenario` (fixture dei test) e `CreatorSmartPolicyPaperScenario` (paper example). |
 | `ChoreographyParticipantAM` | `participantNmt`, `participantCertifier` (`immutable`) | Non è una policy ma un attribute manager: restituisce il tipo di una licenza emessa dal participant NMT a cui è legato e certificata dalla participant Creator policy, zero per ogni altro indirizzo. Un participant NMT conia un solo tipo, quindi c'è un attribute manager per tipo; la Creator policy vincolata sceglie quello del tipo richiesto dal ruolo. |
@@ -318,13 +318,13 @@ La tabella completa di chi può fare cosa è in [Choreography policies](choreogr
 
 ## Livello participant
 
-Un `ParticipantMutableAsset` è la **licenza di un ruolo**. La coreografia collega il ruolo alla licenza una volta: `roles["Special Carrier"]` contiene l'indirizzo della licenza. La licenza resta collegata finché serve. L'organizzazione che interpreta il ruolo è l'holder della licenza, e cambia quando la licenza viene venduta con `transferFrom`: la coreografia non cambia.
+Un `ParticipantMutableAsset` è la **licenza di un ruolo**. La coreografia collega il ruolo alla licenza una volta: `roles["Special Carrier"]` contiene l'indirizzo della licenza. Nello scenario del paper ogni ruolo richiede una licenza del proprio tipo. La licenza resta collegata finché serve. L'organizzazione che interpreta il ruolo è l'holder della licenza, e cambia quando la licenza viene venduta con `transferFrom`: la coreografia non cambia.
 
 | Contratto | Ruolo |
 | --- | --- |
 | `ParticipantNMT` | Un NMT per tipo di licenza: il tipo (`participantType`, `immutable`) è fissato nel costruttore, e il `mint(to, creator, holder)` pubblico della base `NMT` lo passa, tramite l'`_mint` interno, a ogni licenza creata. La Master policy consente il mint solo a un emittente del tipo dell'NMT. Espone `tokenURI` tramite un `ParticipantTokenURIRenderer` fissato nel costruttore. |
-| `ParticipantMasterSmartPolicy` | Valuta mint, transfer e sostituzione della Master (`setMasterSmartPolicy`, solo all'autorità) del `ParticipantNMT`. È **hardcoded**, come una policy tradotta da XACML: per ogni tipo (`SpecialCarrier`, `Carrier`, `Supplier`) scrive nel codice chi lo emette e quali organizzazioni sono qualificate. Una licenza si vende solo a un'organizzazione qualificata per il suo tipo. |
-| `CreatorSmartPolicy` (participant) | Il suo `administrator` è il certificatore: solo lui sostituisce la Creator policy. All'holder consente solo le azioni elencate (`setName`, `setProfile`, `setMessages`, `setLinked`, `transferFrom`); ogni altra azione è negata. Con `evaluateMessagesUpdate` ammette solo i messaggi previsti per il tipo della licenza, scritti nel codice. |
+| `ParticipantMasterSmartPolicy` | Valuta mint, transfer e sostituzione della Master (`setMasterSmartPolicy`) del `ParticipantNMT`. È **hardcoded**, come una policy tradotta da XACML: per ogni tipo (`BulkBuyer`, `Manufacturer`, `Middleman`, `Supplier`, `SpecialCarrier`, `Carrier`) scrive nel codice l'autorità che lo emette e quali organizzazioni sono qualificate. Le autorità sono cinque (account 9–13): una per ciascuno dei primi quattro tipi e un'autorità dei trasporti per `SpecialCarrier` e `Carrier`. Un'autorità fa mint e sostituisce la Master solo sull'NMT di un tipo che emette. Una licenza si vende solo a un'organizzazione qualificata per il suo tipo. |
+| `CreatorSmartPolicy` (participant) | Il suo `administrator` è il certificatore, cioè l'autorità che la pubblica (una per autorità): solo lui sostituisce la Creator policy. All'holder consente solo le azioni elencate (`setName`, `setProfile`, `setMessages`, `setLinked`, `transferFrom`); ogni altra azione è negata. Con `evaluateMessagesUpdate` ammette solo i messaggi previsti per il tipo della licenza, scritti nel codice. |
 | `HolderSmartPolicy` (participant) | Seconda approvazione: consente all'holder le stesse azioni sui propri dati, e nega tutto il resto. Su `evaluateMessagesUpdate` non aggiunge vincoli. |
 | `ParticipantTokenURIRenderer` | Genera i metadati della licenza dallo stato: tipo, holder, nome, profilo, messaggi, chi li ha scritti e se è l'holder attuale. |
 
@@ -379,13 +379,13 @@ Il **dataset NMT** (`*.nmt.json`) è il formato di scambio tra importer, contrat
     {
       "name": "Order",
       "nodeType": 2,
-      "incoming": ["Event_0amsrvp"],
+      "incoming": ["Start"],
       "outgoing": ["Order Intermediate"],
       "conditions": [""],
       "initiatorRole": "Bulk Buyer",
       "participantRole": "Manufacturer",
-      "initiatingMessage": "Message_1xwxfgh",
-      "returnMessage": ""
+      "initiatingMessage": "Purchase Order",
+      "returnMessage": "Order Confirmation"
     }
   ]
 }

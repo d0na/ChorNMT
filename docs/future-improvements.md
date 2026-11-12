@@ -21,14 +21,14 @@ Estimates are paper-and-pencil: they come from measured totals on the current co
 
 ### Estimated effect on a mint
 
-| Part of the paper mint (5,619,770 gas measured) | Today (`new`) | With a clone |
+| Part of the paper mint (5,799,185 gas measured) | Today (`new`) | With a clone |
 | --- | ---: | ---: |
 | Code deposit of the asset (11,055 bytes × 200 gas) | ≈ 2,211,000 | ≈ 9,000 (45 bytes) |
-| Model writes from the model contract, policies, ERC-721 | ≈ 3,400,000 | ≈ 3,400,000 (unchanged) |
+| Model writes from the model contract, policies, ERC-721 | ≈ 3,590,000 | ≈ 3,590,000 (unchanged) |
 | Clone overhead (`nmt` in storage, initialize flag, `delegatecall`) | — | ≈ +25,000–45,000 |
-| **Estimated total** | **5.62 M** | **≈ 3.45–3.47 M** |
+| **Estimated total** | **5.80 M** | **≈ 3.62–3.64 M** |
 
-The mint saves about 2.15 M gas, **about −38%**; a whole instance (mint + `setRoles`, 5.82 M) saves **about −37%**.
+The mint saves about 2.17 M gas, **about −37%**; a whole instance (mint + `setRoles`, 5.98 M) saves **about −36%**.
 
 ### Estimated effect on deploy and calls
 
@@ -37,13 +37,13 @@ The mint saves about 2.15 M gas, **about −38%**; a whole instance (mint + `set
 
 ### Estimated effect on the paper flow
 
-The whole flow (deploy of the type, first instance, delta) costs about 17.9 M gas today.
+The whole flow (deploy of the type, first instance, delta) costs about 18.1 M gas today.
 
 | Scenario | Estimated saving |
 | --- | ---: |
 | First instance, whole flow | ≈ −2.8 M (**−15%**) |
-| Every further instance | ≈ −2.15 M (**−37%**) |
-| Ten instances of the same type | ≈ −22 M out of ≈ 60 M (**≈ −36%**) |
+| Every further instance | ≈ −2.17 M (**−36%**) |
+| Ten instances of the same type | ≈ −22 M out of ≈ 62 M (**≈ −36%**) |
 
 ### Uncertainties
 

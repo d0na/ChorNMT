@@ -1,14 +1,14 @@
 {
   "baseline": {
     "xml": "baseline.bpmn.xml",
-    "xmlSha256": "d5f5a1d02813c172a1dd55c4ac16ade7520f97a17b3b044f76d7e596cc5471cc",
+    "xmlSha256": "11001e7089942298911795381a201d6397d421d8888887a04aebc02ea428bc44",
     "svg": "baseline.svg",
-    "names": 25
+    "names": 34
   },
   "final": {
     "xml": "final.bpmn.xml",
-    "xmlSha256": "2f18c67a6da78d275690d5ad112e7ed981605069dfb2e6195b49ea37b632697e",
+    "xmlSha256": "6747cc3eda738c9ebfdc6c9a5e3aca2d113b48c4276ddfed1588f63d7aeb1e75",
     "svg": "final.svg",
-    "names": 29
+    "names": 38
   }
 }

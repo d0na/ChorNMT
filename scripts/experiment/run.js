@@ -21,7 +21,7 @@ import { loadTrustTables, trustRow } from "./trust-tables.js";
 import { applyAssetDelta } from "../apply-asset-delta.js";
 import { renderAsset } from "../render-asset.js";
 import { summarizeNodes } from "../evaluation/metrics.js";
-import { ACCOUNTS, INPUTS, LICENSED_ROLE, PHASES, ROLE_ACCOUNTS } from "./phases.js";
+import { ACCOUNTS, CERTIFIERS, EXTRA_LICENSE, INPUTS, LICENSED_ROLE, LICENSES, PHASES, ROLE_LICENSES } from "./phases.js";
 
 const root = process.cwd();
 const outDirectory = path.resolve(root, process.env.EVIDENCE_OUT || path.join("evaluation", "evidence"));
@@ -204,13 +204,18 @@ async function runExperiment() {
   const signers = await ethers.getSigners();
   const accounts = ACCOUNTS.map((account) => ({ ...account, address: signers[account.index].address }));
   const signer = (name) => signers[ACCOUNTS.find((account) => account.name === name).index];
-  const administrator = signer("Administrator");
-  const [carrierA, carrierB, carrierC, supplierCompany, authority] =
-    ["Carrier A", "Carrier B", "Carrier C", "Supplier company", "Authority"].map(signer);
+  // Three parts on the choreography: the Master deploys the type, the authorized creator mints,
+  // the Holder edits; the outsider is named by no policy.
+  const [master, creator, holder, outsider] = ["Master", "Authorized creator", "Holder", "Outsider"].map(signer);
+  const [carrierA, carrierB, carrierC, supplierCompany] = ["Carrier A", "Carrier B", "Carrier C", "Supplier company"].map(signer);
   const artifacts = await loadArtifacts();
   const rec = new Recorder({ ethers, artifacts, accounts, trustTables: await loadTrustTables(path.join(root, INPUTS.trustTables)), instrument });
-  const readTokenURI = (address) => new ethers.Contract(address, ["function tokenURI() view returns (string)"], ethers.provider).tokenURI();
-  const contract = (name, address, runner = administrator) => new ethers.Contract(address, artifacts[name].abi, runner);
+  // The render reads the metadata from the token contract, as ERC-721 does: tokenURI(tokenId) on
+  // the ChoreographyNMT that minted the asset, with tokenId = uint160(asset).
+  const nmtOf = (address) => new ethers.Contract(address, ["function nmt() view returns (address)"], ethers.provider).nmt();
+  const NMT_TOKEN_URI = new Interface(["function tokenURI(uint256) view returns (string)"]);
+  const readTokenURI = async (address) => new ethers.Contract(await nmtOf(address), NMT_TOKEN_URI, ethers.provider).tokenURI(BigInt(address));
+  const contract = (name, address, runner = holder) => new ethers.Contract(address, artifacts[name].abi, runner);
   const phases = {};
   const workDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "chornmt-experiment-"));
 
@@ -257,7 +262,7 @@ async function runExperiment() {
   const imported = await importBpmnToNmt(path.join(root, INPUTS.bpmn), path.join(workDirectory, "paper-example.nmt.json"));
   timings.steps["F1.import"] = performance.now() - importStart;
   const { dataset } = imported;
-  const type = await deployChoreographyType(administrator, dataset);
+  const type = await deployChoreographyType(master, dataset);
   for (const [key, part, name] of [
     ["F1.deploy.master", type.master, "MasterSmartPolicy"],
     ["F1.deploy.creator", type.creator, "CreatorSmartPolicy"],
@@ -271,23 +276,33 @@ async function runExperiment() {
   }
   const nmtAddress = type.choreographyNmt.contract.target;
   const nmt = contract("ChoreographyNMT", nmtAddress);
-  const participantMaster = await rec.deploy("F1.deploy.participant-master", administrator, "ParticipantMasterSmartPolicy");
-  const participantRenderer = await rec.deploy("F1.deploy.participant-renderer", administrator, "ParticipantTokenURIRenderer");
-  // One license NMT per type: the type is fixed at deploy time, and mint takes no type.
+  const participantMaster = await rec.deploy("F1.deploy.participant-master", master, "ParticipantMasterSmartPolicy");
+  const participantRenderer = await rec.deploy("F1.deploy.participant-renderer", master, "ParticipantTokenURIRenderer");
+  const participantHolder = await rec.deploy("F1.deploy.participant-holder", master, "ParticipantHolderSmartPolicy");
+  // One license NMT per type, deployed by the authority of the type: the type is fixed at deploy
+  // time, and mint takes no type.
   const typeId = (name) => ethers.encodeBytes32String(name);
-  const licenseNmt = (key, participantType) =>
-    rec.deploy(key, administrator, "ParticipantNMT", [participantMaster.target, participantRenderer.target, typeId(participantType)], `${participantType} NMT`);
-  const licenseNmts = {
-    SpecialCarrier: await licenseNmt("F1.deploy.special-carrier-nmt", "SpecialCarrier"),
-    Carrier: await licenseNmt("F1.deploy.carrier-nmt", "Carrier"),
-    Supplier: await licenseNmt("F1.deploy.supplier-nmt", "Supplier")
-  };
-  const participantNmt = licenseNmts.SpecialCarrier;
-  const certifier = await rec.deploy("F1.deploy.certifier", authority, "ParticipantCreatorSmartPolicy");
-  const participantHolder = await rec.deploy("F1.deploy.participant-holder", administrator, "ParticipantHolderSmartPolicy");
-  // The paper scenario requires only the SpecialCarrier type, so only its attribute manager is deployed.
-  const participantAM = await rec.deploy("F1.deploy.special-carrier-am", administrator, "ChoreographyParticipantAM", [participantNmt.target, certifier.target]);
-  const paperCreator = await rec.deploy("F1.deploy.paper-creator", administrator, "CreatorSmartPolicyPaperScenario", [participantAM.target]);
+  const licenseNmts = {};
+  for (const license of LICENSES) {
+    licenseNmts[license.type] = await rec.deploy(`F1.deploy.${license.slug}-nmt`, signer(license.authority), "ParticipantNMT",
+      [participantMaster.target, participantRenderer.target, typeId(license.type)], `${license.type} NMT`);
+  }
+  const participantNmt = licenseNmts[ROLE_LICENSES[LICENSED_ROLE].type];
+  // One certifier per authority: the Creator policy of the licenses it issues, which it alone replaces.
+  const certifiers = {};
+  for (const certifier of CERTIFIERS) {
+    certifiers[certifier.authority] = await rec.deploy(`F1.deploy.${certifier.slug}-certifier`, signer(certifier.authority), "ParticipantCreatorSmartPolicy", [], `${certifier.authority} certifier`);
+  }
+  // Every role requires a license, so every required type has its attribute manager, bound to the
+  // NMT of the type and to the certifier of its authority.
+  assert.deepEqual([...dataset.roles].sort(), Object.keys(ROLE_LICENSES).sort(), "phases.js must name a license for every role of the model");
+  const attributeManagers = {};
+  for (const license of Object.values(ROLE_LICENSES)) {
+    attributeManagers[license.type] = await rec.deploy(`F1.deploy.${license.slug}-am`, master, "ChoreographyParticipantAM",
+      [licenseNmts[license.type].target, certifiers[license.authority].target], `${license.type} attribute manager`);
+  }
+  const paperCreator = await rec.deploy("F1.deploy.paper-creator", master, "CreatorSmartPolicyPaperScenario",
+    ["BulkBuyer", "Manufacturer", "Middleman", "Supplier", "SpecialCarrier"].map((participantType) => attributeManagers[participantType].target));
   live.nmt = nmt;
   live.participantNmt = participantNmt;
   await endPhase("F1", {
@@ -300,48 +315,57 @@ async function runExperiment() {
   });
   lap("F1");
 
-  // F2: the instance is born with the model and the paper-scenario Creator policy.
-  const roleAccounts = dataset.roles.filter((role) => role !== LICENSED_ROLE);
-  assert.deepEqual([...roleAccounts].sort(), Object.keys(ROLE_ACCOUNTS).sort(), "phases.js must name an account for every role of the model except the licensed one");
-  const roleAddresses = roleAccounts.map((role) => signer(ROLE_ACCOUNTS[role]).address);
-  const instance = await mintAsset(nmtAddress, paperCreator.target, type.holder.contract.target, roleAccounts, { signer: administrator, roleAccounts: roleAddresses });
+  // F2: the authorized creator mints the instance for the Holder, born with the model and the
+  // paper-scenario Creator policy. No role is assigned here: every role is linked to a license in F3.
+  const instance = await mintAsset(nmtAddress, paperCreator.target, type.holder.contract.target, [], { signer: holder, creator });
   rec.name(instance.assetAddress, "ChoreographyMutableAsset", "Instance");
   await rec.record("F2.mint", instance.receipts.mint);
-  await rec.record("F2.roles", instance.receipts.setRoles);
   const asset = contract("ChoreographyMutableAsset", instance.assetAddress);
-  const mintArgs = (holder) => [holder, paperCreator.target, type.holder.contract.target];
-  await rec.deny("F2.denied.unauthorized-creator", signer("Unauthorized creator"), {
-    to: nmtAddress, data: nmt.interface.encodeFunctionData("mint", mintArgs(signer("Unauthorized creator").address))
-  });
-  await rec.deny("F2.denied.ineligible-holder", administrator, {
-    to: nmtAddress, data: nmt.interface.encodeFunctionData("mint", mintArgs(signer("Ineligible holder").address))
-  });
+  const mintArgs = (to) => [to, paperCreator.target, type.holder.contract.target];
+  const mintFor = (to) => ({ to: nmtAddress, data: nmt.interface.encodeFunctionData("mint", mintArgs(to)) });
+  await rec.deny("F2.denied.master", master, mintFor(holder.address));
+  await rec.deny("F2.denied.unauthorized-creator", outsider, mintFor(holder.address));
+  await rec.deny("F2.denied.ineligible-holder", creator, mintFor(signer("Ineligible holder").address));
   live.asset = asset;
   await endPhase("F2");
   lap("F2");
 
-  // F3: licenses of three types; only a SpecialCarrier license can play the Special Carrier role.
-  const mintLicense = async (key, holder, participantType) => {
-    const args = [holder.address, certifier.target, participantHolder.target];
-    const typeNmt = licenseNmts[participantType];
+  // F3: each authority issues the licenses of its types; every role is linked to the license of
+  // the type it requires, and to no other.
+  const mintLicense = async (license) => {
+    const authority = signer(license.authority);
+    const licenseHolder = signer(license.holder);
+    const args = [licenseHolder.address, certifiers[license.authority].target, participantHolder.target];
+    const typeNmt = licenseNmts[license.type];
     const [licenseAddress] = await typeNmt.connect(authority).mint.staticCall(...args);
-    rec.name(licenseAddress, "ParticipantMutableAsset", `${participantType} license`);
-    await rec.allow(key, () => typeNmt.connect(authority).mint(...args));
-    return contract("ParticipantMutableAsset", licenseAddress, holder);
+    rec.name(licenseAddress, "ParticipantMutableAsset", `${license.type} license`);
+    await rec.allow(`F3.license.${license.slug}`, () => typeNmt.connect(authority).mint(...args));
+    return contract("ParticipantMutableAsset", licenseAddress, licenseHolder);
   };
-  const specialCarrierLicense = await mintLicense("F3.license.special-carrier", carrierA, "SpecialCarrier");
-  const carrierLicense = await mintLicense("F3.license.carrier", carrierC, "Carrier");
-  const supplierLicense = await mintLicense("F3.license.supplier", supplierCompany, "Supplier");
+  const licenses = {};
+  for (const license of LICENSES) licenses[license.type] = await mintLicense(license);
+  const specialCarrierLicense = licenses.SpecialCarrier;
+  const supplierAuthority = signer(ROLE_LICENSES.Supplier.authority);
+  await rec.deny("F3.denied.foreign-authority", supplierAuthority, {
+    to: participantNmt.target,
+    data: participantNmt.interface.encodeFunctionData("mint", [carrierA.address, certifiers[ROLE_LICENSES.Supplier.authority].target, participantHolder.target])
+  });
   const linkRole = (roleName, target) => ({ to: asset.target, data: asset.interface.encodeFunctionData("setRoles", [[roleName], [target]]) });
-  await rec.deny("F3.denied.plain-account", administrator, linkRole(LICENSED_ROLE, carrierA.address));
-  await rec.deny("F3.denied.carrier-license", administrator, linkRole(LICENSED_ROLE, carrierLicense.target));
-  await rec.deny("F3.denied.supplier-license", administrator, linkRole(LICENSED_ROLE, supplierLicense.target));
-  await rec.allow("F3.link", () => asset.setRoles([LICENSED_ROLE], [specialCarrierLicense.target]));
-  await rec.deny("F3.denied.new-role", administrator, linkRole("Backup Carrier", specialCarrierLicense.target));
+  await rec.deny("F3.denied.plain-account", holder, linkRole(LICENSED_ROLE, carrierA.address));
+  await rec.deny("F3.denied.carrier-license", holder, linkRole(LICENSED_ROLE, licenses[EXTRA_LICENSE.type].target));
+  await rec.deny("F3.denied.supplier-license", holder, linkRole(LICENSED_ROLE, licenses.Supplier.target));
+  await rec.allow("F3.link", () => asset.setRoles(dataset.roles, dataset.roles.map((role) => licenses[ROLE_LICENSES[role].type].target)));
+  await rec.deny("F3.denied.new-role", holder, linkRole("Backup Carrier", specialCarrierLicense.target));
   const delta = JSON.parse(await fs.readFile(path.join(root, INPUTS.delta), "utf8"));
   const evolvedNodes = [...new Map([...dataset.nodes, ...delta.nodes].map((node) => [node.name, node])).values()];
   const licensedNodes = evolvedNodes.filter((node) => node.initiatorRole === LICENSED_ROLE || node.participantRole === LICENSED_ROLE);
-  const licensedMessages = [...new Set(licensedNodes.flatMap((node) => [node.initiatingMessage, node.returnMessage]))].filter(Boolean).map(typeId);
+  // The messages the licensed role sends: the initiating message of the tasks it starts and the
+  // return message of the tasks it answers (the message on its band), as the certifier allows.
+  const sentMessages = evolvedNodes.flatMap((node) => [
+    node.initiatorRole === LICENSED_ROLE ? node.initiatingMessage : "",
+    node.participantRole === LICENSED_ROLE ? node.returnMessage : ""
+  ]);
+  const licensedMessages = [...new Set(sentMessages)].filter(Boolean).map(typeId);
   const foreignMessage = evolvedNodes.flatMap((node) => [node.initiatingMessage, node.returnMessage])
     .find((message) => message && !licensedMessages.includes(typeId(message)));
   await rec.allow("F3.license.name", () => specialCarrierLicense.connect(carrierA).setName(typeId("Carrier A")));
@@ -365,15 +389,16 @@ async function runExperiment() {
     return sha256(JSON.stringify(data));
   };
   const render = async (id, configPath) => {
-    const tokenURIData = new Interface(["function tokenURI() view returns (string)"]).encodeFunctionData("tokenURI");
-    rec.traces[`${id}.tokenURI`] = await instrument(() => ethers.provider.send("debug_traceCall", [{ from: "0x0000000000000000000000000000000000000000", to: instance.assetAddress, data: tokenURIData }, "latest", { tracer: "callTracer" }]));
+    const tokenURIData = NMT_TOKEN_URI.encodeFunctionData("tokenURI", [BigInt(instance.assetAddress)]);
+    const nmtAddress = await instrument(() => nmtOf(instance.assetAddress));
+    rec.traces[`${id}.tokenURI`] = await instrument(() => ethers.provider.send("debug_traceCall", [{ from: "0x0000000000000000000000000000000000000000", to: nmtAddress, data: tokenURIData }, "latest", { tracer: "callTracer" }]));
     const renderStart = performance.now();
     const result = await renderAsset(instance.assetAddress, configPath, { readTokenURI });
     timings.steps[`${id}.render`] = performance.now() - renderStart;
     const xml = await fs.readFile(result.xmlPath, "utf8");
     // endPhase is instrumentation; the hashes are computed inside it.
     await endPhase(id, {
-      reads: [{ key: `${id}.tokenURI`, call: "ChoreographyMutableAsset.tokenURI", by: "eth_call (any account)" }],
+      reads: [{ key: `${id}.tokenURI`, call: "ChoreographyNMT.tokenURI", by: "eth_call (any account)" }],
       offchain: [
         { step: "export", function: "exportContractToJson", output: "raw JSON", sha256: stableHash(await fs.readFile(result.rawJsonPath, "utf8")), hashedWithout: ["contractExport.exportedAt", "contractExport.rpcUrl"] },
         { step: "normalize", function: "normalizeInput", output: "normalized JSON", sha256: stableHash(await fs.readFile(result.normalizedPath, "utf8")), hashedWithout: ["contractExport.exportedAt", "contractExport.rpcUrl"] },
@@ -385,16 +410,16 @@ async function runExperiment() {
   await render("F4", imported.outputPath);
   lap("F4");
 
-  // F5: the delta through the modify:asset function, then five well-formed updates the
+  // F5: the delta through the modify:asset function, then seven denied updates: five well-formed ones the
   // paper-scenario Creator policy denies, each for the constraint its key names.
   const deltaStart = performance.now();
-  const applied = await applyAssetDelta(instance.assetAddress, path.join(root, INPUTS.delta), { render: false, signer: administrator });
+  const applied = await applyAssetDelta(instance.assetAddress, path.join(root, INPUTS.delta), { render: false, signer: holder });
   timings.steps["F5.delta"] = performance.now() - deltaStart;
   await rec.record("F5.delta", applied.receipts.setNodes);
   const defaultCreator = contract("CreatorSmartPolicy", type.creator.contract.target);
   const denyUpdate = async (key, nodes) => {
     await instrument(async () => assert.equal(await defaultCreator.evaluateNodeUpdate(asset.target, ...toNodeUpdate(nodes).slice(0, 4)), true, `${key}: the denied update must be well formed`));
-    await rec.deny(key, administrator, { to: asset.target, data: asset.interface.encodeFunctionData("setNodes", toNodeUpdate(nodes)) });
+    await rec.deny(key, holder, { to: asset.target, data: asset.interface.encodeFunctionData("setNodes", toNodeUpdate(nodes)) });
   };
   const evolved = (name) => evolvedNodes.find((node) => node.name === name);
   const optionalTask = {
@@ -409,10 +434,15 @@ async function runExperiment() {
     ...extraTargets.map((name) => ({ ...evolved(name), incoming: [...evolved(name).incoming, waybill.name] }))
   ]);
   await denyUpdate("F5.denied.task-name", [{ ...optionalTask, name: "Unapproved Customs Task" }]);
-  await rec.deny("F5.denied.unknown-target", administrator, {
+  await rec.deny("F5.denied.unknown-target", holder, {
     to: asset.target, data: asset.interface.encodeFunctionData("setNodes", toNodeUpdate([{ ...waybill, outgoing: ["Unknown BPMN node"] }]))
   });
   await denyUpdate("F5.denied.protected-node", [{ ...evolved("Order"), initiatingMessage: "Modified order request" }]);
+  // The delta the Holder applied, sent again by accounts that do not hold the instance: the same
+  // well-formed update, refused for its sender alone.
+  const sameDelta = { to: asset.target, data: asset.interface.encodeFunctionData("setNodes", toNodeUpdate(delta.nodes)) };
+  await rec.deny("F5.denied.outsider", outsider, sameDelta);
+  await rec.deny("F5.denied.creator", creator, sameDelta);
   await endPhase("F5");
   lap("F5");
 
@@ -454,20 +484,15 @@ async function runExperiment() {
   lap("F6");
 
   // F7: a second instance, with the default policies, restricted by its holder.
-  const denyAll = await rec.deploy("F7.deploy.deny-all", administrator, "DenyAllSmartPolicy");
-  const defaultMint = [administrator.address, type.creator.contract.target, type.holder.contract.target];
-  const [restrictedAddress] = await nmt.mint.staticCall(...defaultMint);
+  const denyAll = await rec.deploy("F7.deploy.deny-all", holder, "DenyAllSmartPolicy");
+  const defaultMint = [holder.address, type.creator.contract.target, type.holder.contract.target];
+  const [restrictedAddress] = await nmt.connect(creator).mint.staticCall(...defaultMint);
   rec.name(restrictedAddress, "ChoreographyMutableAsset", "Second instance");
-  await rec.allow("F7.mint", () => nmt.mint(...defaultMint));
-  const partner = signer("Partner");
+  await rec.allow("F7.mint", () => nmt.connect(creator).mint(...defaultMint));
   const restrictedId = BigInt(restrictedAddress);
-  await rec.deny("F7.denied.transfer", administrator, {
-    to: nmtAddress, data: nmt.interface.encodeFunctionData("transferFrom", [administrator.address, signer("Ineligible holder").address, restrictedId])
-  });
-  await rec.allow("F7.transfer", () => nmt.transferFrom(administrator.address, partner.address, restrictedId));
-  const restricted = contract("ChoreographyMutableAsset", restrictedAddress, partner);
+  const restricted = contract("ChoreographyMutableAsset", restrictedAddress, holder);
   await rec.allow("F7.holder.deny-all", () => restricted.setHolderSmartPolicy(denyAll.target));
-  await rec.deny("F7.denied.delta", partner, { to: restrictedAddress, data: restricted.interface.encodeFunctionData("setNodes", toNodeUpdate(delta.nodes)) });
+  await rec.deny("F7.denied.delta", holder, { to: restrictedAddress, data: restricted.interface.encodeFunctionData("setNodes", toNodeUpdate(delta.nodes)) });
   // F7 reports the restricted instance, not the main one.
   finishPhase("F7", {
     policies: await instrument(async () => [
@@ -479,15 +504,8 @@ async function runExperiment() {
   });
   lap("F7");
 
-  // F8: the final render, and the alternative to the delta: a new instance with the same roles.
+  // F8: the final render.
   await render("F8", path.join(root, INPUTS.delta));
-  const fresh = await mintAsset(nmtAddress, paperCreator.target, type.holder.contract.target, roleAccounts, { signer: administrator, roleAccounts: roleAddresses });
-  rec.name(fresh.assetAddress, "ChoreographyMutableAsset", "New instance");
-  await rec.record("F8.new-instance.mint", fresh.receipts.mint);
-  await rec.record("F8.new-instance.roles", fresh.receipts.setRoles);
-  const freshAsset = contract("ChoreographyMutableAsset", fresh.assetAddress);
-  await rec.allow("F8.new-instance.link", () => freshAsset.setRoles([LICENSED_ROLE], [specialCarrierLicense.target]));
-  finishPhase("F8", { newInstance: await instrument(() => instanceState(fresh.assetAddress)) });
   lap("F8");
   rec.done();
 

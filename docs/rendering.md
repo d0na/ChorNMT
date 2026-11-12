@@ -1,6 +1,6 @@
 # Rendering: dal modello on-chain al BPMN
 
-Il render rigenera un diagramma BPMN di coreografia a partire dallo stato di un `ChoreographyMutableAsset`. Il contributo è che **l'asset descrive se stesso**: `tokenURI` restituisce, calcolato on-chain, l'intero modello (ruoli, nodi, archi, messaggi) in un formato standard ERC-721. Uno script JavaScript lo legge con una sola chiamata e ne ricava il BPMN completo di layout.
+Il render rigenera un diagramma BPMN di coreografia a partire dallo stato di un `ChoreographyMutableAsset`. Il contributo è che **l'asset descrive se stesso**: `tokenURI` restituisce, calcolato on-chain, l'intero modello (ruoli, nodi, archi, messaggi) in un formato standard ERC-721. Uno script JavaScript lo legge con una sola chiamata `tokenURI(tokenId)` al contratto del token, `ChoreographyNMT`, come per ogni NFT ERC-721, e ne ricava il BPMN completo di layout.
 
 Questo documento descrive le due metà del render: il renderer on-chain e la pipeline off-chain. Per il resto dell'architettura si veda [Architettura](architettura.md).
 
@@ -27,11 +27,12 @@ In sintesi:
 flowchart LR
   subgraph chain[On-chain]
     NMT[ChoreographyNMT.tokenURI] --> TR[ChoreographyTokenURIRenderer]
-    CMA[ChoreographyMutableAsset.tokenURI] --> NMT
+    CMA[ChoreographyMutableAsset.tokenURI<br/>scorciatoia, non usata dal render] -.-> NMT
     TR -->|getRoleNames · getRole<br/>getNodeNames · getNode| CMA
   end
   subgraph js[Off-chain · JavaScript]
-    W[web3.js<br/>readChoreography] --> RAW[raw JSON<br/>*.raw.generated.json]
+    W[web3.js<br/>readChoreography] -->|nmt · tokenURI tokenId| NMT
+    W --> RAW[raw JSON<br/>*.raw.generated.json]
     RAW --> NORM[normalize.js<br/>ID e riferimenti]
     NORM --> VAL[validation.js]
     VAL --> MAP[process-mapper.js<br/>elementi BPMN + layout DI]
@@ -71,7 +72,7 @@ Internamente, il JSON si costruisce in quattro passi:
 3. `_nodesJson` itera `getNodeNames()`, nell'ordine di inserimento, e per ogni nodo `_nodeJson` chiama `getNode(name)` ed emette tutti i campi.
 4. Ogni stringa passa da `_jsonString`, che la racchiude tra virgolette e applica `Strings.escapeJSON` di OpenZeppelin: virgolette, backslash e caratteri di controllo vengono escapati, UTF-8 resta intatto.
 
-`ChoreographyNMT.tokenURI(tokenId)` verifica che il token esista (`_requireOwned`) e poi delega al renderer. `ChoreographyMutableAsset.tokenURI()` chiama l'NMT, così lo stesso valore è raggiungibile sia dal token sia dall'asset. Il render usa l'asset perché il manifest contiene il suo indirizzo.
+`ChoreographyNMT.tokenURI(tokenId)` verifica che il token esista (`_requireOwned`) e poi delega al renderer. `ChoreographyMutableAsset.tokenURI()` chiama l'NMT, così lo stesso valore è raggiungibile anche dall'asset; è una scorciatoia. Il render segue la strada standard ERC-721: il manifest contiene l'indirizzo dell'asset, `web3.js` legge da questo l'indirizzo del suo NMT (`nmt()`) e chiama `ChoreographyNMT.tokenURI(tokenId)` con `tokenId = uint160(asset)`.
 
 ### Formato dei metadati
 
@@ -120,7 +121,7 @@ Le licenze di ruolo seguono lo stesso schema: `ParticipantNMT.tokenURI` delega a
     "schemaVersion": "1.0",
     "participantType": "SpecialCarrier",
     "holder": "0x…", "name": "Carrier B", "profile": "0x…",
-    "messages": ["Message_0dai5by", "Message_10n229k"],
+    "messages": ["Pickup Schedule", "Cargo Details Request"],
     "messagesWriter": "0x…", "messagesWrittenByHolder": true
   }
 }
@@ -135,7 +136,7 @@ Il comando `npm run render:asset -- <asset> <delta-o-dataset.json>` esegue `scri
 | Passo | File | Cosa fa | Output |
 | --- | --- | --- | --- |
 | 1. Manifest | `scripts/render-local-support.js` (`writeManifest`) | Scrive RPC, indirizzo dell'asset e metadati del BPMN. | `example/contract/*-contract-manifest.generated.json` |
-| 2. Lettura | `bpmn-builder-js/scripts/web3.js` (`readChoreography`, `choreographyFromTokenURI`, `decodeTokenURI`) | Una `eth_call` a `tokenURI()`, verifica il prefisso `data:application/json;base64,`, decodifica e valida la presenza di `choreography.roles` e `choreography.nodes`. Con l'opzione `readTokenURI` di `exportContractToJson` la chiamata passa per un altro provider invece dell'RPC del manifest: l'esperimento (`evidence:update`) legge così dalla rete Hardhat in-process. | ruoli e nodi in memoria |
+| 2. Lettura | `bpmn-builder-js/scripts/web3.js` (`readChoreography`, `choreographyFromTokenURI`, `decodeTokenURI`) | Legge l'NMT dell'asset (`nmt()`) e fa una `eth_call` a `ChoreographyNMT.tokenURI(tokenId)`, con `tokenId = uint160(asset)`; verifica il prefisso `data:application/json;base64,`, decodifica e valida la presenza di `choreography.roles` e `choreography.nodes`. Con l'opzione `readTokenURI` di `exportContractToJson` la chiamata passa per un altro provider invece dell'RPC del manifest: l'esperimento (`evidence:update`) legge così dalla rete Hardhat in-process. | ruoli e nodi in memoria |
 | 3. Raw JSON | `web3.js` (`buildRawOutput`) | Traduce il modello per nomi nel formato di input del builder. Nodi con `type` BPMN, archi come chiavi `"A->B"`, messaggi e message flow ricavati da `initiatingMessage` e `returnMessage`, partecipanti dai ruoli. Aggiunge un blocco `contractExport` con indirizzo e data. | `example/input/*.raw.generated.json` |
 | 4. Normalizzazione | `bpmn-builder-js/src/normalize.js` | Genera ID BPMN deterministici dai nomi (per esempio `ChoreographyTask_Order`, `Flow_Order_Order_Intermediate`) e risolve tutti i riferimenti per nome o chiave negli ID. Rifiuta un modello incoerente: un sequence flow verso un nodo sconosciuto, o dichiarato su un solo estremo (`A.outgoing` contiene `B` ma `B.incoming` non contiene `A`), ferma il render con un errore invece di produrre XML con riferimenti indefiniti. | `example/input/*.normalized.generated.json` |
 | 5. Validazione | `bpmn-builder-js/src/validation.js` | Controlla la presenza degli ID e che i riferimenti tra nodi, flussi e partecipanti esistano. | — |
@@ -149,7 +150,7 @@ Il layout non è salvato on-chain. `buildLayout` lo ricalcola a ogni render con 
 
 - il **rango** di un nodo è la lunghezza del cammino più lungo da un nodo senza archi entranti, calcolata ricorsivamente; i cicli vengono interrotti;
 - l'asse **x** dipende dal rango (`252 + rango × 150`);
-- i nodi dello stesso rango sono distribuiti sull'asse **y** attorno a una linea centrale (`368`), a distanza `180`;
+- i nodi dello stesso rango sono distribuiti sull'asse **y** attorno a una linea centrale (`368`), a distanza `280`, che lascia spazio ai due messaggi di un task (sopra e sotto) senza toccare il ramo vicino;
 - le dimensioni dipendono dal tipo di nodo. Per ogni task di coreografia vengono generate anche le due bande dei partecipanti: quella in alto e quella in basso, con quella dell'initiator marcata, e con la visibilità del messaggio.
 
 Il layout è deterministico: lo stesso modello produce sempre lo stesso diagramma.

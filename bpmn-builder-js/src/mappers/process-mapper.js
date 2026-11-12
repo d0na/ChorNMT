@@ -101,7 +101,9 @@ function buildLayout(nodes, sequenceFlows) {
   const startX = 252;
   const startY = 368;
   const rankGap = 150;
-  const branchGap = 180;
+  // Vertical distance between parallel branches: a task with a message on both bands needs
+  // room for both envelopes and their labels without touching the next branch.
+  const branchGap = 280;
 
   [...nodesByRank.entries()].forEach(([rank, levelNodes]) => {
     levelNodes.forEach((node, index) => {

@@ -14,6 +14,10 @@ const RPC_URL = process.env.RPC_URL || "http://127.0.0.1:8545";
 const DEPLOYER_PRIVATE_KEY =
   process.env.DEPLOYER_PRIVATE_KEY ||
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+// The Master policy authorizes one creator, Hardhat account 4, which is not its administrator.
+const CREATOR_PRIVATE_KEY =
+  process.env.CREATOR_PRIVATE_KEY ||
+  "0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a";
 const DEFAULT_BPMN = "references/paper-example.bpmn";
 
 // fileName is relative to contracts/choreography/, or "participant/<File>" for another directory.
@@ -32,17 +36,22 @@ export async function deployContract(signer, fileName, args = []) {
   return { contract, receipt: await contract.deploymentTransaction().wait() };
 }
 
-function connect() {
-  return new NonceManager(new Wallet(DEPLOYER_PRIVATE_KEY, new JsonRpcProvider(RPC_URL)));
+function connect(privateKey = DEPLOYER_PRIVATE_KEY) {
+  return new NonceManager(new Wallet(privateKey, new JsonRpcProvider(RPC_URL)));
 }
 
-// Mints an instance of the choreography type, born with the type's model, and links its roles
-// to local accounts 1..n, or to roleAccounts when given: the model keeps only the role names.
-export async function mintAsset(choreographyNmtAddress, creatorPolicyAddress, holderPolicyAddress, roleNames, { signer = connect(), roleAccounts } = {}) {
-  const deployerAddress = await signer.getAddress();
-  const nmt = new Contract(choreographyNmtAddress, (await readArtifact("ChoreographyNMT")).abi, signer);
-  const [assetAddress, tokenId] = await nmt.mint.staticCall(deployerAddress, creatorPolicyAddress, holderPolicyAddress);
-  const mintReceipt = await (await nmt.mint(deployerAddress, creatorPolicyAddress, holderPolicyAddress)).wait();
+// Mints an instance of the choreography type, born with the type's model: the authorized creator
+// mints it for the holder (signer), who then links its roles to local accounts 1..n, or to
+// roleAccounts when given: the model keeps only the role names. With no role name the holder
+// assigns nothing here (the roles are linked later, for example to participant licenses).
+export async function mintAsset(choreographyNmtAddress, creatorPolicyAddress, holderPolicyAddress, roleNames, { signer = connect(), creator = connect(CREATOR_PRIVATE_KEY), roleAccounts } = {}) {
+  const holderAddress = await signer.getAddress();
+  const nmt = new Contract(choreographyNmtAddress, (await readArtifact("ChoreographyNMT")).abi, creator);
+  const [assetAddress, tokenId] = await nmt.mint.staticCall(holderAddress, creatorPolicyAddress, holderPolicyAddress);
+  const mintReceipt = await (await nmt.mint(holderAddress, creatorPolicyAddress, holderPolicyAddress)).wait();
+  if (roleNames.length === 0) {
+    return { assetAddress, tokenId, receipts: { mint: mintReceipt }, costs: [reportTransactionCost("Mint ChoreographyMutableAsset", mintReceipt)] };
+  }
 
   let accounts = roleAccounts;
   if (!accounts) {

@@ -5,9 +5,21 @@ import { Web3 } from "web3";
 
 const __filename = fileURLToPath(import.meta.url);
 
-const CONTRACT_ABI = [
+// The render reads the metadata the ERC-721 way, from the token contract: the asset only tells
+// which ChoreographyNMT minted it, and its token id is the asset address.
+const ASSET_ABI = [
   {
     inputs: [],
+    name: "nmt",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function"
+  }
+];
+
+const NMT_ABI = [
+  {
+    inputs: [{ internalType: "uint256", name: "tokenId", type: "uint256" }],
     name: "tokenURI",
     outputs: [{ internalType: "string", name: "", type: "string" }],
     stateMutability: "view",
@@ -189,8 +201,11 @@ export function decodeTokenURI(tokenURI) {
   return metadata;
 }
 
-export async function readChoreography(contract) {
-  return choreographyFromTokenURI(await contract.methods.tokenURI().call());
+// Reads an asset through ChoreographyNMT.tokenURI(tokenId), with tokenId = uint160(asset).
+export async function readChoreography(web3, assetAddress) {
+  const nmtAddress = await new web3.eth.Contract(ASSET_ABI, assetAddress).methods.nmt().call();
+  const tokenURI = await new web3.eth.Contract(NMT_ABI, nmtAddress).methods.tokenURI(BigInt(assetAddress)).call();
+  return choreographyFromTokenURI(tokenURI);
 }
 
 export function choreographyFromTokenURI(tokenURI) {
@@ -214,7 +229,7 @@ export async function exportContractToJson(manifestArg, outputArg, { readTokenUR
     choreography = choreographyFromTokenURI(await readTokenURI(manifest.contractAddress));
   } else {
     const web3 = new Web3(manifest.rpcUrl);
-    choreography = await readChoreography(new web3.eth.Contract(CONTRACT_ABI, manifest.contractAddress));
+    choreography = await readChoreography(web3, manifest.contractAddress);
   }
 
   const { roles, nodes } = choreography;

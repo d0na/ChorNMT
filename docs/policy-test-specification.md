@@ -49,10 +49,10 @@ accounts.
 
 | Control | Hardcoded rule | Enforced action | Expected effect |
 | --- | --- | --- | --- |
-| Administrator | account 0 | `setMasterSmartPolicy` | Only the authority replaces the Master. |
-| Authorized Creator | account 0 | `mint` | Only approved organizations can create instances. |
+| Administrator | account 0 | `setMasterSmartPolicy` | Only the authority replaces the Master. It is not an authorized creator: its mint is denied. |
+| Authorized Creator | account 4 | `mint` | Only approved organizations can create instances. The creator gets no right on the instance it minted for another holder. |
 | Eligible Holder | accounts 0 and 1 | mint, transfer | An instance can only be assigned to an approved Holder. |
-| Master replacement | `setMasterSmartPolicy(address)` on the NMT, allowed by the current Master to its administrator | every later NMT action | The new Master governs every later mint and transfer; the zero address is rejected. |
+| Master replacement | `setMasterSmartPolicy(address)` on the NMT, allowed by the current Master to its administrator (participant Master: to the authority of the type of the NMT) | every later NMT action | The new Master governs every later mint and transfer; the zero address is rejected. |
 
 Both NMTs inherit the Master policy from the base `NMT`. The tests check that a
 Holder cannot replace it, that the administrator cannot remove it, and that
@@ -124,6 +124,11 @@ The permitted delta is followed by denials for:
 - a flow pointing to an unknown BPMN node; and
 - a modification of the protected `Order` node.
 
+The same phase then sends the permitted delta again from two accounts that do
+not hold the instance, an outsider and the authorized creator that minted it:
+both are denied by the Creator policy at the action check, which accepts only
+the holder.
+
 ### Example: Special Carrier License Sale
 
 The experiment then (phase F6) changes the organization that plays `Special
@@ -132,24 +137,37 @@ choreography links the role to the license once, and the organization changes
 when Carrier A sells the license to Carrier B. The role, its tasks, and every
 node stay unchanged.
 
-The authority is the participant Master administrator, the issuer of every
-license type, and the certifier. The participant policies are hardcoded, as
+Every role of the paper example is played by a license of its own type, and
+each type has its authority: the issuer of the type and, with the Creator
+policy it deploys, its certifier. The participant policies are hardcoded, as
 policies translated from XACML would be: Carrier A and Carrier B (Hardhat
 accounts 5 and 6) are qualified for `SpecialCarrier` and `Carrier`, Carrier C
-(account 7) for `Carrier` only, and the Supplier company (account 8) for
-`Supplier`; the authority is account 9. The authority mints the `Special
+(account 7) for `Carrier` only, the Supplier company (account 8) for
+`Supplier`, and the Bulk Buyer, Manufacturer, and Middleman companies
+(accounts 14, 15, and 16) for `BulkBuyer`, `Manufacturer`, and `Middleman`.
+The transport authority (account 9) issues `SpecialCarrier` and `Carrier`;
+the Bulk Buyer, Manufacturer, Middleman, and Supplier authorities (accounts
+10 to 13) issue one type each. An authority mints only on the NMT of a type
+it issues, and replaces the participant Master only there. In phase F3 each
+authority issues its licenses, the Supplier authority is denied a
+`SpecialCarrier` license, and the holder of the instance links the five roles
+to the five licenses of their types in one `setRoles`. The transport authority
+mints the `Special
 Carrier` license to Carrier A with `mint` on the `ParticipantNMT` of type
 `SpecialCarrier`, which fixes the type of every license it mints. The
-certifier's policy allows a `SpecialCarrier` license to declare the messages
-of the Special Carrier tasks of the paper example, including the one added by
-the delta.
+certifier's policy allows a license to declare the messages its type sends in
+the paper example: the message on its band of each task it takes part in (the
+initiating message of the tasks it starts, the return message of the tasks it
+answers). The task added by the delta is one-way, so it adds no Special Carrier
+message.
 
 | Case | Expected outcome | Rule |
 | --- | --- | --- |
 | Link the role to a plain account | denied | The role requires a license. |
 | Link the role to a `Carrier` license | denied | Wrong license type. |
 | Link the role to a `Supplier` license | denied | Wrong license type. |
-| Link the role to the Special Carrier license | allowed | The license meets the requirement. |
+| The Supplier authority issues a `SpecialCarrier` license | denied | An authority issues only its own types. |
+| Link every role to the license of its type | allowed | Each license meets the requirement of its role. |
 | Create a `Backup Carrier` role | denied | Only existing roles can be reassigned. |
 | Carrier A declares the Special Carrier messages | allowed | Every message is allowed for `SpecialCarrier`. |
 | Carrier A declares a message of another role | denied | The certifier's policy rejects it (`evaluateMessagesUpdate`). |
@@ -167,7 +185,8 @@ After the sale the experiment checks that the license belongs to Carrier B,
 that `getRole("Special Carrier")` still returns the license, that every task
 of the role still references it, and that the messages survived the sale with
 Carrier A as writer. `npm run test:policies` covers the same rules on the
-small fixture, plus an unauthorized issuer, a mint on the NMT of a type the Master
+small fixture, plus an unauthorized issuer, an authority on the NMT of another
+authority (mint and Master replacement), a mint on the NMT of a type the Master
 does not define, a license
 certified by an untrusted policy, an account playing two roles, the computed
 license `tokenURI` before and after the sale, and the replacement of the
@@ -202,8 +221,8 @@ cost of the model contract (once per type) and of each mint.
 
 | Command | Model | Evidence produced |
 | --- | --- | --- |
-| `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, `setLinked`, event-based model history, Master policy replacement, attempts to bypass the Creator policy, and receipt gas/wei. The script exits with an error if any case has an unexpected outcome. |
-| `npm run evidence:update` | Imported `paper-example` plus real delta | The experiment, phases F1–F8 of `scripts/experiment/phases.js`: model contract and instance mint, Master denials, the licenses and the Special Carrier link with its Creator denials, the baseline render, the paper delta with five structural denials, the Special Carrier license sale with its denials, a transfer and a Holder restriction, the final render, and the delta versus a new instance; every transaction checked against its expected outcome and trust-table row, with call traces, sequence diagrams, charts, chor-js BPMN drawings, and the `test:policies` matrix (`evaluation/evidence/`). |
+| `npm run test:policies` | Small deterministic fixture | Complete Master/Creator/Holder allow-deny matrix, restrictive Holder policy, transfer, `setLinked`, event-based model history, a mint by the Master administrator, an authority acting on the license type of another authority, Master policy replacement, attempts to bypass the Creator policy, and receipt gas/wei. The script exits with an error if any case has an unexpected outcome. |
+| `npm run evidence:update` | Imported `paper-example` plus real delta | The experiment, phases F1–F8 of `scripts/experiment/phases.js`: model contract and instance mint by the authorized creator for the holder, Master denials, the licenses (one type per role, each issued by its authority) and the link of the five roles with the participant Master and Creator denials, the baseline render, the paper delta with five structural denials and two denials for senders who do not hold the instance, the Special Carrier license sale with its denials, a Holder restriction on a second instance, and the final render; every transaction checked against its expected outcome and trust-table row, with call traces, sequence diagrams, charts, chor-js BPMN drawings, and the `test:policies` matrix (`evaluation/evidence/`). |
 | `npm run check:evidence` | Same | Reruns the experiment and fails if its evidence differs from the versioned one. |
 
 The tables of [`docs/experiment.md`](experiment.md) are generated from the evidence: per

@@ -7,31 +7,31 @@ left to right direction
 ' evidence (transactions or reads of evaluation/evidence/), and the test:policies cases that prove
 ' it. npm run check:use-cases checks all of them both ways. The Master and Creator policies are
 ' never replaced (open question in docs/decisions.md), so those use cases are not shown.
-' accounts: Administrator
-actor "Authorized creator\n(account 0)" as Creator
-' accounts: Administrator, Partner
-actor "Holder\n(account 0, then 1)" as Holder
+' accounts: Authorized creator
+actor "Authorized creator\n(account 4)" as Creator
+' accounts: Holder
+actor "Holder\n(account 1)" as Holder
 ' accounts: eth_call
 actor "Anyone else" as Anyone
 rectangle "ChoreographyNMT + ChoreographyMutableAsset" {
   ' trust: choreography:mint
-  ' evidence: F2.mint, F2.denied.unauthorized-creator, F2.denied.ineligible-holder, F7.mint, F8.new-instance.mint
-  ' test: authorized creator mints eligible holder; unauthorized creator cannot mint; authorized creator cannot assign an ineligible holder
+  ' evidence: F2.mint, F2.denied.master, F2.denied.unauthorized-creator, F2.denied.ineligible-holder, F7.mint
+  ' test: authorized creator mints eligible holder; master administrator cannot mint; unauthorized creator cannot mint; authorized creator cannot assign an ineligible holder
   usecase "Mint an instance of the\nchoreography type" as UC_Mint
   ' trust: choreography:transferFrom
-  ' evidence: F7.transfer, F7.denied.transfer
+  ' evidence: test-only
   ' test: holder transfers to eligible holder; holder cannot transfer to an ineligible holder
-  usecase "Transfer the instance\nto an eligible holder" as UC_Transfer
+  usecase "Transfer the instance\nto an eligible holder" as UC_Transfer <<test only>>
   ' trust: choreography:setNodes
-  ' evidence: F5.delta, F5.denied.task-limit, F5.denied.flow-limit, F5.denied.task-name, F5.denied.unknown-target, F5.denied.protected-node, F7.denied.delta
+  ' evidence: F5.delta, F5.denied.task-limit, F5.denied.flow-limit, F5.denied.task-name, F5.denied.unknown-target, F5.denied.protected-node, F5.denied.outsider, F5.denied.creator, F7.denied.delta
   ' test: creator and holder update nodes; creator policy denies task count above limit; non-holder cannot update choreography
   usecase "Apply a BPMN delta\n(setNodes)" as UC_Nodes
   ' trust: choreography:setRoles
-  ' evidence: F2.roles, F8.new-instance.roles
+  ' evidence: test-only
   ' test: creator and holder update roles; non-holder cannot update choreography
-  usecase "Assign role accounts\n(setRoles)" as UC_Roles
+  usecase "Assign role accounts\n(setRoles)" as UC_Roles <<test only>>
   ' trust: choreography:setRoles
-  ' evidence: F3.link, F3.denied.plain-account, F3.denied.carrier-license, F3.denied.supplier-license, F3.denied.new-role, F8.new-instance.link
+  ' evidence: F3.link, F3.denied.plain-account, F3.denied.carrier-license, F3.denied.supplier-license, F3.denied.new-role
   ' test: holder links a role to a certified license; creator policy denies a plain account for a licensed role
   usecase "Link a role to a\nparticipant license" as UC_Link
   ' trust: choreography:setNodes, choreography:setRoles
@@ -72,6 +72,9 @@ note bottom of UC_Domain
 end note
 note bottom of UC_Linked
   <<test only>>: proved by test:policies,
-  not exercised by the experiment.
+  not exercised by the experiment
+  (setLinked, the transfer, and plain
+  role accounts: every role of the
+  experiment is linked to a license).
 end note
 @enduml

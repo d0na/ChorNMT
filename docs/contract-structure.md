@@ -150,7 +150,7 @@ function _evaluateThingUpdate(T calldata value) private view {
 
 - Selector constants: `bytes4 private constant NAME = bytes4(keccak256("<canonical signature>"))`, one per action the policy recognizes.
 - **Configuration is hardcoded.** A policy stands for a policy translated from XACML, so its rules and their data (accounts, types, allowed values, limits, switches) are `private constant`s and literal conditions in the source, edited by hand when the scenarios change. There is one policy per role, tuned to the current test and evaluation scenarios. Changing a rule means deploying a new policy and installing it through the policy it replaces (`setMasterSmartPolicy`, `setCreatorSmartPolicy`), never a runtime setter. Literals are also the cheapest form: no storage at deploy, no `SLOAD` at evaluation.
-- `administrator`: the account that may replace the policy, hardcoded as a `constant` (Master policies and the choreography Creator policies) or the deployer stored as an `immutable` (participant Creator policies, whose deployer is the certifier).
+- `administrator`: the account that may replace the policy, hardcoded as a `constant` (the choreography Master policy and the choreography Creator policies) or the deployer stored as an `immutable` (participant Creator policies, whose deployer is the certifier). `ParticipantMasterSmartPolicy` has none: it is replaced, on each license NMT, by the authority of the type of that NMT.
 - **Rule variants are policies.** A variant of a rule (e.g. a stricter constraint set) is a separate contract, named `<Policy><Variant>`, that may extend the policy it varies and override `evaluate`. When several policies share rules and differ only in data, the rules live in an abstract policy with `internal pure virtual` hooks, and each scenario policy implements the hooks with literals (`ConstrainedCreatorSmartPolicy` → `CreatorSmartPolicyTestScenario`, `CreatorSmartPolicyPaperScenario`).
 - **Attributes of other contracts come from an attribute manager.** When a rule needs an attribute held by contracts deployed at runtime (e.g. the type of a role license), the policy reads it through an attribute manager (`ChoreographyParticipantAM`, one per license type), bound as an `immutable` constructor argument. The attribute manager only answers about attributes; which value a rule requires stays in the policy. Deploy-time bindings of contract addresses are not runtime configuration.
 
@@ -162,7 +162,7 @@ function _evaluateThingUpdate(T calldata value) private view {
   3. `return false;` at the end — **default deny** for unrecognized actions.
 - Domain evaluations (`evaluateNodeUpdate`, `evaluateRoleUpdate`) are `view`, declared in a domain interface, return `false` instead of reverting, and never write state. **Both** the Creator and the Holder policy of a domain implement the domain interface (a permissive Holder returns `true`; `DenyAllSmartPolicy` returns `false`), since the asset asks both.
 - Views exposing derived decisions: `is<Condition>` (e.g. `isQualifiedFor`, `isIssuerOf`, `isAllowedMessage`), `pure` when they read only hardcoded rules.
-- Master policies recognize `setMasterSmartPolicy(address)` and decide who may replace them (the default policies: their `administrator`).
+- Master policies recognize `setMasterSmartPolicy(address)` and decide who may replace them (`MasterSmartPolicy`: its `administrator`; `ParticipantMasterSmartPolicy`: the authority that issues the type of the NMT).
 
 **Shared decoding**: `_addressAt(action, offset)` and `_wordAt(action, offset)` are `internal` in the base `SmartPolicy`, revert with `MalformedAction()` on a short action, and are the only way policies read static arguments; never copy them into a policy.
 
@@ -226,7 +226,7 @@ The cost of the whole flow is measured, not estimated: `npm test` prints receipt
 | G6 | Copy `incoming`/`outgoing`/`conditions` arrays with a single assignment where the compiler supports it, instead of `delete` + `push` loops. | `setNodes`, import. | Fewer storage-length writes; measure first. |
 | G7 | Emit `NodesChanged`/`RolesChanged` with counts or hashes instead of full name arrays. | `setNodes`, `setRoles`. | Smaller log data cost. Check off-chain consumers first. |
 | G8 | Tune optimizer `runs` for the flow's call pattern (deploy-heavy vs. call-heavy). | All. | Lower `runs` favours deployment, higher favours calls; pick from measurements. |
-| G9 | Store the model of a choreography type with a compact encoding instead of `abi.encode`, which pads every string and length to 32 bytes (the paper model takes 11,136 bytes). | Model contract deploy (about 200 gas per byte); every mint (decoding). | Smaller model contract and a larger model under the 24,576-byte limit, at the cost of a custom decoder in the asset, which the Token embeds. |
+| G9 | Store the model of a choreography type with a compact encoding instead of `abi.encode`, which pads every string and length to 32 bytes (the paper model takes 11,424 bytes). | Model contract deploy (about 200 gas per byte); every mint (decoding). | Smaller model contract and a larger model under the 24,576-byte limit, at the cost of a custom decoder in the asset, which the Token embeds. |
 
 ## Known deviations
 

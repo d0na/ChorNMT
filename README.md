@@ -84,7 +84,7 @@ Node and role names are the contract reference keys. A `ChoreographyNMT` is one 
 
 The default `CreatorSmartPolicy` has no BPMN constraint. Constraints (task and sequence-flow limits, permitted task names, known flow targets, protected nodes and roles, role licenses) are hardcoded in scenario policies such as `CreatorSmartPolicyPaperScenario`, installed with `setCreatorSmartPolicy` or passed at mint.
 
-Run `npm run evidence:update` to run the experiment (phases F1–F8: the type, the mint, the licenses, the renders, the delta, the role sale, the transfer, and a new instance) on ephemeral networks. It writes the versioned evidence of `evaluation/evidence/` (gas and outcome of every allowed and denied policy decision, call traces, sequence diagrams, charts, BPMN drawings) and the generated parts of [the experiment protocol](docs/experiment.md); `npm run check:evidence` checks that the versioned evidence is the evidence of the current code. See the [evaluation toolkit](evaluation/README.md).
+Run `npm run evidence:update` to run the experiment (phases F1–F8: the type, the mint, the licenses, the renders, the delta, the role sale, and the Holder restriction) on ephemeral networks. It writes the versioned evidence of `evaluation/evidence/` (gas and outcome of every allowed and denied policy decision, call traces, sequence diagrams, charts, BPMN drawings) and the generated parts of [the experiment protocol](docs/experiment.md); `npm run check:evidence` checks that the versioned evidence is the evidence of the current code. See the [evaluation toolkit](evaluation/README.md).
 
 ## Other examples
 

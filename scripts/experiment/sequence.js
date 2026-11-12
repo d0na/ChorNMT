@@ -154,7 +154,7 @@ async function main() {
     // The run executes the off-chain steps first in a phase, then its transactions. The export
     // step reads the asset with tokenURI, so that read sits between its request and its answer.
     for (const step of phase.offchain || []) {
-      const from = step.step === "import" ? evidence.accounts.find((account) => account.name === "Administrator").address : ZERO;
+      const from = step.step === "import" ? evidence.accounts.find((account) => account.name === "Master").address : ZERO;
       steps.push({ kind: "request", step, from });
       if (step.step === "export") for (const read of phase.reads || []) steps.push({ kind: "read", read });
       steps.push({ kind: "answer", step, from });
@@ -260,7 +260,7 @@ async function verify(phase, records, outDirectory, used) {
 
   // The actors are those of the phase; both views show the same participants.
   const actors = used.filtered.filter((entry) => entry.kind === "account").map((entry) => entry.name).sort();
-  const phaseActors = [...new Set([...phase.actors, ...(phase.offchain?.some((step) => step.step === "import") ? ["Administrator"] : [])])].sort();
+  const phaseActors = [...new Set([...phase.actors, ...(phase.offchain?.some((step) => step.step === "import") ? ["Master"] : [])])].sort();
   if (JSON.stringify(actors) !== JSON.stringify(phaseActors)) fail(`actors ${actors.join(", ")}, the phase lists ${phaseActors.join(", ")}`);
   const aliases = (view) => used[view].map((entry) => entry.alias).sort().join(",");
   if (aliases("full") !== aliases("filtered")) fail("the filtered and the full view show different participants");

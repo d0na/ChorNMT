@@ -48,7 +48,7 @@ ChoreographyMutableAsset : MutableAsset
   - asks its Creator AND Holder policy (IChoreographyPolicy) to validate every node and role update
 
 MasterSmartPolicy  : SmartPolicy
-  - hardcoded creators and holders
+  - hardcoded administrator (account 0), authorized creator (account 4), and holders (accounts 0, 1)
 CreatorSmartPolicy : SmartPolicy
   - authorizes editors; no BPMN constraint (hardcoded, administrator = account 0)
 ConstrainedCreatorSmartPolicy : CreatorSmartPolicy (abstract)
@@ -76,10 +76,11 @@ ParticipantMutableAsset : MutableAsset
   - tokenURI computed by ParticipantTokenURIRenderer
 
 ParticipantMasterSmartPolicy : SmartPolicy
-  - hardcoded issuers and qualified organizations per license type
+  - hardcoded authority (issuer) and qualified organizations per license type;
+    five authorities, each minting only on the NMT of its own types
   - sells licenses only to organizations qualified for their type
 CreatorSmartPolicy : SmartPolicy
-  - its administrator is the certifier
+  - its administrator is the certifier: the authority that deploys it (one per authority)
   - hardcoded messages allowed per license type
 HolderSmartPolicy  : SmartPolicy
 ```

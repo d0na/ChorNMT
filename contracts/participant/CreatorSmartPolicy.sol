@@ -20,15 +20,31 @@ contract CreatorSmartPolicy is SmartPolicy, IParticipantPolicy {
     bytes32 private constant SPECIAL_CARRIER = "SpecialCarrier";
     bytes32 private constant CARRIER = "Carrier";
     bytes32 private constant SUPPLIER = "Supplier";
+    bytes32 private constant BULK_BUYER = "BulkBuyer";
+    bytes32 private constant MANUFACTURER = "Manufacturer";
+    bytes32 private constant MIDDLEMAN = "Middleman";
 
-    // Messages of the paper-example choreography (BPMN message ids).
-    bytes32 private constant ORDER_SPECIAL_TRANSPORT = "Message_0dai5by";
-    bytes32 private constant REQUEST_DETAILS = "Message_10n229k";
-    bytes32 private constant TRANSPORT_DETAILS = "Message_1325zdq";
-    bytes32 private constant WAYBILL_FOR_INTERMEDIATE = "Message_1vaojlk";
-    bytes32 private constant ARRIVAL_INTERMEDIATE = "Message_11ex51i";
-    // Added by the parallel transport preparation delta.
-    bytes32 private constant PREPARE_TRANSPORT_DOCUMENTATION = "Prepare transport documentation";
+    // Messages of the paper-example choreography, by name. A license type may declare the
+    // messages its participant sends: the message on its band of each task it takes part in.
+    bytes32 private constant PURCHASE_ORDER = "Purchase Order"; // Bulk Buyer, Order
+    bytes32 private constant ORDER_CONFIRMATION = "Order Confirmation"; // Manufacturer, Order
+    bytes32 private constant COMPONENT_ORDER = "Component Order"; // Manufacturer, Order Intermediate
+    bytes32 private constant DELIVERY_DATE_COMMITMENT = "Delivery Date Commitment"; // Middleman, Order Intermediate
+    bytes32 private constant FORWARDED_ORDER = "Forwarded Order"; // Middleman, FWD Oder Intermediate
+    bytes32 private constant TRANSPORT_ORDER = "Transport Order"; // Middleman, Order Special Transport
+    bytes32 private constant TRANSPORT_DOCUMENTATION = "Prepare transport documentation"; // Middleman, Prepare Transport Documentation
+    bytes32 private constant GOODS_RECEIPT = "Goods Receipt"; // Manufacturer, Arrival Intermediate
+    bytes32 private constant DELIVERY_NOTE = "Delivery Note"; // Manufacturer, Delivery of Product
+    bytes32 private constant PAYMENT = "Payment"; // Bulk Buyer, Delivery of Product
+    bytes32 private constant AVAILABILITY_NOTICE = "Availability Notice"; // Supplier, FWD Oder Intermediate
+    bytes32 private constant PICKUP_SCHEDULE = "Pickup Schedule"; // Special Carrier, Order Special Transport
+    bytes32 private constant CARGO_DETAILS_REQUEST = "Cargo Details Request"; // Special Carrier, Request Details
+    bytes32 private constant LOADING_SLOT = "Loading Slot"; // Supplier, Request Details
+    bytes32 private constant CARGO_SPECIFICATION = "Cargo Specification"; // Supplier, Transport Details
+    bytes32 private constant VEHICLE_ASSIGNMENT = "Vehicle Assignment"; // Special Carrier, Transport Details
+    bytes32 private constant WAYBILL = "Waybill"; // Supplier, Waybill for Intermediate
+    bytes32 private constant SIGNED_WAYBILL = "Signed Waybill"; // Special Carrier, Waybill for Intermediate
+    bytes32 private constant ARRIVAL_NOTICE = "Arrival Notice"; // Special Carrier, Arrival Intermediate
 
     // The certifier: the only one who replaces this policy on a license.
     address public immutable administrator;
@@ -76,21 +92,38 @@ contract CreatorSmartPolicy is SmartPolicy, IParticipantPolicy {
     function isAllowedMessage(bytes32 participantType, bytes32 message) public pure returns (bool) {
         if (participantType == SPECIAL_CARRIER) {
             return
-                message == ORDER_SPECIAL_TRANSPORT ||
-                message == REQUEST_DETAILS ||
-                message == TRANSPORT_DETAILS ||
-                message == WAYBILL_FOR_INTERMEDIATE ||
-                message == ARRIVAL_INTERMEDIATE ||
-                message == PREPARE_TRANSPORT_DOCUMENTATION;
+                message == PICKUP_SCHEDULE ||
+                message == CARGO_DETAILS_REQUEST ||
+                message == VEHICLE_ASSIGNMENT ||
+                message == SIGNED_WAYBILL ||
+                message == ARRIVAL_NOTICE;
         }
         if (participantType == CARRIER) {
-            return message == ORDER_SPECIAL_TRANSPORT || message == ARRIVAL_INTERMEDIATE;
+            return message == PICKUP_SCHEDULE || message == ARRIVAL_NOTICE;
         }
         if (participantType == SUPPLIER) {
             return
-                message == REQUEST_DETAILS ||
-                message == TRANSPORT_DETAILS ||
-                message == WAYBILL_FOR_INTERMEDIATE;
+                message == AVAILABILITY_NOTICE ||
+                message == LOADING_SLOT ||
+                message == CARGO_SPECIFICATION ||
+                message == WAYBILL;
+        }
+        if (participantType == BULK_BUYER) {
+            return message == PURCHASE_ORDER || message == PAYMENT;
+        }
+        if (participantType == MANUFACTURER) {
+            return
+                message == ORDER_CONFIRMATION ||
+                message == COMPONENT_ORDER ||
+                message == GOODS_RECEIPT ||
+                message == DELIVERY_NOTE;
+        }
+        if (participantType == MIDDLEMAN) {
+            return
+                message == DELIVERY_DATE_COMMITMENT ||
+                message == FORWARDED_ORDER ||
+                message == TRANSPORT_ORDER ||
+                message == TRANSPORT_DOCUMENTATION;
         }
         return false;
     }

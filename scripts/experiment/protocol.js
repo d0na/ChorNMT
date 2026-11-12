@@ -33,8 +33,8 @@ const GWEI_SCENARIOS = [
   [100, "High congestion", "high demand; users pay more to be included sooner"]
 ];
 // The cost of a choreography type and its first complete instance, as deploy:asset measured it:
-// the six deployments of the type, the mint, the role accounts, and the licensed role link.
-const TYPE_AND_INSTANCE = ["F1.deploy.master", "F1.deploy.creator", "F1.deploy.holder", "F1.deploy.renderer", "F1.deploy.model", "F1.deploy.nmt", "F2.mint", "F2.roles", "F3.link"];
+// the six deployments of the type, the mint, and the link of the roles to their licenses.
+const TYPE_AND_INSTANCE = ["F1.deploy.master", "F1.deploy.creator", "F1.deploy.holder", "F1.deploy.renderer", "F1.deploy.model", "F1.deploy.nmt", "F2.mint", "F3.link"];
 
 const number = (value) => Number(value).toLocaleString("en-US");
 const table = (header, rows) => [`| ${header.join(" | ")} |`, `| ${header.map((cell) => /^(Gas|Cost|USD|Median|Min|Max|Std|Count|Nodes|Tasks|Gateways|Edges|Messages|Roles|Bytes|Transactions|Index|Relative)/.test(cell) ? "---:" : "---").join(" | ")} |`, ...rows.map((row) => `| ${row.join(" | ")} |`)];
@@ -197,10 +197,6 @@ function blocks(ctx) {
           "", ...table(["Role", "Played by", "Address"], state.roleAssignments.map((role) => [role.role, role.account ?? role.contract, code(role.address)])),
           ...(state.holder ? ["", `Holder: ${state.holder}.`] : [])]);
     }
-    if (phase.newInstance) {
-      const fresh = phase.newInstance;
-      section("The new instance", table(["Address", "Nodes", "Tasks", "Gateways", "Edges", "Messages", "Roles"], [[code(fresh.address), ...[fresh.nodes, fresh.tasks, fresh.gateways, fresh.sequenceEdges, fresh.messages, fresh.roles].map(number)]]));
-    }
     section("Policies in force at the end of the phase", table(["Resource", "Layer", "Contract", "Address", "Source", "Bytecode keccak256"],
       phase.policies.map((policy) => [policy.resource, policy.layer, policy.contract, code(policy.address), policy.source ? `[${path.basename(policy.source)}](../${policy.source})` : "—", policy.bytecodeKeccak256 ? code(policy.bytecodeKeccak256) : "—"])));
     const steps = Object.entries(timings.steps).filter(([key]) => key.startsWith(`${phase.id}.`));
@@ -211,15 +207,6 @@ function blocks(ctx) {
     lines.push(`**Sequence diagram** (filtered; [complete](${relative(`uml/${phase.id}-full.svg`)}))`, "", `![${phase.id} sequence diagram](${relative(`uml/${phase.id}.svg`)})`);
     return lines;
   }
-
-  const deltaRecord = records.get("F5.delta");
-  const freshRecords = ["F8.new-instance.mint", "F8.new-instance.roles", "F8.new-instance.link"].map((key) => records.get(key));
-  const freshGas = gasSum(freshRecords);
-  const saving = (1 - Number(deltaRecord.gasUsed) / Number(freshGas)) * 100;
-  generated.comparison = table(["Strategy", "Transactions", "Gas", "Cost (ETH)", "USD @10 gwei", "USD @30 gwei", "USD @100 gwei", "Relative gas saving"], [
-    [`Delta update, ${number(delta.nodes.length)} nodes written`, code(deltaRecord.key), number(deltaRecord.gasUsed), formatEther(deltaRecord.costWei), ...usd(deltaRecord.gasUsed, price), `${saving.toFixed(2)}%`],
-    [`New instance, ${number(phases.get("F8").newInstance.nodes)} nodes`, freshRecords.map((record) => code(record.key)).join(", "), number(freshGas), formatEther(costSum(freshRecords)), ...usd(freshGas, price), "0.00%"]
-  ]);
 
   const typeRecords = TYPE_AND_INSTANCE.map((key) => records.get(key));
   const typeGas = gasSum(typeRecords);
@@ -267,11 +254,9 @@ function blocks(ctx) {
 
   generated.artifacts = ctx.files.map((file) => `- [${file}](${relative(file)})`);
 
-  // Consistency: the overview totals are the sums of the phase tables; the comparison uses the
-  // transactions it names.
+  // Consistency: the overview totals are the sums of the phase tables.
   const phaseTotal = evidence.phases.reduce((sum, phase) => sum + gasSum(phaseRecords(phase.id)), 0n);
   assert.equal(phaseTotal, gasSum(evidence.transactions), "the phase totals do not add up to the experiment total");
-  assert.equal(freshRecords.every((record) => record.outcome === "allowed") && deltaRecord.outcome === "allowed", true, "the comparison uses a denied transaction");
   return generated;
 }
 

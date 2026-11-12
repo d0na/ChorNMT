@@ -1,14 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn2:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xs="http://www.w3.org/2001/XMLSchema" id="_tTv5YOycEeiHGOQ2NkJZNQ" targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn2:message id="Message_0t5qtd8" />
-  <bpmn2:message id="Message_11ex51i" />
-  <bpmn2:message id="Message_1vaojlk" />
-  <bpmn2:message id="Message_1325zdq" />
-  <bpmn2:message id="Message_10n229k" />
-  <bpmn2:message id="Message_0dai5by" />
-  <bpmn2:message id="Message_1o2ktar" />
-  <bpmn2:message id="Message_0zv34lb" />
-  <bpmn2:message id="Message_1xwxfgh" />
+  <bpmn2:message id="Message_0t5qtd8" name="Delivery Note" />
+  <bpmn2:message id="Message_Return_9" name="Payment" />
+  <bpmn2:message id="Message_11ex51i" name="Arrival Notice" />
+  <bpmn2:message id="Message_Return_8" name="Goods Receipt" />
+  <bpmn2:message id="Message_1vaojlk" name="Waybill" />
+  <bpmn2:message id="Message_Return_7" name="Signed Waybill" />
+  <bpmn2:message id="Message_1325zdq" name="Cargo Specification" />
+  <bpmn2:message id="Message_Return_6" name="Vehicle Assignment" />
+  <bpmn2:message id="Message_10n229k" name="Cargo Details Request" />
+  <bpmn2:message id="Message_Return_5" name="Loading Slot" />
+  <bpmn2:message id="Message_0dai5by" name="Transport Order" />
+  <bpmn2:message id="Message_Return_4" name="Pickup Schedule" />
+  <bpmn2:message id="Message_1o2ktar" name="Forwarded Order" />
+  <bpmn2:message id="Message_Return_3" name="Availability Notice" />
+  <bpmn2:message id="Message_0zv34lb" name="Component Order" />
+  <bpmn2:message id="Message_Return_2" name="Delivery Date Commitment" />
+  <bpmn2:message id="Message_1xwxfgh" name="Purchase Order" />
+  <bpmn2:message id="Message_Return_1" name="Order Confirmation" />
   <bpmn2:choreography id="Choreography">
     <bpmn2:participant id="Participant_0b0qri3" name="Bulk Buyer" />
     <bpmn2:participant id="Participant_1p3ppt5" name="Manufacturer" />
@@ -16,15 +25,24 @@
     <bpmn2:participant id="Participant_10m1jry" name="Supplier" />
     <bpmn2:participant id="Participant_0kfbpuv" name="Special Carrier" />
     <bpmn2:messageFlow id="MessageFlow_03a3qbf" sourceRef="Participant_1p3ppt5" targetRef="Participant_0b0qri3" messageRef="Message_0t5qtd8" />
+    <bpmn2:messageFlow id="MessageFlow_Return_9" sourceRef="Participant_0b0qri3" targetRef="Participant_1p3ppt5" messageRef="Message_Return_9" />
     <bpmn2:messageFlow id="MessageFlow_1pzc5pu" sourceRef="Participant_0kfbpuv" targetRef="Participant_1p3ppt5" messageRef="Message_11ex51i" />
+    <bpmn2:messageFlow id="MessageFlow_Return_8" sourceRef="Participant_1p3ppt5" targetRef="Participant_0kfbpuv" messageRef="Message_Return_8" />
     <bpmn2:messageFlow id="MessageFlow_05v7to6" sourceRef="Participant_10m1jry" targetRef="Participant_0kfbpuv" messageRef="Message_1vaojlk" />
+    <bpmn2:messageFlow id="MessageFlow_Return_7" sourceRef="Participant_0kfbpuv" targetRef="Participant_10m1jry" messageRef="Message_Return_7" />
     <bpmn2:messageFlow id="MessageFlow_1dkw3c3" sourceRef="Participant_10m1jry" targetRef="Participant_0kfbpuv" messageRef="Message_1325zdq" />
+    <bpmn2:messageFlow id="MessageFlow_Return_6" sourceRef="Participant_0kfbpuv" targetRef="Participant_10m1jry" messageRef="Message_Return_6" />
     <bpmn2:messageFlow id="MessageFlow_0ihez2j" sourceRef="Participant_0kfbpuv" targetRef="Participant_10m1jry" messageRef="Message_10n229k" />
+    <bpmn2:messageFlow id="MessageFlow_Return_5" sourceRef="Participant_10m1jry" targetRef="Participant_0kfbpuv" messageRef="Message_Return_5" />
     <bpmn2:messageFlow id="MessageFlow_0fvlipl" sourceRef="Participant_1x2u9zv" targetRef="Participant_0kfbpuv" messageRef="Message_0dai5by" />
+    <bpmn2:messageFlow id="MessageFlow_Return_4" sourceRef="Participant_0kfbpuv" targetRef="Participant_1x2u9zv" messageRef="Message_Return_4" />
     <bpmn2:messageFlow id="MessageFlow_0d4x0h6" sourceRef="Participant_1x2u9zv" targetRef="Participant_10m1jry" messageRef="Message_1o2ktar" />
+    <bpmn2:messageFlow id="MessageFlow_Return_3" sourceRef="Participant_10m1jry" targetRef="Participant_1x2u9zv" messageRef="Message_Return_3" />
     <bpmn2:messageFlow id="MessageFlow_15kdg96" sourceRef="Participant_1p3ppt5" targetRef="Participant_1x2u9zv" messageRef="Message_0zv34lb" />
+    <bpmn2:messageFlow id="MessageFlow_Return_2" sourceRef="Participant_1x2u9zv" targetRef="Participant_1p3ppt5" messageRef="Message_Return_2" />
     <bpmn2:messageFlow id="MessageFlow_1xl55r0" sourceRef="Participant_0b0qri3" targetRef="Participant_1p3ppt5" messageRef="Message_1xwxfgh" />
-    <bpmn2:startEvent id="Event_0amsrvp">
+    <bpmn2:messageFlow id="MessageFlow_Return_1" sourceRef="Participant_1p3ppt5" targetRef="Participant_0b0qri3" messageRef="Message_Return_1" />
+    <bpmn2:startEvent id="Event_0amsrvp" name="Start">
       <bpmn2:outgoing>Flow_0svz4s5</bpmn2:outgoing>
     </bpmn2:startEvent>
     <bpmn2:choreographyTask id="ChoreographyTask_02kcf9r" name="Order" initiatingParticipantRef="Participant_0b0qri3">
@@ -33,6 +51,7 @@
       <bpmn2:participantRef>Participant_0b0qri3</bpmn2:participantRef>
       <bpmn2:participantRef>Participant_1p3ppt5</bpmn2:participantRef>
       <bpmn2:messageFlowRef>MessageFlow_1xl55r0</bpmn2:messageFlowRef>
+      <bpmn2:messageFlowRef>MessageFlow_Return_1</bpmn2:messageFlowRef>
     </bpmn2:choreographyTask>
     <bpmn2:sequenceFlow id="Flow_0svz4s5" sourceRef="Event_0amsrvp" targetRef="ChoreographyTask_02kcf9r" />
     <bpmn2:choreographyTask id="ChoreographyTask_1dzzejp" name="Order Intermediate" initiatingParticipantRef="Participant_1p3ppt5">
@@ -41,6 +60,7 @@
       <bpmn2:participantRef>Participant_1p3ppt5</bpmn2:participantRef>
       <bpmn2:participantRef>Participant_1x2u9zv</bpmn2:participantRef>
       <bpmn2:messageFlowRef>MessageFlow_15kdg96</bpmn2:messageFlowRef>
+      <bpmn2:messageFlowRef>MessageFlow_Return_2</bpmn2:messageFlowRef>
     </bpmn2:choreographyTask>
     <bpmn2:sequenceFlow id="Flow_02kl8qq" sourceRef="ChoreographyTask_02kcf9r" targetRef="ChoreographyTask_1dzzejp" />
     <bpmn2:choreographyTask id="ChoreographyTask_1on49hm" name="FWD Oder Intermediate" initiatingParticipantRef="Participant_1x2u9zv">
@@ -49,6 +69,7 @@
       <bpmn2:participantRef>Participant_1x2u9zv</bpmn2:participantRef>
       <bpmn2:participantRef>Participant_10m1jry</bpmn2:participantRef>
       <bpmn2:messageFlowRef>MessageFlow_0d4x0h6</bpmn2:messageFlowRef>
+      <bpmn2:messageFlowRef>MessageFlow_Return_3</bpmn2:messageFlowRef>
     </bpmn2:choreographyTask>
     <bpmn2:sequenceFlow id="Flow_07krclk" sourceRef="ChoreographyTask_1dzzejp" targetRef="ChoreographyTask_1on49hm" />
     <bpmn2:choreographyTask id="ChoreographyTask_0bcspiv" name="Order Special Transport" initiatingParticipantRef="Participant_1x2u9zv">
@@ -57,6 +78,7 @@
       <bpmn2:participantRef>Participant_1x2u9zv</bpmn2:participantRef>
       <bpmn2:participantRef>Participant_0kfbpuv</bpmn2:participantRef>
       <bpmn2:messageFlowRef>MessageFlow_0fvlipl</bpmn2:messageFlowRef>
+      <bpmn2:messageFlowRef>MessageFlow_Return_4</bpmn2:messageFlowRef>
     </bpmn2:choreographyTask>
     <bpmn2:sequenceFlow id="Flow_0m1lokg" sourceRef="ChoreographyTask_1on49hm" targetRef="ChoreographyTask_0bcspiv" />
     <bpmn2:choreographyTask id="ChoreographyTask_1ype6n3" name="Request Details" initiatingParticipantRef="Participant_0kfbpuv">
@@ -65,6 +87,7 @@
       <bpmn2:participantRef>Participant_0kfbpuv</bpmn2:participantRef>
       <bpmn2:participantRef>Participant_10m1jry</bpmn2:participantRef>
       <bpmn2:messageFlowRef>MessageFlow_0ihez2j</bpmn2:messageFlowRef>
+      <bpmn2:messageFlowRef>MessageFlow_Return_5</bpmn2:messageFlowRef>
     </bpmn2:choreographyTask>
     <bpmn2:sequenceFlow id="Flow_1986gse" sourceRef="ChoreographyTask_0bcspiv" targetRef="ChoreographyTask_1ype6n3" />
     <bpmn2:choreographyTask id="ChoreographyTask_0ttkwqy" name="Transport Details" initiatingParticipantRef="Participant_10m1jry">
@@ -73,6 +96,7 @@
       <bpmn2:participantRef>Participant_10m1jry</bpmn2:participantRef>
       <bpmn2:participantRef>Participant_0kfbpuv</bpmn2:participantRef>
       <bpmn2:messageFlowRef>MessageFlow_1dkw3c3</bpmn2:messageFlowRef>
+      <bpmn2:messageFlowRef>MessageFlow_Return_6</bpmn2:messageFlowRef>
     </bpmn2:choreographyTask>
     <bpmn2:sequenceFlow id="Flow_1a6cpiu" sourceRef="ChoreographyTask_1ype6n3" targetRef="ChoreographyTask_0ttkwqy" />
     <bpmn2:choreographyTask id="ChoreographyTask_0t5rv09" name="Waybill for Intermediate" initiatingParticipantRef="Participant_10m1jry">
@@ -81,6 +105,7 @@
       <bpmn2:participantRef>Participant_10m1jry</bpmn2:participantRef>
       <bpmn2:participantRef>Participant_0kfbpuv</bpmn2:participantRef>
       <bpmn2:messageFlowRef>MessageFlow_05v7to6</bpmn2:messageFlowRef>
+      <bpmn2:messageFlowRef>MessageFlow_Return_7</bpmn2:messageFlowRef>
     </bpmn2:choreographyTask>
     <bpmn2:sequenceFlow id="Flow_1qw91m6" sourceRef="ChoreographyTask_0ttkwqy" targetRef="ChoreographyTask_0t5rv09" />
     <bpmn2:choreographyTask id="ChoreographyTask_03xg3r1" name="Arrival Intermediate" initiatingParticipantRef="Participant_0kfbpuv">
@@ -89,6 +114,7 @@
       <bpmn2:participantRef>Participant_0kfbpuv</bpmn2:participantRef>
       <bpmn2:participantRef>Participant_1p3ppt5</bpmn2:participantRef>
       <bpmn2:messageFlowRef>MessageFlow_1pzc5pu</bpmn2:messageFlowRef>
+      <bpmn2:messageFlowRef>MessageFlow_Return_8</bpmn2:messageFlowRef>
     </bpmn2:choreographyTask>
     <bpmn2:sequenceFlow id="Flow_09im2k2" sourceRef="ChoreographyTask_0t5rv09" targetRef="ChoreographyTask_03xg3r1" />
     <bpmn2:choreographyTask id="ChoreographyTask_12pfi6f" name="Delivery of Product" initiatingParticipantRef="Participant_1p3ppt5">
@@ -97,9 +123,10 @@
       <bpmn2:participantRef>Participant_1p3ppt5</bpmn2:participantRef>
       <bpmn2:participantRef>Participant_0b0qri3</bpmn2:participantRef>
       <bpmn2:messageFlowRef>MessageFlow_03a3qbf</bpmn2:messageFlowRef>
+      <bpmn2:messageFlowRef>MessageFlow_Return_9</bpmn2:messageFlowRef>
     </bpmn2:choreographyTask>
     <bpmn2:sequenceFlow id="Flow_0zyjx5f" sourceRef="ChoreographyTask_03xg3r1" targetRef="ChoreographyTask_12pfi6f" />
-    <bpmn2:endEvent id="Event_10n27bz">
+    <bpmn2:endEvent id="Event_10n27bz" name="End">
       <bpmn2:incoming>Flow_0peae86</bpmn2:incoming>
     </bpmn2:endEvent>
     <bpmn2:sequenceFlow id="Flow_0peae86" sourceRef="ChoreographyTask_12pfi6f" targetRef="Event_10n27bz" />

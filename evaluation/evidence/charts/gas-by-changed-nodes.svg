@@ -4,7 +4,7 @@
  viewBox="0 0 1400 850"
  xmlns="http://www.w3.org/2000/svg"
  xmlns:xlink="http://www.w3.org/1999/xlink"
-><!-- chornmt-chart-data-sha256: c56d121b1adc2fa840ae87ec9aadd4677b76a2cae8d3a5aa27312b957fcf5ddf -->
+><!-- chornmt-chart-data-sha256: 830ca3109074cf25af741c7ad535d5dcc489958e85fd59a3a2a45d283ff7718e -->
 
 <title>Gnuplot</title>
 <desc>Produced by GNUPLOT 6.0 patchlevel 6 </desc>
@@ -314,7 +314,7 @@
 	</g>
 </g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
-	<use xlink:href='#gpPt6' transform='translate(1217.93,120.15) scale(8.10)' color='rgb( 40, 120, 181)'/>
+	<use xlink:href='#gpPt6' transform='translate(1217.93,119.61) scale(8.10)' color='rgb( 40, 120, 181)'/>
 	<use xlink:href='#gpPt6' transform='translate(706.59,18.00) scale(8.10)' color='rgb( 40, 120, 181)'/>
 </g>
 	</g>
@@ -326,11 +326,13 @@
 </g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
 	<use xlink:href='#gpPt4' transform='translate(433.45,677.56) scale(7.20)' color='rgb(199,  78,  69)'/>
-	<use xlink:href='#gpPt4' transform='translate(590.35,595.34) scale(7.20)' color='rgb(199,  78,  69)'/>
+	<use xlink:href='#gpPt4' transform='translate(590.35,595.04) scale(7.20)' color='rgb(199,  78,  69)'/>
 	<use xlink:href='#gpPt4' transform='translate(276.56,684.91) scale(7.20)' color='rgb(199,  78,  69)'/>
-	<use xlink:href='#gpPt4' transform='translate(276.56,764.78) scale(7.20)' color='rgb(199,  78,  69)'/>
-	<use xlink:href='#gpPt4' transform='translate(276.56,669.76) scale(7.20)' color='rgb(199,  78,  69)'/>
-	<use xlink:href='#gpPt4' transform='translate(1217.93,743.35) scale(7.20)' color='rgb(199,  78,  69)'/>
+	<use xlink:href='#gpPt4' transform='translate(276.56,764.69) scale(7.20)' color='rgb(199,  78,  69)'/>
+	<use xlink:href='#gpPt4' transform='translate(276.56,669.65) scale(7.20)' color='rgb(199,  78,  69)'/>
+	<use xlink:href='#gpPt4' transform='translate(1217.93,745.91) scale(7.20)' color='rgb(199,  78,  69)'/>
+	<use xlink:href='#gpPt4' transform='translate(1217.93,745.91) scale(7.20)' color='rgb(199,  78,  69)'/>
+	<use xlink:href='#gpPt4' transform='translate(1217.93,742.82) scale(7.20)' color='rgb(199,  78,  69)'/>
 	<use xlink:href='#gpPt4' transform='translate(908.56,18.00) scale(7.20)' color='rgb(199,  78,  69)'/>
 </g>
 	</g>

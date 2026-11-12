@@ -1,6 +1,8 @@
 @startuml rendering
 ' How the rendering works: the on-chain tokenURI computation and the off-chain pipeline that
-' regenerates the BPMN from it (docs/rendering.md). Steps 1-4 are one eth_call, 5-10 run off-chain.
+' regenerates the BPMN from it (docs/rendering.md). The metadata is read the ERC-721 way, from the
+' token contract: step 1 asks the asset for its NMT, steps 2-5 are one eth_call to
+' ChoreographyNMT.tokenURI(tokenId), 6-10 run off-chain.
 ' Hand-written: update it when a render step, a script, a read function, or an output file changes.
 !include style.iuml
 skinparam ArrowColor #2F4F6F
@@ -16,10 +18,14 @@ skinparam rectangle {
   BorderColor #8AA9C8
 }
 
-rectangle "On-chain · one eth_call, nothing stored" as chain #F2F8FD {
-  component "ChoreographyMutableAsset" <<contract>> as asset
-  component "ChoreographyNMT" <<contract>> as nmt
+rectangle "On-chain · read only, nothing stored" as chain #F2F8FD {
+  component "ChoreographyNMT" <<contract, ERC-721>> as nmt
   component "ChoreographyTokenURIRenderer" <<contract, stateless>> as renderer
+  component "ChoreographyMutableAsset" <<contract>> as asset
+  note right of asset
+    Its tokenURI() is a shortcut to
+    step 2 (same value), not used here.
+  end note
 }
 
 rectangle "Off-chain · JavaScript · npm run render:asset" as js #F1F9F3 {
@@ -36,14 +42,15 @@ rectangle "Off-chain · JavaScript · npm run render:asset" as js #F1F9F3 {
   artifact "BPMN drawing (SVG)" as svg
 }
 
-' ---------- on-chain: the asset describes itself ----------
-asset -right-> nmt : 2. tokenURI(tokenId)
+' ---------- on-chain: the token contract answers, the renderer reads the asset ----------
 nmt -right-> renderer : 3. tokenURI(asset)
-renderer .left.> asset : 4. reads roles and nodes
+renderer .right.> asset : 4. reads roles\nand nodes
 
-' ---------- the single read ----------
-web3 -up-> asset : 1. eth_call\ntokenURI()
-asset .down.> web3 : 5. base64 JSON\n(roles + nodes)
+' ---------- the read: tokenURI on the token contract ----------
+web3 -up-> asset : 1. nmt()
+web3 -up-> nmt : 2. eth_call\ntokenURI(tokenId)\ntokenId = uint160(asset)
+nmt .down.> web3 : 5. base64 JSON\n(roles + nodes)
+
 
 ' ---------- off-chain pipeline ----------
 web3 -right-> normalize : 6. model\nby names

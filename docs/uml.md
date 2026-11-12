@@ -19,13 +19,13 @@ The off-chain JavaScript pipeline (import, model encoding, BPMN updates applied 
 
 ![Architecture overview](uml/architecture-overview.svg)
 
-The same overview extended with the role license path of the running example, in purple: ① the authority mints the `SpecialCarrier` license for Carrier A with `mint` on the `ParticipantNMT` of that type (the `ParticipantMasterSmartPolicy` checks the issuer of the type); ② `setRoles` binds the Special Carrier role to the license; ③ the choreography Creator policy asks the `ChoreographyParticipantAM` of the SpecialCarrier licenses (`participantTypeOf`) for the license type; ④ Carrier A transfers the license to Carrier B; ⑤ the participant Master checks that Carrier B is qualified for the type; ⑥ the transfer clears `name` and `profile` and resets the Holder policy to `address(0)`. Written by hand in `docs/uml/architecture-participants.mmd`, rendered like the overview.
+The same overview extended with the role license path of the running example, in purple: ① the transport authority mints the `SpecialCarrier` license for Carrier A with `mint` on the `ParticipantNMT` of that type (the `ParticipantMasterSmartPolicy` checks the issuer of the type); ② `setRoles` binds the Special Carrier role to the license; ③ the choreography Creator policy asks the `ChoreographyParticipantAM` of the SpecialCarrier licenses (`participantTypeOf`) for the license type; ④ Carrier A transfers the license to Carrier B; ⑤ the participant Master checks that Carrier B is qualified for the type; ⑥ the transfer clears `name` and `profile` and resets the Holder policy to `address(0)`. Written by hand in `docs/uml/architecture-participants.mmd`, rendered like the overview.
 
 ![Architecture with role licenses](uml/architecture-participants.svg)
 
 ## Rendering
 
-How a choreography asset becomes a BPMN diagram, left to right, in numbered steps. Steps 1–5 are one `eth_call`: `web3.js` calls `tokenURI()` on the asset, the asset asks its `ChoreographyNMT`, the NMT delegates to the stateless `ChoreographyTokenURIRenderer`, which reads the roles and the nodes through the public getters of the asset (`getRoleNames`, `getRole`, `getNodeNames`, `getNode`) and returns them as a base64 `data:application/json` URI; nothing is stored. Steps 6–10 are the off-chain pipeline of `npm run render:asset`: `normalize.js` derives the BPMN ids from the names, `validation.js` checks the references, `process-mapper.js` builds the BPMN elements and computes the layout, `moddle-generator.js` writes the XML, and `render-bpmn-images.js` (optional, used by the experiment) draws it. Details in [Rendering](rendering.md). Written by hand in `docs/uml/rendering.puml` and rendered by `docs:uml`; update it when a render step, a script, a read function, or an output file changes.
+How a choreography asset becomes a BPMN diagram, left to right, in numbered steps. The metadata is read the ERC-721 way, from the token contract: `web3.js` asks the asset for its `ChoreographyNMT` (step 1), then steps 2–5 are one `eth_call` to `ChoreographyNMT.tokenURI(tokenId)` with `tokenId = uint160(asset)`; the NMT delegates to the stateless `ChoreographyTokenURIRenderer`, which reads the roles and the nodes through the public getters of the asset (`getRoleNames`, `getRole`, `getNodeNames`, `getNode`) and returns them as a base64 `data:application/json` URI; nothing is stored. Steps 6–10 are the off-chain pipeline of `npm run render:asset`: `normalize.js` derives the BPMN ids from the names, `validation.js` checks the references, `process-mapper.js` builds the BPMN elements and computes the layout, `moddle-generator.js` writes the XML, and `render-bpmn-images.js` (optional, used by the experiment) draws it. Details in [Rendering](rendering.md). Written by hand in `docs/uml/rendering.puml` and rendered by `docs:uml`; update it when a render step, a script, a read function, or an output file changes.
 
 ![Rendering](uml/rendering.svg)
 
@@ -39,13 +39,13 @@ The contract hierarchy with the internal structure of the two mutable assets: th
 
 ### Choreography
 
-Who does what on a choreography: the authorized creator (Hardhat account 0) mints, the holder edits the model, assigns and links roles, installs a Holder policy, and transfers the instance, anyone reads and renders it. Every actor is a column of the trust table in [Choreography policies](choreography-policies.md#who-can-do-what), and every use case names its row, the experiment transactions, and the `test:policies` cases that prove it (PlantUML comments checked by `check:use-cases`). `setLinked` is proved only by the tests (`<<test only>>`). The Master and Creator policies are never replaced, so their setters have no use case (open question in [Design decisions](decisions.md#open-questions)).
+Who does what on a choreography: the authorized creator (Hardhat account 4) mints, the holder (account 1) edits the model, assigns and links roles, installs a Holder policy, and may transfer the instance, anyone reads and renders it. Every actor is a column of the trust table in [Choreography policies](choreography-policies.md#who-can-do-what), and every use case names its row, the experiment transactions, and the `test:policies` cases that prove it (PlantUML comments checked by `check:use-cases`). `setLinked`, the transfer of an instance, and plain role accounts are proved only by the tests (`<<test only>>`): in the experiment every role is linked to a license. The Master and Creator policies are never replaced, so their setters have no use case (open question in [Design decisions](decisions.md#open-questions)).
 
 ![Choreography use cases](uml/use-case-choreography.svg)
 
 ### Participant licenses
 
-The role licenses that choreography roles link to: the authority (account 9) issues and certifies them, the carriers hold and sell them, the buyer installs its own Holder policy. Checked the same way against the "Role licenses" table. Details in [Participant license design](participant-license-design.md).
+The role licenses that choreography roles link to: the authorities (accounts 9–13, one per license type, the transport one with two types) issue and certify them, the carriers hold and sell them, the buyer installs its own Holder policy. Checked the same way against the "Role licenses" table. Details in [Participant license design](participant-license-design.md).
 
 ![Participant license use cases](uml/use-case-participant-license.svg)
 
@@ -61,12 +61,12 @@ One sequence diagram per phase of the experiment, generated from the call traces
 | Phase | Filtered | Complete |
 | --- | --- | --- |
 | F1, deploy the choreography type and the license infrastructure (import as a sub-step) | [F1](../evaluation/evidence/uml/F1.svg) | [F1 complete](../evaluation/evidence/uml/F1-full.svg) |
-| F2, mint the instance and assign the role accounts | [F2](../evaluation/evidence/uml/F2.svg) | [F2 complete](../evaluation/evidence/uml/F2-full.svg) |
-| F3, issue the licenses and link the Special Carrier role | [F3](../evaluation/evidence/uml/F3.svg) | [F3 complete](../evaluation/evidence/uml/F3-full.svg) |
+| F2, mint the instance for its holder | [F2](../evaluation/evidence/uml/F2.svg) | [F2 complete](../evaluation/evidence/uml/F2-full.svg) |
+| F3, issue the licenses and link every role to its license | [F3](../evaluation/evidence/uml/F3.svg) | [F3 complete](../evaluation/evidence/uml/F3-full.svg) |
 | F4, render the baseline model (traced `tokenURI` call and off-chain pipeline) | [F4](../evaluation/evidence/uml/F4.svg) | [F4 complete](../evaluation/evidence/uml/F4-full.svg) |
-| F5, apply the delta: one allowed and five denied updates | [F5](../evaluation/evidence/uml/F5.svg) | [F5 complete](../evaluation/evidence/uml/F5-full.svg) |
+| F5, apply the delta: one allowed and seven denied updates | [F5](../evaluation/evidence/uml/F5.svg) | [F5 complete](../evaluation/evidence/uml/F5-full.svg) |
 | F6, sell the Special Carrier role | [F6](../evaluation/evidence/uml/F6.svg) | [F6 complete](../evaluation/evidence/uml/F6-full.svg) |
-| F7, transfer a second instance and restrict it through its Holder policy | [F7](../evaluation/evidence/uml/F7.svg) | [F7 complete](../evaluation/evidence/uml/F7-full.svg) |
-| F8, render the final model and mint a new instance | [F8](../evaluation/evidence/uml/F8.svg) | [F8 complete](../evaluation/evidence/uml/F8-full.svg) |
+| F7, restrict a second instance through its Holder policy | [F7](../evaluation/evidence/uml/F7.svg) | [F7 complete](../evaluation/evidence/uml/F7-full.svg) |
+| F8, render the final model | [F8](../evaluation/evidence/uml/F8.svg) | [F8 complete](../evaluation/evidence/uml/F8-full.svg) |
 
 ![F5, apply the delta](../evaluation/evidence/uml/F5.svg)

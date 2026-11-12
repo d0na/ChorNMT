@@ -41,7 +41,8 @@ bpmn-builder-js/example/output/<base>.generated.bpmn.xml
 | Variable | Default | Used by |
 | --- | --- | --- |
 | `RPC_URL` | `http://127.0.0.1:8545` | `deploy:asset`, `modify:asset`, `render:asset` |
-| `DEPLOYER_PRIVATE_KEY` | Hardhat account #0 | `deploy:asset`, `modify:asset` (signer and initial holder) |
+| `DEPLOYER_PRIVATE_KEY` | Hardhat account #0 | `deploy:asset` (deployer of the type and holder of the instance), `modify:asset` (signer) |
+| `CREATOR_PRIVATE_KEY` | Hardhat account #4 | `deploy:asset`: the account that mints the instance for the holder, the only creator the Master policy authorizes |
 | `ETH_USD_PRICE` | 3000 | `evidence:update` and `check:evidence`: the USD columns of the evidence (see the [evaluation toolkit](../evaluation/README.md#usd-price-for-gas-scenarios)); another price is another run |
 | `EXPERIMENT_REPETITIONS` | 10 | `evidence:update`, `check:evidence`: measured runs after the warm-up run |
 | `POLICY_TESTS_OUT` | unset | `test:policies`: also write the test matrix as JSON to this file |
@@ -67,7 +68,7 @@ The commands print measured transaction costs after every on-chain write. Each l
 | --- | --- | --- |
 | `deploy:asset` | Deploys Master, Creator, and Holder policies, `ChoreographyTokenURIRenderer`, the model contract of the type (SSTORE2), and `ChoreographyNMT`; mints an instance, born with the model; calls `setRoles(...)` to link its roles. | Eight transactions; the model contract and the mint grow with roles, nodes, messages, and graph edges. |
 | `modify:asset` | Calls `setNodes(...)`; calls `setRoles(...)` for every role in the delta `roles` map, adding new roles and overwriting the address of existing ones. | One or two transactions; a constrained Creator policy (e.g. `CreatorSmartPolicyPaperScenario`) also evaluates BPMN structural constraints. |
-| `render:asset` | Reads the asset with one `tokenURI()` call and writes local files. | No blockchain transaction and no gas cost; the call executes about 1.7M gas for the evolved paper example, within the `eth_call` limits of common RPC providers. |
+| `render:asset` | Reads the asset with one `tokenURI(tokenId)` call on its `ChoreographyNMT` (the ERC-721 way) and writes local files. | No blockchain transaction and no gas cost; the call executes about 1.7M gas for the evolved paper example, within the `eth_call` limits of common RPC providers. |
 | `start:operations` and `clean` | Local operations only. | No gas cost. |
 
 Costs are exact for the RPC network used by the command. On Hardhat's local node they use test ETH and have no real monetary value. On a public network, the displayed ETH value depends on the network's actual gas price; convert it to fiat currency separately using the current ETH price.
@@ -98,7 +99,7 @@ These scripts are used by public commands and are not intended as separate user-
 | `check-gas.js` | `check:gas` | Compares the gas figures listed in its `FIGURES` table with the versioned evidence; a current figure added to a doc gets an entry there. |
 | `render-uml.js` | `docs:uml`, `check:uml`, `evidence:update` | Renders `docs/uml/*.puml` and `evaluation/evidence/uml/*.puml` (or `--dir <dir>`) to SVG with a pinned PlantUML and stamps each SVG with the hash of its source; `--check` compares the hashes. |
 | `test-policies.js` | `test:policies`, `evidence:update` | Exercises policy allow/deny paths on one choreography type per fixture model; with `POLICY_TESTS_OUT` it writes the matrix as JSON (`evaluation/evidence/tests.json` during `evidence:update`). |
-| `experiment/phases.js` | `evidence:update` | The experiment specification: accounts, role accounts, inputs, phases, and every transaction with its sender, function, expected outcome, revert reason, and trust-table row. |
+| `experiment/phases.js` | `evidence:update` | The experiment specification: accounts, role licenses and their authorities, inputs, phases, and every transaction with its sender, function, expected outcome, revert reason, and trust-table row. |
 | `experiment/charts.js` | `evidence:update` | Writes the data of the four charts from the evidence, recomputes every point from its primary source, draws them with the templates in `evaluation/gnuplot/experiment/`, and stamps each SVG with the SHA-256 of its data. |
 | `experiment/bpmn.js` | `evidence:update` | Checks the baseline and final BPMN XML against the source, the delta, and the chain, draws them with chor-js, and checks that each drawing shows exactly the names of its XML. |
 | `experiment/protocol.js`, `experiment/parity.js` | `evidence:update`, `check:protocol` | Fill the generated blocks of `docs/experiment.md` from the evidence and check its rules; the parity checklist of the former reports. |

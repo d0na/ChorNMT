@@ -73,8 +73,12 @@ function totalGas(report, outcome) {
 
 async function main() {
   const { ethers } = await hre.network.connect();
-  const [administrator, eligibleHolder, unauthorizedCreator, ineligibleHolder, , carrierA, carrierB, carrierC, , authority] =
-    await ethers.getSigners();
+  // The choreography Master policy names three parts: its administrator (account 0, also an
+  // eligible holder), the eligible partner (account 1), and the authorized creator (account 4).
+  // "authority" is the transport authority (account 9), "supplierAuthority" another one (account 13).
+  const signers = await ethers.getSigners();
+  const [administrator, eligibleHolder, unauthorizedCreator, ineligibleHolder, authorizedCreator, carrierA, carrierB, carrierC, , authority] = signers;
+  const supplierAuthority = signers[13];
 
   const masterFactory = await ethers.getContractFactory("MasterSmartPolicy");
   const creatorFactory = await ethers.getContractFactory(
@@ -138,8 +142,8 @@ async function main() {
     creatorPolicyAddress,
     holderPolicyAddress
   ];
-  const [assetAddress] = await nmt.mint.staticCall(...mintArguments);
-  report.push(await expectAllowed("authorized creator mints eligible holder", () => nmt.mint(...mintArguments)));
+  const [assetAddress] = await nmt.connect(authorizedCreator).mint.staticCall(...mintArguments);
+  report.push(await expectAllowed("authorized creator mints eligible holder", () => nmt.connect(authorizedCreator).mint(...mintArguments)));
 
   // The asset is born with the model of its type.
   const asset = await ethers.getContractAt("ChoreographyMutableAsset", assetAddress);
@@ -187,8 +191,8 @@ async function main() {
     participantRoles: ["", "Supplier\\S", ""]
   };
   const escapedNmt = await deployChoreographyType(escapedModel);
-  const [escapedAssetAddress] = await escapedNmt.mint.staticCall(...mintArguments);
-  await (await escapedNmt.mint(...mintArguments)).wait();
+  const [escapedAssetAddress] = await escapedNmt.connect(authorizedCreator).mint.staticCall(...mintArguments);
+  await (await escapedNmt.connect(authorizedCreator).mint(...mintArguments)).wait();
   assert.deepEqual(modelFromTokenURI(await escapedNmt.tokenURI(BigInt(escapedAssetAddress))), escapedModel);
 
   // Creator constraints are hardcoded: the constrained assets are minted with the test-scenario
@@ -230,10 +234,10 @@ async function main() {
   await scenarioCreatorPolicy.waitForDeployment();
   const constrainedMintArguments = [administrator.address, scenarioCreatorPolicy.target, holderPolicyAddress];
 
-  const [constrainedAssetAddress] = await nmt.mint.staticCall(...constrainedMintArguments);
+  const [constrainedAssetAddress] = await nmt.connect(authorizedCreator).mint.staticCall(...constrainedMintArguments);
   report.push(await expectAllowed(
     "authorized creator mints with the test-scenario creator policy",
-    () => nmt.mint(...constrainedMintArguments)
+    () => nmt.connect(authorizedCreator).mint(...constrainedMintArguments)
   ));
   const constrainedAsset = await ethers.getContractAt(
     "ChoreographyMutableAsset",
@@ -365,8 +369,8 @@ async function main() {
   assert.equal(await constrainedAsset.getRole("Buyer"), administrator.address);
 
   // Participant licenses. The participant policies hardcode their configuration (license types,
-  // issuers, qualified organizations, allowed messages) for default Hardhat accounts 5-9.
-  const specialCarrierMessages = ["Message_0dai5by", "Message_10n229k"].map(ethers.encodeBytes32String);
+  // issuers, qualified organizations, allowed messages) for default Hardhat accounts 5-16.
+  const specialCarrierMessages = ["Pickup Schedule", "Cargo Details Request"].map(ethers.encodeBytes32String);
   const mintLicense = async (holder, certifierPolicy, licenseNmt) => {
     const licenseArguments = [holder.address, certifierPolicy.target, participantHolderPolicy.target];
     const [licenseAddress] = await licenseNmt.connect(authority).mint.staticCall(...licenseArguments);
@@ -393,6 +397,18 @@ async function main() {
     }
   ));
   report.push(await expectDenied(
+    "authority cannot issue a license type of another authority",
+    supplierAuthority,
+    {
+      to: specialCarrierNmt.target,
+      data: specialCarrierNmt.interface.encodeFunctionData("mint", [
+        carrierA.address,
+        participantCertifier.target,
+        participantHolderPolicy.target
+      ])
+    }
+  ));
+  report.push(await expectDenied(
     "issuer cannot mint a license of a type the Master does not define",
     authority,
     {
@@ -413,7 +429,7 @@ async function main() {
     carrierC,
     {
       to: plainCarrierLicense.target,
-      data: plainCarrierLicense.interface.encodeFunctionData("setMessages", [[ethers.encodeBytes32String("Message_10n229k")]])
+      data: plainCarrierLicense.interface.encodeFunctionData("setMessages", [[ethers.encodeBytes32String("Cargo Details Request")]])
     }
   ));
   report.push(await expectAllowed(
@@ -429,10 +445,10 @@ async function main() {
     participantRoles: ["", "Carrier", ""]
   };
   const carrierNmt = await deployChoreographyType(carrierModel);
-  const [carrierAssetAddress] = await carrierNmt.mint.staticCall(...constrainedMintArguments);
+  const [carrierAssetAddress] = await carrierNmt.connect(authorizedCreator).mint.staticCall(...constrainedMintArguments);
   report.push(await expectAllowed(
     "authorized creator mints a model whose Carrier role requires a SpecialCarrier license",
-    () => carrierNmt.mint(...constrainedMintArguments)
+    () => carrierNmt.connect(authorizedCreator).mint(...constrainedMintArguments)
   ));
   const carrierAsset = await ethers.getContractAt("ChoreographyMutableAsset", carrierAssetAddress);
   report.push(await expectAllowed(
@@ -510,7 +526,7 @@ async function main() {
     holder: carrierB.address,
     name: "",
     profile: ethers.ZeroHash,
-    messages: ["Message_0dai5by", "Message_10n229k"],
+    messages: ["Pickup Schedule", "Cargo Details Request"],
     messagesWriter: carrierA.address,
     messagesWrittenByHolder: false
   });
@@ -593,8 +609,21 @@ async function main() {
   ));
 
   report.push(await expectDenied(
-    "authorized creator cannot assign an ineligible holder",
+    "master administrator cannot mint",
     administrator,
+    {
+      to: nmtAddress,
+      data: nmt.interface.encodeFunctionData("mint", [
+        administrator.address,
+        creatorPolicyAddress,
+        holderPolicyAddress
+      ])
+    }
+  ));
+
+  report.push(await expectDenied(
+    "authorized creator cannot assign an ineligible holder",
+    authorizedCreator,
     {
       to: nmtAddress,
       data: nmt.interface.encodeFunctionData("mint", [
@@ -650,8 +679,8 @@ async function main() {
   await denyAllPolicy.waitForDeployment();
 
   const holderMintArguments = [eligibleHolder.address, creatorPolicyAddress, holderPolicyAddress];
-  const [holderAssetAddress] = await nmt.mint.staticCall(...holderMintArguments);
-  await (await nmt.mint(...holderMintArguments)).wait();
+  const [holderAssetAddress] = await nmt.connect(authorizedCreator).mint.staticCall(...holderMintArguments);
+  await (await nmt.connect(authorizedCreator).mint(...holderMintArguments)).wait();
   const holderAsset = await ethers.getContractAt("ChoreographyMutableAsset", holderAssetAddress);
   report.push(await expectDenied(
     "holder cannot replace creator policy",
@@ -667,8 +696,8 @@ async function main() {
     () => holderAsset.setCreatorSmartPolicy(creatorPolicyAddress)
   ));
 
-  const secondMint = await nmt.mint.staticCall(...mintArguments);
-  await (await nmt.mint(...mintArguments)).wait();
+  const secondMint = await nmt.connect(authorizedCreator).mint.staticCall(...mintArguments);
+  await (await nmt.connect(authorizedCreator).mint(...mintArguments)).wait();
   const restrictedAsset = await ethers.getContractAt("ChoreographyMutableAsset", secondMint[0]);
   report.push(await expectAllowed(
     "holder installs restrictive policy",
@@ -708,7 +737,7 @@ async function main() {
   assert.equal(await nmt.masterSmartPolicy(), denyAllPolicy.target);
   report.push(await expectDenied(
     "replaced master policy governs minting",
-    administrator,
+    authorizedCreator,
     {
       to: nmtAddress,
       data: nmt.interface.encodeFunctionData("mint", holderMintArguments)
@@ -719,6 +748,14 @@ async function main() {
   report.push(await expectDenied(
     "license holder cannot replace participant master policy",
     carrierB,
+    {
+      to: specialCarrierNmt.target,
+      data: specialCarrierNmt.interface.encodeFunctionData("setMasterSmartPolicy", [denyAllPolicy.target])
+    }
+  ));
+  report.push(await expectDenied(
+    "authority cannot replace the participant master policy of another authority's license type",
+    supplierAuthority,
     {
       to: specialCarrierNmt.target,
       data: specialCarrierNmt.interface.encodeFunctionData("setMasterSmartPolicy", [denyAllPolicy.target])

@@ -36,9 +36,9 @@ export const PARITY = [
   { source: "experiment-summary", item: "Deployment and mint costs: USD @10, @30, @100 gwei columns", destination: "block:phase:F1" },
   { source: "experiment-summary", item: "Deployment and mint costs: mint and role-account rows", destination: "block:phase:F2" },
   { source: "experiment-summary", item: "Deployment and mint costs: deployment and mint total row (gas, local-price ETH, USD x3)", destination: "block:scenarios" },
-  { source: "experiment-summary", item: "Deployment and mint costs: transfer row, not executed then", destination: "block:phase:F7", reason: "the experiment now measures a transfer, on the second instance" },
-  { source: "experiment-summary", item: "Delta update versus a new instance: strategy, gas, ETH cost, USD x3, relative gas saving", destination: "block:comparison" },
-  { source: "experiment-summary", item: "Delta update versus a new instance: explanation (deployment excluded, per-instance transactions)", destination: "narrative:comparison" },
+  { source: "experiment-summary", item: "Deployment and mint costs: transfer row, not executed then", destination: "dropped", reason: "the experiment does not transfer a choreography instance: the transfer rules are proved by test:policies" },
+  { source: "experiment-summary", item: "Delta update versus a new instance: strategy, gas, ETH cost, USD x3, relative gas saving", destination: "dropped", reason: "the experiment measures the cost of the delta and does not compare it with a new instance (requirement H5)" },
+  { source: "experiment-summary", item: "Delta update versus a new instance: explanation (deployment excluded, per-instance transactions)", destination: "dropped", reason: "the comparison is not part of the experiment" },
   { source: "experiment-summary", item: "Public-network gas-price scenarios: condition, gas price, meaning, gas, ETH, USD", destination: "block:scenarios" },
   { source: "experiment-summary", item: "Phase measurements: phase, duration, gas, ETH cost", destination: "block:phases-overview" },
   { source: "experiment-summary", item: "Phase measurements: nodes, edges, gateways, messages", destination: "block:phases-overview" },
@@ -108,7 +108,7 @@ export const PARITY = [
   { source: "README", item: "Policy lifecycle evaluation", destination: "narrative:phases" },
   { source: "README", item: "UML diagrams in the reports", destination: "block:uml-guide" },
   { source: "README", item: "Unified overview", destination: "readme:Unified overview" },
-  { source: "README", item: "Delta versus a new instance benchmark", destination: "narrative:comparison" },
+  { source: "README", item: "Delta versus a new instance benchmark", destination: "dropped", reason: "the comparison is not part of the experiment" },
   { source: "README", item: "Manual gnuplot templates", destination: "block:charts" },
   { source: "README", item: "For publication: repeat, aggregate median/mean/stddev, report network, gas price, optimizer, Node, hardware", destination: "block:provenance" }
 ];

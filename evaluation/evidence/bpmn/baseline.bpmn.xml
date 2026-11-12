@@ -1,14 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Choreography_definitions" targetNamespace="http://example.com/chornmt/import">
-  <bpmn:message id="Message_Order_initiating" name="Message_1xwxfgh" />
-  <bpmn:message id="Message_Order_Intermediate_initiating" name="Message_0zv34lb" />
-  <bpmn:message id="Message_FWD_Oder_Intermediate_initiating" name="Message_1o2ktar" />
-  <bpmn:message id="Message_Order_Special_Transport_initiating" name="Message_0dai5by" />
-  <bpmn:message id="Message_Request_Details_initiating" name="Message_10n229k" />
-  <bpmn:message id="Message_Transport_Details_initiating" name="Message_1325zdq" />
-  <bpmn:message id="Message_Waybill_for_Intermediate_initiating" name="Message_1vaojlk" />
-  <bpmn:message id="Message_Arrival_Intermediate_initiating" name="Message_11ex51i" />
-  <bpmn:message id="Message_Delivery_of_Product_initiating" name="Message_0t5qtd8" />
+  <bpmn:message id="Message_Order_initiating" name="Purchase Order" />
+  <bpmn:message id="Message_Order_return" name="Order Confirmation" />
+  <bpmn:message id="Message_Order_Intermediate_initiating" name="Component Order" />
+  <bpmn:message id="Message_Order_Intermediate_return" name="Delivery Date Commitment" />
+  <bpmn:message id="Message_FWD_Oder_Intermediate_initiating" name="Forwarded Order" />
+  <bpmn:message id="Message_FWD_Oder_Intermediate_return" name="Availability Notice" />
+  <bpmn:message id="Message_Order_Special_Transport_initiating" name="Transport Order" />
+  <bpmn:message id="Message_Order_Special_Transport_return" name="Pickup Schedule" />
+  <bpmn:message id="Message_Request_Details_initiating" name="Cargo Details Request" />
+  <bpmn:message id="Message_Request_Details_return" name="Loading Slot" />
+  <bpmn:message id="Message_Transport_Details_initiating" name="Cargo Specification" />
+  <bpmn:message id="Message_Transport_Details_return" name="Vehicle Assignment" />
+  <bpmn:message id="Message_Waybill_for_Intermediate_initiating" name="Waybill" />
+  <bpmn:message id="Message_Waybill_for_Intermediate_return" name="Signed Waybill" />
+  <bpmn:message id="Message_Arrival_Intermediate_initiating" name="Arrival Notice" />
+  <bpmn:message id="Message_Arrival_Intermediate_return" name="Goods Receipt" />
+  <bpmn:message id="Message_Delivery_of_Product_initiating" name="Delivery Note" />
+  <bpmn:message id="Message_Delivery_of_Product_return" name="Payment" />
   <bpmn:choreography id="Choreography" name="paper-example">
     <bpmn:participant id="Participant_Bulk_Buyer" name="Bulk Buyer" />
     <bpmn:participant id="Participant_Manufacturer" name="Manufacturer" />
@@ -16,23 +25,33 @@
     <bpmn:participant id="Participant_Supplier" name="Supplier" />
     <bpmn:participant id="Participant_Special_Carrier" name="Special Carrier" />
     <bpmn:messageFlow id="MessageFlow_Order_initiating" sourceRef="Participant_Bulk_Buyer" targetRef="Participant_Manufacturer" messageRef="Message_Order_initiating" />
+    <bpmn:messageFlow id="MessageFlow_Order_return" sourceRef="Participant_Manufacturer" targetRef="Participant_Bulk_Buyer" messageRef="Message_Order_return" />
     <bpmn:messageFlow id="MessageFlow_Order_Intermediate_initiating" sourceRef="Participant_Manufacturer" targetRef="Participant_Middleman" messageRef="Message_Order_Intermediate_initiating" />
+    <bpmn:messageFlow id="MessageFlow_Order_Intermediate_return" sourceRef="Participant_Middleman" targetRef="Participant_Manufacturer" messageRef="Message_Order_Intermediate_return" />
     <bpmn:messageFlow id="MessageFlow_FWD_Oder_Intermediate_initiating" sourceRef="Participant_Middleman" targetRef="Participant_Supplier" messageRef="Message_FWD_Oder_Intermediate_initiating" />
+    <bpmn:messageFlow id="MessageFlow_FWD_Oder_Intermediate_return" sourceRef="Participant_Supplier" targetRef="Participant_Middleman" messageRef="Message_FWD_Oder_Intermediate_return" />
     <bpmn:messageFlow id="MessageFlow_Order_Special_Transport_initiating" sourceRef="Participant_Middleman" targetRef="Participant_Special_Carrier" messageRef="Message_Order_Special_Transport_initiating" />
+    <bpmn:messageFlow id="MessageFlow_Order_Special_Transport_return" sourceRef="Participant_Special_Carrier" targetRef="Participant_Middleman" messageRef="Message_Order_Special_Transport_return" />
     <bpmn:messageFlow id="MessageFlow_Request_Details_initiating" sourceRef="Participant_Special_Carrier" targetRef="Participant_Supplier" messageRef="Message_Request_Details_initiating" />
+    <bpmn:messageFlow id="MessageFlow_Request_Details_return" sourceRef="Participant_Supplier" targetRef="Participant_Special_Carrier" messageRef="Message_Request_Details_return" />
     <bpmn:messageFlow id="MessageFlow_Transport_Details_initiating" sourceRef="Participant_Supplier" targetRef="Participant_Special_Carrier" messageRef="Message_Transport_Details_initiating" />
+    <bpmn:messageFlow id="MessageFlow_Transport_Details_return" sourceRef="Participant_Special_Carrier" targetRef="Participant_Supplier" messageRef="Message_Transport_Details_return" />
     <bpmn:messageFlow id="MessageFlow_Waybill_for_Intermediate_initiating" sourceRef="Participant_Supplier" targetRef="Participant_Special_Carrier" messageRef="Message_Waybill_for_Intermediate_initiating" />
+    <bpmn:messageFlow id="MessageFlow_Waybill_for_Intermediate_return" sourceRef="Participant_Special_Carrier" targetRef="Participant_Supplier" messageRef="Message_Waybill_for_Intermediate_return" />
     <bpmn:messageFlow id="MessageFlow_Arrival_Intermediate_initiating" sourceRef="Participant_Special_Carrier" targetRef="Participant_Manufacturer" messageRef="Message_Arrival_Intermediate_initiating" />
+    <bpmn:messageFlow id="MessageFlow_Arrival_Intermediate_return" sourceRef="Participant_Manufacturer" targetRef="Participant_Special_Carrier" messageRef="Message_Arrival_Intermediate_return" />
     <bpmn:messageFlow id="MessageFlow_Delivery_of_Product_initiating" sourceRef="Participant_Manufacturer" targetRef="Participant_Bulk_Buyer" messageRef="Message_Delivery_of_Product_initiating" />
-    <bpmn:startEvent id="StartEvent_Event_0amsrvp" name="Event_0amsrvp">
-      <bpmn:outgoing>Flow_Event_0amsrvp_Order</bpmn:outgoing>
+    <bpmn:messageFlow id="MessageFlow_Delivery_of_Product_return" sourceRef="Participant_Bulk_Buyer" targetRef="Participant_Manufacturer" messageRef="Message_Delivery_of_Product_return" />
+    <bpmn:startEvent id="StartEvent_Start" name="Start">
+      <bpmn:outgoing>Flow_Start_Order</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:choreographyTask id="ChoreographyTask_Order" name="Order" initiatingParticipantRef="Participant_Bulk_Buyer">
-      <bpmn:incoming>Flow_Event_0amsrvp_Order</bpmn:incoming>
+      <bpmn:incoming>Flow_Start_Order</bpmn:incoming>
       <bpmn:outgoing>Flow_Order_Order_Intermediate</bpmn:outgoing>
       <bpmn:participantRef>Participant_Bulk_Buyer</bpmn:participantRef>
       <bpmn:participantRef>Participant_Manufacturer</bpmn:participantRef>
       <bpmn:messageFlowRef>MessageFlow_Order_initiating</bpmn:messageFlowRef>
+      <bpmn:messageFlowRef>MessageFlow_Order_return</bpmn:messageFlowRef>
     </bpmn:choreographyTask>
     <bpmn:choreographyTask id="ChoreographyTask_Order_Intermediate" name="Order Intermediate" initiatingParticipantRef="Participant_Manufacturer">
       <bpmn:incoming>Flow_Order_Order_Intermediate</bpmn:incoming>
@@ -40,6 +59,7 @@
       <bpmn:participantRef>Participant_Manufacturer</bpmn:participantRef>
       <bpmn:participantRef>Participant_Middleman</bpmn:participantRef>
       <bpmn:messageFlowRef>MessageFlow_Order_Intermediate_initiating</bpmn:messageFlowRef>
+      <bpmn:messageFlowRef>MessageFlow_Order_Intermediate_return</bpmn:messageFlowRef>
     </bpmn:choreographyTask>
     <bpmn:choreographyTask id="ChoreographyTask_FWD_Oder_Intermediate" name="FWD Oder Intermediate" initiatingParticipantRef="Participant_Middleman">
       <bpmn:incoming>Flow_Order_Intermediate_FWD_Oder_Intermediate</bpmn:incoming>
@@ -47,6 +67,7 @@
       <bpmn:participantRef>Participant_Middleman</bpmn:participantRef>
       <bpmn:participantRef>Participant_Supplier</bpmn:participantRef>
       <bpmn:messageFlowRef>MessageFlow_FWD_Oder_Intermediate_initiating</bpmn:messageFlowRef>
+      <bpmn:messageFlowRef>MessageFlow_FWD_Oder_Intermediate_return</bpmn:messageFlowRef>
     </bpmn:choreographyTask>
     <bpmn:choreographyTask id="ChoreographyTask_Order_Special_Transport" name="Order Special Transport" initiatingParticipantRef="Participant_Middleman">
       <bpmn:incoming>Flow_FWD_Oder_Intermediate_Order_Special_Transport</bpmn:incoming>
@@ -54,6 +75,7 @@
       <bpmn:participantRef>Participant_Middleman</bpmn:participantRef>
       <bpmn:participantRef>Participant_Special_Carrier</bpmn:participantRef>
       <bpmn:messageFlowRef>MessageFlow_Order_Special_Transport_initiating</bpmn:messageFlowRef>
+      <bpmn:messageFlowRef>MessageFlow_Order_Special_Transport_return</bpmn:messageFlowRef>
     </bpmn:choreographyTask>
     <bpmn:choreographyTask id="ChoreographyTask_Request_Details" name="Request Details" initiatingParticipantRef="Participant_Special_Carrier">
       <bpmn:incoming>Flow_Order_Special_Transport_Request_Details</bpmn:incoming>
@@ -61,6 +83,7 @@
       <bpmn:participantRef>Participant_Special_Carrier</bpmn:participantRef>
       <bpmn:participantRef>Participant_Supplier</bpmn:participantRef>
       <bpmn:messageFlowRef>MessageFlow_Request_Details_initiating</bpmn:messageFlowRef>
+      <bpmn:messageFlowRef>MessageFlow_Request_Details_return</bpmn:messageFlowRef>
     </bpmn:choreographyTask>
     <bpmn:choreographyTask id="ChoreographyTask_Transport_Details" name="Transport Details" initiatingParticipantRef="Participant_Supplier">
       <bpmn:incoming>Flow_Request_Details_Transport_Details</bpmn:incoming>
@@ -68,6 +91,7 @@
       <bpmn:participantRef>Participant_Supplier</bpmn:participantRef>
       <bpmn:participantRef>Participant_Special_Carrier</bpmn:participantRef>
       <bpmn:messageFlowRef>MessageFlow_Transport_Details_initiating</bpmn:messageFlowRef>
+      <bpmn:messageFlowRef>MessageFlow_Transport_Details_return</bpmn:messageFlowRef>
     </bpmn:choreographyTask>
     <bpmn:choreographyTask id="ChoreographyTask_Waybill_for_Intermediate" name="Waybill for Intermediate" initiatingParticipantRef="Participant_Supplier">
       <bpmn:incoming>Flow_Transport_Details_Waybill_for_Intermediate</bpmn:incoming>
@@ -75,6 +99,7 @@
       <bpmn:participantRef>Participant_Supplier</bpmn:participantRef>
       <bpmn:participantRef>Participant_Special_Carrier</bpmn:participantRef>
       <bpmn:messageFlowRef>MessageFlow_Waybill_for_Intermediate_initiating</bpmn:messageFlowRef>
+      <bpmn:messageFlowRef>MessageFlow_Waybill_for_Intermediate_return</bpmn:messageFlowRef>
     </bpmn:choreographyTask>
     <bpmn:choreographyTask id="ChoreographyTask_Arrival_Intermediate" name="Arrival Intermediate" initiatingParticipantRef="Participant_Special_Carrier">
       <bpmn:incoming>Flow_Waybill_for_Intermediate_Arrival_Intermediate</bpmn:incoming>
@@ -82,18 +107,20 @@
       <bpmn:participantRef>Participant_Special_Carrier</bpmn:participantRef>
       <bpmn:participantRef>Participant_Manufacturer</bpmn:participantRef>
       <bpmn:messageFlowRef>MessageFlow_Arrival_Intermediate_initiating</bpmn:messageFlowRef>
+      <bpmn:messageFlowRef>MessageFlow_Arrival_Intermediate_return</bpmn:messageFlowRef>
     </bpmn:choreographyTask>
     <bpmn:choreographyTask id="ChoreographyTask_Delivery_of_Product" name="Delivery of Product" initiatingParticipantRef="Participant_Manufacturer">
       <bpmn:incoming>Flow_Arrival_Intermediate_Delivery_of_Product</bpmn:incoming>
-      <bpmn:outgoing>Flow_Delivery_of_Product_Event_10n27bz</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Delivery_of_Product_End</bpmn:outgoing>
       <bpmn:participantRef>Participant_Manufacturer</bpmn:participantRef>
       <bpmn:participantRef>Participant_Bulk_Buyer</bpmn:participantRef>
       <bpmn:messageFlowRef>MessageFlow_Delivery_of_Product_initiating</bpmn:messageFlowRef>
+      <bpmn:messageFlowRef>MessageFlow_Delivery_of_Product_return</bpmn:messageFlowRef>
     </bpmn:choreographyTask>
-    <bpmn:endEvent id="EndEvent_Event_10n27bz" name="Event_10n27bz">
-      <bpmn:incoming>Flow_Delivery_of_Product_Event_10n27bz</bpmn:incoming>
+    <bpmn:endEvent id="EndEvent_End" name="End">
+      <bpmn:incoming>Flow_Delivery_of_Product_End</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_Event_0amsrvp_Order" sourceRef="StartEvent_Event_0amsrvp" targetRef="ChoreographyTask_Order" />
+    <bpmn:sequenceFlow id="Flow_Start_Order" sourceRef="StartEvent_Start" targetRef="ChoreographyTask_Order" />
     <bpmn:sequenceFlow id="Flow_Order_Order_Intermediate" sourceRef="ChoreographyTask_Order" targetRef="ChoreographyTask_Order_Intermediate" />
     <bpmn:sequenceFlow id="Flow_Order_Intermediate_FWD_Oder_Intermediate" sourceRef="ChoreographyTask_Order_Intermediate" targetRef="ChoreographyTask_FWD_Oder_Intermediate" />
     <bpmn:sequenceFlow id="Flow_FWD_Oder_Intermediate_Order_Special_Transport" sourceRef="ChoreographyTask_FWD_Oder_Intermediate" targetRef="ChoreographyTask_Order_Special_Transport" />
@@ -102,11 +129,11 @@
     <bpmn:sequenceFlow id="Flow_Transport_Details_Waybill_for_Intermediate" sourceRef="ChoreographyTask_Transport_Details" targetRef="ChoreographyTask_Waybill_for_Intermediate" />
     <bpmn:sequenceFlow id="Flow_Waybill_for_Intermediate_Arrival_Intermediate" sourceRef="ChoreographyTask_Waybill_for_Intermediate" targetRef="ChoreographyTask_Arrival_Intermediate" />
     <bpmn:sequenceFlow id="Flow_Arrival_Intermediate_Delivery_of_Product" sourceRef="ChoreographyTask_Arrival_Intermediate" targetRef="ChoreographyTask_Delivery_of_Product" />
-    <bpmn:sequenceFlow id="Flow_Delivery_of_Product_Event_10n27bz" sourceRef="ChoreographyTask_Delivery_of_Product" targetRef="EndEvent_Event_10n27bz" />
+    <bpmn:sequenceFlow id="Flow_Delivery_of_Product_End" sourceRef="ChoreographyTask_Delivery_of_Product" targetRef="EndEvent_End" />
   </bpmn:choreography>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_Choreography" bpmnElement="Choreography">
-      <bpmndi:BPMNShape id="StartEvent_Event_0amsrvp_di" bpmnElement="StartEvent_Event_0amsrvp">
+      <bpmndi:BPMNShape id="StartEvent_Start_di" bpmnElement="StartEvent_Start">
         <dc:Bounds x="234" y="350" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="ChoreographyTask_Order_di" bpmnElement="ChoreographyTask_Order">
@@ -190,10 +217,10 @@
       <bpmndi:BPMNShape id="ChoreographyTask_Delivery_of_Product_Participant_Bulk_Buyer_band_di" bpmnElement="Participant_Bulk_Buyer" isMessageVisible="true" participantBandKind="bottom_non_initiating" choreographyActivityShape="ChoreographyTask_Delivery_of_Product_di">
         <dc:Bounds x="1552" y="388" width="100" height="20" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="EndEvent_Event_10n27bz_di" bpmnElement="EndEvent_Event_10n27bz">
+      <bpmndi:BPMNShape id="EndEvent_End_di" bpmnElement="EndEvent_End">
         <dc:Bounds x="1734" y="350" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_Event_0amsrvp_Order_di" bpmnElement="Flow_Event_0amsrvp_Order">
+      <bpmndi:BPMNEdge id="Flow_Start_Order_di" bpmnElement="Flow_Start_Order">
         <di:waypoint x="270" y="368" />
         <di:waypoint x="352" y="368" />
       </bpmndi:BPMNEdge>
@@ -229,7 +256,7 @@
         <di:waypoint x="1502" y="368" />
         <di:waypoint x="1552" y="368" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_Delivery_of_Product_Event_10n27bz_di" bpmnElement="Flow_Delivery_of_Product_Event_10n27bz">
+      <bpmndi:BPMNEdge id="Flow_Delivery_of_Product_End_di" bpmnElement="Flow_Delivery_of_Product_End">
         <di:waypoint x="1652" y="368" />
         <di:waypoint x="1734" y="368" />
       </bpmndi:BPMNEdge>

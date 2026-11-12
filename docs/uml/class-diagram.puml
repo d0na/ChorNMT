@@ -122,7 +122,6 @@ class ParticipantMutableAsset {
   + participantType : bytes32 {immutable}
   - name : bytes32
   - profile : bytes32
-  - messagesWriter : address
   - messages : bytes32[]
   + constructor(nmt, creatorPolicy, holderPolicy, participantType)
   ' participantType: the type of the ParticipantNMT that creates it
@@ -147,10 +146,12 @@ NMT <|-- ChoreographyNMT
 NMT <|-- ParticipantNMT
 MutableAsset <|-- ChoreographyMutableAsset
 MutableAsset <|-- ParticipantMutableAsset
-SmartPolicy <|-- MasterSmartPolicy
-SmartPolicy <|-- CreatorSmartPolicy
-SmartPolicy <|-- HolderSmartPolicy
-SmartPolicy <|-- DenyAllSmartPolicy
+MasterSmartPolicy -down-|> SmartPolicy
+CreatorSmartPolicy -down-|> SmartPolicy
+HolderSmartPolicy -down-|> SmartPolicy
+DenyAllSmartPolicy -down-|> SmartPolicy
+' keep the Master on the row of the other policies
+ParticipantMutableAsset -[hidden]down- MasterSmartPolicy
 
 ' ---------- internal structure ----------
 ChoreographyMutableAsset *-- Descriptor
@@ -164,4 +165,7 @@ ChoreographyNMT ..> MasterSmartPolicy : consults
 ChoreographyNMT ..> ChoreographyTokenURIRenderer : tokenURI
 ChoreographyMutableAsset ..> CreatorSmartPolicy : consults
 ChoreographyMutableAsset ..> HolderSmartPolicy : consults
+ParticipantNMT ..> MasterSmartPolicy : consults
+ParticipantMutableAsset ..> CreatorSmartPolicy : consults
+ParticipantMutableAsset ..> HolderSmartPolicy : consults
 @enduml

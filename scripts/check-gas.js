@@ -37,8 +37,8 @@ const FIGURES = [
   },
   {
     doc: "docs/choreography-policies.md",
-    text: "| Assign an account to four of its five roles (`setRoles`; the fifth takes a license) | {gas} |",
-    gas: ({ experiment }) => [gasOf(experiment, "F2.roles")],
+    text: "| Link its five roles to their licenses (one `setRoles`) | {gas} |",
+    gas: ({ experiment }) => [gasOf(experiment, "F3.link")],
   },
   {
     doc: "docs/choreography-policies.md",

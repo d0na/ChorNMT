@@ -27,6 +27,7 @@ Acceptance criteria:
 - The trust table in [Choreography policies](choreography-policies.md#who-can-do-what), the cases of `scripts/test-policies.js`, and [Policy and test specification](policy-test-specification.md) agree.
 - `test:policies` passes: every public mutator has at least one allowed and one denied case, and every denial is a reverted transaction.
 - The experiment records the outcome, revert reason, trust-table row, and gas of every allowed and denied policy decision of the paper scenario (`evaluation/evidence/experiment.json`).
+- In the experiment the administrator of the Master policy, the authorized creator, and the holder of the instance are three accounts, and each is denied what belongs to another: the administrator a mint, the authorized creator and an outsider an update of the instance (phases F2 and F5).
 
 ### C3. The Creator sets constraints the Holder cannot remove
 
@@ -44,15 +45,16 @@ A role is linked once to a license (`ParticipantMutableAsset`) of the type the C
 Acceptance criteria:
 
 - `test:policies` covers license minting, linking, message declaration, and sale, with allowed and denied cases (see [Participant license design](participant-license-design.md)).
+- The experiment links every role of the paper example to a license of its own type, issued by the authority of that type, and records the denials: an authority issuing a type of another authority, and a role linked to a plain account or to a license of another type (phase F3).
 - The experiment records the Special Carrier license sale, its denials, and its costs (phase F6).
 
 ### H5. Cost hypothesis
 
-The cost of the whole flow (deploy of a type, mint, modify) is measured, and a delta update is expected to cost less than a new instance of the type, born with the whole model, depending on the size of the delta. This is a hypothesis, confirmed or refuted by the measurements, not by this document.
+The cost of the whole flow (deploy of a type and of the license infrastructure, mint, licenses, modify) is measured, and the cost of a delta update is expected to depend on the number of nodes it writes. The aim is to know what a delta costs, not to compare it with another strategy: the experiment does not measure a delta against a new instance. This is a hypothesis, confirmed or refuted by the measurements, not by this document.
 
 Acceptance criteria:
 
-- The experiment records the gas of the type deployment (F1, model contract included), the mint (F2), and the delta (F5), the delta versus new instance comparison (F8), and the gas by number of changed nodes (the `gas-by-changed-nodes` chart).
+- The experiment records the gas of the type deployment (F1, model contract included), the mint (F2), the licenses and the role links (F3), and the delta (F5), and the gas by number of changed nodes (the `gas-by-changed-nodes` chart).
 - Every contract change reports its gas before and after; an increase needs a stated reason (see [Contract structure](contract-structure.md#gas)).
 - Every contract fits the EIP-170 and EIP-3860 limits (`check:size`, CI).
 
@@ -63,7 +65,7 @@ Every number, outcome, chart, BPMN drawing, and sequence diagram that documents 
 Acceptance criteria:
 
 - One run on an ephemeral network executes phases F1–F8 of the versioned phase specification on one instance, through the same functions as the CLI commands, and fails if an outcome differs from the expected one.
-- `evaluation/evidence/` holds the last approved run; `check:evidence` regenerates and compares it in the pre-commit hook and in CI, timings excluded and each image checked through the hash of the compared file it is drawn from, and recomputes every derived value (gas from receipts, phase totals, USD, delta versus new instance, chart points, test matrix versus run) independently.
+- `evaluation/evidence/` holds the last approved run; `check:evidence` regenerates and compares it in the pre-commit hook and in CI, timings excluded and each image checked through the hash of the compared file it is drawn from, and recomputes every derived value (gas from receipts, phase totals, USD, chart points, test matrix versus run) independently.
 - The sequence diagrams are generated from the call trace, filtered and complete; their transactions, order, outcomes, and participants match the phase tables. The use case diagrams match the trust table, the test cases, and the evidence both ways.
 - The baseline BPMN XML is equivalent to `references/paper-example.bpmn`, the final one equals the baseline plus the delta, both equal the on-chain state, and each SVG contains exactly the element names of its XML.
 - `docs/experiment.md` contains no number or outcome word outside generated blocks, except declared structural ones, and the parity checklist maps every section, table, column, and artifact of the former reports to a block of the protocol.
@@ -82,5 +84,5 @@ Out of scope by choice; do not add them:
 - **Deleting nodes.** Nodes are overwritten, never removed; a clean model needs a new asset.
 - **A version registry.** The history of a model is the chain itself (see [Design decisions](decisions.md)).
 - **Replacing the model of a type.** The model contract of a `ChoreographyNMT` is immutable; another starting model is another type.
-- **Models above the contract size limit.** The encoded model is stored as contract code, at most 24,576 bytes (the paper example takes 11,136).
+- **Models above the contract size limit.** The encoded model is stored as contract code, at most 24,576 bytes (the paper example takes 11,424).
 - **Production deployment.** No public networks, no security audit; accounts are the default Hardhat ones.

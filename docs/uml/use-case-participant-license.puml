@@ -7,18 +7,18 @@ left to right direction
 ' trust-table row, the experiment evidence, and the test:policies cases that prove it.
 ' npm run check:use-cases checks all of them both ways. The participant Master and the certifier
 ' policy are never replaced (open question in docs/decisions.md), so those use cases are not shown.
-' accounts: Authority
-actor "Authority\n(account 9)\nissuer and certifier" as Authority
+' accounts: Transport authority, Supplier authority, Bulk Buyer authority, Manufacturer authority, Middleman authority
+actor "Authority\n(accounts 9-13, one per\nlicense type; transport: two)\nissuer and certifier" as Authority
 ' accounts: Carrier A, Carrier B
 actor "License holder\n(Carrier A, then Carrier B)" as LicenseHolder
 ' accounts: Carrier B
 actor "Buyer\n(Carrier B)" as Buyer
-' accounts: Administrator
+' accounts: Holder
 actor "Holder\n(of the choreography)" as ChoreoHolder
 rectangle "ParticipantNMT (one per type) + ParticipantMutableAsset" {
   ' trust: licenses:mint
-  ' evidence: F3.license.special-carrier, F3.license.carrier, F3.license.supplier
-  ' test: unauthorized issuer cannot mint a participant license; issuer cannot mint a license of a type the Master does not define
+  ' evidence: F3.license.special-carrier, F3.license.carrier, F3.license.supplier, F3.license.bulk-buyer, F3.license.manufacturer, F3.license.middleman, F3.denied.foreign-authority
+  ' test: unauthorized issuer cannot mint a participant license; authority cannot issue a license type of another authority; issuer cannot mint a license of a type the Master does not define
   usecase "Mint a license\n(mint on the NMT of its type)" as UC_Mint
   ' trust: licenses:setMessages
   ' evidence: F3.license.messages, F3.denied.foreign-message, F6.buyer.messages
@@ -43,7 +43,7 @@ rectangle "ParticipantNMT (one per type) + ParticipantMutableAsset" {
 }
 rectangle "Choreography" {
   ' trust: choreography:setRoles
-  ' evidence: F3.link, F8.new-instance.link
+  ' evidence: F3.link
   ' test: holder links a role to a certified license
   usecase "Link a role to the license" as UC_Link
   ' trust: choreography:setRoles

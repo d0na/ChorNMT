@@ -12,7 +12,7 @@ The table is the intended trust model with the default policies. Every change to
 | Action | Master administrator | Authorized creator | Holder | Creator policy administrator | Anyone else |
 | --- | --- | --- | --- | --- | --- |
 | Replace the Master policy of the NMT (`setMasterSmartPolicy`) | yes | no | no | no | no |
-| `mint` an instance of the choreography type to an eligible holder | yes (an authorized creator) | yes | no | no | no |
+| `mint` an instance of the choreography type to an eligible holder | **no** | yes | no | no | no |
 | `transferFrom` to an eligible holder | no | no | yes | no | no |
 | `setNodes` | no | no | yes, within the Creator BPMN constraints | no | no |
 | `setRoles` | no | no | yes, a protected role only once, and within the Creator role constraints | no | no |
@@ -36,7 +36,7 @@ Design decisions behind the table:
 
 ## Master policy
 
-The Master stands for a policy translated from XACML, so its configuration is hardcoded, not set at runtime: the administrator and only authorized creator is the authority (Hardhat account 0), and the eligible holders are the authority and its partner (accounts 0 and 1). A different rule is a different policy, installed with `setMasterSmartPolicy`.
+The Master stands for a policy translated from XACML, so its configuration is hardcoded, not set at runtime: the administrator is the authority (Hardhat account 0), the only authorized creator is another account (account 4), and the eligible holders are the authority and its partner (accounts 0 and 1). The three parts are separate: the administrator replaces the policy and does not mint, the authorized creator mints and holds no right on the instance it minted, and the holder edits its instance. The experiment plays them with three accounts (0, 4, and 1). A different rule is a different policy, installed with `setMasterSmartPolicy`.
 
 - `mint(...)` requires an authorized creator and an eligible initial holder.
 - `transferFrom(...)` requires the current holder as caller and an eligible receiving holder.
@@ -55,12 +55,12 @@ The experiment (`evaluation/evidence/`, [protocol](experiment.md)) and `npm run 
 
 | Operation | Gas used |
 | --- | ---: |
-| Deploy the paper-example model contract (once per type) | 2,343,146 |
-| Mint a paper-example instance, born with the model | 5,619,770 |
-| Assign an account to four of its five roles (`setRoles`; the fifth takes a license) | 176,849 |
+| Deploy the paper-example model contract (once per type) | 2,403,302 |
+| Mint a paper-example instance, born with the model | 5,799,185 |
+| Link its five roles to their licenses (one `setRoles`) | 284,148 |
 | Mint a three-node test instance | 3,173,819 |
 
-The values are reproducible local gas measurements, not public-network prices. Storage writes in the asset dominate the mint. In the same run, an allowed constrained update (three whole nodes) used 609,279 gas and structural deny paths used 76,086--324,233 gas; the paper delta used 1,866,349 gas.
+The values are reproducible local gas measurements, not public-network prices. Storage writes in the asset dominate the mint. In the same run, an allowed constrained update (three whole nodes) used 609,279 gas and structural deny paths used 76,086--324,233 gas; the paper delta used 1,867,847 gas.
 
 ## Instance policies
 
@@ -73,14 +73,14 @@ Replacing the Creator policy is not a Holder operation: only the Creator policy'
 The Creator policy also defines the structural boundaries for `setNodes(...)`; it is not a fourth policy type. Like every policy it stands for a policy translated from XACML, so its rules are hardcoded, not set at runtime; a different set of constraints is a different policy, installed with `setCreatorSmartPolicy` or passed at mint.
 
 - `CreatorSmartPolicy`, the default, has no BPMN constraint: it rejects only malformed updates (array lengths that differ, empty or duplicate names, and sequence flows declared on one endpoint only: in the post-update model `B` is in `A.outgoing` if and only if `A` is in `B.incoming`). A one-sided flow would leave a model that the render cannot draw, so every Creator policy enforces it, the constrained ones included.
-- `ConstrainedCreatorSmartPolicy` (abstract) holds the constraint rules. Each scenario extends it and writes the data as literals: `CreatorSmartPolicyTestScenario` for the fixture of `scripts/test-policies.js` (4 tasks, 5 flows, allowed tasks `Delivery`, `Inspection`, `Packing`, `Labeling`, `Shipping`, protected node `Start`, protected role `Buyer`, `Carrier` requires a `SpecialCarrier` license, distinct role accounts) and `CreatorSmartPolicyPaperScenario` for the paper example (11 tasks, 15 flows, the evolved paper tasks plus two optional inspections, protected node `Order`, `Special Carrier` requires a `SpecialCarrier` license).
+- `ConstrainedCreatorSmartPolicy` (abstract) holds the constraint rules. Each scenario extends it and writes the data as literals: `CreatorSmartPolicyTestScenario` for the fixture of `scripts/test-policies.js` (4 tasks, 5 flows, allowed tasks `Delivery`, `Inspection`, `Packing`, `Labeling`, `Shipping`, protected node `Start`, protected role `Buyer`, `Carrier` requires a `SpecialCarrier` license, distinct role accounts) and `CreatorSmartPolicyPaperScenario` for the paper example (11 tasks, 15 flows, the evolved paper tasks plus two optional inspections, protected node `Order`, and every role requires a license of its own type: `Bulk Buyer` a `BulkBuyer` license, `Manufacturer` a `Manufacturer` one, `Middleman` a `Middleman` one, `Supplier` a `Supplier` one, and `Special Carrier` a `SpecialCarrier` one, each read through the attribute manager of its type).
 - `ChoreographyParticipantAM` is the attribute manager the constrained policies read role licenses from: it returns the type of a license minted by its license NMT and certified by the participant Creator policy, both bound at its deploy, and zero for any other address. A license NMT mints one type, so there is one attribute manager per type: the scenario policy binds the attribute manager of each type it requires and asks the one of the role's type. Which type a role requires stays in the Creator policy.
 
 Before writing storage, the asset asks its Creator policy to evaluate the update. A constrained policy computes the post-update task count and total outgoing sequence-flow count, and rejects protected-node updates, task names outside the allowlist, incoming or outgoing flows whose endpoint does not already exist or appear in the same delta, and any change to the links of a protected node. `setRoles` is checked for protected roles that already have an account, new roles (only existing roles can be reassigned), addresses that are not a suitable license for a role with a requirement, and, when the scenario requires it, accounts that would play two roles.
 
 The Holder policy remains an independent second approval, also for these domain checks: the asset asks `evaluateNodeUpdate` and `evaluateRoleUpdate` of the Creator AND the Holder policy (`IChoreographyPolicy`). A Holder can further restrict an instance by installing `DenyAllSmartPolicy`, without weakening the Creator-defined BPMN boundaries.
 
-The Master policy is deployed before `ChoreographyNMT`. Its rules are hardcoded for Hardhat account 0 (authorized creator, administrator, and the default deployer of `deploy:asset`) and account 1 (eligible holder); another organization needs a different Master policy, installed with `setMasterSmartPolicy`.
+The Master policy is deployed before `ChoreographyNMT`. Its rules are hardcoded for Hardhat account 0 (administrator, eligible holder, and the default deployer and holder of `deploy:asset`), account 1 (eligible holder), and account 4 (authorized creator, the account `deploy:asset` mints with); another organization needs a different Master policy, installed with `setMasterSmartPolicy`.
 
 Run `npm run test:policies` to execute allowed and denied paths for each policy category. The test reports the gas used and wei cost for both outcomes, including reverted transactions.
 
@@ -88,12 +88,12 @@ Run `npm run test:policies` to execute allowed and denied paths for each policy 
 
 A role is played by a license: a `ParticipantMutableAsset` minted by a `ParticipantNMT`. Each license type has its own `ParticipantNMT`, which fixes the type at deploy time; `mint` takes no type. The choreography links the role to the license once. The organization that plays the role is the license holder; it changes when the holder sells the license.
 
-The participant policies stand for policies translated from XACML: their configuration is hardcoded, not set at runtime. The participant Master writes, for every license type (`SpecialCarrier`, `Carrier`, `Supplier`), its issuers and the organizations qualified to hold it; the certifier's Creator policy writes the messages each type may declare. Changing a rule means deploying a new policy and installing it (`setMasterSmartPolicy`, `setCreatorSmartPolicy`). The design is in [Participant license design](participant-license-design.md).
+The participant policies stand for policies translated from XACML: their configuration is hardcoded, not set at runtime. The participant Master writes, for every license type (`BulkBuyer`, `Manufacturer`, `Middleman`, `Supplier`, `SpecialCarrier`, and `Carrier`), the authority that issues it and the organizations qualified to hold it. There are five authorities (Hardhat accounts 9–13): one for each of the first four types, and a transport authority for `SpecialCarrier` and `Carrier`. An authority issues only its own types, and each one deploys its certifier, the Creator policy of the licenses it issues; that policy writes the messages each type may declare, by name: the messages the participant sends in its tasks. Changing a rule means deploying a new policy and installing it (`setMasterSmartPolicy`, `setCreatorSmartPolicy`). The design is in [Participant license design](participant-license-design.md).
 
 | Action | Authority (participant Master administrator, issuer) | Certifier (participant Creator policy administrator) | License holder | Buyer | Anyone else |
 | --- | --- | --- | --- | --- | --- |
 | Mint a license (`mint` on the `ParticipantNMT` of its type) | yes, for the types it issues | no | no | no | no |
-| Replace the participant Master policy (`setMasterSmartPolicy` on `ParticipantNMT`) | yes | no | no | no | no |
+| Replace the participant Master policy (`setMasterSmartPolicy` on `ParticipantNMT`) | yes, on the NMT of a type it issues | no | no | no | no |
 | Replace the license Creator policy (`setCreatorSmartPolicy`) | no | yes | no | no | no |
 | Change the license type | no | no | no | no | no |
 | Sell the license (`transferFrom`) to an organization qualified for its type | no | no | yes | no | no |

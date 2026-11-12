@@ -18,7 +18,7 @@ The kinds of diagram, with their rules:
 | `architecture-overview` | Off-chain scripts, on-chain contracts, and the data flowing between them | A component, a script, or a data flow changes. |
 | `architecture-participants` | The overview plus the role license path (mint, link, type check, transfer, reset), numbered ①–⑥ | A participant contract, the attribute manager, or the license path changes. |
 | `class-diagram` | Contract hierarchy and the internals of the two mutable assets | A contract gains, loses, or renames a state variable, struct field, function, or inheritance link the diagram shows. |
-| `rendering` | The render in numbered steps: the `tokenURI` call across asset, NMT, and renderer, then the JavaScript pipeline and the files it writes | A render step, a script of the pipeline, a read function of the asset, or an output file changes. |
+| `rendering` | The render in numbered steps: the `tokenURI(tokenId)` call on the NMT, which the renderer answers by reading the asset, then the JavaScript pipeline and the files it writes | A render step, a script of the pipeline, a read function of the asset, or an output file changes. |
 | `use-case-choreography` | Actors (trust-table columns) and use cases of the choreography NMT and asset | A choreography action, actor, or trust rule changes, or the experiment adds or drops a transaction. |
 | `use-case-participant-license` | Actors and use cases of the role licenses | A participant action or rule changes. |
 | `evaluation/evidence/uml/F1`–`F8` | The calls of each phase, with the policy answers | Generated: rerun `npm run evidence:update`. |
