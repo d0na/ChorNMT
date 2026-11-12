@@ -8,7 +8,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      ETH_USD_PRICE: "3000"
+      POL_USD_PRICE: "0.09"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

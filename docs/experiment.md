@@ -1,6 +1,6 @@
 # ChorNMT experiment protocol
 
-This document describes the ChorNMT experiment: a BPMN choreography governed on-chain by smart policies, run end to end on a local Ethereum network. It is written for reviewers who want to know what was done, by whom, under which policies, and what came out, and who may want to run it again.
+This document describes the ChorNMT experiment: a BPMN choreography governed on-chain by smart policies, run end to end on a local EVM network, with its costs estimated for Polygon. It is written for reviewers who want to know what was done, by whom, under which policies, and what came out, and who may want to run it again.
 
 ## How to read this document
 
@@ -29,11 +29,11 @@ Each phase below lists its actors, the policies in force, the transactions with 
 | Node.js | `22.15.1` |
 | Hardhat | `^3.9.0` |
 | Network | hardhat (edr-simulated, ephemeral) |
-| ETH/USD price of the USD columns | $3,000 (fixed, `ETH_USD_PRICE`) |
+| POL/USD price of the USD columns | $0.090 (a calculation assumption, fixed, `POL_USD_PRICE`) |
 | Measured runs (timings) | 10 after 1 warm-up run, each on a fresh network; all gave the same evidence |
 | Machine of the timings | Apple M2 Pro, 10 cores, 32 GiB, darwin 25.6.0 arm64 |
 
-Gas and costs are local Hardhat measurements with the compiler and optimizer above. The USD columns price the measured gas at the public-network gas prices of the scenarios, not at the local gas price; the cost columns in ETH use the local gas price of each receipt.
+Gas and costs are local Hardhat measurements with the compiler and optimizer above. The USD columns price the measured gas on Polygon, at the gas prices of the scenarios and the POL/USD price above, not at the local gas price: USD = gas × gas price in gwei × 10⁻⁹ × POL/USD. The cost columns in POL use the local gas price of each receipt.
 <!-- /evidence:provenance -->
 
 ## Reproduction
@@ -116,23 +116,23 @@ An operation the policies refuse is a real transaction that the chain mines and 
 The experiment is one run, on one ephemeral network, in which the choreography steps (type, mint, delta, render) go through the same functions as the command-line tools (`deploy:asset`, `modify:asset`, `render:asset`) and the license steps call the license contracts directly. The phases follow the life of the choreography.
 
 <!-- evidence:phases-overview -->
-| Phase | Title | Transactions | Allowed | Denied | Gas allowed | Gas denied | Cost (ETH) | Median (ms) | Nodes | Tasks | Edges | Gateways | Messages |
+| Phase | Title | Transactions | Allowed | Denied | Gas allowed | Gas denied | Cost (POL) | Median (ms) | Nodes | Tasks | Edges | Gateways | Messages |
 | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| [F1](#f1) | Deploy the choreography type and the license infrastructure | 26 | 26 | 0 | 33,888,410 | 0 | 0.012709786140464698 | 52.449 | — | — | — | — | — |
-| [F2](#f2) | Mint the instance for its holder | 4 | 1 | 3 | 5,799,185 | 89,743 | 0.000237063923387315 | 10.488 | 11 | 9 | 10 | 0 | 18 |
-| [F3](#f3) | Issue the participant licenses and link every role to its license | 15 | 9 | 6 | 7,741,738 | 323,943 | 0.000135683017525273 | 21.179 | 11 | 9 | 10 | 0 | 18 |
-| [F4](#f4) | Render the baseline model from the chain | 0 | 0 | 0 | 0 | 0 | 0.0 | 14.626 | 11 | 9 | 10 | 0 | 18 |
-| [F5](#f5) | Apply the delta: one allowed update and seven denied ones | 8 | 1 | 7 | 1,867,847 | 1,841,022 | 0.000010609130724406 | 109.070 | 14 | 10 | 14 | 2 | 19 |
-| [F6](#f6) | Sell the Special Carrier role: Carrier A to Carrier B | 10 | 5 | 5 | 364,960 | 176,717 | 0.000000358230406225 | 11.928 | 14 | 10 | 14 | 2 | 19 |
-| [F7](#f7) | Restrict a second instance through its Holder policy | 4 | 3 | 1 | 6,172,776 | 137,644 | 0.000001744657991383 | 13.902 | — | — | — | — | — |
-| [F8](#f8) | Render the final model from the chain | 0 | 0 | 0 | 0 | 0 | 0.0 | 18.882 | 14 | 10 | 14 | 2 | 19 |
+| [F1](#f1) | Deploy the choreography type and the license infrastructure | 26 | 26 | 0 | 33,888,410 | 0 | 0.012709786140464698 | 55.116 | — | — | — | — | — |
+| [F2](#f2) | Mint the instance for its holder | 4 | 1 | 3 | 5,799,185 | 89,743 | 0.000237063923387315 | 10.846 | 11 | 9 | 10 | 0 | 18 |
+| [F3](#f3) | Issue the participant licenses and link every role to its license | 15 | 9 | 6 | 7,741,738 | 323,943 | 0.000135683017525273 | 22.338 | 11 | 9 | 10 | 0 | 18 |
+| [F4](#f4) | Render the baseline model from the chain | 0 | 0 | 0 | 0 | 0 | 0.0 | 15.203 | 11 | 9 | 10 | 0 | 18 |
+| [F5](#f5) | Apply the delta: one allowed update and seven denied ones | 8 | 1 | 7 | 1,867,847 | 1,841,022 | 0.000010609130724406 | 116.042 | 14 | 10 | 14 | 2 | 19 |
+| [F6](#f6) | Sell the Special Carrier role: Carrier A to Carrier B | 10 | 5 | 5 | 364,960 | 176,717 | 0.000000358230406225 | 13.677 | 14 | 10 | 14 | 2 | 19 |
+| [F7](#f7) | Restrict a second instance through its Holder policy | 4 | 3 | 1 | 6,172,776 | 137,644 | 0.000001744657991383 | 14.832 | — | — | — | — | — |
+| [F8](#f8) | Render the final model from the chain | 0 | 0 | 0 | 0 | 0 | 0.0 | 20.121 | 14 | 10 | 14 | 2 | 19 |
 
 | Whole experiment | Value |
 | --- | --- |
 | Transactions | 67 |
 | Allowed transactions, gas | 45, 55,834,916 |
 | Denied transactions, gas | 22, 2,569,069 |
-| Duration of a run, median (min–max), ms | 256.414 (240.627–263.675) |
+| Duration of a run, median (min–max), ms | 270.102 (262.727–288.488) |
 
 Nodes to messages: the main instance at the end of the phase (F7 works on a second instance). Durations leave out the time the run spends tracing and checking.
 <!-- /evidence:phases-overview -->
@@ -203,35 +203,35 @@ The Master imports the BPMN into the model of a choreography type, off-chain, an
 
 **Costs**
 
-| Key | Gas | Cost (ETH) | USD @10 gwei | USD @30 gwei | USD @100 gwei |
+| Key | Gas | Cost (POL) | USD @100 gwei | USD @300 gwei | USD @1000 gwei |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `F1.deploy.master` | 368,379 | 0.000407950962890625 | $11.0514 | $33.1541 | $110.5137 |
-| `F1.deploy.creator` | 1,047,571 | 0.001016870818277027 | $31.4271 | $94.2814 | $314.2713 |
-| `F1.deploy.holder` | 391,047 | 0.000333795433921332 | $11.7314 | $35.1942 | $117.3141 |
-| `F1.deploy.renderer` | 1,236,012 | 0.000924890107100424 | $37.0804 | $111.2411 | $370.8036 |
-| `F1.deploy.model` | 2,403,302 | 0.001582823584610796 | $72.0991 | $216.2972 | $720.9906 |
-| `F1.deploy.nmt` | 4,815,956 | 0.002807092330117304 | $144.4787 | $433.4360 | $1444.7868 |
-| `F1.deploy.participant-master` | 556,881 | 0.000290530601466066 | $16.7064 | $50.1193 | $167.0643 |
-| `F1.deploy.participant-renderer` | 983,462 | 0.000450137571450984 | $29.5039 | $88.5116 | $295.0386 |
-| `F1.deploy.participant-holder` | 323,604 | 0.000130208319487656 | $9.7081 | $29.1244 | $97.0812 |
-| `F1.deploy.special-carrier-nmt` | 2,639,234 | 0.000930635307424524 | $79.1770 | $237.5311 | $791.7702 |
-| `F1.deploy.carrier-nmt` | 2,639,150 | 0.00082451367080295 | $79.1745 | $237.5235 | $791.7450 |
-| `F1.deploy.supplier-nmt` | 2,639,162 | 0.000730519516406762 | $79.1749 | $237.5246 | $791.7486 |
-| `F1.deploy.bulk-buyer-nmt` | 2,639,174 | 0.000647240685858492 | $79.1752 | $237.5257 | $791.7522 |
-| `F1.deploy.manufacturer-nmt` | 2,639,210 | 0.00057346084250077 | $79.1763 | $237.5289 | $791.7630 |
-| `F1.deploy.middleman-nmt` | 2,639,174 | 0.000508077489498072 | $79.1752 | $237.5257 | $791.7522 |
-| `F1.deploy.transport-certifier` | 576,064 | 0.00009825727210176 | $17.2819 | $51.8458 | $172.8192 |
-| `F1.deploy.supplier-certifier` | 576,064 | 0.000086210957003008 | $17.2819 | $51.8458 | $172.8192 |
-| `F1.deploy.bulk-buyer-certifier` | 576,064 | 0.000075641516767232 | $17.2819 | $51.8458 | $172.8192 |
-| `F1.deploy.manufacturer-certifier` | 576,064 | 0.000066367887566464 | $17.2819 | $51.8458 | $172.8192 |
-| `F1.deploy.middleman-certifier` | 576,064 | 0.000058231202470784 | $17.2819 | $51.8458 | $172.8192 |
-| `F1.deploy.bulk-buyer-am` | 229,423 | 0.000020347906941603 | $6.8827 | $20.6481 | $68.8269 |
-| `F1.deploy.manufacturer-am` | 229,423 | 0.000017823869658078 | $6.8827 | $20.6481 | $68.8269 |
-| `F1.deploy.middleman-am` | 229,399 | 0.000015611291293995 | $6.8820 | $20.6459 | $68.8197 |
-| `F1.deploy.supplier-am` | 229,423 | 0.000013676232416621 | $6.8827 | $20.6481 | $68.8269 |
-| `F1.deploy.special-carrier-am` | 229,423 | 0.000011979777120232 | $6.8827 | $20.6481 | $68.8269 |
-| `F1.deploy.paper-creator` | 1,899,681 | 0.000086890985311137 | $56.9904 | $170.9713 | $569.9043 |
-| **phase total** | 33,888,410 | 0.012709786140464698 | $1016.6523 | $3049.9569 | $10166.5230 |
+| `F1.deploy.master` | 368,379 | 0.000407950962890625 | $0.003315 | $0.009946 | $0.033154 |
+| `F1.deploy.creator` | 1,047,571 | 0.001016870818277027 | $0.009428 | $0.028284 | $0.094281 |
+| `F1.deploy.holder` | 391,047 | 0.000333795433921332 | $0.003519 | $0.010558 | $0.035194 |
+| `F1.deploy.renderer` | 1,236,012 | 0.000924890107100424 | $0.011124 | $0.033372 | $0.111241 |
+| `F1.deploy.model` | 2,403,302 | 0.001582823584610796 | $0.021630 | $0.064889 | $0.216297 |
+| `F1.deploy.nmt` | 4,815,956 | 0.002807092330117304 | $0.043344 | $0.130031 | $0.433436 |
+| `F1.deploy.participant-master` | 556,881 | 0.000290530601466066 | $0.005012 | $0.015036 | $0.050119 |
+| `F1.deploy.participant-renderer` | 983,462 | 0.000450137571450984 | $0.008851 | $0.026553 | $0.088512 |
+| `F1.deploy.participant-holder` | 323,604 | 0.000130208319487656 | $0.002912 | $0.008737 | $0.029124 |
+| `F1.deploy.special-carrier-nmt` | 2,639,234 | 0.000930635307424524 | $0.023753 | $0.071259 | $0.237531 |
+| `F1.deploy.carrier-nmt` | 2,639,150 | 0.00082451367080295 | $0.023752 | $0.071257 | $0.237523 |
+| `F1.deploy.supplier-nmt` | 2,639,162 | 0.000730519516406762 | $0.023752 | $0.071257 | $0.237525 |
+| `F1.deploy.bulk-buyer-nmt` | 2,639,174 | 0.000647240685858492 | $0.023753 | $0.071258 | $0.237526 |
+| `F1.deploy.manufacturer-nmt` | 2,639,210 | 0.00057346084250077 | $0.023753 | $0.071259 | $0.237529 |
+| `F1.deploy.middleman-nmt` | 2,639,174 | 0.000508077489498072 | $0.023753 | $0.071258 | $0.237526 |
+| `F1.deploy.transport-certifier` | 576,064 | 0.00009825727210176 | $0.005185 | $0.015554 | $0.051846 |
+| `F1.deploy.supplier-certifier` | 576,064 | 0.000086210957003008 | $0.005185 | $0.015554 | $0.051846 |
+| `F1.deploy.bulk-buyer-certifier` | 576,064 | 0.000075641516767232 | $0.005185 | $0.015554 | $0.051846 |
+| `F1.deploy.manufacturer-certifier` | 576,064 | 0.000066367887566464 | $0.005185 | $0.015554 | $0.051846 |
+| `F1.deploy.middleman-certifier` | 576,064 | 0.000058231202470784 | $0.005185 | $0.015554 | $0.051846 |
+| `F1.deploy.bulk-buyer-am` | 229,423 | 0.000020347906941603 | $0.002065 | $0.006194 | $0.020648 |
+| `F1.deploy.manufacturer-am` | 229,423 | 0.000017823869658078 | $0.002065 | $0.006194 | $0.020648 |
+| `F1.deploy.middleman-am` | 229,399 | 0.000015611291293995 | $0.002065 | $0.006194 | $0.020646 |
+| `F1.deploy.supplier-am` | 229,423 | 0.000013676232416621 | $0.002065 | $0.006194 | $0.020648 |
+| `F1.deploy.special-carrier-am` | 229,423 | 0.000011979777120232 | $0.002065 | $0.006194 | $0.020648 |
+| `F1.deploy.paper-creator` | 1,899,681 | 0.000086890985311137 | $0.017097 | $0.051291 | $0.170971 |
+| **phase total** | 33,888,410 | 0.012709786140464698 | $0.304996 | $0.914987 | $3.049957 |
 
 **The model of the type**
 
@@ -252,8 +252,8 @@ Role names: `Bulk Buyer`, `Manufacturer`, `Middleman`, `Supplier`, `Special Carr
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F1 | 52.449 | 50.323 | 56.339 | 2.067 |
-| step `F1.import` | 3.367 | 2.819 | 4.292 | 0.493 |
+| phase F1 | 55.116 | 51.498 | 62.757 | 3.625 |
+| step `F1.import` | 3.813 | 3.012 | 5.921 | 0.927 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F1-full.svg))
 
@@ -289,13 +289,13 @@ The authorized creator mints the instance for the holder; the instance decodes t
 
 **Costs**
 
-| Key | Gas | Cost (ETH) | USD @10 gwei | USD @30 gwei | USD @100 gwei |
+| Key | Gas | Cost (POL) | USD @100 gwei | USD @300 gwei | USD @1000 gwei |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `F2.mint` | 5,799,185 | 0.00023419631675475 | $173.9755 | $521.9266 | $1739.7555 |
-| `F2.denied.master` | 29,822 | 0.00000108290019175 | $0.8947 | $2.6840 | $8.9466 |
-| `F2.denied.unauthorized-creator` | 29,822 | 0.000000947672243284 | $0.8947 | $2.6840 | $8.9466 |
-| `F2.denied.ineligible-holder` | 30,099 | 0.000000837034197531 | $0.9030 | $2.7089 | $9.0297 |
-| **phase total** | 5,888,928 | 0.000237063923387315 | $176.6678 | $530.0035 | $1766.6784 |
+| `F2.mint` | 5,799,185 | 0.00023419631675475 | $0.052193 | $0.156578 | $0.521927 |
+| `F2.denied.master` | 29,822 | 0.00000108290019175 | $0.000268 | $0.000805 | $0.002684 |
+| `F2.denied.unauthorized-creator` | 29,822 | 0.000000947672243284 | $0.000268 | $0.000805 | $0.002684 |
+| `F2.denied.ineligible-holder` | 30,099 | 0.000000837034197531 | $0.000271 | $0.000813 | $0.002709 |
+| **phase total** | 5,888,928 | 0.000237063923387315 | $0.053000 | $0.159001 | $0.530004 |
 
 **Trust-table rows**
 
@@ -333,7 +333,7 @@ The authorized creator mints the instance for the holder; the instance decodes t
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F2 | 10.488 | 9.941 | 11.337 | 0.472 |
+| phase F2 | 10.846 | 10.495 | 14.555 | 1.272 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F2-full.svg))
 
@@ -384,24 +384,24 @@ Each authority issues the licenses of its types by calling `mint` on the NMT of 
 
 **Costs**
 
-| Key | Gas | Cost (ETH) | USD @10 gwei | USD @30 gwei | USD @100 gwei |
+| Key | Gas | Cost (POL) | USD @100 gwei | USD @300 gwei | USD @1000 gwei |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `F3.license.special-carrier` | 1,196,913 | 0.000029128895850318 | $35.9074 | $107.7222 | $359.0739 |
-| `F3.license.carrier` | 1,196,930 | 0.00002563341936596 | $35.9079 | $107.7237 | $359.0790 |
-| `F3.license.supplier` | 1,196,959 | 0.000022557628376938 | $35.9088 | $107.7263 | $359.0877 |
-| `F3.license.bulk-buyer` | 1,196,988 | 0.0000198509088414 | $35.9096 | $107.7289 | $359.0964 |
-| `F3.license.manufacturer` | 1,197,017 | 0.000017468974025852 | $35.9105 | $107.7315 | $359.1051 |
-| `F3.license.middleman` | 1,197,034 | 0.000015372698467016 | $35.9110 | $107.7331 | $359.1102 |
-| `F3.denied.foreign-authority` | 30,523 | 0.000000344943078501 | $0.9157 | $2.7471 | $9.1569 |
-| `F3.denied.plain-account` | 63,953 | 0.000000632488007264 | $1.9186 | $5.7558 | $19.1859 |
-| `F3.denied.carrier-license` | 63,953 | 0.000000553595650417 | $1.9186 | $5.7558 | $19.1859 |
-| `F3.denied.supplier-license` | 63,953 | 0.00000048454374168 | $1.9186 | $5.7558 | $19.1859 |
-| `F3.link` | 284,148 | 0.000001884330019332 | $8.5244 | $25.5733 | $85.2444 |
-| `F3.denied.new-role` | 54,893 | 0.000000318951494846 | $1.6468 | $4.9404 | $16.4679 |
-| `F3.license.name` | 66,674 | 0.000000339067226626 | $2.0002 | $6.0007 | $20.0022 |
-| `F3.license.messages` | 209,075 | 0.000000930630667575 | $6.2723 | $18.8167 | $62.7225 |
-| `F3.denied.foreign-message` | 46,668 | 0.000000181942711548 | $1.4000 | $4.2001 | $14.0004 |
-| **phase total** | 8,065,681 | 0.000135683017525273 | $241.9704 | $725.9113 | $2419.7043 |
+| `F3.license.special-carrier` | 1,196,913 | 0.000029128895850318 | $0.010772 | $0.032317 | $0.107722 |
+| `F3.license.carrier` | 1,196,930 | 0.00002563341936596 | $0.010772 | $0.032317 | $0.107724 |
+| `F3.license.supplier` | 1,196,959 | 0.000022557628376938 | $0.010773 | $0.032318 | $0.107726 |
+| `F3.license.bulk-buyer` | 1,196,988 | 0.0000198509088414 | $0.010773 | $0.032319 | $0.107729 |
+| `F3.license.manufacturer` | 1,197,017 | 0.000017468974025852 | $0.010773 | $0.032319 | $0.107732 |
+| `F3.license.middleman` | 1,197,034 | 0.000015372698467016 | $0.010773 | $0.032320 | $0.107733 |
+| `F3.denied.foreign-authority` | 30,523 | 0.000000344943078501 | $0.000275 | $0.000824 | $0.002747 |
+| `F3.denied.plain-account` | 63,953 | 0.000000632488007264 | $0.000576 | $0.001727 | $0.005756 |
+| `F3.denied.carrier-license` | 63,953 | 0.000000553595650417 | $0.000576 | $0.001727 | $0.005756 |
+| `F3.denied.supplier-license` | 63,953 | 0.00000048454374168 | $0.000576 | $0.001727 | $0.005756 |
+| `F3.link` | 284,148 | 0.000001884330019332 | $0.002557 | $0.007672 | $0.025573 |
+| `F3.denied.new-role` | 54,893 | 0.000000318951494846 | $0.000494 | $0.001482 | $0.004940 |
+| `F3.license.name` | 66,674 | 0.000000339067226626 | $0.000600 | $0.001800 | $0.006001 |
+| `F3.license.messages` | 209,075 | 0.000000930630667575 | $0.001882 | $0.005645 | $0.018817 |
+| `F3.denied.foreign-message` | 46,668 | 0.000000181942711548 | $0.000420 | $0.001260 | $0.004200 |
+| **phase total** | 8,065,681 | 0.000135683017525273 | $0.072591 | $0.217773 | $0.725911 |
 
 **Trust-table rows**
 
@@ -452,7 +452,7 @@ Each authority issues the licenses of its types by calling `mint` on the NMT of 
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F3 | 21.179 | 20.087 | 25.825 | 1.736 |
+| phase F3 | 22.338 | 20.820 | 34.541 | 3.989 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F3-full.svg))
 
@@ -517,8 +517,8 @@ Anyone can read the model: the render reads the instance the ERC-721 way, with o
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F4 | 14.626 | 13.592 | 16.016 | 0.860 |
-| step `F4.render` | 14.206 | 13.225 | 15.583 | 0.836 |
+| phase F4 | 15.203 | 14.592 | 15.801 | 0.421 |
+| step `F4.render` | 14.800 | 14.189 | 15.355 | 0.435 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F4-full.svg))
 
@@ -568,17 +568,17 @@ Split transport preparation into parallel detail collection and documentation pr
 
 **Costs**
 
-| Key | Gas | Cost (ETH) | USD @10 gwei | USD @30 gwei | USD @100 gwei |
+| Key | Gas | Cost (POL) | USD @100 gwei | USD @300 gwei | USD @1000 gwei |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `F5.delta` | 1,867,847 | 0.000006373256466689 | $56.0354 | $168.1062 | $560.3541 |
-| `F5.denied.task-limit` | 318,816 | 0.000000960315556896 | $9.5645 | $28.6934 | $95.6448 |
-| `F5.denied.flow-limit` | 547,912 | 0.000001446277829704 | $16.4374 | $49.3121 | $164.3736 |
-| `F5.denied.task-name` | 298,426 | 0.000000691062700792 | $8.9528 | $26.8583 | $89.5278 |
-| `F5.denied.unknown-target` | 76,933 | 0.00000015610551963 | $2.3080 | $6.9240 | $23.0799 |
-| `F5.denied.protected-node` | 340,785 | 0.00000060527573577 | $10.2235 | $30.6706 | $102.2355 |
-| `F5.denied.outsider` | 129,075 | 0.00000020092201725 | $3.8723 | $11.6167 | $38.7225 |
-| `F5.denied.creator` | 129,075 | 0.000000175914897675 | $3.8723 | $11.6167 | $38.7225 |
-| **phase total** | 3,708,869 | 0.000010609130724406 | $111.2661 | $333.7982 | $1112.6607 |
+| `F5.delta` | 1,867,847 | 0.000006373256466689 | $0.016811 | $0.050432 | $0.168106 |
+| `F5.denied.task-limit` | 318,816 | 0.000000960315556896 | $0.002869 | $0.008608 | $0.028693 |
+| `F5.denied.flow-limit` | 547,912 | 0.000001446277829704 | $0.004931 | $0.014794 | $0.049312 |
+| `F5.denied.task-name` | 298,426 | 0.000000691062700792 | $0.002686 | $0.008058 | $0.026858 |
+| `F5.denied.unknown-target` | 76,933 | 0.00000015610551963 | $0.000692 | $0.002077 | $0.006924 |
+| `F5.denied.protected-node` | 340,785 | 0.00000060527573577 | $0.003067 | $0.009201 | $0.030671 |
+| `F5.denied.outsider` | 129,075 | 0.00000020092201725 | $0.001162 | $0.003485 | $0.011617 |
+| `F5.denied.creator` | 129,075 | 0.000000175914897675 | $0.001162 | $0.003485 | $0.011617 |
+| **phase total** | 3,708,869 | 0.000010609130724406 | $0.033380 | $0.100139 | $0.333798 |
 
 **Trust-table rows**
 
@@ -622,8 +622,8 @@ Split transport preparation into parallel detail collection and documentation pr
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F5 | 109.070 | 101.986 | 117.080 | 4.150 |
-| step `F5.delta` | 61.449 | 57.900 | 62.788 | 1.715 |
+| phase F5 | 116.042 | 110.633 | 138.414 | 7.900 |
+| step `F5.delta` | 62.962 | 59.863 | 65.062 | 1.718 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F5-full.svg))
 
@@ -664,19 +664,19 @@ The organization behind the Special Carrier role changes by selling the license,
 
 **Costs**
 
-| Key | Gas | Cost (ETH) | USD @10 gwei | USD @30 gwei | USD @100 gwei |
+| Key | Gas | Cost (POL) | USD @100 gwei | USD @300 gwei | USD @1000 gwei |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `F6.denied.carrier-buyer` | 37,297 | 0.000000044505055517 | $1.1189 | $3.3567 | $11.1891 |
-| `F6.denied.supplier-buyer` | 37,297 | 0.000000038948846833 | $1.1189 | $3.3567 | $11.1891 |
-| `F6.denied.without-seller` | 30,226 | 0.000000027624025016 | $0.9068 | $2.7203 | $9.0678 |
-| `F6.sale` | 108,998 | 0.000000087175728416 | $3.2699 | $9.8098 | $32.6994 |
-| `F6.denied.buyer-without-policy` | 37,003 | 0.000000025908834546 | $1.1101 | $3.3303 | $11.1009 |
-| `F6.buyer.holder-policy` | 49,611 | 0.000000030400033248 | $1.4883 | $4.4650 | $14.8833 |
-| `F6.denied.former-holder` | 34,894 | 0.000000018713617306 | $1.0468 | $3.1405 | $10.4682 |
-| `F6.buyer.name` | 66,674 | 0.00000003129277516 | $2.0002 | $6.0007 | $20.0022 |
-| `F6.buyer.profile` | 67,102 | 0.000000027565770008 | $2.0131 | $6.0392 | $20.1306 |
-| `F6.buyer.messages` | 72,575 | 0.000000026095720175 | $2.1773 | $6.5317 | $21.7725 |
-| **phase total** | 541,677 | 0.000000358230406225 | $16.2503 | $48.7509 | $162.5031 |
+| `F6.denied.carrier-buyer` | 37,297 | 0.000000044505055517 | $0.000336 | $0.001007 | $0.003357 |
+| `F6.denied.supplier-buyer` | 37,297 | 0.000000038948846833 | $0.000336 | $0.001007 | $0.003357 |
+| `F6.denied.without-seller` | 30,226 | 0.000000027624025016 | $0.000272 | $0.000816 | $0.002720 |
+| `F6.sale` | 108,998 | 0.000000087175728416 | $0.000981 | $0.002943 | $0.009810 |
+| `F6.denied.buyer-without-policy` | 37,003 | 0.000000025908834546 | $0.000333 | $0.000999 | $0.003330 |
+| `F6.buyer.holder-policy` | 49,611 | 0.000000030400033248 | $0.000446 | $0.001339 | $0.004465 |
+| `F6.denied.former-holder` | 34,894 | 0.000000018713617306 | $0.000314 | $0.000942 | $0.003140 |
+| `F6.buyer.name` | 66,674 | 0.00000003129277516 | $0.000600 | $0.001800 | $0.006001 |
+| `F6.buyer.profile` | 67,102 | 0.000000027565770008 | $0.000604 | $0.001812 | $0.006039 |
+| `F6.buyer.messages` | 72,575 | 0.000000026095720175 | $0.000653 | $0.001960 | $0.006532 |
+| **phase total** | 541,677 | 0.000000358230406225 | $0.004875 | $0.014625 | $0.048751 |
 
 **Trust-table rows**
 
@@ -746,7 +746,7 @@ Messages declared on the license: `Pickup Schedule`, `Cargo Details Request`, `V
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F6 | 11.928 | 11.608 | 13.967 | 0.692 |
+| phase F6 | 13.677 | 11.711 | 19.938 | 2.245 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F6-full.svg))
 
@@ -787,13 +787,13 @@ A second instance, minted by the authorized creator for the same holder with the
 
 **Costs**
 
-| Key | Gas | Cost (ETH) | USD @10 gwei | USD @30 gwei | USD @100 gwei |
+| Key | Gas | Cost (POL) | USD @100 gwei | USD @300 gwei | USD @1000 gwei |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `F7.deploy.deny-all` | 335,458 | 0.000000105579031798 | $10.0637 | $30.1912 | $100.6374 |
-| `F7.mint` | 5,804,785 | 0.00000160113384655 | $174.1436 | $522.4307 | $1741.4355 |
-| `F7.holder.deny-all` | 32,533 | 0.000000008068932259 | $0.9760 | $2.9280 | $9.7599 |
-| `F7.denied.delta` | 137,644 | 0.000000029876180776 | $4.1293 | $12.3880 | $41.2932 |
-| **phase total** | 6,310,420 | 0.000001744657991383 | $189.3126 | $567.9378 | $1893.1260 |
+| `F7.deploy.deny-all` | 335,458 | 0.000000105579031798 | $0.003019 | $0.009057 | $0.030191 |
+| `F7.mint` | 5,804,785 | 0.00000160113384655 | $0.052243 | $0.156729 | $0.522431 |
+| `F7.holder.deny-all` | 32,533 | 0.000000008068932259 | $0.000293 | $0.000878 | $0.002928 |
+| `F7.denied.delta` | 137,644 | 0.000000029876180776 | $0.001239 | $0.003716 | $0.012388 |
+| **phase total** | 6,310,420 | 0.000001744657991383 | $0.056794 | $0.170381 | $0.567938 |
 
 **Trust-table rows**
 
@@ -831,7 +831,7 @@ Holder: Holder.
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F7 | 13.902 | 13.045 | 15.094 | 0.599 |
+| phase F7 | 14.832 | 14.180 | 22.395 | 2.484 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F7-full.svg))
 
@@ -896,8 +896,8 @@ The render reads the instance again and regenerates the BPMN of the changed mode
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F8 | 18.882 | 17.351 | 27.584 | 2.916 |
-| step `F8.render` | 18.288 | 16.834 | 27.043 | 2.919 |
+| phase F8 | 20.121 | 19.166 | 21.695 | 0.816 |
+| step `F8.render` | 19.550 | 18.548 | 21.176 | 0.842 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F8-full.svg))
 
@@ -906,16 +906,18 @@ The render reads the instance again and regenerates the BPMN of the changed mode
 
 ## Public-network cost scenarios
 
-The measured gas of a choreography type and its first instance, priced at three public-network gas prices.
+The measured gas of a choreography type and its first instance, priced on Polygon at the gas prices of a sensitivity analysis.
 
 <!-- evidence:scenarios -->
-The gas of a choreography type and its first complete instance: `F1.deploy.master`, `F1.deploy.creator`, `F1.deploy.holder`, `F1.deploy.renderer`, `F1.deploy.model`, `F1.deploy.nmt`, `F2.mint`, `F3.link`, 16,345,600 gas in all, 0.00730950388369159 ETH at the local gas price of the receipts.
+The gas of a choreography type and its first complete instance: `F1.deploy.master`, `F1.deploy.creator`, `F1.deploy.holder`, `F1.deploy.renderer`, `F1.deploy.model`, `F1.deploy.nmt`, `F2.mint`, `F3.link`, 16,345,600 gas in all, 0.00730950388369159 POL at the local gas price of the receipts.
 
-| Network condition | Gas price | Meaning | Gas | Estimated ETH cost | Estimated USD cost |
+The costs on Polygon are estimated at three overall gas prices: 100, 300, 1,000 gwei. The central value comes from a reading of the Polygon Gas Station, about 271 gwei, rounded up to 300 gwei; the lower and the upper value are sensitivity scenarios, which show the effect of fee variability on the cost of the operations. They are assumptions to compare costs, not historical averages or official congestion thresholds; the POL/USD price, $0.090, is a calculation assumption too.
+
+| Scenario | Gas price | Meaning | Gas | Estimated POL cost | Estimated USD cost |
 | --- | ---: | --- | ---: | --- | --- |
-| Low congestion | 10 gwei | low demand; transactions are usually inexpensive | 16,345,600 | 0.163456 | $490.37 |
-| Typical congestion | 30 gwei | ordinary public-network demand | 16,345,600 | 0.490368 | $1471.10 |
-| High congestion | 100 gwei | high demand; users pay more to be included sooner | 16,345,600 | 1.634560 | $4903.68 |
+| Economical | 100 gwei | fees below the reading consulted | 16,345,600 | 1.634560 | $0.1471 |
+| Reference | 300 gwei | the Polygon Gas Station reading of about 271 gwei, rounded up | 16,345,600 | 4.903680 | $0.4413 |
+| Costly | 1,000 gwei | fees markedly above the reading, to see how far the costs grow | 16,345,600 | 16.345600 | $1.4711 |
 <!-- /evidence:scenarios -->
 
 ## Charts
@@ -984,69 +986,69 @@ The experiment exercises the policies on the paper example; `npm test` exercises
 | Gas of the allowed cases | 12,609,330 |
 | Gas of the denied cases | 2,451,785 |
 
-| Case | Outcome | Gas | Cost (wei) | USD @10 gwei | USD @30 gwei | USD @100 gwei |
+| Case | Outcome | Gas | Cost (wei) | USD @100 gwei | USD @300 gwei | USD @1000 gwei |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| authorized creator mints eligible holder | allowed | 3,173,819 | 1,642,656,922,973,363 | $95.2146 | $285.6437 | $952.1457 |
-| creator and holder update roles | allowed | 109,294 | 50,243,936,558,990 | $3.2788 | $9.8365 | $32.7882 |
-| creator and holder update nodes | allowed | 224,844 | 90,490,432,262,028 | $6.7453 | $20.2360 | $67.4532 |
-| creator policy denies a flow declared on one endpoint | denied | 121,951 | 42,991,195,664,489 | $3.6585 | $10.9756 | $36.5853 |
-| authorized creator mints with the test-scenario creator policy | allowed | 3,179,419 | 191,647,733,996,724 | $95.3826 | $286.1477 | $953.8257 |
-| creator policy allows approved task within limits | allowed | 609,279 | 32,621,668,928,970 | $18.2784 | $54.8351 | $182.7837 |
-| creator policy allows second approved task within limits | allowed | 601,451 | 28,258,979,763,425 | $18.0435 | $54.1306 | $180.4353 |
-| creator policy denies task count above limit | denied | 164,755 | 6,792,739,252,680 | $4.9427 | $14.8279 | $49.4265 |
-| creator policy denies sequence flow count above limit | denied | 324,233 | 11,706,099,477,709 | $9.7270 | $29.1810 | $97.2699 |
-| creator policy denies task outside name allowlist | denied | 144,822 | 4,582,132,164,144 | $4.3447 | $13.0340 | $43.4466 |
-| creator policy denies flow to unknown node | denied | 76,086 | 2,107,877,109,336 | $2.2826 | $6.8477 | $22.8258 |
-| creator policy denies protected node update | denied | 167,677 | 4,066,112,922,652 | $5.0303 | $15.0909 | $50.3031 |
-| creator policy denies flow from unknown node | denied | 93,939 | 1,994,833,086,051 | $2.8182 | $8.4545 | $28.1817 |
-| creator policy allows update keeping protected node links | allowed | 231,955 | 4,311,879,689,770 | $6.9587 | $20.8759 | $69.5865 |
-| creator policy denies unlinking protected node | denied | 127,358 | 2,073,846,601,442 | $3.8207 | $11.4622 | $38.2074 |
-| creator policy denies new link to protected node | denied | 134,415 | 1,916,326,562,265 | $4.0324 | $12.0974 | $40.3245 |
-| creator policy allows unprotected role update | allowed | 97,958 | 1,222,778,073,566 | $2.9387 | $8.8162 | $29.3874 |
-| creator policy allows the first assignment of a protected role | allowed | 99,718 | 1,089,662,162,766 | $2.9915 | $8.9746 | $29.9154 |
-| creator policy denies protected role update | denied | 58,627 | 560,828,754,723 | $1.7588 | $5.2764 | $17.5881 |
-| unauthorized issuer cannot mint a participant license | denied | 30,523 | 174,150,227,943 | $0.9157 | $2.7471 | $9.1569 |
-| authority cannot issue a license type of another authority | denied | 30,523 | 152,403,628,225 | $0.9157 | $2.7471 | $9.1569 |
-| issuer cannot mint a license of a type the Master does not define | denied | 30,621 | 133,800,786,696 | $0.9186 | $2.7559 | $9.1863 |
-| license holder declares messages allowed for its type | allowed | 139,774 | 534,486,970,238 | $4.1932 | $12.5797 | $41.9322 |
-| creator policy denies a message not allowed for the license type | denied | 46,675 | 156,275,928,100 | $1.4002 | $4.2008 | $14.0025 |
-| license holder updates its organization data | allowed | 66,674 | 195,374,955,548 | $2.0002 | $6.0007 | $20.0022 |
-| authorized creator mints a model whose Carrier role requires a SpecialCarrier license | allowed | 3,223,648 | 5,687,843,214,976 | $96.7094 | $290.1283 | $967.0944 |
-| holder assigns the accounts of the new instance | allowed | 135,868 | 212,981,377,948 | $4.0760 | $12.2281 | $40.7604 |
-| creator policy denies a plain account for a licensed role | denied | 63,657 | 87,369,487,128 | $1.9097 | $5.7291 | $19.0971 |
-| creator policy denies a license of another type | denied | 63,657 | 76,471,472,385 | $1.9097 | $5.7291 | $19.0971 |
-| creator policy denies a license from an untrusted certifier | denied | 69,240 | 72,803,228,880 | $2.0772 | $6.2316 | $20.7720 |
-| creator policy denies new role when known roles are enforced | denied | 54,893 | 50,519,839,369 | $1.6468 | $4.9404 | $16.4679 |
-| creator policy denies account already holding another role | denied | 73,824 | 59,465,453,472 | $2.2147 | $6.6442 | $22.1472 |
-| holder links a role to a certified license | allowed | 120,833 | 85,194,877,479 | $3.6250 | $10.8750 | $36.2499 |
-| participant master denies selling a license to an unqualified buyer | denied | 37,297 | 23,022,878,645 | $1.1189 | $3.3567 | $11.1891 |
-| buyer cannot take a license without the seller | denied | 30,226 | 16,328,719,946 | $0.9068 | $2.7203 | $9.0678 |
-| holder sells a license to a qualified buyer | allowed | 106,998 | 50,584,588,476 | $3.2099 | $9.6298 | $32.0994 |
-| former license holder cannot install a Holder policy | denied | 27,477 | 11,372,125,806 | $0.8243 | $2.4729 | $8.2431 |
-| new license holder installs its Holder policy | allowed | 49,611 | 17,968,657,701 | $1.4883 | $4.4650 | $14.8833 |
-| former license holder cannot update the license | denied | 34,894 | 11,061,153,742 | $1.0468 | $3.1405 | $10.4682 |
-| new license holder updates its data | allowed | 66,674 | 18,496,434,384 | $2.0002 | $6.0007 | $20.0022 |
-| new license holder rewrites the messages | allowed | 62,974 | 15,291,094,784 | $1.8892 | $5.6677 | $18.8922 |
-| unauthorized creator cannot mint | denied | 29,810 | 6,335,459,680 | $0.8943 | $2.6829 | $8.9430 |
-| master administrator cannot mint | denied | 29,822 | 5,546,563,958 | $0.8947 | $2.6840 | $8.9466 |
-| authorized creator cannot assign an ineligible holder | denied | 30,099 | 4,899,033,636 | $0.9030 | $2.7089 | $9.0297 |
-| non-holder cannot update choreography | denied | 39,477 | 5,623,064,403 | $1.1843 | $3.5529 | $11.8431 |
-| holder links the asset | allowed | 66,238 | 8,257,162,842 | $1.9871 | $5.9614 | $19.8714 |
-| non-holder cannot link the asset | denied | 35,225 | 3,843,470,200 | $1.0568 | $3.1702 | $10.5675 |
-| holder transfers to eligible holder | allowed | 113,970 | 10,882,995,300 | $3.4191 | $10.2573 | $34.1910 |
-| holder cannot transfer to an ineligible holder | denied | 30,322 | 2,534,888,878 | $0.9097 | $2.7290 | $9.0966 |
-| holder cannot replace creator policy | denied | 28,929 | 1,647,622,266 | $0.8679 | $2.6036 | $8.6787 |
-| creator policy administrator replaces creator policy | allowed | 29,146 | 1,452,694,932 | $0.8744 | $2.6231 | $8.7438 |
-| holder installs restrictive policy | allowed | 32,533 | 1,260,491,085 | $0.9760 | $2.9280 | $9.7599 |
-| holder policy can deny further updates | denied | 45,904 | 1,556,512,832 | $1.3771 | $4.1314 | $13.7712 |
-| holder cannot replace master policy | denied | 28,800 | 854,697,600 | $0.8640 | $2.5920 | $8.6400 |
-| master administrator cannot remove master policy | denied | 28,595 | 742,640,745 | $0.8579 | $2.5736 | $8.5785 |
-| master administrator replaces master policy | allowed | 32,920 | 748,238,680 | $0.9876 | $2.9628 | $9.8760 |
-| replaced master policy governs minting | denied | 29,136 | 579,544,176 | $0.8741 | $2.6222 | $8.7408 |
-| license holder cannot replace participant master policy | denied | 29,612 | 515,485,696 | $0.8884 | $2.6651 | $8.8836 |
-| authority cannot replace the participant master policy of another authority's license type | denied | 29,612 | 451,138,820 | $0.8884 | $2.6651 | $8.8836 |
-| participant master administrator replaces participant master policy | allowed | 33,732 | 449,748,756 | $1.0120 | $3.0359 | $10.1196 |
-| replaced participant master policy governs sales | denied | 29,072 | 339,241,168 | $0.8722 | $2.6165 | $8.7216 |
+| authorized creator mints eligible holder | allowed | 3,173,819 | 1,642,656,922,973,363 | $0.028564 | $0.085693 | $0.285644 |
+| creator and holder update roles | allowed | 109,294 | 50,243,936,558,990 | $0.000984 | $0.002951 | $0.009836 |
+| creator and holder update nodes | allowed | 224,844 | 90,490,432,262,028 | $0.002024 | $0.006071 | $0.020236 |
+| creator policy denies a flow declared on one endpoint | denied | 121,951 | 42,991,195,664,489 | $0.001098 | $0.003293 | $0.010976 |
+| authorized creator mints with the test-scenario creator policy | allowed | 3,179,419 | 191,647,733,996,724 | $0.028615 | $0.085844 | $0.286148 |
+| creator policy allows approved task within limits | allowed | 609,279 | 32,621,668,928,970 | $0.005484 | $0.016451 | $0.054835 |
+| creator policy allows second approved task within limits | allowed | 601,451 | 28,258,979,763,425 | $0.005413 | $0.016239 | $0.054131 |
+| creator policy denies task count above limit | denied | 164,755 | 6,792,739,252,680 | $0.001483 | $0.004448 | $0.014828 |
+| creator policy denies sequence flow count above limit | denied | 324,233 | 11,706,099,477,709 | $0.002918 | $0.008754 | $0.029181 |
+| creator policy denies task outside name allowlist | denied | 144,822 | 4,582,132,164,144 | $0.001303 | $0.003910 | $0.013034 |
+| creator policy denies flow to unknown node | denied | 76,086 | 2,107,877,109,336 | $0.000685 | $0.002054 | $0.006848 |
+| creator policy denies protected node update | denied | 167,677 | 4,066,112,922,652 | $0.001509 | $0.004527 | $0.015091 |
+| creator policy denies flow from unknown node | denied | 93,939 | 1,994,833,086,051 | $0.000845 | $0.002536 | $0.008455 |
+| creator policy allows update keeping protected node links | allowed | 231,955 | 4,311,879,689,770 | $0.002088 | $0.006263 | $0.020876 |
+| creator policy denies unlinking protected node | denied | 127,358 | 2,073,846,601,442 | $0.001146 | $0.003439 | $0.011462 |
+| creator policy denies new link to protected node | denied | 134,415 | 1,916,326,562,265 | $0.001210 | $0.003629 | $0.012097 |
+| creator policy allows unprotected role update | allowed | 97,958 | 1,222,778,073,566 | $0.000882 | $0.002645 | $0.008816 |
+| creator policy allows the first assignment of a protected role | allowed | 99,718 | 1,089,662,162,766 | $0.000897 | $0.002692 | $0.008975 |
+| creator policy denies protected role update | denied | 58,627 | 560,828,754,723 | $0.000528 | $0.001583 | $0.005276 |
+| unauthorized issuer cannot mint a participant license | denied | 30,523 | 174,150,227,943 | $0.000275 | $0.000824 | $0.002747 |
+| authority cannot issue a license type of another authority | denied | 30,523 | 152,403,628,225 | $0.000275 | $0.000824 | $0.002747 |
+| issuer cannot mint a license of a type the Master does not define | denied | 30,621 | 133,800,786,696 | $0.000276 | $0.000827 | $0.002756 |
+| license holder declares messages allowed for its type | allowed | 139,774 | 534,486,970,238 | $0.001258 | $0.003774 | $0.012580 |
+| creator policy denies a message not allowed for the license type | denied | 46,675 | 156,275,928,100 | $0.000420 | $0.001260 | $0.004201 |
+| license holder updates its organization data | allowed | 66,674 | 195,374,955,548 | $0.000600 | $0.001800 | $0.006001 |
+| authorized creator mints a model whose Carrier role requires a SpecialCarrier license | allowed | 3,223,648 | 5,687,843,214,976 | $0.029013 | $0.087038 | $0.290128 |
+| holder assigns the accounts of the new instance | allowed | 135,868 | 212,981,377,948 | $0.001223 | $0.003668 | $0.012228 |
+| creator policy denies a plain account for a licensed role | denied | 63,657 | 87,369,487,128 | $0.000573 | $0.001719 | $0.005729 |
+| creator policy denies a license of another type | denied | 63,657 | 76,471,472,385 | $0.000573 | $0.001719 | $0.005729 |
+| creator policy denies a license from an untrusted certifier | denied | 69,240 | 72,803,228,880 | $0.000623 | $0.001869 | $0.006232 |
+| creator policy denies new role when known roles are enforced | denied | 54,893 | 50,519,839,369 | $0.000494 | $0.001482 | $0.004940 |
+| creator policy denies account already holding another role | denied | 73,824 | 59,465,453,472 | $0.000664 | $0.001993 | $0.006644 |
+| holder links a role to a certified license | allowed | 120,833 | 85,194,877,479 | $0.001087 | $0.003262 | $0.010875 |
+| participant master denies selling a license to an unqualified buyer | denied | 37,297 | 23,022,878,645 | $0.000336 | $0.001007 | $0.003357 |
+| buyer cannot take a license without the seller | denied | 30,226 | 16,328,719,946 | $0.000272 | $0.000816 | $0.002720 |
+| holder sells a license to a qualified buyer | allowed | 106,998 | 50,584,588,476 | $0.000963 | $0.002889 | $0.009630 |
+| former license holder cannot install a Holder policy | denied | 27,477 | 11,372,125,806 | $0.000247 | $0.000742 | $0.002473 |
+| new license holder installs its Holder policy | allowed | 49,611 | 17,968,657,701 | $0.000446 | $0.001339 | $0.004465 |
+| former license holder cannot update the license | denied | 34,894 | 11,061,153,742 | $0.000314 | $0.000942 | $0.003140 |
+| new license holder updates its data | allowed | 66,674 | 18,496,434,384 | $0.000600 | $0.001800 | $0.006001 |
+| new license holder rewrites the messages | allowed | 62,974 | 15,291,094,784 | $0.000567 | $0.001700 | $0.005668 |
+| unauthorized creator cannot mint | denied | 29,810 | 6,335,459,680 | $0.000268 | $0.000805 | $0.002683 |
+| master administrator cannot mint | denied | 29,822 | 5,546,563,958 | $0.000268 | $0.000805 | $0.002684 |
+| authorized creator cannot assign an ineligible holder | denied | 30,099 | 4,899,033,636 | $0.000271 | $0.000813 | $0.002709 |
+| non-holder cannot update choreography | denied | 39,477 | 5,623,064,403 | $0.000355 | $0.001066 | $0.003553 |
+| holder links the asset | allowed | 66,238 | 8,257,162,842 | $0.000596 | $0.001788 | $0.005961 |
+| non-holder cannot link the asset | denied | 35,225 | 3,843,470,200 | $0.000317 | $0.000951 | $0.003170 |
+| holder transfers to eligible holder | allowed | 113,970 | 10,882,995,300 | $0.001026 | $0.003077 | $0.010257 |
+| holder cannot transfer to an ineligible holder | denied | 30,322 | 2,534,888,878 | $0.000273 | $0.000819 | $0.002729 |
+| holder cannot replace creator policy | denied | 28,929 | 1,647,622,266 | $0.000260 | $0.000781 | $0.002604 |
+| creator policy administrator replaces creator policy | allowed | 29,146 | 1,452,694,932 | $0.000262 | $0.000787 | $0.002623 |
+| holder installs restrictive policy | allowed | 32,533 | 1,260,491,085 | $0.000293 | $0.000878 | $0.002928 |
+| holder policy can deny further updates | denied | 45,904 | 1,556,512,832 | $0.000413 | $0.001239 | $0.004131 |
+| holder cannot replace master policy | denied | 28,800 | 854,697,600 | $0.000259 | $0.000778 | $0.002592 |
+| master administrator cannot remove master policy | denied | 28,595 | 742,640,745 | $0.000257 | $0.000772 | $0.002574 |
+| master administrator replaces master policy | allowed | 32,920 | 748,238,680 | $0.000296 | $0.000889 | $0.002963 |
+| replaced master policy governs minting | denied | 29,136 | 579,544,176 | $0.000262 | $0.000787 | $0.002622 |
+| license holder cannot replace participant master policy | denied | 29,612 | 515,485,696 | $0.000267 | $0.000800 | $0.002665 |
+| authority cannot replace the participant master policy of another authority's license type | denied | 29,612 | 451,138,820 | $0.000267 | $0.000800 | $0.002665 |
+| participant master administrator replaces participant master policy | allowed | 33,732 | 449,748,756 | $0.000304 | $0.000911 | $0.003036 |
+| replaced participant master policy governs sales | denied | 29,072 | 339,241,168 | $0.000262 | $0.000785 | $0.002616 |
 <!-- /evidence:tests -->
 
 ## Evidence files

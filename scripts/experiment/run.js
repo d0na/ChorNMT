@@ -27,7 +27,8 @@ const root = process.cwd();
 const outDirectory = path.resolve(root, process.env.EVIDENCE_OUT || path.join("evaluation", "evidence"));
 const GAS_LIMIT = 10_000_000n;
 // The USD columns of the reports need a fixed price to be reproducible (D18).
-const ETH_USD_PRICE = Number(process.env.ETH_USD_PRICE) > 0 ? Number(process.env.ETH_USD_PRICE) : 3000;
+// The USD columns assume Polygon: the price of one POL in USD, a calculation assumption.
+const POL_USD_PRICE = Number(process.env.POL_USD_PRICE) > 0 ? Number(process.env.POL_USD_PRICE) : 0.09;
 
 const POLICY_LAYERS = ["CREATOR", "HOLDER"];
 
@@ -524,7 +525,7 @@ async function runExperiment() {
       node: process.versions.node.split(".")[0],
       hardhat: packageJson.devDependencies.hardhat,
       network: "hardhat (edr-simulated, ephemeral)",
-      ethUsdPrice: ETH_USD_PRICE,
+      polUsdPrice: POL_USD_PRICE,
       timings: "timings.json, measured over the repetitions and not compared"
     },
     accounts,

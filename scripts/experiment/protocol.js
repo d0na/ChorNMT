@@ -27,11 +27,15 @@ const CHECK = process.argv.includes("--check");
 // Phase ids, decision and claim ids of docs/decisions.md and docs/requirements.md, standard names.
 const STRUCTURAL = [/\bF[1-8]\b/g, /\b[DCH]\d{1,2}\b/g, /\bERC-721\b/g, /\bEIP-170\b/g, /\bSSTORE2\b/g, /\bBPMN 2\.0\b/g, /\bXACML\b/g];
 const OUTCOME_WORDS = /\b(allowed|denied|reverted|reverts|revert)\b/gi;
+// Polygon gas prices of a sensitivity analysis: assumptions to compare costs, not historical
+// averages or official congestion thresholds. The reference rounds up a Polygon Gas Station reading.
+const GAS_STATION_READING_GWEI = 271;
 const GWEI_SCENARIOS = [
-  [10, "Low congestion", "low demand; transactions are usually inexpensive"],
-  [30, "Typical congestion", "ordinary public-network demand"],
-  [100, "High congestion", "high demand; users pay more to be included sooner"]
+  [100, "Economical", "fees below the reading consulted"],
+  [300, "Reference", `the Polygon Gas Station reading of about ${GAS_STATION_READING_GWEI} gwei, rounded up`],
+  [1000, "Costly", "fees markedly above the reading, to see how far the costs grow"]
 ];
+const USD_COLUMNS = GWEI_SCENARIOS.map(([gwei]) => `USD @${gwei} gwei`);
 // The cost of a choreography type and its first complete instance, as deploy:asset measured it:
 // the six deployments of the type, the mint, and the link of the roles to their licenses.
 const TYPE_AND_INSTANCE = ["F1.deploy.master", "F1.deploy.creator", "F1.deploy.holder", "F1.deploy.renderer", "F1.deploy.model", "F1.deploy.nmt", "F2.mint", "F3.link"];
@@ -68,7 +72,7 @@ async function listFiles(directory, prefix = "") {
 }
 
 function usd(gas, price) {
-  return GWEI_SCENARIOS.map(([gwei]) => `$${(Number(gas) * gwei / 1e9 * price).toFixed(4)}`);
+  return GWEI_SCENARIOS.map(([gwei]) => `$${(Number(gas) * gwei / 1e9 * price).toFixed(6)}`);
 }
 
 function gasSum(records) {
@@ -81,7 +85,7 @@ function costSum(records) {
 
 function blocks(ctx) {
   const { evidence, timings, traces, tests, images, delta, records, phases } = ctx;
-  const price = evidence.provenance.ethUsdPrice;
+  const price = evidence.provenance.polUsdPrice;
   const account = (name) => evidence.accounts.find((item) => item.name === name);
   const phaseRecords = (id) => evidence.transactions.filter((record) => record.phase === id);
   const generated = {};
@@ -93,12 +97,12 @@ function blocks(ctx) {
       ["Node.js", code(timings.machine.node)],
       ["Hardhat", code(evidence.provenance.hardhat)],
       ["Network", evidence.provenance.network],
-      ["ETH/USD price of the USD columns", `$${number(price)} (fixed, ${code("ETH_USD_PRICE")})`],
+      ["POL/USD price of the USD columns", `$${price.toFixed(3)} (a calculation assumption, fixed, ${code("POL_USD_PRICE")})`],
       ["Measured runs (timings)", `${number(timings.repetitions)} after ${number(timings.warmUpRuns)} warm-up run, each on a fresh network; all gave the same evidence`],
       ["Machine of the timings", `${timings.machine.cpu}, ${number(timings.machine.cores)} cores, ${number(timings.machine.memoryGiB)} GiB, ${timings.machine.platform} ${timings.machine.arch}`]
     ]),
     "",
-    "Gas and costs are local Hardhat measurements with the compiler and optimizer above. The USD columns price the measured gas at the public-network gas prices of the scenarios, not at the local gas price; the cost columns in ETH use the local gas price of each receipt."
+    "Gas and costs are local Hardhat measurements with the compiler and optimizer above. The USD columns price the measured gas on Polygon, at the gas prices of the scenarios and the POL/USD price above, not at the local gas price: USD = gas × gas price in gwei × 10⁻⁹ × POL/USD. The cost columns in POL use the local gas price of each receipt."
   ];
 
   generated.reproduction = [
@@ -122,7 +126,7 @@ function blocks(ctx) {
 
   const totalRecords = evidence.transactions;
   generated["phases-overview"] = [
-    ...table(["Phase", "Title", "Transactions", "Allowed", "Denied", "Gas allowed", "Gas denied", "Cost (ETH)", "Median (ms)", "Nodes", "Tasks", "Edges", "Gateways", "Messages"],
+    ...table(["Phase", "Title", "Transactions", "Allowed", "Denied", "Gas allowed", "Gas denied", "Cost (POL)", "Median (ms)", "Nodes", "Tasks", "Edges", "Gateways", "Messages"],
       evidence.phases.map((phase) => {
         const list = phaseRecords(phase.id);
         const allowed = list.filter((record) => record.outcome === "allowed");
@@ -161,7 +165,7 @@ function blocks(ctx) {
         const target = record.created || record.to;
         return [code(record.key), record.label, record.from.account, code(record.call), `${target.contract} ${code(target.address)}`, record.outcome, record.reason ? code(record.reason) : "—", number(record.gasUsed)];
       })) : []);
-    section("Costs", list.length ? table(["Key", "Gas", "Cost (ETH)", "USD @10 gwei", "USD @30 gwei", "USD @100 gwei"],
+    section("Costs", list.length ? table(["Key", "Gas", "Cost (POL)", ...USD_COLUMNS],
       [...list.map((record) => [code(record.key), number(record.gasUsed), formatEther(record.costWei), ...usd(record.gasUsed, price)]),
         ["**phase total**", number(gasSum(list)), formatEther(costSum(list)), ...usd(gasSum(list), price)]]) : []);
     section("Trust-table rows", list.some((record) => record.trust) ? table(["Key", "Table", "Row of docs/choreography-policies.md"],
@@ -211,12 +215,14 @@ function blocks(ctx) {
   const typeRecords = TYPE_AND_INSTANCE.map((key) => records.get(key));
   const typeGas = gasSum(typeRecords);
   generated.scenarios = [
-    `The gas of a choreography type and its first complete instance: ${typeRecords.map((record) => code(record.key)).join(", ")}, ${number(typeGas)} gas in all, ${formatEther(costSum(typeRecords))} ETH at the local gas price of the receipts.`,
+    `The gas of a choreography type and its first complete instance: ${typeRecords.map((record) => code(record.key)).join(", ")}, ${number(typeGas)} gas in all, ${formatEther(costSum(typeRecords))} POL at the local gas price of the receipts.`,
     "",
-    ...table(["Network condition", "Gas price", "Meaning", "Gas", "Estimated ETH cost", "Estimated USD cost"],
+    `The costs on Polygon are estimated at three overall gas prices: ${GWEI_SCENARIOS.map(([gwei]) => number(gwei)).join(", ")} gwei. The central value comes from a reading of the Polygon Gas Station, about ${GAS_STATION_READING_GWEI} gwei, rounded up to ${GWEI_SCENARIOS[1][0]} gwei; the lower and the upper value are sensitivity scenarios, which show the effect of fee variability on the cost of the operations. They are assumptions to compare costs, not historical averages or official congestion thresholds; the POL/USD price, $${price.toFixed(3)}, is a calculation assumption too.`,
+    "",
+    ...table(["Scenario", "Gas price", "Meaning", "Gas", "Estimated POL cost", "Estimated USD cost"],
       GWEI_SCENARIOS.map(([gwei, condition, meaning]) => {
         const eth = Number(typeGas) * gwei / 1e9;
-        return [condition, `${number(gwei)} gwei`, meaning, number(typeGas), eth.toFixed(6), `$${(eth * price).toFixed(2)}`];
+        return [condition, `${number(gwei)} gwei`, meaning, number(typeGas), eth.toFixed(6), `$${(eth * price).toFixed(4)}`];
       }))
   ];
 
@@ -248,7 +254,7 @@ function blocks(ctx) {
       ["Gas of the denied cases", number(tests.summary.deniedGas)]
     ]),
     "",
-    ...table(["Case", "Outcome", "Gas", "Cost (wei)", "USD @10 gwei", "USD @30 gwei", "USD @100 gwei"],
+    ...table(["Case", "Outcome", "Gas", "Cost (wei)", ...USD_COLUMNS],
       tests.cases.map((item) => [item.label, item.outcome, number(item.gasUsed), number(item.costWei), ...usd(item.gasUsed, price)]))
   ];
 

@@ -2,7 +2,7 @@
 
 Ideas worth doing later, with the reasoning and the estimates behind them. Nothing here is implemented. An idea moves out of this page when it is applied (record the measured numbers in [Contract structure](contract-structure.md#gas) and, for a design change, a decision in [Design decisions](decisions.md)) or rejected (say why here).
 
-Estimates are paper-and-pencil: they come from measured totals on the current code (`ETH_USD_PRICE=3000`, `npm test`, and the experiment evidence of `evaluation/evidence/`) and from EVM gas rules, not from an implementation. Measure before deciding.
+Estimates are paper-and-pencil: they come from measured totals on the current code (`POL_USD_PRICE=0.09`, `npm test`, and the experiment evidence of `evaluation/evidence/`) and from EVM gas rules, not from an implementation. Measure before deciding.
 
 ## G1: assets as EIP-1167 clones
 

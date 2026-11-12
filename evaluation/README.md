@@ -50,13 +50,13 @@ CI and the pre-commit hook run all three. Files in `evidence/` and the generated
 
 ## USD price for gas scenarios
 
-The `USD @10 gwei`, `USD @30 gwei`, and `USD @100 gwei` columns use a fixed ETH/USD price, `ETH_USD_PRICE`, 3000 by default; the protocol states the price it used. A run with another price is another run, so `check:evidence` fails against the versioned evidence:
+The costs are estimated on Polygon. The `USD @100 gwei`, `USD @300 gwei`, and `USD @1000 gwei` columns are a sensitivity analysis: 300 gwei is the reference, a Polygon Gas Station reading of about 271 gwei rounded up, and 100 and 1000 gwei are an economical and a costly scenario; they are assumptions to compare costs, not historical averages or official congestion thresholds. USD = gas × gas price in gwei × 10⁻⁹ × POL/USD, with a fixed POL/USD price, `POL_USD_PRICE`, 0.09 by default, a calculation assumption; the protocol states the price it used. A run with another price is another run, so `check:evidence` fails against the versioned evidence:
 
 ```bash
-ETH_USD_PRICE=2500 npm run evidence:update -- --out /tmp/chornmt-2500
+POL_USD_PRICE=0.12 npm run evidence:update -- --out /tmp/chornmt-pol-012
 ```
 
-The ETH column is the receipt cost at the local gas price of each block; compare gas and USD across transactions.
+The POL column is the receipt cost at the local gas price of each block; compare gas and USD across transactions.
 
 ## Targeted runs
 

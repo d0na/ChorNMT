@@ -16,7 +16,7 @@ export const PARITY = [
   // evaluation/experiment-summary.generated.md (evaluate:paper)
   { source: "experiment-summary", item: "header: asset address", destination: "block:phase:F2" },
   { source: "experiment-summary", item: "header: total wall-clock duration", destination: "block:phases-overview" },
-  { source: "experiment-summary", item: "header: ETH/USD price used", destination: "block:provenance" },
+  { source: "experiment-summary", item: "header: ETH/USD price used", destination: "block:provenance", reason: "now the POL/USD price: the costs are estimated on Polygon" },
   { source: "experiment-summary", item: "header: choreography type (NMT) and model contract addresses", destination: "block:phase:F1" },
   { source: "experiment-summary", item: "header: links to the metrics JSON of import/deploy/mint, renders, and modification", destination: "block:artifacts" },
   { source: "experiment-summary", item: "header: aggregated CSV of the operation metrics", destination: "artifact:transactions.csv" },

@@ -21,7 +21,7 @@ The experiment is code: `scripts/experiment/phases.js` specifies it, `npm run ev
 - `gnuplot`, `java`, and `dot` (Graphviz) on PATH (`brew install gnuplot graphviz openjdk` on macOS); ask before installing system packages.
 - No local node is needed: the run uses ephemeral in-process Hardhat networks.
 
-Every command starts with `source ~/.nvm/nvm.sh && nvm use >/dev/null && export ETH_USD_PRICE=3000 &&`; the evidence records that price, and another one is a different run.
+Every command starts with `source ~/.nvm/nvm.sh && nvm use >/dev/null && export POL_USD_PRICE=0.09 &&`; the evidence records that price, and another one is a different run.
 
 ## Check
 

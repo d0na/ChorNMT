@@ -56,7 +56,7 @@ npm run modify:asset -- <asset> <delta.json> [--no-render]
 npm run clean
 ```
 
-CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:invariants`, `check:uml`, `check:use-cases`, `check:protocol`, `npm test`, `check:evidence`, `check:gas`, and the BPMN importer on both reference models. Run the same before declaring work done. The experiment fixes `ETH_USD_PRICE` at 3000; the operational commands (`deploy:asset`, `modify:asset`) print USD costs only when it is set.
+CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:invariants`, `check:uml`, `check:use-cases`, `check:protocol`, `npm test`, `check:evidence`, `check:gas`, and the BPMN importer on both reference models. Run the same before declaring work done. The experiment estimates costs on Polygon and fixes `POL_USD_PRICE` at 0.09 (gas prices 100, 300, and 1000 gwei); the operational commands (`deploy:asset`, `modify:asset`) print USD costs only when it is set.
 
 ## Invariants and gotchas
 

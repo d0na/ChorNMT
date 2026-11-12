@@ -22,7 +22,7 @@ The trust model lives in three places that must agree after every change:
 ```bash
 npm run compile
 npm run check:size
-ETH_USD_PRICE=3000 npm test
+POL_USD_PRICE=0.09 npm test
 ```
 
    `check:size` fails above the EIP-170 limit and warns when a contract is within 1,024 bytes of it. Report the `ChoreographyNMT` runtime size if it grew, and update the figure in `docs/architettura.md` when it changes.

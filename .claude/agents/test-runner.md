@@ -9,7 +9,7 @@ You run the ChorNMT checks and report a short summary. You never edit, create, o
 
 ## Setup
 
-Every shell command starts with `source ~/.nvm/nvm.sh && nvm use >/dev/null && export ETH_USD_PRICE=3000 &&` (Node 22 from `.nvmrc`; the fixed price avoids the live Coinbase fetch).
+Every shell command starts with `source ~/.nvm/nvm.sh && nvm use >/dev/null && export POL_USD_PRICE=0.09 &&` (Node 22 from `.nvmrc`; the fixed POL/USD price of the evidence).
 
 ## What to run
 

@@ -43,7 +43,7 @@ bpmn-builder-js/example/output/<base>.generated.bpmn.xml
 | `RPC_URL` | `http://127.0.0.1:8545` | `deploy:asset`, `modify:asset`, `render:asset` |
 | `DEPLOYER_PRIVATE_KEY` | Hardhat account #0 | `deploy:asset` (deployer of the type and holder of the instance), `modify:asset` (signer) |
 | `CREATOR_PRIVATE_KEY` | Hardhat account #4 | `deploy:asset`: the account that mints the instance for the holder, the only creator the Master policy authorizes |
-| `ETH_USD_PRICE` | 3000 | `evidence:update` and `check:evidence`: the USD columns of the evidence (see the [evaluation toolkit](../evaluation/README.md#usd-price-for-gas-scenarios)); another price is another run |
+| `POL_USD_PRICE` | 0.09 | `evidence:update` and `check:evidence`: the USD columns of the evidence (see the [evaluation toolkit](../evaluation/README.md#usd-price-for-gas-scenarios)); another price is another run |
 | `EXPERIMENT_REPETITIONS` | 10 | `evidence:update`, `check:evidence`: measured runs after the warm-up run |
 | `POLICY_TESTS_OUT` | unset | `test:policies`: also write the test matrix as JSON to this file |
 | `EVIDENCE_OUT` | `evaluation/evidence/` | the scripts of `scripts/experiment/` run alone; `evidence:update` sets it from `--out` |
@@ -62,7 +62,7 @@ The full command sequence is in the [README](../README.md).
 
 ## Blockchain costs
 
-The commands print measured transaction costs after every on-chain write. Each line reports `gas used × effective gas price = ETH cost`, followed by a total for the command.
+The commands print measured transaction costs after every on-chain write. Each line reports `gas used × effective gas price = POL cost`, followed by a total for the command.
 
 | Operation | On-chain transaction | Cost behavior |
 | --- | --- | --- |
@@ -71,7 +71,7 @@ The commands print measured transaction costs after every on-chain write. Each l
 | `render:asset` | Reads the asset with one `tokenURI(tokenId)` call on its `ChoreographyNMT` (the ERC-721 way) and writes local files. | No blockchain transaction and no gas cost; the call executes about 1.7M gas for the evolved paper example, within the `eth_call` limits of common RPC providers. |
 | `start:operations` and `clean` | Local operations only. | No gas cost. |
 
-Costs are exact for the RPC network used by the command. On Hardhat's local node they use test ETH and have no real monetary value. On a public network, the displayed ETH value depends on the network's actual gas price; convert it to fiat currency separately using the current ETH price.
+Costs are exact for the RPC network used by the command. The costs are labelled in POL because the project estimates them for Polygon. On Hardhat's local node they use test tokens and have no real monetary value. On a public network, the displayed value depends on the network's actual gas price; convert it to fiat currency separately using the current price of the token.
 
 ## Evaluation measurements
 
@@ -114,7 +114,7 @@ These scripts are used by public commands and are not intended as separate user-
 The evaluation helpers are isolated under `scripts/evaluation/`:
 
 - `metrics.js` writes the per-command JSON reports under `metrics/` and summarizes a model (`summarizeNodes`, also used by the experiment);
-- `transaction-cost.js` formats receipt-derived gas and ETH costs for the command output;
+- `transaction-cost.js` formats receipt-derived gas and POL costs for the command output;
 - `render-bpmn-images.js` draws a BPMN XML with chor-js in headless Chromium (`experiment/bpmn.js`).
 
 ## Other models

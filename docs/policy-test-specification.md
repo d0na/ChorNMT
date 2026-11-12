@@ -227,8 +227,8 @@ cost of the model contract (once per type) and of each mint.
 
 The tables of [`docs/experiment.md`](experiment.md) are generated from the evidence: per
 phase, the actors, the transactions with outcome, revert reason, trust-table
-row, gas, wei, and estimated USD costs at 10, 30, and 100 gwei (ETH/USD fixed
-by `ETH_USD_PRICE`, 3000 by default), the policies in force, and the sequence
+row, gas, wei, and estimated USD costs on Polygon at 100, 300, and 1000 gwei (POL/USD fixed
+by `POL_USD_PRICE`, 0.09 by default), the policies in force, and the sequence
 diagram; then the test matrix.
 
 ## Reproducing the Evidence

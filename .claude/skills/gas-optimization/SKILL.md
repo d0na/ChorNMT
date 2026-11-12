@@ -11,7 +11,7 @@ Goal: the lowest total cost of the whole flow without weakening any policy check
 
 ```bash
 npm run compile && npm run check:size
-ETH_USD_PRICE=3000 npm test 2>&1 | tee <scratchpad>/gas-before.txt
+POL_USD_PRICE=0.09 npm test 2>&1 | tee <scratchpad>/gas-before.txt
 ```
 
 For changes to import/modify paths, also run the paper flow (`local-flow` skill) and keep the gas lines printed by `deploy:asset` and `modify:asset`. Save outputs in the scratchpad, not in the repo.
