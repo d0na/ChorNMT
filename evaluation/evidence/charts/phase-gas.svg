@@ -4,7 +4,7 @@
  viewBox="0 0 1400 850"
  xmlns="http://www.w3.org/2000/svg"
  xmlns:xlink="http://www.w3.org/1999/xlink"
-><!-- chornmt-chart-data-sha256: 352ef6407c40158d6b2a5675cee1b223419ba3d098f617961606e6bd2fc370e4 -->
+><!-- chornmt-chart-data-sha256: 6eb50ee115793dff78a278ebc42611c88a25e3a36ace02a86bf5e0954a056f1c -->
 
 <title>Gnuplot</title>
 <desc>Produced by GNUPLOT 6.0 patchlevel 6 </desc>
@@ -229,9 +229,9 @@
 	<path stroke='black'  d='M902.57,814.00 L902.57,806.26 L1001.25,806.26 L1001.25,814.00 L902.57,814.00 Z  '/></g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
 	<g stroke='none' shape-rendering='crispEdges'>
-		<polygon fill = 'rgb( 40, 120, 181)' points = '1043.54,814.00 1142.23,814.00 1142.23,683.13 1043.54,683.13 '/>
+		<polygon fill = 'rgb( 40, 120, 181)' points = '1043.54,814.00 1142.23,814.00 1142.23,806.19 1043.54,806.19 '/>
 	</g>
-	<path stroke='black'  d='M1043.54,814.00 L1043.54,683.14 L1142.22,683.14 L1142.22,814.00 L1043.54,814.00 Z  '/></g>
+	<path stroke='black'  d='M1043.54,814.00 L1043.54,806.20 L1142.22,806.20 L1142.22,814.00 L1043.54,814.00 Z  '/></g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
 </g>
 	</g>
@@ -273,9 +273,9 @@
 	<path stroke='black'  d='M902.57,806.26 L902.57,802.52 L1001.25,802.52 L1001.25,806.26 L902.57,806.26 Z  '/></g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
 	<g stroke='none' shape-rendering='crispEdges'>
-		<polygon fill = 'rgb(199,  78,  69)' points = '1043.54,683.14 1142.23,683.14 1142.23,680.21 1043.54,680.21 '/>
+		<polygon fill = 'rgb(199,  78,  69)' points = '1043.54,806.20 1142.23,806.20 1142.23,803.27 1043.54,803.27 '/>
 	</g>
-	<path stroke='black'  d='M1043.54,683.14 L1043.54,680.22 L1142.22,680.22 L1142.22,683.14 L1043.54,683.14 Z  '/></g>
+	<path stroke='black'  d='M1043.54,806.20 L1043.54,803.28 L1142.22,803.28 L1142.22,806.20 L1043.54,806.20 Z  '/></g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
 </g>
 	</g>

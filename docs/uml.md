@@ -66,7 +66,7 @@ One sequence diagram per phase of the experiment, generated from the call traces
 | F4, render the baseline model (traced `tokenURI` call and off-chain pipeline) | [F4](../evaluation/evidence/uml/F4.svg) | [F4 complete](../evaluation/evidence/uml/F4-full.svg) |
 | F5, apply the delta: one allowed and seven denied updates | [F5](../evaluation/evidence/uml/F5.svg) | [F5 complete](../evaluation/evidence/uml/F5-full.svg) |
 | F6, sell the Special Carrier role | [F6](../evaluation/evidence/uml/F6.svg) | [F6 complete](../evaluation/evidence/uml/F6-full.svg) |
-| F7, restrict a second instance through its Holder policy | [F7](../evaluation/evidence/uml/F7.svg) | [F7 complete](../evaluation/evidence/uml/F7-full.svg) |
+| F7, freeze the instance through its Holder policy | [F7](../evaluation/evidence/uml/F7.svg) | [F7 complete](../evaluation/evidence/uml/F7-full.svg) |
 | F8, render the final model | [F8](../evaluation/evidence/uml/F8.svg) | [F8 complete](../evaluation/evidence/uml/F8-full.svg) |
 
 ![F5, apply the delta](../evaluation/evidence/uml/F5.svg)

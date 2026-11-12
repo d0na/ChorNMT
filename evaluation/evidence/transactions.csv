@@ -63,6 +63,5 @@ F6.buyer.name,F6,Carrier B,ParticipantMutableAsset.setName,allowed,,66674,469340
 F6.buyer.profile,F6,Carrier B,ParticipantMutableAsset.setProfile,allowed,,67102,410804,27565770008
 F6.buyer.messages,F6,Carrier B,ParticipantMutableAsset.setMessages,allowed,,72575,359569,26095720175
 F7.deploy.deny-all,F7,Holder,DenyAllSmartPolicy.constructor,allowed,,335458,314731,105579031798
-F7.mint,F7,Authorized creator,ChoreographyNMT.mint,allowed,,5804785,275830,1601133846550
-F7.holder.deny-all,F7,Holder,ChoreographyMutableAsset.setHolderSmartPolicy,allowed,,32533,248023,8068932259
-F7.denied.delta,F7,Holder,ChoreographyMutableAsset.setNodes,denied,OperationDenied(HOLDER),137644,217054,29876180776
+F7.holder.deny-all,F7,Holder,ChoreographyMutableAsset.setHolderSmartPolicy,allowed,,32533,275830,8973577390
+F7.denied.delta,F7,Holder,ChoreographyMutableAsset.setNodes,denied,OperationDenied(HOLDER),137644,241390,33225885160

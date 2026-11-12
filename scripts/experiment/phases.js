@@ -156,13 +156,12 @@ export const PHASES = [
   },
   {
     id: "F7",
-    title: "Restrict a second instance through its Holder policy",
+    title: "Freeze the instance through its Holder policy",
     inputs: ["delta"],
     transactions: [
       deploy("F7.deploy.deny-all", "the Holder deploys the deny-all policy", "Holder", "DenyAllSmartPolicy"),
-      tx("F7.mint", "the authorized creator mints a second instance for the Holder, with the default policies", "Authorized creator", "ChoreographyNMT.mint", "allowed", "choreography:mint"),
-      tx("F7.holder.deny-all", "the Holder installs the deny-all policy", "Holder", "ChoreographyMutableAsset.setHolderSmartPolicy", "allowed", "choreography:setHolderSmartPolicy"),
-      tx("F7.denied.delta", "the Holder policy denies the delta", "Holder", "ChoreographyMutableAsset.setNodes", "denied", "choreography:setNodes", HOLDER_DENIED)
+      tx("F7.holder.deny-all", "the Holder installs the deny-all policy on the instance", "Holder", "ChoreographyMutableAsset.setHolderSmartPolicy", "allowed", "choreography:setHolderSmartPolicy"),
+      tx("F7.denied.delta", "the Holder policy denies a further update of the frozen instance", "Holder", "ChoreographyMutableAsset.setNodes", "denied", "choreography:setNodes", HOLDER_DENIED)
     ]
   },
   {

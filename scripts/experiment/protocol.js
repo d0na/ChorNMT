@@ -143,7 +143,7 @@ function blocks(ctx) {
       ["Duration of a run, median (min–max), ms", `${ms(timings.total.medianMs)} (${ms(timings.total.minMs)}–${ms(timings.total.maxMs)})`]
     ]),
     "",
-    "Nodes to messages: the main instance at the end of the phase (F7 works on a second instance). Durations leave out the time the run spends tracing and checking."
+    "Nodes to messages: the instance at the end of the phase. Durations leave out the time the run spends tracing and checking."
   ];
 
   for (const phase of evidence.phases) {
@@ -194,12 +194,11 @@ function blocks(ctx) {
       lines.push(`Tasks of ${code("Special Carrier")}, which keep the role through the sale: ${phase.roleTasks.map(code).join(", ")}.`, "",
         `Messages declared on the license: ${phase.messages.map(code).join(", ")}.`, "");
     }
-    const state = phase.instance || phase.restrictedInstance;
+    const state = phase.instance;
     if (state) {
-      section(phase.restrictedInstance ? "The second instance at the end of the phase" : "The instance at the end of the phase",
+      section("The instance at the end of the phase",
         [...table(["Address", "Nodes", "Tasks", "Gateways", "Edges", "Messages", "Roles"], [[code(state.address), ...[state.nodes, state.tasks, state.gateways, state.sequenceEdges, state.messages, state.roles].map(number)]]),
-          "", ...table(["Role", "Played by", "Address"], state.roleAssignments.map((role) => [role.role, role.account ?? role.contract, code(role.address)])),
-          ...(state.holder ? ["", `Holder: ${state.holder}.`] : [])]);
+          "", ...table(["Role", "Played by", "Address"], state.roleAssignments.map((role) => [role.role, role.account ?? role.contract, code(role.address)]))]);
     }
     section("Policies in force at the end of the phase", table(["Resource", "Layer", "Contract", "Address", "Source", "Bytecode keccak256"],
       phase.policies.map((policy) => [policy.resource, policy.layer, policy.contract, code(policy.address), policy.source ? `[${path.basename(policy.source)}](../${policy.source})` : "—", policy.bytecodeKeccak256 ? code(policy.bytecodeKeccak256) : "—"])));

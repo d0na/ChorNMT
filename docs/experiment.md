@@ -118,23 +118,23 @@ The experiment is one run, on one ephemeral network, in which the choreography s
 <!-- evidence:phases-overview -->
 | Phase | Title | Transactions | Allowed | Denied | Gas allowed | Gas denied | Cost (POL) | Median (ms) | Nodes | Tasks | Edges | Gateways | Messages |
 | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| [F1](#f1) | Deploy the choreography type and the license infrastructure | 26 | 26 | 0 | 33,888,398 | 0 | 0.012709772167251831 | 53.923 | — | — | — | — | — |
-| [F2](#f2) | Mint the instance for its holder | 4 | 1 | 3 | 5,799,185 | 89,743 | 0.000237063917498387 | 11.243 | 11 | 9 | 10 | 0 | 18 |
-| [F3](#f3) | Issue the participant licenses and link every role to its license | 15 | 9 | 6 | 7,741,738 | 323,943 | 0.000135683012737541 | 21.793 | 11 | 9 | 10 | 0 | 18 |
-| [F4](#f4) | Render the baseline model from the chain | 0 | 0 | 0 | 0 | 0 | 0.0 | 14.626 | 11 | 9 | 10 | 0 | 18 |
-| [F5](#f5) | Apply the delta: one allowed update and seven denied ones | 8 | 1 | 7 | 1,867,847 | 1,841,022 | 0.000010609130724406 | 111.656 | 14 | 10 | 14 | 2 | 19 |
-| [F6](#f6) | Sell the Special Carrier role: Carrier A to Carrier B | 10 | 5 | 5 | 364,960 | 176,717 | 0.000000358230406225 | 12.668 | 14 | 10 | 14 | 2 | 19 |
-| [F7](#f7) | Restrict a second instance through its Holder policy | 4 | 3 | 1 | 6,172,776 | 137,644 | 0.000001744657991383 | 14.838 | — | — | — | — | — |
-| [F8](#f8) | Render the final model from the chain | 0 | 0 | 0 | 0 | 0 | 0.0 | 18.937 | 14 | 10 | 14 | 2 | 19 |
+| [F1](#f1) | Deploy the choreography type and the license infrastructure | 26 | 26 | 0 | 33,888,398 | 0 | 0.012709772167251831 | 50.287 | — | — | — | — | — |
+| [F2](#f2) | Mint the instance for its holder | 4 | 1 | 3 | 5,799,185 | 89,743 | 0.000237063917498387 | 10.188 | 11 | 9 | 10 | 0 | 18 |
+| [F3](#f3) | Issue the participant licenses and link every role to its license | 15 | 9 | 6 | 7,741,738 | 323,943 | 0.000135683012737541 | 20.508 | 11 | 9 | 10 | 0 | 18 |
+| [F4](#f4) | Render the baseline model from the chain | 0 | 0 | 0 | 0 | 0 | 0.0 | 14.728 | 11 | 9 | 10 | 0 | 18 |
+| [F5](#f5) | Apply the delta: one allowed update and seven denied ones | 8 | 1 | 7 | 1,867,847 | 1,841,022 | 0.000010609130724406 | 107.905 | 14 | 10 | 14 | 2 | 19 |
+| [F6](#f6) | Sell the Special Carrier role: Carrier A to Carrier B | 10 | 5 | 5 | 364,960 | 176,717 | 0.000000358230406225 | 11.797 | 14 | 10 | 14 | 2 | 19 |
+| [F7](#f7) | Freeze the instance through its Holder policy | 3 | 2 | 1 | 367,991 | 137,644 | 0.000000147778494348 | 4.617 | 14 | 10 | 14 | 2 | 19 |
+| [F8](#f8) | Render the final model from the chain | 0 | 0 | 0 | 0 | 0 | 0.0 | 18.250 | 14 | 10 | 14 | 2 | 19 |
 
 | Whole experiment | Value |
 | --- | --- |
-| Transactions | 67 |
-| Allowed transactions, gas | 45, 55,834,904 |
+| Transactions | 66 |
+| Allowed transactions, gas | 44, 50,030,119 |
 | Denied transactions, gas | 22, 2,569,069 |
-| Duration of a run, median (min–max), ms | 259.099 (240.543–305.073) |
+| Duration of a run, median (min–max), ms | 239.934 (227.480–453.737) |
 
-Nodes to messages: the main instance at the end of the phase (F7 works on a second instance). Durations leave out the time the run spends tracing and checking.
+Nodes to messages: the instance at the end of the phase. Durations leave out the time the run spends tracing and checking.
 <!-- /evidence:phases-overview -->
 
 <!-- evidence:phase-title:F1 -->
@@ -252,8 +252,8 @@ Role names: `Bulk Buyer`, `Manufacturer`, `Middleman`, `Supplier`, `Special Carr
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F1 | 53.923 | 50.400 | 58.785 | 2.895 |
-| step `F1.import` | 3.121 | 2.757 | 4.520 | 0.599 |
+| phase F1 | 50.287 | 49.305 | 81.112 | 9.805 |
+| step `F1.import` | 2.951 | 2.258 | 6.483 | 1.184 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F1-full.svg))
 
@@ -333,7 +333,7 @@ The authorized creator mints the instance for the holder; the instance decodes t
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F2 | 11.243 | 9.687 | 12.781 | 0.887 |
+| phase F2 | 10.188 | 9.530 | 11.278 | 0.500 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F2-full.svg))
 
@@ -452,7 +452,7 @@ Each authority issues the licenses of its types by calling `mint` on the NMT of 
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F3 | 21.793 | 20.581 | 49.036 | 8.625 |
+| phase F3 | 20.508 | 19.589 | 26.706 | 2.067 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F3-full.svg))
 
@@ -517,8 +517,8 @@ Anyone can read the model: the render reads the instance the ERC-721 way, with o
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F4 | 14.626 | 13.743 | 15.804 | 0.664 |
-| step `F4.render` | 14.192 | 13.302 | 15.341 | 0.656 |
+| phase F4 | 14.728 | 13.631 | 15.734 | 0.775 |
+| step `F4.render` | 14.303 | 13.210 | 15.306 | 0.765 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F4-full.svg))
 
@@ -622,8 +622,8 @@ Split transport preparation into parallel detail collection and documentation pr
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F5 | 111.656 | 100.426 | 119.281 | 6.765 |
-| step `F5.delta` | 62.762 | 56.030 | 65.086 | 3.388 |
+| phase F5 | 107.905 | 99.901 | 125.111 | 8.152 |
+| step `F5.delta` | 59.433 | 55.848 | 62.387 | 2.493 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F5-full.svg))
 
@@ -746,7 +746,7 @@ Messages declared on the license: `Pickup Schedule`, `Cargo Details Request`, `V
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F6 | 12.668 | 11.881 | 14.583 | 1.028 |
+| phase F6 | 11.797 | 11.313 | 177.316 | 52.077 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F6-full.svg))
 
@@ -756,11 +756,11 @@ Messages declared on the license: `Pickup Schedule`, `Cargo Details Request`, `V
 <!-- evidence:phase-title:F7 -->
 ### F7
 
-**Restrict a second instance through its Holder policy**
+**Freeze the instance through its Holder policy**
 <!-- /evidence:phase-title:F7 -->
 
 <!-- narrative:F7 -->
-A second instance, minted by the authorized creator for the same holder with the default policies, shows the Holder layer without touching the first one. The holder deploys and installs `DenyAllSmartPolicy` as its Holder policy, and the delta on this instance is <!-- outcome:F7.denied.delta -->denied<!-- /outcome --> at the Holder action check. The experiment does not transfer a choreography instance: the transfer rules of the Master policy are exercised only by the policy test matrix.
+The holder freezes the instance of the previous phases; no other instance is minted. It deploys `DenyAllSmartPolicy` and installs it as the Holder policy of that instance, in place of the default one. The holder then sends again the update it applied with the delta. The Creator policy is unchanged and would accept it again: its action check passes in the diagram below, and the update rewrites the nodes to the state they already have, so no limit is exceeded. The update is <!-- outcome:F7.denied.delta -->denied<!-- /outcome --> by the Holder policy alone, at the action check, where the asset asks both policies whether the caller may call the function before it looks at any rule on the model. Frozen means that the model can no longer be changed through `setNodes` or `setRoles` while the deny-all Holder policy is installed; only the holder can replace that policy, and the final render reads the frozen instance. The experiment does not transfer a choreography instance: the transfer rules of the Master policy are exercised only by the policy test matrix.
 
 <!-- evidence:phase:F7 -->
 **Actors**
@@ -768,7 +768,6 @@ A second instance, minted by the authorized creator for the same holder with the
 | Account | Index | Address | Plays |
 | --- | ---: | --- | --- |
 | Holder | 1 | `0x70997970C51812dc3A010C7d01b50e0d17dc79C8` | eligible holder: holds and edits the instances |
-| Authorized creator | 4 | `0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65` | the account the Master policy authorizes to mint an instance |
 
 **Inputs**
 
@@ -781,57 +780,55 @@ A second instance, minted by the authorized creator for the same holder with the
 | Key | Operation | From | Call | Contract | Outcome | Reason | Gas |
 | --- | --- | --- | --- | --- | --- | --- | ---: |
 | `F7.deploy.deny-all` | the Holder deploys the deny-all policy | Holder | `DenyAllSmartPolicy.constructor` | DenyAllSmartPolicy `0x90118d110B07ABB82Ba8980D1c5cC96EeA810d2C` | allowed | — | 335,458 |
-| `F7.mint` | the authorized creator mints a second instance for the Holder, with the default policies | Authorized creator | `ChoreographyNMT.mint` | ChoreographyNMT `0x5FC8d32690cc91D4c39d9d3abcBD16989F875707` | allowed | — | 5,804,785 |
-| `F7.holder.deny-all` | the Holder installs the deny-all policy | Holder | `ChoreographyMutableAsset.setHolderSmartPolicy` | ChoreographyMutableAsset `0x23dB4a08f2272df049a4932a4Cc3A6Dc1002B33E` | allowed | — | 32,533 |
-| `F7.denied.delta` | the Holder policy denies the delta | Holder | `ChoreographyMutableAsset.setNodes` | ChoreographyMutableAsset `0x23dB4a08f2272df049a4932a4Cc3A6Dc1002B33E` | denied | `OperationDenied(HOLDER)` | 137,644 |
+| `F7.holder.deny-all` | the Holder installs the deny-all policy on the instance | Holder | `ChoreographyMutableAsset.setHolderSmartPolicy` | ChoreographyMutableAsset `0x61c36a8d610163660E21a8b7359e1Cac0C9133e1` | allowed | — | 32,533 |
+| `F7.denied.delta` | the Holder policy denies a further update of the frozen instance | Holder | `ChoreographyMutableAsset.setNodes` | ChoreographyMutableAsset `0x61c36a8d610163660E21a8b7359e1Cac0C9133e1` | denied | `OperationDenied(HOLDER)` | 137,644 |
 
 **Costs**
 
 | Key | Gas | Cost (POL) | USD @100 gwei | USD @300 gwei | USD @1000 gwei |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | `F7.deploy.deny-all` | 335,458 | 0.000000105579031798 | $0.003019 | $0.009057 | $0.030191 |
-| `F7.mint` | 5,804,785 | 0.00000160113384655 | $0.052243 | $0.156729 | $0.522431 |
-| `F7.holder.deny-all` | 32,533 | 0.000000008068932259 | $0.000293 | $0.000878 | $0.002928 |
-| `F7.denied.delta` | 137,644 | 0.000000029876180776 | $0.001239 | $0.003716 | $0.012388 |
-| **phase total** | 6,310,420 | 0.000001744657991383 | $0.056794 | $0.170381 | $0.567938 |
+| `F7.holder.deny-all` | 32,533 | 0.00000000897357739 | $0.000293 | $0.000878 | $0.002928 |
+| `F7.denied.delta` | 137,644 | 0.00000003322588516 | $0.001239 | $0.003716 | $0.012388 |
+| **phase total** | 505,635 | 0.000000147778494348 | $0.004551 | $0.013652 | $0.045507 |
 
 **Trust-table rows**
 
 | Key | Table | Row of docs/choreography-policies.md |
 | --- | --- | --- |
-| `F7.mint` | choreography | `mint` an instance of the choreography type to an eligible holder |
 | `F7.holder.deny-all` | choreography | `setHolderSmartPolicy` |
 | `F7.denied.delta` | choreography | `setNodes` |
 
-**The second instance at the end of the phase**
+**The instance at the end of the phase**
 
 | Address | Nodes | Tasks | Gateways | Edges | Messages | Roles |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `0x23dB4a08f2272df049a4932a4Cc3A6Dc1002B33E` | 11 | 9 | 0 | 10 | 18 | 5 |
+| `0x61c36a8d610163660E21a8b7359e1Cac0C9133e1` | 14 | 10 | 2 | 14 | 19 | 5 |
 
 | Role | Played by | Address |
 | --- | --- | --- |
-| Bulk Buyer | none | `0x0000000000000000000000000000000000000000` |
-| Manufacturer | none | `0x0000000000000000000000000000000000000000` |
-| Middleman | none | `0x0000000000000000000000000000000000000000` |
-| Supplier | none | `0x0000000000000000000000000000000000000000` |
-| Special Carrier | none | `0x0000000000000000000000000000000000000000` |
-
-Holder: Holder.
+| Bulk Buyer | ParticipantMutableAsset | `0x0214919f0E8889b55d6dd69f1341B4947453458B` |
+| Manufacturer | ParticipantMutableAsset | `0xD5B9B99c015C86F4a44122b9EB8e5c8AF0AC3F16` |
+| Middleman | ParticipantMutableAsset | `0xb008fcD5ce8D04C68f62D240A1b4907dEBb12732` |
+| Supplier | ParticipantMutableAsset | `0x611cA715eae6F4BBa9e4442a379C206072655759` |
+| Special Carrier | ParticipantMutableAsset | `0xA44B9f3F5Bb8C278c1ee85D8F32517c6EFa64B0D` |
 
 **Policies in force at the end of the phase**
 
 | Resource | Layer | Contract | Address | Source | Bytecode keccak256 |
 | --- | --- | --- | --- | --- | --- |
 | choreography type | Master | MasterSmartPolicy | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | [MasterSmartPolicy.sol](../contracts/choreography/MasterSmartPolicy.sol) | `0x1081a7b7fedd7c06c5e8c1ddfc67a255b1ddedf172c040fc52e4f513112088e6` |
-| restricted instance | Creator | CreatorSmartPolicy | `0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512` | [CreatorSmartPolicy.sol](../contracts/choreography/CreatorSmartPolicy.sol) | `0x43492bed290349b36ee4209e036f71822a65418023ba5edd9e222d5e13406330` |
-| restricted instance | Holder | DenyAllSmartPolicy | `0x90118d110B07ABB82Ba8980D1c5cC96EeA810d2C` | [DenyAllSmartPolicy.sol](../contracts/choreography/DenyAllSmartPolicy.sol) | `0x9f03a9ce484e3bd5888dbcdf647bf64f9b80a32025b7548177e9283f625f21f1` |
+| instance | Creator | CreatorSmartPolicyPaperScenario | `0x9A676e781A523b5d0C0e43731313A708CB607508` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x86c1693d9ff2a7c6ffe210994b5bede78f42ce0d1580907f1f5eab10d1c6c178` |
+| instance | Holder | DenyAllSmartPolicy | `0x90118d110B07ABB82Ba8980D1c5cC96EeA810d2C` | [DenyAllSmartPolicy.sol](../contracts/choreography/DenyAllSmartPolicy.sol) | `0x9f03a9ce484e3bd5888dbcdf647bf64f9b80a32025b7548177e9283f625f21f1` |
+| license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xa1125e3bff544447605dbd3dcb2dcfa30cb51725b2e6b4e298f0bbcbe4f86b8e` |
+| licensed role | Creator | ParticipantCreatorSmartPolicy | `0xb19b36b1456E65E3A6D514D3F715f204BD59f431` | [CreatorSmartPolicy.sol](../contracts/participant/CreatorSmartPolicy.sol) | `0xf0e86dce5cd1908403aeb034f9f9944086e3fbc133c9ee0e9c55c36e279c92e0` |
+| licensed role | Holder | ParticipantHolderSmartPolicy | `0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6` | [HolderSmartPolicy.sol](../contracts/participant/HolderSmartPolicy.sol) | `0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b` |
 
 **Duration (ms)**
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F7 | 14.838 | 12.934 | 18.000 | 1.506 |
+| phase F7 | 4.617 | 4.173 | 8.836 | 1.868 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F7-full.svg))
 
@@ -887,7 +884,7 @@ The render reads the instance again and regenerates the BPMN of the changed mode
 | --- | --- | --- | --- | --- | --- |
 | choreography type | Master | MasterSmartPolicy | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | [MasterSmartPolicy.sol](../contracts/choreography/MasterSmartPolicy.sol) | `0x1081a7b7fedd7c06c5e8c1ddfc67a255b1ddedf172c040fc52e4f513112088e6` |
 | instance | Creator | CreatorSmartPolicyPaperScenario | `0x9A676e781A523b5d0C0e43731313A708CB607508` | [CreatorSmartPolicyPaperScenario.sol](../contracts/choreography/CreatorSmartPolicyPaperScenario.sol) | `0x86c1693d9ff2a7c6ffe210994b5bede78f42ce0d1580907f1f5eab10d1c6c178` |
-| instance | Holder | HolderSmartPolicy | `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` | [HolderSmartPolicy.sol](../contracts/choreography/HolderSmartPolicy.sol) | `0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b` |
+| instance | Holder | DenyAllSmartPolicy | `0x90118d110B07ABB82Ba8980D1c5cC96EeA810d2C` | [DenyAllSmartPolicy.sol](../contracts/choreography/DenyAllSmartPolicy.sol) | `0x9f03a9ce484e3bd5888dbcdf647bf64f9b80a32025b7548177e9283f625f21f1` |
 | license type | Master | ParticipantMasterSmartPolicy | `0x0165878A594ca255338adfa4d48449f69242Eb8F` | [ParticipantMasterSmartPolicy.sol](../contracts/participant/ParticipantMasterSmartPolicy.sol) | `0xa1125e3bff544447605dbd3dcb2dcfa30cb51725b2e6b4e298f0bbcbe4f86b8e` |
 | licensed role | Creator | ParticipantCreatorSmartPolicy | `0xb19b36b1456E65E3A6D514D3F715f204BD59f431` | [CreatorSmartPolicy.sol](../contracts/participant/CreatorSmartPolicy.sol) | `0xf0e86dce5cd1908403aeb034f9f9944086e3fbc133c9ee0e9c55c36e279c92e0` |
 | licensed role | Holder | ParticipantHolderSmartPolicy | `0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6` | [HolderSmartPolicy.sol](../contracts/participant/HolderSmartPolicy.sol) | `0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b` |
@@ -896,8 +893,8 @@ The render reads the instance again and regenerates the BPMN of the changed mode
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F8 | 18.937 | 17.689 | 20.602 | 0.847 |
-| step `F8.render` | 18.382 | 17.181 | 20.041 | 0.805 |
+| phase F8 | 18.250 | 17.207 | 23.787 | 2.016 |
+| step `F8.render` | 17.699 | 16.701 | 23.188 | 1.999 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F8-full.svg))
 
@@ -970,7 +967,7 @@ The use case diagrams are written by hand and checked by `npm run check:use-case
 | [F4](../evaluation/evidence/uml/F4.svg) · [complete](../evaluation/evidence/uml/F4-full.svg) | Render the baseline model from the chain |
 | [F5](../evaluation/evidence/uml/F5.svg) · [complete](../evaluation/evidence/uml/F5-full.svg) | Apply the delta: one allowed update and seven denied ones |
 | [F6](../evaluation/evidence/uml/F6.svg) · [complete](../evaluation/evidence/uml/F6-full.svg) | Sell the Special Carrier role: Carrier A to Carrier B |
-| [F7](../evaluation/evidence/uml/F7.svg) · [complete](../evaluation/evidence/uml/F7-full.svg) | Restrict a second instance through its Holder policy |
+| [F7](../evaluation/evidence/uml/F7.svg) · [complete](../evaluation/evidence/uml/F7-full.svg) | Freeze the instance through its Holder policy |
 | [F8](../evaluation/evidence/uml/F8.svg) · [complete](../evaluation/evidence/uml/F8-full.svg) | Render the final model from the chain |
 <!-- /evidence:uml-guide -->
 

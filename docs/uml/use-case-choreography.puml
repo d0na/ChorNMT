@@ -15,7 +15,7 @@ actor "Holder\n(account 1)" as Holder
 actor "Anyone else" as Anyone
 rectangle "ChoreographyNMT + ChoreographyMutableAsset" {
   ' trust: choreography:mint
-  ' evidence: F2.mint, F2.denied.master, F2.denied.unauthorized-creator, F2.denied.ineligible-holder, F7.mint
+  ' evidence: F2.mint, F2.denied.master, F2.denied.unauthorized-creator, F2.denied.ineligible-holder
   ' test: authorized creator mints eligible holder; master administrator cannot mint; unauthorized creator cannot mint; authorized creator cannot assign an ineligible holder
   usecase "Mint an instance of the\nchoreography type" as UC_Mint
   ' trust: choreography:transferFrom

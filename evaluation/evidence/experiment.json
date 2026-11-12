@@ -287,11 +287,6 @@
       "address": "0x90118d110B07ABB82Ba8980D1c5cC96EeA810d2C",
       "contract": "DenyAllSmartPolicy",
       "label": "DenyAllSmartPolicy"
-    },
-    {
-      "address": "0x23dB4a08f2272df049a4932a4Cc3A6Dc1002B33E",
-      "contract": "ChoreographyMutableAsset",
-      "label": "Second instance"
     }
   ],
   "inputs": {
@@ -1015,7 +1010,7 @@
     },
     {
       "id": "F7",
-      "title": "Restrict a second instance through its Holder policy",
+      "title": "Freeze the instance through its Holder policy",
       "inputs": [
         {
           "path": "scripts/data/paper-example-parallel-transport-preparation.delta.json",
@@ -1023,12 +1018,10 @@
         }
       ],
       "actors": [
-        "Holder",
-        "Authorized creator"
+        "Holder"
       ],
       "transactions": [
         "F7.deploy.deny-all",
-        "F7.mint",
         "F7.holder.deny-all",
         "F7.denied.delta"
       ],
@@ -1042,63 +1035,86 @@
           "bytecodeKeccak256": "0x1081a7b7fedd7c06c5e8c1ddfc67a255b1ddedf172c040fc52e4f513112088e6"
         },
         {
-          "resource": "restricted instance",
+          "resource": "instance",
           "layer": "Creator",
-          "contract": "CreatorSmartPolicy",
-          "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-          "source": "contracts/choreography/CreatorSmartPolicy.sol",
-          "bytecodeKeccak256": "0x43492bed290349b36ee4209e036f71822a65418023ba5edd9e222d5e13406330"
+          "contract": "CreatorSmartPolicyPaperScenario",
+          "address": "0x9A676e781A523b5d0C0e43731313A708CB607508",
+          "source": "contracts/choreography/CreatorSmartPolicyPaperScenario.sol",
+          "bytecodeKeccak256": "0x86c1693d9ff2a7c6ffe210994b5bede78f42ce0d1580907f1f5eab10d1c6c178"
         },
         {
-          "resource": "restricted instance",
+          "resource": "instance",
           "layer": "Holder",
           "contract": "DenyAllSmartPolicy",
           "address": "0x90118d110B07ABB82Ba8980D1c5cC96EeA810d2C",
           "source": "contracts/choreography/DenyAllSmartPolicy.sol",
           "bytecodeKeccak256": "0x9f03a9ce484e3bd5888dbcdf647bf64f9b80a32025b7548177e9283f625f21f1"
+        },
+        {
+          "resource": "license type",
+          "layer": "Master",
+          "contract": "ParticipantMasterSmartPolicy",
+          "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+          "source": "contracts/participant/ParticipantMasterSmartPolicy.sol",
+          "bytecodeKeccak256": "0xa1125e3bff544447605dbd3dcb2dcfa30cb51725b2e6b4e298f0bbcbe4f86b8e"
+        },
+        {
+          "resource": "licensed role",
+          "layer": "Creator",
+          "contract": "ParticipantCreatorSmartPolicy",
+          "address": "0xb19b36b1456E65E3A6D514D3F715f204BD59f431",
+          "source": "contracts/participant/CreatorSmartPolicy.sol",
+          "bytecodeKeccak256": "0xf0e86dce5cd1908403aeb034f9f9944086e3fbc133c9ee0e9c55c36e279c92e0"
+        },
+        {
+          "resource": "licensed role",
+          "layer": "Holder",
+          "contract": "ParticipantHolderSmartPolicy",
+          "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+          "source": "contracts/participant/HolderSmartPolicy.sol",
+          "bytecodeKeccak256": "0x29c7f6744db23d0f03ec3cd9c5c8cd4b279ba4324371e80d432e259078e2c57b"
         }
       ],
-      "restrictedInstance": {
-        "address": "0x23dB4a08f2272df049a4932a4Cc3A6Dc1002B33E",
+      "instance": {
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1",
         "roles": 5,
-        "nodes": 11,
-        "tasks": 9,
-        "gateways": 0,
-        "sequenceEdges": 10,
-        "messages": 18,
+        "nodes": 14,
+        "tasks": 10,
+        "gateways": 2,
+        "sequenceEdges": 14,
+        "messages": 19,
         "roleAssignments": [
           {
             "role": "Bulk Buyer",
-            "address": "0x0000000000000000000000000000000000000000",
+            "address": "0x0214919f0E8889b55d6dd69f1341B4947453458B",
             "account": null,
-            "contract": "none"
+            "contract": "ParticipantMutableAsset"
           },
           {
             "role": "Manufacturer",
-            "address": "0x0000000000000000000000000000000000000000",
+            "address": "0xD5B9B99c015C86F4a44122b9EB8e5c8AF0AC3F16",
             "account": null,
-            "contract": "none"
+            "contract": "ParticipantMutableAsset"
           },
           {
             "role": "Middleman",
-            "address": "0x0000000000000000000000000000000000000000",
+            "address": "0xb008fcD5ce8D04C68f62D240A1b4907dEBb12732",
             "account": null,
-            "contract": "none"
+            "contract": "ParticipantMutableAsset"
           },
           {
             "role": "Supplier",
-            "address": "0x0000000000000000000000000000000000000000",
+            "address": "0x611cA715eae6F4BBa9e4442a379C206072655759",
             "account": null,
-            "contract": "none"
+            "contract": "ParticipantMutableAsset"
           },
           {
             "role": "Special Carrier",
-            "address": "0x0000000000000000000000000000000000000000",
+            "address": "0xA44B9f3F5Bb8C278c1ee85D8F32517c6EFa64B0D",
             "account": null,
-            "contract": "none"
+            "contract": "ParticipantMutableAsset"
           }
-        ],
-        "holder": "Holder"
+        ]
       }
     },
     {
@@ -1127,10 +1143,10 @@
         {
           "resource": "instance",
           "layer": "Holder",
-          "contract": "HolderSmartPolicy",
-          "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-          "source": "contracts/choreography/HolderSmartPolicy.sol",
-          "bytecodeKeccak256": "0x64f3e21bf63e229868d575e36b6dfdafb0a11d8ed37cf63bf59858a08474030b"
+          "contract": "DenyAllSmartPolicy",
+          "address": "0x90118d110B07ABB82Ba8980D1c5cC96EeA810d2C",
+          "source": "contracts/choreography/DenyAllSmartPolicy.sol",
+          "bytecodeKeccak256": "0x9f03a9ce484e3bd5888dbcdf647bf64f9b80a32025b7548177e9283f625f21f1"
         },
         {
           "resource": "license type",
@@ -2820,42 +2836,16 @@
       "blockNumber": 64
     },
     {
-      "key": "F7.mint",
-      "phase": "F7",
-      "label": "the authorized creator mints a second instance for the Holder, with the default policies",
-      "from": {
-        "account": "Authorized creator",
-        "address": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"
-      },
-      "to": {
-        "contract": "ChoreographyNMT",
-        "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
-      },
-      "created": null,
-      "call": "ChoreographyNMT.mint",
-      "outcome": "allowed",
-      "reason": null,
-      "trust": {
-        "table": "choreography",
-        "action": "`mint` an instance of the choreography type to an eligible holder"
-      },
-      "gasUsed": "5804785",
-      "gasPriceWei": "275830",
-      "costWei": "1601133846550",
-      "transactionHash": "0x1b894b37d4828cbee3959e4e5c4fae794a769c82fb7cbdd6ce49d60b8bd9ab5d",
-      "blockNumber": 65
-    },
-    {
       "key": "F7.holder.deny-all",
       "phase": "F7",
-      "label": "the Holder installs the deny-all policy",
+      "label": "the Holder installs the deny-all policy on the instance",
       "from": {
         "account": "Holder",
         "address": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
       },
       "to": {
         "contract": "ChoreographyMutableAsset",
-        "address": "0x23dB4a08f2272df049a4932a4Cc3A6Dc1002B33E"
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1"
       },
       "created": null,
       "call": "ChoreographyMutableAsset.setHolderSmartPolicy",
@@ -2866,22 +2856,22 @@
         "action": "`setHolderSmartPolicy`"
       },
       "gasUsed": "32533",
-      "gasPriceWei": "248023",
-      "costWei": "8068932259",
-      "transactionHash": "0x3aec2071ed1dbbc16698004d7caea460a12d59a275557826c1f9377e7c627bb8",
-      "blockNumber": 66
+      "gasPriceWei": "275830",
+      "costWei": "8973577390",
+      "transactionHash": "0x3e1aed357a87da88ae6c7201a5731907191b5fe0a9972c90ebf44e42bc0cdf1e",
+      "blockNumber": 65
     },
     {
       "key": "F7.denied.delta",
       "phase": "F7",
-      "label": "the Holder policy denies the delta",
+      "label": "the Holder policy denies a further update of the frozen instance",
       "from": {
         "account": "Holder",
         "address": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
       },
       "to": {
         "contract": "ChoreographyMutableAsset",
-        "address": "0x23dB4a08f2272df049a4932a4Cc3A6Dc1002B33E"
+        "address": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1"
       },
       "created": null,
       "call": "ChoreographyMutableAsset.setNodes",
@@ -2892,10 +2882,10 @@
         "action": "`setNodes`"
       },
       "gasUsed": "137644",
-      "gasPriceWei": "217054",
-      "costWei": "29876180776",
-      "transactionHash": "0xade33990b2606fdfdd8096738ca2508837435ebb3fee8c9c13ce98509d193299",
-      "blockNumber": 67
+      "gasPriceWei": "241390",
+      "costWei": "33225885160",
+      "transactionHash": "0xf63f74fe23fa658d4b390a04e722d8a9ac245b6b184fa364515cc9b1480190eb",
+      "blockNumber": 66
     }
   ]
 }

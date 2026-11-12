@@ -484,25 +484,12 @@ async function runExperiment() {
   });
   lap("F6");
 
-  // F7: a second instance, with the default policies, restricted by its holder.
+  // F7: the holder freezes the instance: it replaces its own Holder policy with the deny-all one,
+  // and the update it applied in F5, sent again, is refused. No other instance is minted.
   const denyAll = await rec.deploy("F7.deploy.deny-all", holder, "DenyAllSmartPolicy");
-  const defaultMint = [holder.address, type.creator.contract.target, type.holder.contract.target];
-  const [restrictedAddress] = await nmt.connect(creator).mint.staticCall(...defaultMint);
-  rec.name(restrictedAddress, "ChoreographyMutableAsset", "Second instance");
-  await rec.allow("F7.mint", () => nmt.connect(creator).mint(...defaultMint));
-  const restrictedId = BigInt(restrictedAddress);
-  const restricted = contract("ChoreographyMutableAsset", restrictedAddress, holder);
-  await rec.allow("F7.holder.deny-all", () => restricted.setHolderSmartPolicy(denyAll.target));
-  await rec.deny("F7.denied.delta", holder, { to: restrictedAddress, data: restricted.interface.encodeFunctionData("setNodes", toNodeUpdate(delta.nodes)) });
-  // F7 reports the restricted instance, not the main one.
-  finishPhase("F7", {
-    policies: await instrument(async () => [
-      await policyEntry("choreography type", "Master", await nmt.masterSmartPolicy()),
-      await policyEntry("restricted instance", "Creator", await restricted.creatorSmartPolicy()),
-      await policyEntry("restricted instance", "Holder", await restricted.holderSmartPolicy())
-    ]),
-    restrictedInstance: await instrument(async () => ({ ...await instanceState(restrictedAddress), holder: rec.accountName(await nmt.ownerOf(restrictedId)) }))
-  });
+  await rec.allow("F7.holder.deny-all", () => asset.connect(holder).setHolderSmartPolicy(denyAll.target));
+  await rec.deny("F7.denied.delta", holder, sameDelta);
+  await endPhase("F7");
   lap("F7");
 
   // F8: the final render.
