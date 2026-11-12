@@ -59,7 +59,7 @@ A0 -> OffChain : importBpmnToNmt(references/paper-example.bpmn)
 OffChain --> A0 : NMT dataset (roles and nodes), sha256 e5324e018212…
 == F1.deploy.master · allowed ==
 A0 -> C0 : constructor
-C0 --> A0 : allowed · 368,379 gas
+C0 --> A0 : allowed · 368,367 gas
 == F1.deploy.creator · allowed ==
 A0 -> C1 : constructor
 C1 --> A0 : allowed · 1,047,571 gas

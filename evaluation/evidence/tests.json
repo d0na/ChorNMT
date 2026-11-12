@@ -9,79 +9,79 @@
       "label": "authorized creator mints eligible holder",
       "outcome": "allowed",
       "gasUsed": "3173819",
-      "costWei": "1642656922973363"
+      "costWei": "1642656830932612"
     },
     {
       "label": "creator and holder update roles",
       "outcome": "allowed",
       "gasUsed": "109294",
-      "costWei": "50243936558990"
+      "costWei": "50243933608052"
     },
     {
       "label": "creator and holder update nodes",
       "outcome": "allowed",
       "gasUsed": "224844",
-      "costWei": "90490432262028"
+      "costWei": "90490426865772"
     },
     {
       "label": "creator policy denies a flow declared on one endpoint",
       "outcome": "denied",
       "gasUsed": "121951",
-      "costWei": "42991195664489"
+      "costWei": "42991193103518"
     },
     {
       "label": "authorized creator mints with the test-scenario creator policy",
       "outcome": "allowed",
       "gasUsed": "3179419",
-      "costWei": "191647733996724"
+      "costWei": "191647721279048"
     },
     {
       "label": "creator policy allows approved task within limits",
       "outcome": "allowed",
       "gasUsed": "609279",
-      "costWei": "32621668928970"
+      "costWei": "32621666491854"
     },
     {
       "label": "creator policy allows second approved task within limits",
       "outcome": "allowed",
       "gasUsed": "601451",
-      "costWei": "28258979763425"
+      "costWei": "28258977959072"
     },
     {
       "label": "creator policy denies task count above limit",
       "outcome": "denied",
       "gasUsed": "164755",
-      "costWei": "6792739252680"
+      "costWei": "6792739087925"
     },
     {
       "label": "creator policy denies sequence flow count above limit",
       "outcome": "denied",
       "gasUsed": "324233",
-      "costWei": "11706099477709"
+      "costWei": "11706098829243"
     },
     {
       "label": "creator policy denies task outside name allowlist",
       "outcome": "denied",
       "gasUsed": "144822",
-      "costWei": "4582132164144"
+      "costWei": "4582132019322"
     },
     {
       "label": "creator policy denies flow to unknown node",
       "outcome": "denied",
       "gasUsed": "76086",
-      "costWei": "2107877109336"
+      "costWei": "2107877033250"
     },
     {
       "label": "creator policy denies protected node update",
       "outcome": "denied",
       "gasUsed": "167677",
-      "costWei": "4066112922652"
+      "costWei": "4066112587298"
     },
     {
       "label": "creator policy denies flow from unknown node",
       "outcome": "denied",
       "gasUsed": "93939",
-      "costWei": "1994833086051"
+      "costWei": "1994832992112"
     },
     {
       "label": "creator policy allows update keeping protected node links",
