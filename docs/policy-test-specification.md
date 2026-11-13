@@ -76,8 +76,9 @@ optional BPMN structural governance. Its rules are hardcoded, as a policy
 translated from XACML would be. The default `CreatorSmartPolicy` has no
 structural constraint beyond well-formed updates; the constraints live in
 `ConstrainedCreatorSmartPolicy`, whose scenario policies
-(`CreatorSmartPolicyTestScenario`, `CreatorSmartPolicyPaperScenario`) write
-the data as literals. The administrator (Hardhat account 0) is the only party
+(`CreatorSmartPolicyTestScenario`, `CreatorSmartPolicyPaperScenario`, and
+`CreatorSmartPolicyScaleScenario` for the synthetic models of the extended
+evaluation) write the data as literals. The administrator (Hardhat account 0) is the only party
 allowed to replace the Creator policy of an instance; the Holder cannot remove
 the constraints it is subject to.
 

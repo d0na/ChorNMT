@@ -54,6 +54,18 @@ The whole flow (deploy of the type, first instance, delta) costs about 18.1 M ga
 
 Implement a minimal version in a separate worktree, then run `npm test` and `npm run check:evidence` and compare gas per row, as for the other candidates (`gas-optimization` skill). Keep it only if the whole-flow total drops and every allow/deny outcome is unchanged.
 
+## A version check against lost updates
+
+*Status: idea, not estimated. Shown by case `K3.lost-update` of the [extended evaluation](extended-evaluation.md#study-4-concurrency).*
+
+An update carries whole nodes, and the asset writes them without checking that each node is still the one the sender read. Two updates of the same node built on the same state both succeed, and the second writes back the old value of what the first changed. The asset could keep a version per node (or one for the model) and take the expected version with the update, refusing a stale one. It costs one storage slot per node, or one per model, and one more argument in `setNodes`; the asset is close to the bytecode limit, so the check may have to live in a policy that reads the version through `IChoreographyAsset`.
+
+## Counters for the constrained Creator policy
+
+*Status: idea, not estimated. Measured by study 2 of the [extended evaluation](extended-evaluation.md#updating).*
+
+`ConstrainedCreatorSmartPolicy` enforces its task and flow limits by counting every node of the model at every update, so the cost of an update grows linearly with the model, while under the default policy it does not depend on the size. If the asset kept the two counts, updated by `_setNodes`, the policy would read two numbers. It adds storage writes to every update and code to an asset close to the bytecode limit; measure both before deciding.
+
 ## Instances that read unchanged nodes from the model contract
 
 *Status: idea, not estimated.*

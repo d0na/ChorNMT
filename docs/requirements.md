@@ -80,7 +80,7 @@ Out of scope by choice; do not add them:
 
 - **Execution of the choreography.** The asset holds the model, not running instances: no task state, no message exchange at runtime.
 - **The XACML to Solidity translator.** The policies are hand-written simulations of its output.
-- **BPMN models other than `paper-example`.** `pizza-delivery` and `parallel-gateway-example` are development references only.
+- **BPMN models other than `paper-example`.** `pizza-delivery` and `parallel-gateway-example` are development references only. The synthetic models of the [extended evaluation](extended-evaluation.md) are not an exception: they are generated in code to measure how costs grow with the size of a model, they are not BPMN models of a process, and nothing else uses them.
 - **Deleting nodes.** Nodes are overwritten, never removed; a clean model needs a new asset.
 - **A version registry.** The history of a model is the chain itself (see [Design decisions](decisions.md)).
 - **Replacing the model of a type.** The model contract of a `ChoreographyNMT` is immutable; another starting model is another type.

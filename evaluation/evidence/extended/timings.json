@@ -1,0 +1,325 @@
+{
+  "repetitions": 3,
+  "warmUpRuns": 1,
+  "note": "Wall-clock durations on the local network and machine, over the measured runs; the warm-up run is excluded. They measure the off-chain work and the local execution, not the latency of a public network. Not compared by check:evidence.",
+  "machine": {
+    "platform": "darwin 25.6.0",
+    "arch": "arm64",
+    "cpu": "Apple M2 Pro",
+    "cores": 10,
+    "memoryGiB": 32,
+    "node": "22.15.1"
+  },
+  "steps": {
+    "size-005.mintAndLink": {
+      "medianMs": 9,
+      "minMs": 8.623,
+      "maxMs": 9.664,
+      "samplesMs": [
+        9.664,
+        9,
+        8.623
+      ]
+    },
+    "size-005.tokenURI": {
+      "medianMs": 6.363,
+      "minMs": 6.229,
+      "maxMs": 7.662,
+      "samplesMs": [
+        7.662,
+        6.229,
+        6.363
+      ]
+    },
+    "size-005.render": {
+      "medianMs": 12.162,
+      "minMs": 9.972,
+      "maxMs": 12.234,
+      "samplesMs": [
+        12.234,
+        12.162,
+        9.972
+      ]
+    },
+    "size-010.mintAndLink": {
+      "medianMs": 12.394,
+      "minMs": 10.683,
+      "maxMs": 20.468,
+      "samplesMs": [
+        20.468,
+        12.394,
+        10.683
+      ]
+    },
+    "size-010.tokenURI": {
+      "medianMs": 9.476,
+      "minMs": 8.96,
+      "maxMs": 9.498,
+      "samplesMs": [
+        8.96,
+        9.476,
+        9.498
+      ]
+    },
+    "size-010.render": {
+      "medianMs": 13.914,
+      "minMs": 13.355,
+      "maxMs": 16.77,
+      "samplesMs": [
+        16.77,
+        13.914,
+        13.355
+      ]
+    },
+    "size-015.mintAndLink": {
+      "medianMs": 14.578,
+      "minMs": 14.539,
+      "maxMs": 15.108,
+      "samplesMs": [
+        14.539,
+        14.578,
+        15.108
+      ]
+    },
+    "size-015.tokenURI": {
+      "medianMs": 13.292,
+      "minMs": 13.15,
+      "maxMs": 14.195,
+      "samplesMs": [
+        14.195,
+        13.292,
+        13.15
+      ]
+    },
+    "size-015.render": {
+      "medianMs": 18.554,
+      "minMs": 18.431,
+      "maxMs": 19.3,
+      "samplesMs": [
+        19.3,
+        18.431,
+        18.554
+      ]
+    },
+    "size-020.mintAndLink": {
+      "medianMs": 44.223,
+      "minMs": 43.621,
+      "maxMs": 59.838,
+      "samplesMs": [
+        59.838,
+        43.621,
+        44.223
+      ]
+    },
+    "size-020.tokenURI": {
+      "medianMs": 15.195,
+      "minMs": 14.988,
+      "maxMs": 18.765,
+      "samplesMs": [
+        18.765,
+        14.988,
+        15.195
+      ]
+    },
+    "size-020.render": {
+      "medianMs": 21.308,
+      "minMs": 21.237,
+      "maxMs": 22.39,
+      "samplesMs": [
+        22.39,
+        21.237,
+        21.308
+      ]
+    },
+    "size-022.mintAndLink": {
+      "medianMs": 48.386,
+      "minMs": 48.01,
+      "maxMs": 59.175,
+      "samplesMs": [
+        59.175,
+        48.01,
+        48.386
+      ]
+    },
+    "size-022.tokenURI": {
+      "medianMs": 16.155,
+      "minMs": 15.849,
+      "maxMs": 16.407,
+      "samplesMs": [
+        16.155,
+        15.849,
+        16.407
+      ]
+    },
+    "size-022.render": {
+      "medianMs": 22.648,
+      "minMs": 21.706,
+      "maxMs": 28.093,
+      "samplesMs": [
+        28.093,
+        22.648,
+        21.706
+      ]
+    },
+    "grown-032.tokenURI": {
+      "medianMs": 21.414,
+      "minMs": 20.276,
+      "maxMs": 33.169,
+      "samplesMs": [
+        33.169,
+        20.276,
+        21.414
+      ]
+    },
+    "grown-032.render": {
+      "medianMs": 29.266,
+      "minMs": 27.914,
+      "maxMs": 85.975,
+      "samplesMs": [
+        85.975,
+        27.914,
+        29.266
+      ]
+    },
+    "grown-042.tokenURI": {
+      "medianMs": 29.61,
+      "minMs": 28.89,
+      "maxMs": 43.762,
+      "samplesMs": [
+        43.762,
+        28.89,
+        29.61
+      ]
+    },
+    "grown-042.render": {
+      "medianMs": 39.318,
+      "minMs": 36.81,
+      "maxMs": 64.465,
+      "samplesMs": [
+        64.465,
+        36.81,
+        39.318
+      ]
+    },
+    "grown-052.tokenURI": {
+      "medianMs": 34.83,
+      "minMs": 32.59,
+      "maxMs": 34.885,
+      "samplesMs": [
+        34.885,
+        32.59,
+        34.83
+      ]
+    },
+    "grown-052.render": {
+      "medianMs": 45.499,
+      "minMs": 43.607,
+      "maxMs": 57.937,
+      "samplesMs": [
+        57.937,
+        43.607,
+        45.499
+      ]
+    },
+    "grown-062.tokenURI": {
+      "medianMs": 39.006,
+      "minMs": 38.296,
+      "maxMs": 40.673,
+      "samplesMs": [
+        40.673,
+        39.006,
+        38.296
+      ]
+    },
+    "grown-062.render": {
+      "medianMs": 51.273,
+      "minMs": 48.025,
+      "maxMs": 55.301,
+      "samplesMs": [
+        55.301,
+        48.025,
+        51.273
+      ]
+    },
+    "grown-072.tokenURI": {
+      "medianMs": 48.134,
+      "minMs": 47.91,
+      "maxMs": 48.426,
+      "samplesMs": [
+        47.91,
+        48.426,
+        48.134
+      ]
+    },
+    "grown-072.render": {
+      "medianMs": 61.215,
+      "minMs": 60.572,
+      "maxMs": 67.017,
+      "samplesMs": [
+        61.215,
+        60.572,
+        67.017
+      ]
+    },
+    "grown-082.tokenURI": {
+      "medianMs": 56.307,
+      "minMs": 53.534,
+      "maxMs": 68.24,
+      "samplesMs": [
+        56.307,
+        53.534,
+        68.24
+      ]
+    },
+    "grown-082.render": {
+      "medianMs": 69.177,
+      "minMs": 67.564,
+      "maxMs": 736.708,
+      "samplesMs": [
+        69.177,
+        67.564,
+        736.708
+      ]
+    },
+    "grown-092.tokenURI": {
+      "medianMs": 70.928,
+      "minMs": 59.702,
+      "maxMs": 85.297,
+      "samplesMs": [
+        85.297,
+        70.928,
+        59.702
+      ]
+    },
+    "grown-092.render": {
+      "medianMs": 85.569,
+      "minMs": 83.706,
+      "maxMs": 86.159,
+      "samplesMs": [
+        85.569,
+        86.159,
+        83.706
+      ]
+    },
+    "grown-100.tokenURI": {
+      "medianMs": 61.842,
+      "minMs": 59.841,
+      "maxMs": 95.642,
+      "samplesMs": [
+        95.642,
+        59.841,
+        61.842
+      ]
+    },
+    "grown-100.render": {
+      "medianMs": 86.96,
+      "minMs": 78.536,
+      "maxMs": 100.627,
+      "samplesMs": [
+        100.627,
+        78.536,
+        86.96
+      ]
+    }
+  }
+}

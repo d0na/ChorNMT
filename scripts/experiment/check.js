@@ -1,11 +1,11 @@
-// npm run check:evidence: reruns the experiment into a temporary directory (evidence:update --out)
+// npm run check:evidence: reruns the experiment and the extended evaluation into a temporary directory (evidence:update --out)
 // and compares it with the versioned evaluation/evidence/ (decision D18). Every data file is compared
-// byte for byte except the measurements (timings.json and the phase-duration chart data). The SVG
+// byte for byte except the measurements (the two timings.json and the phase-duration chart data). The SVG
 // images are not compared, since their bytes depend on the gnuplot, PlantUML, Chromium, and font
 // versions of the machine (D20); each one carries the SHA-256 of the versioned file it is drawn
 // from, which is checked instead (the UML ones by check:uml). It fails on a missing, extra, or
-// different file or a stale image, lists the transactions and test cases whose outcome or gas
-// changed, and keeps the regenerated evidence for inspection; `npm run evidence:update` accepts it.
+// different file or a stale image, lists the transactions, the test cases, and the cases of the
+// extended evaluation whose outcome or gas changed, and keeps the regenerated evidence for inspection; `npm run evidence:update` accepts it.
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
@@ -13,11 +13,12 @@ import os from "node:os";
 import path from "node:path";
 
 const EVIDENCE = path.resolve("evaluation", "evidence");
-const NOT_COMPARED = [/^timings\.json$/, /^charts\/phase-duration\.dat$/, /\.svg$/];
+const NOT_COMPARED = [/^timings\.json$/, /^extended\/timings\.json$/, /^charts\/phase-duration\.dat$/, /\.svg$/];
 // The source of each image and the marker of its hash; the UML sources are checked by check:uml.
 const IMAGE_SOURCES = [
   { image: /^bpmn\/(.+)\.svg$/, source: "bpmn/$1.bpmn.xml", marker: "chornmt-bpmn-xml-sha256" },
-  { image: /^charts\/(.+)\.svg$/, source: "charts/$1.dat", marker: "chornmt-chart-data-sha256" }
+  { image: /^charts\/(.+)\.svg$/, source: "charts/$1.dat", marker: "chornmt-chart-data-sha256" },
+  { image: /^extended\/charts\/(.+)\.svg$/, source: "extended/charts/$1.dat", marker: "chornmt-chart-data-sha256" }
 ];
 
 async function files(directory, prefix = "") {
@@ -92,6 +93,13 @@ async function main() {
     const [a, b] = await Promise.all([readJson(path.join(EVIDENCE, "experiment.json")), readJson(path.join(out, "experiment.json"))]);
     details.push(...caseChanges("transaction", a.transactions, b.transactions, (entry) => entry.key));
   }
+  if (problems.includes("differs: extended/extended.json")) {
+    const [a, b] = await Promise.all([readJson(path.join(EVIDENCE, "extended", "extended.json")), readJson(path.join(out, "extended", "extended.json"))]);
+    details.push(...caseChanges("update", a.updates.series, b.updates.series, (entry) => entry.key));
+    details.push(...caseChanges("conflict", a.conflicts.cases, b.conflicts.cases, (entry) => entry.key));
+    const sameBlock = (evidence) => evidence.concurrency.cases.flatMap((item) => item.transactions.map((transaction) => ({ ...transaction, key: `${item.key} #${transaction.position}` })));
+    details.push(...caseChanges("same-block transaction", sameBlock(a), sameBlock(b), (entry) => entry.key));
+  }
   if (problems.includes("differs: tests.json")) {
     const [a, b] = await Promise.all([readJson(path.join(EVIDENCE, "tests.json")), readJson(path.join(out, "tests.json"))]);
     details.push(...caseChanges("test", a.cases, b.cases, (entry) => entry.label));
@@ -101,7 +109,7 @@ async function main() {
     ...problems.map((problem) => `  ${problem}`),
     ...(details.length ? ["Outcome and gas changes:", ...details] : []),
     `Regenerated evidence: ${out} (compare with \`diff -r evaluation/evidence ${out}\`).`,
-    "If the change is intended, run `npm run evidence:update` and commit evaluation/evidence/ and docs/experiment.md."
+    "If the change is intended, run `npm run evidence:update` and commit evaluation/evidence/, docs/experiment.md, and docs/extended-evaluation.md."
   ].join("\n"));
   process.exitCode = 1;
 }

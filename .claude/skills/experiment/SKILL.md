@@ -9,7 +9,7 @@ The experiment is code: `scripts/experiment/phases.js` specifies it, `npm run ev
 
 ## Never
 
-- Edit a file in `evaluation/evidence/` or a generated placeholder of `docs/experiment.md` (`<!-- evidence:… -->`, `<!-- outcome:… -->`): the `guard-generated.sh` hook denies it. Change the code, the specification, or an input, then regenerate.
+- Edit a file in `evaluation/evidence/` or a generated placeholder of `docs/experiment.md` (`<!-- evidence:… -->`, `<!-- outcome:… -->`) or of `docs/extended-evaluation.md` (`<!-- extended:… -->`): the `guard-generated.sh` hook denies it. Change the code, the specification, or an input, then regenerate.
 - Write a digit or an outcome word (allowed, denied, reverted) in the narrative of `docs/experiment.md`: `check:protocol` fails. Name the transaction with an outcome placeholder instead, or declare a structural id in `STRUCTURAL` of `scripts/experiment/protocol.js`.
 - Accept an evidence diff in which an allow/deny outcome changed without asking the user first.
 - Replace the Master or the Creator policy in the experiment (choreography or license, certifier included): they are never replaced (open question in `docs/decisions.md`).
@@ -26,8 +26,8 @@ Every command starts with `source ~/.nvm/nvm.sh && nvm use >/dev/null && export 
 ## Check
 
 ```bash
-npm run check:evidence   # about 20 s: the run (1 warm-up + 10 repetitions), the test matrix, and the comparison
-npm run check:protocol   # the blocks of docs/experiment.md against the evidence, no number in the narrative
+npm run check:evidence   # about 40 s: the run (1 warm-up + 10 repetitions), the test matrix, the extended evaluation (1 + 3), and the comparison
+npm run check:protocol   # the blocks of docs/experiment.md and docs/extended-evaluation.md against the evidence, no number in the narrative of the first
 npm run check:use-cases  # the use case diagrams against the trust tables, tests, and evidence
 npm run check:gas        # the gas figures quoted in the docs against the evidence
 ```
@@ -51,11 +51,21 @@ The pre-commit hook and CI run all four.
 When the change is intended and understood:
 
 ```bash
-npm run evidence:update                    # rewrites evaluation/evidence/ and the blocks of docs/experiment.md
+npm run evidence:update                    # rewrites evaluation/evidence/ and the blocks of docs/experiment.md and docs/extended-evaluation.md
 npm run evidence:update -- --out <dir>     # an exploratory run elsewhere; the protocol is not touched
 ```
 
-Then run the four checks, update the narrative of `docs/experiment.md` only where the phases changed meaning, and commit the code, `evaluation/evidence/`, and `docs/experiment.md` together. A new section of the protocol or a removed one changes `scripts/experiment/parity.js` (a removal is `dropped` with its reason).
+Then run the four checks, update the narrative of `docs/experiment.md` only where the phases changed meaning, and commit the code, `evaluation/evidence/`, `docs/experiment.md`, and `docs/extended-evaluation.md` together. A new section of the protocol or a removed one changes `scripts/experiment/parity.js` (a removal is `dropped` with its reason).
+
+## Extended evaluation
+
+`scripts/experiment/extended-spec.js` specifies four studies (update variety, scalability on synthetic models, conflicts between organizations, same-block concurrency, decision D28); `scripts/experiment/extended.js` runs each on its own network and checks every transaction against the specification; `evidence:update` runs it after the experiment and writes `evaluation/evidence/extended/` and the `<!-- extended:… -->` blocks of `docs/extended-evaluation.md`.
+
+- It never changes the experiment: if a transaction, gas figure, or outcome of F1-F8 moves after a change to the extended evaluation, something is wrong.
+- A changed outcome in `extended/extended.json` is a change of the trust model, as in the experiment: stop and ask the user.
+- Never edit `evaluation/evidence/extended/` or an `extended:` block; keep measured values out of the hand-written text of `docs/extended-evaluation.md`, which the blocks alone carry.
+- The synthetic models are generated in code for size measurements; do not add them as supported models or as BPMN files.
+- `EXTENDED_REPETITIONS` (default 3) sets its measured runs; `extended/timings.json` is never compared.
 
 ## Review
 

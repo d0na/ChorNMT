@@ -84,7 +84,7 @@ Node and role names are the contract reference keys. A `ChoreographyNMT` is one 
 
 The default `CreatorSmartPolicy` has no BPMN constraint. Constraints (task and sequence-flow limits, permitted task names, known flow targets, protected nodes and roles, role licenses) are hardcoded in scenario policies such as `CreatorSmartPolicyPaperScenario`, installed with `setCreatorSmartPolicy` or passed at mint.
 
-Run `npm run evidence:update` to run the experiment (phases F1–F8: the type, the mint, the licenses, the renders, the delta, the role sale, and the Holder freezing the instance) on ephemeral networks. It writes the versioned evidence of `evaluation/evidence/` (gas and outcome of every allowed and denied policy decision, call traces, sequence diagrams, charts, BPMN drawings) and the generated parts of [the experiment protocol](docs/experiment.md); `npm run check:evidence` checks that the versioned evidence is the evidence of the current code. See the [evaluation toolkit](evaluation/README.md).
+Run `npm run evidence:update` to run the experiment (phases F1–F8: the type, the mint, the licenses, the renders, the delta, the role sale, and the Holder freezing the instance) on ephemeral networks. It writes the versioned evidence of `evaluation/evidence/` (gas and outcome of every allowed and denied policy decision, call traces, sequence diagrams, charts, BPMN drawings) and the generated parts of [the experiment protocol](docs/experiment.md). The same command runs the [extended evaluation](docs/extended-evaluation.md): a series of different updates, synthetic models of growing size, conflicts between organizations, and transactions in the same block. `npm run check:evidence` checks that the versioned evidence is the evidence of the current code. See the [evaluation toolkit](evaluation/README.md).
 
 ## Other examples
 
@@ -109,6 +109,7 @@ Files with a `.generated.*` suffix and imported `*.nmt.json` files are local art
 - [Design decisions](docs/decisions.md): why the main choices were made, and the open questions.
 - [Future improvements](docs/future-improvements.md): ideas not implemented yet, with estimated gas effects.
 - [Experiment protocol](docs/experiment.md): the phases F1–F8 of the experiment, with their actors, policies, transactions, costs, sequence diagrams, charts, and BPMN models, generated from the evidence.
+- [Extended evaluation](docs/extended-evaluation.md): update variety, scalability, conflicts between organizations, and same-block concurrency, generated from `evaluation/evidence/extended/`.
 - [BPMN to NMT workflow](docs/bpmn-to-nmt-workflow.md): NMT format, import, and delta rules.
 - [Contract structure](docs/contract-structure.md): the standard internal structure of Token, Asset, Policy, and Renderer contracts, gas rules, and known deviations.
 - [Architecture](docs/architettura.md): components, responsibilities, and internal structure of the NMT, asset, policy, and renderer contracts and of the JavaScript tooling.

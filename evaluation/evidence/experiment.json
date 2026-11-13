@@ -300,7 +300,7 @@
     },
     "trustTables": {
       "path": "docs/choreography-policies.md",
-      "sha256": "ff35c129c2d73ead63cd83dcf8dc61382ca8892bfedd2c37a8efc62023eba6cb"
+      "sha256": "1cf83233cabdfa2c43c7979a2636c41c56607bce3a59a0e1f1f5bb513db5e7c2"
     }
   },
   "phases": [

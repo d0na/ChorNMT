@@ -1,0 +1,953 @@
+{
+  "evaluation": "ChorNMT extended evaluation",
+  "specification": "scripts/experiment/extended-spec.js",
+  "provenance": {
+    "solc": "0.8.28",
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "node": "22",
+    "hardhat": "^3.9.0",
+    "network": "hardhat (edr-simulated, ephemeral), one network per study",
+    "polUsdPrice": 0.09,
+    "timings": "timings.json, measured over the repetitions and not compared"
+  },
+  "updates": {
+    "model": "references/paper-example.bpmn",
+    "policy": "CreatorSmartPolicyPaperScenario",
+    "baseline": {
+      "nodes": 11,
+      "tasks": 9,
+      "gateways": 0,
+      "sequenceEdges": 10,
+      "messages": 18
+    },
+    "rendered": "after every update the model on the chain equals the expected one, node by node, and the render:asset function generates its BPMN",
+    "series": [
+      {
+        "key": "U1.parallel-block",
+        "kind": "add a parallel block",
+        "description": "the delta of the experiment: a parallel split and join around the transport preparation, with one new task",
+        "nodesWritten": 7,
+        "written": [
+          "Order Special Transport",
+          "Parallel Transport Preparation Split",
+          "Request Details",
+          "Transport Details",
+          "Prepare Transport Documentation",
+          "Parallel Transport Preparation Join",
+          "Waybill for Intermediate"
+        ],
+        "calldataBytes": 7460,
+        "from": "Holder",
+        "call": "ChoreographyMutableAsset.setNodes",
+        "outcome": "allowed",
+        "reason": null,
+        "gasUsed": "1867847",
+        "after": {
+          "nodes": 14,
+          "tasks": 10,
+          "gateways": 2,
+          "sequenceEdges": 14,
+          "messages": 19
+        }
+      },
+      {
+        "key": "U2.message",
+        "kind": "change a message",
+        "description": "the initiating message of Transport Details",
+        "nodesWritten": 1,
+        "written": [
+          "Transport Details"
+        ],
+        "calldataBytes": 1572,
+        "from": "Holder",
+        "call": "ChoreographyMutableAsset.setNodes",
+        "outcome": "allowed",
+        "reason": null,
+        "gasUsed": "401592",
+        "after": {
+          "nodes": 14,
+          "tasks": 10,
+          "gateways": 2,
+          "sequenceEdges": 14,
+          "messages": 19
+        }
+      },
+      {
+        "key": "U3.roles",
+        "kind": "reassign a task",
+        "description": "Prepare Transport Documentation is started by the Supplier instead of the Middleman",
+        "nodesWritten": 1,
+        "written": [
+          "Prepare Transport Documentation"
+        ],
+        "calldataBytes": 1572,
+        "from": "Holder",
+        "call": "ChoreographyMutableAsset.setNodes",
+        "outcome": "allowed",
+        "reason": null,
+        "gasUsed": "404925",
+        "after": {
+          "nodes": 14,
+          "tasks": 10,
+          "gateways": 2,
+          "sequenceEdges": 14,
+          "messages": 19
+        }
+      },
+      {
+        "key": "U4.gateway-type",
+        "kind": "change a gateway pair",
+        "description": "the parallel split and join become an exclusive split and join, with a condition on each branch",
+        "nodesWritten": 2,
+        "written": [
+          "Parallel Transport Preparation Split",
+          "Parallel Transport Preparation Join"
+        ],
+        "calldataBytes": 2564,
+        "from": "Holder",
+        "call": "ChoreographyMutableAsset.setNodes",
+        "outcome": "allowed",
+        "reason": null,
+        "gasUsed": "611382",
+        "after": {
+          "nodes": 14,
+          "tasks": 10,
+          "gateways": 2,
+          "sequenceEdges": 14,
+          "messages": 19
+        }
+      },
+      {
+        "key": "U5.insert-task",
+        "kind": "insert a task on a flow",
+        "description": "Optional Quality Inspection between Arrival Intermediate and Delivery of Product",
+        "nodesWritten": 3,
+        "written": [
+          "Arrival Intermediate",
+          "Optional Quality Inspection",
+          "Delivery of Product"
+        ],
+        "calldataBytes": 3428,
+        "from": "Holder",
+        "call": "ChoreographyMutableAsset.setNodes",
+        "outcome": "allowed",
+        "reason": null,
+        "gasUsed": "785548",
+        "after": {
+          "nodes": 15,
+          "tasks": 11,
+          "gateways": 2,
+          "sequenceEdges": 15,
+          "messages": 20
+        }
+      },
+      {
+        "key": "U6.detach-task",
+        "kind": "detach a task",
+        "description": "the flow goes again from Arrival Intermediate to Delivery of Product; Optional Quality Inspection stays in the model with no flow, since a node is never deleted",
+        "nodesWritten": 3,
+        "written": [
+          "Arrival Intermediate",
+          "Optional Quality Inspection",
+          "Delivery of Product"
+        ],
+        "calldataBytes": 3172,
+        "from": "Holder",
+        "call": "ChoreographyMutableAsset.setNodes",
+        "outcome": "allowed",
+        "reason": null,
+        "gasUsed": "540386",
+        "after": {
+          "nodes": 15,
+          "tasks": 11,
+          "gateways": 2,
+          "sequenceEdges": 14,
+          "messages": 20
+        }
+      },
+      {
+        "key": "U7.insert-after-detach",
+        "kind": "insert a task on a flow",
+        "description": "Optional Customs Inspection between Order Intermediate and FWD Oder Intermediate: the detached task still counts toward the task limit",
+        "nodesWritten": 3,
+        "written": [
+          "Order Intermediate",
+          "Optional Customs Inspection",
+          "FWD Oder Intermediate"
+        ],
+        "calldataBytes": 3428,
+        "from": "Holder",
+        "call": "ChoreographyMutableAsset.setNodes",
+        "outcome": "denied",
+        "reason": "OperationDenied(CREATOR)",
+        "gasUsed": "455083",
+        "after": {
+          "nodes": 15,
+          "tasks": 11,
+          "gateways": 2,
+          "sequenceEdges": 14,
+          "messages": 20
+        }
+      }
+    ]
+  },
+  "scalability": {
+    "shape": "a chain Start -> Task 001 -> ... -> Task n -> End, every task with two messages",
+    "roles": 5,
+    "policies": {
+      "default": "CreatorSmartPolicy",
+      "constrained": "CreatorSmartPolicyScaleScenario"
+    },
+    "modelLimit": {
+      "bytes": 24576,
+      "largest": {
+        "tasks": 22,
+        "modelBytes": 23904
+      },
+      "firstTooLarge": {
+        "tasks": 23,
+        "modelBytes": 24864
+      }
+    },
+    "blockGasLimit": "60000000",
+    "sizes": [
+      {
+        "tasks": 5,
+        "nodes": 7,
+        "sequenceEdges": 6,
+        "messages": 10,
+        "modelBytes": 7584,
+        "gas": {
+          "model": "1608835",
+          "nmt": "4815968",
+          "mint": {
+            "default": "4584370",
+            "constrained": "4589958"
+          },
+          "setRoles": {
+            "default": "197968",
+            "constrained": "207856"
+          },
+          "updateOne": {
+            "default": "169167",
+            "constrained": "265798"
+          },
+          "updateBatch": {
+            "nodes": 5,
+            "default": "444560",
+            "constrained": "577571"
+          },
+          "insertTask": {
+            "default": "563488",
+            "constrained": "674845"
+          }
+        },
+        "read": {
+          "gas": "781750",
+          "bytes": 2637
+        }
+      },
+      {
+        "tasks": 10,
+        "nodes": 12,
+        "sequenceEdges": 11,
+        "messages": 20,
+        "modelBytes": 12384,
+        "gas": {
+          "model": "2594734",
+          "nmt": "4815968",
+          "mint": {
+            "default": "6102927",
+            "constrained": "6108515"
+          },
+          "setRoles": {
+            "default": "197968",
+            "constrained": "207856"
+          },
+          "updateOne": {
+            "default": "169167",
+            "constrained": "337331"
+          },
+          "updateBatch": {
+            "nodes": 5,
+            "default": "448245",
+            "constrained": "650863"
+          },
+          "insertTask": {
+            "default": "563488",
+            "constrained": "746401"
+          }
+        },
+        "read": {
+          "gas": "1203513",
+          "bytes": 4057
+        }
+      },
+      {
+        "tasks": 15,
+        "nodes": 17,
+        "sequenceEdges": 16,
+        "messages": 30,
+        "modelBytes": 17184,
+        "gas": {
+          "model": "3580457",
+          "nmt": "4815968",
+          "mint": {
+            "default": "7621872",
+            "constrained": "7627460"
+          },
+          "setRoles": {
+            "default": "197968",
+            "constrained": "207856"
+          },
+          "updateOne": {
+            "default": "169167",
+            "constrained": "408892"
+          },
+          "updateBatch": {
+            "nodes": 5,
+            "default": "448245",
+            "constrained": "722492"
+          },
+          "insertTask": {
+            "default": "563488",
+            "constrained": "817985"
+          }
+        },
+        "read": {
+          "gas": "1633707",
+          "bytes": 5477
+        }
+      },
+      {
+        "tasks": 20,
+        "nodes": 22,
+        "sequenceEdges": 21,
+        "messages": 40,
+        "modelBytes": 21984,
+        "gas": {
+          "model": "4566507",
+          "nmt": "4815968",
+          "mint": {
+            "default": "9141205",
+            "constrained": "9146793"
+          },
+          "setRoles": {
+            "default": "197968",
+            "constrained": "207856"
+          },
+          "updateOne": {
+            "default": "169167",
+            "constrained": "480482"
+          },
+          "updateBatch": {
+            "nodes": 5,
+            "default": "448245",
+            "constrained": "794150"
+          },
+          "insertTask": {
+            "default": "563488",
+            "constrained": "889598"
+          }
+        },
+        "read": {
+          "gas": "2073733",
+          "bytes": 6897
+        }
+      },
+      {
+        "tasks": 22,
+        "nodes": 24,
+        "sequenceEdges": 23,
+        "messages": 44,
+        "modelBytes": 23904,
+        "gas": {
+          "model": "4960683",
+          "nmt": "4815968",
+          "mint": {
+            "default": "9749047",
+            "constrained": "9754635"
+          },
+          "setRoles": {
+            "default": "197968",
+            "constrained": "207856"
+          },
+          "updateOne": {
+            "default": "169167",
+            "constrained": "509126"
+          },
+          "updateBatch": {
+            "nodes": 5,
+            "default": "448245",
+            "constrained": "822821"
+          },
+          "insertTask": {
+            "default": "563488",
+            "constrained": "918251"
+          }
+        },
+        "read": {
+          "gas": "2252975",
+          "bytes": 7465
+        }
+      }
+    ],
+    "growth": [
+      {
+        "tasks": 32,
+        "nodes": 34,
+        "appended": 10,
+        "nodesWritten": 12,
+        "gas": {
+          "append": {
+            "default": "3428635",
+            "constrained": "3876287"
+          },
+          "updateOne": {
+            "default": "165512",
+            "constrained": "648745"
+          }
+        },
+        "read": {
+          "gas": "3191085",
+          "bytes": 10305
+        }
+      },
+      {
+        "tasks": 42,
+        "nodes": 44,
+        "appended": 10,
+        "nodesWritten": 12,
+        "gas": {
+          "append": {
+            "default": "3428635",
+            "constrained": "4019699"
+          },
+          "updateOne": {
+            "default": "165512",
+            "constrained": "792143"
+          }
+        },
+        "read": {
+          "gas": "4213380",
+          "bytes": 13145
+        }
+      },
+      {
+        "tasks": 52,
+        "nodes": 54,
+        "appended": 10,
+        "nodesWritten": 12,
+        "gas": {
+          "append": {
+            "default": "3428635",
+            "constrained": "4163226"
+          },
+          "updateOne": {
+            "default": "165512",
+            "constrained": "935655"
+          }
+        },
+        "read": {
+          "gas": "5353402",
+          "bytes": 15985
+        }
+      },
+      {
+        "tasks": 62,
+        "nodes": 64,
+        "appended": 10,
+        "nodesWritten": 12,
+        "gas": {
+          "append": {
+            "default": "3428635",
+            "constrained": "4306867"
+          },
+          "updateOne": {
+            "default": "165512",
+            "constrained": "1079281"
+          }
+        },
+        "read": {
+          "gas": "6648588",
+          "bytes": 18825
+        }
+      },
+      {
+        "tasks": 72,
+        "nodes": 74,
+        "appended": 10,
+        "nodesWritten": 12,
+        "gas": {
+          "append": {
+            "default": "3428635",
+            "constrained": "4450622"
+          },
+          "updateOne": {
+            "default": "165512",
+            "constrained": "1223022"
+          }
+        },
+        "read": {
+          "gas": "8141510",
+          "bytes": 21665
+        }
+      },
+      {
+        "tasks": 82,
+        "nodes": 84,
+        "appended": 10,
+        "nodesWritten": 12,
+        "gas": {
+          "append": {
+            "default": "3428635",
+            "constrained": "4594491"
+          },
+          "updateOne": {
+            "default": "165512",
+            "constrained": "1366876"
+          }
+        },
+        "read": {
+          "gas": "9880060",
+          "bytes": 24505
+        }
+      },
+      {
+        "tasks": 92,
+        "nodes": 94,
+        "appended": 10,
+        "nodesWritten": 12,
+        "gas": {
+          "append": {
+            "default": "3428635",
+            "constrained": "4738474"
+          },
+          "updateOne": {
+            "default": "165512",
+            "constrained": "1510844"
+          }
+        },
+        "read": {
+          "gas": "11917244",
+          "bytes": 27345
+        }
+      },
+      {
+        "tasks": 100,
+        "nodes": 102,
+        "appended": 8,
+        "nodesWritten": 10,
+        "gas": {
+          "append": {
+            "default": "2780335",
+            "constrained": "4212043"
+          },
+          "updateOne": {
+            "default": "165512",
+            "constrained": "1626100"
+          }
+        },
+        "read": {
+          "gas": "13801110",
+          "bytes": 29617
+        }
+      }
+    ]
+  },
+  "conflicts": {
+    "licensedRole": "Special Carrier",
+    "before": {
+      "roleLinkedTo": "the first SpecialCarrier license",
+      "playedBy": "Carrier A"
+    },
+    "model": "unchanged by the whole study, node by node",
+    "cases": [
+      {
+        "key": "X1.holder-replaces-creator-policy",
+        "parties": [
+          "Holder",
+          "Creator"
+        ],
+        "intent": "the Holder replaces the paper-scenario Creator policy of its instance with the default one, to drop the constraints",
+        "from": "Holder",
+        "call": "ChoreographyMutableAsset.setCreatorSmartPolicy",
+        "outcome": "denied",
+        "reason": "OperationDenied(CREATOR)",
+        "gasUsed": "28929",
+        "prevails": "Creator",
+        "rule": "the Creator policy lets only its administrator, the Master, replace it; the study does not exercise that replacement",
+        "licensedRole": {
+          "roleLinkedTo": "the first SpecialCarrier license",
+          "playedBy": "Carrier A"
+        }
+      },
+      {
+        "key": "X2.master-updates-instance",
+        "parties": [
+          "Master",
+          "Holder"
+        ],
+        "intent": "the Master, who deployed the type and administers the policies, changes a message in the Holder's instance",
+        "from": "Master",
+        "call": "ChoreographyMutableAsset.setNodes",
+        "outcome": "denied",
+        "reason": "OperationDenied(CREATOR)",
+        "gasUsed": "54163",
+        "prevails": "Holder",
+        "rule": "the Creator policy accepts model updates from the holder of the instance only",
+        "licensedRole": {
+          "roleLinkedTo": "the first SpecialCarrier license",
+          "playedBy": "Carrier A"
+        }
+      },
+      {
+        "key": "X3.master-replaces-holder-policy",
+        "parties": [
+          "Master",
+          "Holder"
+        ],
+        "intent": "the Master replaces the Holder policy of the Holder's instance",
+        "from": "Master",
+        "call": "ChoreographyMutableAsset.setHolderSmartPolicy",
+        "outcome": "denied",
+        "reason": "CallerNotHolder",
+        "gasUsed": "27499",
+        "prevails": "Holder",
+        "rule": "only the holder of the instance sets its Holder policy",
+        "licensedRole": {
+          "roleLinkedTo": "the first SpecialCarrier license",
+          "playedBy": "Carrier A"
+        }
+      },
+      {
+        "key": "X4.participant-updates-instance",
+        "parties": [
+          "Carrier A",
+          "Holder"
+        ],
+        "intent": "Carrier A, whose license plays Special Carrier, changes a message of a task it takes part in",
+        "from": "Carrier A",
+        "call": "ChoreographyMutableAsset.setNodes",
+        "outcome": "denied",
+        "reason": "OperationDenied(CREATOR)",
+        "gasUsed": "53770",
+        "prevails": "Holder",
+        "rule": "playing a role gives no right on the model",
+        "licensedRole": {
+          "roleLinkedTo": "the first SpecialCarrier license",
+          "playedBy": "Carrier A"
+        }
+      },
+      {
+        "key": "X5.holder-updates-license",
+        "parties": [
+          "Holder",
+          "Carrier A"
+        ],
+        "intent": "the Holder of the choreography renames the license that plays Special Carrier",
+        "from": "Holder",
+        "call": "ParticipantMutableAsset.setName",
+        "outcome": "denied",
+        "reason": "OperationDenied(CREATOR)",
+        "gasUsed": "35014",
+        "prevails": "Carrier A",
+        "rule": "the license Creator policy (certifier) accepts updates from the holder of the license only",
+        "licensedRole": {
+          "roleLinkedTo": "the first SpecialCarrier license",
+          "playedBy": "Carrier A"
+        }
+      },
+      {
+        "key": "X6.authority-updates-license",
+        "parties": [
+          "Transport authority",
+          "Carrier A"
+        ],
+        "intent": "the authority that issued and certifies the license renames it",
+        "from": "Transport authority",
+        "call": "ParticipantMutableAsset.setName",
+        "outcome": "denied",
+        "reason": "OperationDenied(CREATOR)",
+        "gasUsed": "35050",
+        "prevails": "Carrier A",
+        "rule": "the license Creator policy (certifier) lets only the holder of the license write it; the authority restricts which messages a license may declare, and it can replace the certifier, which the study does not exercise",
+        "licensedRole": {
+          "roleLinkedTo": "the first SpecialCarrier license",
+          "playedBy": "Carrier A"
+        }
+      },
+      {
+        "key": "X7.sale-without-holder",
+        "parties": [
+          "Carrier A",
+          "Holder"
+        ],
+        "intent": "Carrier A sells the license that plays Special Carrier to Carrier B; the Holder of the choreography takes no part",
+        "from": "Carrier A",
+        "call": "ParticipantNMT.transferFrom",
+        "outcome": "allowed",
+        "reason": null,
+        "gasUsed": "110998",
+        "prevails": "Carrier A",
+        "rule": "the participant Master policy (a seller who holds the license, a buyer qualified for the type) and the license Creator policy decide a sale; the role follows the license, so Carrier B plays it, and the sale clears the Holder policy of the license",
+        "licensedRole": {
+          "roleLinkedTo": "the first SpecialCarrier license",
+          "playedBy": "Carrier B"
+        }
+      },
+      {
+        "key": "X8.second-license",
+        "parties": [
+          "Transport authority",
+          "Holder"
+        ],
+        "intent": "the authority issues a second SpecialCarrier license, to Carrier A, which the Holder can choose",
+        "from": "Transport authority",
+        "call": "ParticipantNMT.mint",
+        "outcome": "allowed",
+        "reason": null,
+        "gasUsed": "1199713",
+        "prevails": "Transport authority",
+        "rule": "an authority issues the licenses of its types",
+        "licensedRole": {
+          "roleLinkedTo": "the first SpecialCarrier license",
+          "playedBy": "Carrier B"
+        }
+      },
+      {
+        "key": "X9.holder-relinks-role",
+        "parties": [
+          "Holder",
+          "Carrier B"
+        ],
+        "intent": "the Holder does not want Carrier B and links Special Carrier to the second license",
+        "from": "Holder",
+        "call": "ChoreographyMutableAsset.setRoles",
+        "outcome": "allowed",
+        "reason": null,
+        "gasUsed": "80422",
+        "prevails": "Holder",
+        "rule": "the Holder chooses who plays a role, among the licenses of the type the Creator policy requires",
+        "licensedRole": {
+          "roleLinkedTo": "the second SpecialCarrier license",
+          "playedBy": "Carrier A"
+        }
+      },
+      {
+        "key": "X10.holder-links-other-type",
+        "parties": [
+          "Holder",
+          "Creator"
+        ],
+        "intent": "the Holder links Special Carrier to the Carrier license of Carrier C",
+        "from": "Holder",
+        "call": "ChoreographyMutableAsset.setRoles",
+        "outcome": "denied",
+        "reason": "OperationDenied(CREATOR)",
+        "gasUsed": "63953",
+        "prevails": "Creator",
+        "rule": "the Creator policy requires a SpecialCarrier license for the role",
+        "licensedRole": {
+          "roleLinkedTo": "the second SpecialCarrier license",
+          "playedBy": "Carrier A"
+        }
+      }
+    ]
+  },
+  "concurrency": {
+    "mining": "automine off: the transactions of a case are sent, then one block is mined; their order is the position in that block",
+    "cases": [
+      {
+        "key": "K1.two-organizations",
+        "description": "the Holder updates the model and Carrier A sells the license of a role, in the same block",
+        "finding": "independent: the two assets have different holders and policies, both transactions pass",
+        "transactions": [
+          {
+            "position": 1,
+            "label": "the Holder applies the delta of the experiment",
+            "from": "Holder",
+            "call": "ChoreographyMutableAsset.setNodes",
+            "outcome": "allowed",
+            "reason": null,
+            "gasUsed": "1867847"
+          },
+          {
+            "position": 2,
+            "label": "Carrier A sells the SpecialCarrier license to Carrier B",
+            "from": "Carrier A",
+            "call": "ParticipantNMT.transferFrom",
+            "outcome": "allowed",
+            "reason": null,
+            "gasUsed": "110998"
+          }
+        ],
+        "observed": {
+          "licenseHolder": "Carrier B"
+        }
+      },
+      {
+        "key": "K2.license-first",
+        "description": "the license holder acts first and the Holder second, in the same block: Carrier B installs the Holder policy the sale of K1 cleared",
+        "finding": "independent for this pair of transactions too",
+        "transactions": [
+          {
+            "position": 1,
+            "label": "Carrier B installs its Holder policy on the license",
+            "from": "Carrier B",
+            "call": "ParticipantMutableAsset.setHolderSmartPolicy",
+            "outcome": "allowed",
+            "reason": null,
+            "gasUsed": "49611"
+          },
+          {
+            "position": 2,
+            "label": "the Holder changes a message of Arrival Intermediate",
+            "from": "Holder",
+            "call": "ChoreographyMutableAsset.setNodes",
+            "outcome": "allowed",
+            "reason": null,
+            "gasUsed": "396277"
+          }
+        ]
+      },
+      {
+        "key": "K3.lost-update",
+        "description": "two updates of the same task, each built on the state before the block: one changes the initiating message, the other the return message",
+        "finding": "the last write wins: an update carries the whole node, so the second one writes back the old initiating message; the asset has no version check",
+        "transactions": [
+          {
+            "position": 1,
+            "label": "the first update changes the initiating message of Transport Details",
+            "from": "Holder",
+            "call": "ChoreographyMutableAsset.setNodes",
+            "outcome": "allowed",
+            "reason": null,
+            "gasUsed": "401592"
+          },
+          {
+            "position": 2,
+            "label": "the second update changes the return message of Transport Details",
+            "from": "Holder",
+            "call": "ChoreographyMutableAsset.setNodes",
+            "outcome": "allowed",
+            "reason": null,
+            "gasUsed": "404416"
+          }
+        ],
+        "observed": {
+          "task": "Transport Details",
+          "before": {
+            "initiatingMessage": "Cargo Specification",
+            "returnMessage": "Vehicle Assignment"
+          },
+          "firstUpdate": {
+            "initiatingMessage": "Detailed Cargo Specification"
+          },
+          "secondUpdate": {
+            "returnMessage": "Vehicle and Driver Assignment"
+          },
+          "after": {
+            "initiatingMessage": "Cargo Specification",
+            "returnMessage": "Vehicle and Driver Assignment"
+          },
+          "lost": "the initiating message \"Detailed Cargo Specification\" of the first update"
+        }
+      },
+      {
+        "key": "K4.limit-under-race",
+        "description": "two updates, each inserting one optional task, each within the task limit on the state before the block",
+        "finding": "the Creator policy evaluates each update on the state its transaction finds: the limit holds whatever the sender saw",
+        "transactions": [
+          {
+            "position": 1,
+            "label": "the first update inserts Optional Quality Inspection",
+            "from": "Holder",
+            "call": "ChoreographyMutableAsset.setNodes",
+            "outcome": "allowed",
+            "reason": null,
+            "gasUsed": "785620"
+          },
+          {
+            "position": 2,
+            "label": "the second update inserts Optional Customs Inspection",
+            "from": "Holder",
+            "call": "ChoreographyMutableAsset.setNodes",
+            "outcome": "denied",
+            "reason": "OperationDenied(CREATOR)",
+            "gasUsed": "458712"
+          }
+        ],
+        "observed": {
+          "eachPassesAlone": true,
+          "tasksAfter": 11
+        }
+      },
+      {
+        "key": "K5.three-instances",
+        "description": "the delta of the experiment on three other instances of the type, in the same block",
+        "finding": "instances do not interfere: each update costs what it costs alone",
+        "transactions": [
+          {
+            "position": 1,
+            "label": "the Holder applies the delta to instance 1",
+            "from": "Holder",
+            "call": "ChoreographyMutableAsset.setNodes",
+            "outcome": "allowed",
+            "reason": null,
+            "gasUsed": "1867847"
+          },
+          {
+            "position": 2,
+            "label": "the Holder applies the delta to instance 2",
+            "from": "Holder",
+            "call": "ChoreographyMutableAsset.setNodes",
+            "outcome": "allowed",
+            "reason": null,
+            "gasUsed": "1867847"
+          },
+          {
+            "position": 3,
+            "label": "the Holder applies the delta to instance 3",
+            "from": "Holder",
+            "call": "ChoreographyMutableAsset.setNodes",
+            "outcome": "allowed",
+            "reason": null,
+            "gasUsed": "1867847"
+          }
+        ],
+        "observed": {
+          "gasAlone": "1867847"
+        }
+      },
+      {
+        "key": "K6.freeze-in-block",
+        "description": "the Holder freezes the instance and updates it in the same block",
+        "finding": "the order in the block decides: after the deny-all Holder policy is installed, the update that follows it in the same block is refused",
+        "transactions": [
+          {
+            "position": 1,
+            "label": "the Holder installs the deny-all Holder policy",
+            "from": "Holder",
+            "call": "ChoreographyMutableAsset.setHolderSmartPolicy",
+            "outcome": "allowed",
+            "reason": null,
+            "gasUsed": "32533"
+          },
+          {
+            "position": 2,
+            "label": "the Holder changes a message of Request Details",
+            "from": "Holder",
+            "call": "ChoreographyMutableAsset.setNodes",
+            "outcome": "denied",
+            "reason": "OperationDenied(HOLDER)",
+            "gasUsed": "60920"
+          }
+        ]
+      }
+    ]
+  }
+}

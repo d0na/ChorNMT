@@ -1,8 +1,9 @@
-// Reads a PreToolUse Edit|Write|MultiEdit input on stdin for docs/experiment.md and prints the
-// placeholders whose content the edit would change: the generated blocks
-// (<!-- evidence:<name> --> ... <!-- /evidence:<name> -->) and the inline outcomes
-// (<!-- outcome:<key> -->...<!-- /outcome -->), which only scripts/experiment/protocol.js writes
-// (decision D21). Prints nothing when the edit touches the narrative only.
+// Reads a PreToolUse Edit|Write|MultiEdit input on stdin for docs/experiment.md or
+// docs/extended-evaluation.md and prints the placeholders whose content the edit would change: the
+// generated blocks (<!-- evidence:<name> --> ... <!-- /evidence:<name> --> and
+// <!-- extended:<name> --> ... <!-- /extended:<name> -->) and the inline outcomes
+// (<!-- outcome:<key> -->...<!-- /outcome -->), which only scripts/experiment/protocol.js and
+// scripts/experiment/extended-report.js write (decisions D21, D28). Prints nothing when the edit touches the narrative only.
 import fs from "node:fs";
 
 const input = JSON.parse(fs.readFileSync(0, "utf8"));
@@ -18,7 +19,7 @@ let next = current;
 if (typeof tool.content === "string") next = tool.content;
 else for (const edit of tool.edits ?? [tool]) next = apply(next, edit);
 
-const PLACEHOLDER = /<!-- (evidence:([\w:.-]+)) -->[\s\S]*?<!-- \/evidence:\2 -->|<!-- (outcome:[\w.-]+) -->[\s\S]*?<!-- \/outcome -->/g;
+const PLACEHOLDER = /<!-- ((?:evidence|extended):([\w:.-]+)) -->[\s\S]*?<!-- \/(?:evidence|extended):\2 -->|<!-- (outcome:[\w.-]+) -->[\s\S]*?<!-- \/outcome -->/g;
 // Placeholder name -> its occurrences, in order.
 function placeholders(text) {
   const found = new Map();

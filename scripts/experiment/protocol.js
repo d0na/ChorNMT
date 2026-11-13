@@ -16,6 +16,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { formatEther, Interface } from "ethers";
 import { PARITY } from "./parity.js";
+import { GAS_STATION_READING_GWEI, GWEI_SCENARIOS } from "./costs.js";
 
 const root = process.cwd();
 const evidenceDirectory = path.resolve(root, process.env.EVIDENCE_OUT || path.join("evaluation", "evidence"));
@@ -27,14 +28,6 @@ const CHECK = process.argv.includes("--check");
 // Phase ids, decision and claim ids of docs/decisions.md and docs/requirements.md, standard names.
 const STRUCTURAL = [/\bF[1-8]\b/g, /\b[DCH]\d{1,2}\b/g, /\bERC-721\b/g, /\bEIP-170\b/g, /\bSSTORE2\b/g, /\bBPMN 2\.0\b/g, /\bXACML\b/g];
 const OUTCOME_WORDS = /\b(allowed|denied|reverted|reverts|revert)\b/gi;
-// Polygon gas prices of a sensitivity analysis: assumptions to compare costs, not historical
-// averages or official congestion thresholds. The reference rounds up a Polygon Gas Station reading.
-const GAS_STATION_READING_GWEI = 271;
-const GWEI_SCENARIOS = [
-  [100, "Economical", "fees below the reading consulted"],
-  [300, "Reference", `the Polygon Gas Station reading of about ${GAS_STATION_READING_GWEI} gwei, rounded up`],
-  [1000, "Costly", "fees markedly above the reading, to see how far the costs grow"]
-];
 const USD_COLUMNS = GWEI_SCENARIOS.map(([gwei]) => `USD @${gwei} gwei`);
 // The cost of a choreography type and its first complete instance, as deploy:asset measured it:
 // the six deployments of the type, the mint, and the link of the roles to their licenses.
@@ -57,7 +50,8 @@ async function load() {
     delta: JSON.parse(await fs.readFile(path.join(root, evidence.inputs.delta.path), "utf8")),
     records: new Map(evidence.transactions.map((record) => [record.key, record])),
     phases: new Map(evidence.phases.map((phase) => [phase.id, phase])),
-    files: await listFiles(evidenceDirectory)
+    // The files of the extended evaluation are listed in its own page, docs/extended-evaluation.md.
+    files: (await listFiles(evidenceDirectory)).filter((file) => !file.startsWith("extended/"))
   };
 }
 

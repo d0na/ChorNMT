@@ -22,7 +22,7 @@ Unless the caller asks for something else, run in this order and stop at the fir
 5. `npm run check:use-cases`
 6. `npm run check:protocol`
 7. `npm test` (`test:policies`, ephemeral network)
-8. `npm run check:evidence` (reruns the experiment and the test matrix into a temporary directory and compares with `evaluation/evidence/`; needs Chromium from `npm run setup:evaluation`, gnuplot, Java, and Graphviz)
+8. `npm run check:evidence` (reruns the experiment, the test matrix, and the extended evaluation into a temporary directory and compares with `evaluation/evidence/`; needs Chromium from `npm run setup:evaluation`, gnuplot, Java, and Graphviz)
 9. `npm run check:gas`
 
 Never run `npm run evidence:update` unless the caller asks: it rewrites the versioned evidence.

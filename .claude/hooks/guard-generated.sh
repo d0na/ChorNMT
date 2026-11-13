@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # PreToolUse Edit|Write: generated files and build outputs are never edited by hand: `*.generated.*`,
 # the rendered UML SVGs, the Hardhat build outputs, the versioned experiment evidence, and the
-# generated blocks and outcomes of the experiment protocol (decisions D18, D21, D22).
+# generated blocks and outcomes of the experiment protocol and of the extended evaluation
+# (decisions D18, D21, D22, D28).
 . "$(dirname "$0")/lib.sh"
 input="$(cat)"
 path="$(printf '%s' "$input" | edited_path)"
@@ -11,9 +12,9 @@ case "$path" in
   docs/uml/*.svg) reason="it is rendered from its PlantUML source; edit docs/uml/$(basename "$path" .svg).puml, the post-edit hook renders the SVG (npm run docs:uml)" ;;
   artifacts/*|cache/*) reason="it is a Hardhat build output; change the contract and run npm run compile" ;;
   evaluation/evidence/*) reason="it is experiment evidence, produced only by a run; change the code, the specification (scripts/experiment/phases.js), or an input, then run npm run evidence:update" ;;
-  docs/experiment.md)
+  docs/experiment.md|docs/extended-evaluation.md)
     blocks="$(printf '%s' "$input" | node "$(dirname "$0")/protocol-blocks.mjs")"
-    [ -n "$blocks" ] && reason="the edit changes generated placeholders ($blocks), which scripts/experiment/protocol.js fills from the evidence; edit only the narrative, or change the generator and run npm run evidence:update" ;;
+    [ -n "$blocks" ] && reason="the edit changes generated placeholders ($blocks), which scripts/experiment/protocol.js or extended-report.js fills from the evidence; edit only the narrative, or change the generator and run npm run evidence:update" ;;
 esac
 if [ -n "$reason" ]; then
   jq -n --arg r "Do not edit $path: $reason." \

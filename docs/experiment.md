@@ -17,6 +17,8 @@ The experiment shows the claims of [Requirements](requirements.md) on one choreo
 - a role is played by a participant license that can be sold, and the organization behind the role changes with the sale (claim C4);
 - the cost of every step is measured: the deployment of a type, the mint of an instance, the licenses, and a delta update (hypothesis H5).
 
+The experiment follows one scenario with one update. The [extended evaluation](extended-evaluation.md) varies what stays fixed here: the kind of update, the size of the model, the organizations in disagreement, and the transactions that share a block.
+
 Each phase below lists its actors, the policies in force, the transactions with their outcome and gas, the state of the instance afterwards, its duration, and its sequence diagram, drawn from the call traces of the run.
 
 ## Provenance
@@ -90,7 +92,7 @@ The accounts are the default Hardhat ones, and no account plays two of the parts
 | --- | --- | --- |
 | bpmn | [references/paper-example.bpmn](../references/paper-example.bpmn) | `db4dd683fb621f205a02c4593dfb628eeb9b493bb360a7c46de4830c61f0ff99` |
 | delta | [scripts/data/paper-example-parallel-transport-preparation.delta.json](../scripts/data/paper-example-parallel-transport-preparation.delta.json) | `43416b130a769acca4ea93a75afdcb827e9f69d548bdb2a8307987c1e22cb490` |
-| trustTables | [docs/choreography-policies.md](../docs/choreography-policies.md) | `ff35c129c2d73ead63cd83dcf8dc61382ca8892bfedd2c37a8efc62023eba6cb` |
+| trustTables | [docs/choreography-policies.md](../docs/choreography-policies.md) | `1cf83233cabdfa2c43c7979a2636c41c56607bce3a59a0e1f1f5bb513db5e7c2` |
 <!-- /evidence:inputs -->
 
 <!-- narrative:policies -->
@@ -118,21 +120,21 @@ The experiment is one run, on one ephemeral network, in which the choreography s
 <!-- evidence:phases-overview -->
 | Phase | Title | Transactions | Allowed | Denied | Gas allowed | Gas denied | Cost (POL) | Median (ms) | Nodes | Tasks | Edges | Gateways | Messages |
 | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| [F1](#f1) | Deploy the choreography type and the license infrastructure | 26 | 26 | 0 | 33,888,398 | 0 | 0.012709772167251831 | 50.287 | — | — | — | — | — |
-| [F2](#f2) | Mint the instance for its holder | 4 | 1 | 3 | 5,799,185 | 89,743 | 0.000237063917498387 | 10.188 | 11 | 9 | 10 | 0 | 18 |
-| [F3](#f3) | Issue the participant licenses and link every role to its license | 15 | 9 | 6 | 7,741,738 | 323,943 | 0.000135683012737541 | 20.508 | 11 | 9 | 10 | 0 | 18 |
-| [F4](#f4) | Render the baseline model from the chain | 0 | 0 | 0 | 0 | 0 | 0.0 | 14.728 | 11 | 9 | 10 | 0 | 18 |
-| [F5](#f5) | Apply the delta: one allowed update and seven denied ones | 8 | 1 | 7 | 1,867,847 | 1,841,022 | 0.000010609130724406 | 107.905 | 14 | 10 | 14 | 2 | 19 |
-| [F6](#f6) | Sell the Special Carrier role: Carrier A to Carrier B | 10 | 5 | 5 | 364,960 | 176,717 | 0.000000358230406225 | 11.797 | 14 | 10 | 14 | 2 | 19 |
-| [F7](#f7) | Freeze the instance through its Holder policy | 3 | 2 | 1 | 367,991 | 137,644 | 0.000000147778494348 | 4.617 | 14 | 10 | 14 | 2 | 19 |
-| [F8](#f8) | Render the final model from the chain | 0 | 0 | 0 | 0 | 0 | 0.0 | 18.250 | 14 | 10 | 14 | 2 | 19 |
+| [F1](#f1) | Deploy the choreography type and the license infrastructure | 26 | 26 | 0 | 33,888,398 | 0 | 0.012709772167251831 | 52.411 | — | — | — | — | — |
+| [F2](#f2) | Mint the instance for its holder | 4 | 1 | 3 | 5,799,185 | 89,743 | 0.000237063917498387 | 10.734 | 11 | 9 | 10 | 0 | 18 |
+| [F3](#f3) | Issue the participant licenses and link every role to its license | 15 | 9 | 6 | 7,741,738 | 323,943 | 0.000135683012737541 | 21.395 | 11 | 9 | 10 | 0 | 18 |
+| [F4](#f4) | Render the baseline model from the chain | 0 | 0 | 0 | 0 | 0 | 0.0 | 14.479 | 11 | 9 | 10 | 0 | 18 |
+| [F5](#f5) | Apply the delta: one allowed update and seven denied ones | 8 | 1 | 7 | 1,867,847 | 1,841,022 | 0.000010609130724406 | 111.125 | 14 | 10 | 14 | 2 | 19 |
+| [F6](#f6) | Sell the Special Carrier role: Carrier A to Carrier B | 10 | 5 | 5 | 364,960 | 176,717 | 0.000000358230406225 | 12.446 | 14 | 10 | 14 | 2 | 19 |
+| [F7](#f7) | Freeze the instance through its Holder policy | 3 | 2 | 1 | 367,991 | 137,644 | 0.000000147778494348 | 4.774 | 14 | 10 | 14 | 2 | 19 |
+| [F8](#f8) | Render the final model from the chain | 0 | 0 | 0 | 0 | 0 | 0.0 | 19.706 | 14 | 10 | 14 | 2 | 19 |
 
 | Whole experiment | Value |
 | --- | --- |
 | Transactions | 66 |
 | Allowed transactions, gas | 44, 50,030,119 |
 | Denied transactions, gas | 22, 2,569,069 |
-| Duration of a run, median (min–max), ms | 239.934 (227.480–453.737) |
+| Duration of a run, median (min–max), ms | 253.357 (229.540–257.759) |
 
 Nodes to messages: the instance at the end of the phase. Durations leave out the time the run spends tracing and checking.
 <!-- /evidence:phases-overview -->
@@ -252,8 +254,8 @@ Role names: `Bulk Buyer`, `Manufacturer`, `Middleman`, `Supplier`, `Special Carr
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F1 | 50.287 | 49.305 | 81.112 | 9.805 |
-| step `F1.import` | 2.951 | 2.258 | 6.483 | 1.184 |
+| phase F1 | 52.411 | 49.700 | 61.558 | 3.411 |
+| step `F1.import` | 3.399 | 2.665 | 3.638 | 0.291 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F1-full.svg))
 
@@ -333,7 +335,7 @@ The authorized creator mints the instance for the holder; the instance decodes t
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F2 | 10.188 | 9.530 | 11.278 | 0.500 |
+| phase F2 | 10.734 | 9.763 | 11.808 | 0.695 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F2-full.svg))
 
@@ -452,7 +454,7 @@ Each authority issues the licenses of its types by calling `mint` on the NMT of 
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F3 | 20.508 | 19.589 | 26.706 | 2.067 |
+| phase F3 | 21.395 | 20.112 | 24.431 | 1.279 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F3-full.svg))
 
@@ -517,8 +519,8 @@ Anyone can read the model: the render reads the instance the ERC-721 way, with o
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F4 | 14.728 | 13.631 | 15.734 | 0.775 |
-| step `F4.render` | 14.303 | 13.210 | 15.306 | 0.765 |
+| phase F4 | 14.479 | 13.586 | 15.878 | 0.696 |
+| step `F4.render` | 14.083 | 13.187 | 15.433 | 0.673 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F4-full.svg))
 
@@ -622,8 +624,8 @@ Split transport preparation into parallel detail collection and documentation pr
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F5 | 107.905 | 99.901 | 125.111 | 8.152 |
-| step `F5.delta` | 59.433 | 55.848 | 62.387 | 2.493 |
+| phase F5 | 111.125 | 100.716 | 119.926 | 4.831 |
+| step `F5.delta` | 60.697 | 56.013 | 62.736 | 2.280 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F5-full.svg))
 
@@ -746,7 +748,7 @@ Messages declared on the license: `Pickup Schedule`, `Cargo Details Request`, `V
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F6 | 11.797 | 11.313 | 177.316 | 52.077 |
+| phase F6 | 12.446 | 11.284 | 17.398 | 1.763 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F6-full.svg))
 
@@ -828,7 +830,7 @@ The holder freezes the instance of the previous phases; no other instance is min
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F7 | 4.617 | 4.173 | 8.836 | 1.868 |
+| phase F7 | 4.774 | 4.155 | 5.159 | 0.293 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F7-full.svg))
 
@@ -893,8 +895,8 @@ The render reads the instance again and regenerates the BPMN of the changed mode
 
 | Measured | Median | Min | Max | Std dev |
 | --- | ---: | ---: | ---: | ---: |
-| phase F8 | 18.250 | 17.207 | 23.787 | 2.016 |
-| step `F8.render` | 17.699 | 16.701 | 23.188 | 1.999 |
+| phase F8 | 19.706 | 17.510 | 29.898 | 3.948 |
+| step `F8.render` | 19.178 | 16.985 | 29.002 | 3.844 |
 
 **Sequence diagram** (filtered; [complete](../evaluation/evidence/uml/F8-full.svg))
 

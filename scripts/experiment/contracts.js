@@ -13,6 +13,7 @@ export const ARTIFACTS = {
   ChoreographyMutableAsset: "ChoreographyMutableAsset",
   ChoreographyParticipantAM: "ChoreographyParticipantAM",
   CreatorSmartPolicyPaperScenario: "CreatorSmartPolicyPaperScenario",
+  CreatorSmartPolicyScaleScenario: "CreatorSmartPolicyScaleScenario",
   DenyAllSmartPolicy: "DenyAllSmartPolicy",
   ParticipantMasterSmartPolicy: "participant/ParticipantMasterSmartPolicy",
   ParticipantTokenURIRenderer: "participant/ParticipantTokenURIRenderer",

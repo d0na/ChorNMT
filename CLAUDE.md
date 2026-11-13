@@ -22,15 +22,16 @@ The docs are the source of truth and must stay in sync with the code:
 | Contract hierarchy and participant target design | `docs/contract-hierarchy.md` |
 | Participant license: fields, hardcoded policies, gas | `docs/participant-license-design.md` |
 | **Experiment protocol: phases, actors, policies, evidence (generated blocks, never edit them)** | `docs/experiment.md` |
+| **Extended evaluation: update variety, scalability, conflicts, concurrency (generated blocks, never edit them)** | `docs/extended-evaluation.md` |
 | Evaluation: setup, runs, evidence layout | `evaluation/README.md` |
 | UML architecture overview, rendering, class, use case, and sequence diagrams | `docs/uml.md`, `docs/uml/` |
 
 ## Layout
 
 - `contracts/base/` — generic `NMT`, `MutableAsset`, `SmartPolicy`.
-- `contracts/choreography/` — `ChoreographyNMT`, `ChoreographyMutableAsset`, `ChoreographyTokenURIRenderer`, Master/Creator/Holder policies and their variants, `ChoreographyParticipantAM`, `DenyAllSmartPolicy`.
+- `contracts/choreography/` — `ChoreographyNMT`, `ChoreographyMutableAsset`, `ChoreographyTokenURIRenderer`, Master/Creator/Holder policies and their variants, `ChoreographyParticipantAM`, `DenyAllSmartPolicy`. `CreatorSmartPolicyScaleScenario` is the constrained Creator policy of the synthetic models of the extended evaluation.
 - `contracts/participant/` — participant licenses (`ParticipantNMT`, `ParticipantMutableAsset`, `ParticipantTokenURIRenderer`) that choreography roles can be linked to.
-- `scripts/` — npm-command implementations (ESM, ethers v6); `scripts/evaluation/` per-command metrics, transaction costs, and the chor-js drawing; `scripts/experiment/` the experiment specification (`phases.js`), its run, the generators, and the checks (D16–D22), writing the versioned `evaluation/evidence/`; `scripts/data/` versioned deltas and legacy datasets.
+- `scripts/` — npm-command implementations (ESM, ethers v6); `scripts/evaluation/` per-command metrics, transaction costs, and the chor-js drawing; `scripts/experiment/` the experiment specification (`phases.js`), its run, the generators, and the checks (D16–D22), and the extended evaluation (`extended-spec.js`, `extended.js`, its charts and report, D28), writing the versioned `evaluation/evidence/`; `scripts/data/` versioned deltas and legacy datasets.
 - `bpmn-builder-js/` — separate npm package: BPMN→NMT importer, tokenURI reader (`scripts/web3.js`), `normalize` → `validation` → `process-mapper` → `moddle-generator`.
 - `references/` — source BPMN models (`paper-example.bpmn` is the supported one) and the original `BPMNChoreography.sol`.
 
@@ -43,11 +44,11 @@ npm run check:size                                   # fail if a contract exceed
 npm run docs:uml                                     # render docs/uml/*.puml to SVG (Java + Graphviz)
 npm run check:uml                                    # fail if a UML SVG is missing or stale
 npm run check:use-cases                              # fail if a use case disagrees with trust tables, tests, or evidence
-npm run check:protocol                               # fail if docs/experiment.md differs from the evidence or has a number in its narrative
+npm run check:protocol                               # fail if docs/experiment.md or docs/extended-evaluation.md differs from the evidence, or the first has a number in its narrative
 npm run check:invariants                             # fail if a contract breaks a design decision (grep, no compile)
 npm test                                             # = test:policies, ephemeral network, no node needed
-npm run evidence:update [-- --out <dir>]             # experiment F1-F8, 1+10 runs on ephemeral networks: evaluation/evidence/ (traces, timings, tests, sequence diagrams, charts, BPMN SVG) and, without --out, docs/experiment.md; needs gnuplot, Chromium (setup:evaluation), Java, Graphviz
-npm run check:evidence                               # rerun the experiment into a temp dir and fail if the versioned evidence differs (timings, image bytes excepted)
+npm run evidence:update [-- --out <dir>]             # experiment F1-F8 (1+10 runs) and extended evaluation (1+3 runs) on ephemeral networks: evaluation/evidence/ (traces, timings, tests, sequence diagrams, charts, BPMN SVG, extended/) and, without --out, docs/experiment.md and docs/extended-evaluation.md; needs gnuplot, Chromium (setup:evaluation), Java, Graphviz
+npm run check:evidence                               # rerun the experiment and the extended evaluation into a temp dir and fail if the versioned evidence differs (timings, image bytes excepted)
 npm run check:gas                                    # fail if a gas figure in the docs differs from the versioned evidence
 npm run start:operations                             # compile + hardhat node on :8545 (long-running)
 npm run deploy:asset -- references/paper-example.bpmn  # needs the node: deploy the type, mint, print the asset
@@ -74,6 +75,7 @@ CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:invariant
 - **tokenURI is computed**, never stored; render reads the whole model in one `tokenURI` call.
 - NMT mints with `_mint`, not `_safeMint` — keep it that way.
 - Generated files end in `.generated.*` and are git-ignored; reference BPMNs and deltas are versioned. `artifacts/`, `cache/` are build outputs.
+- **The extended evaluation is separate.** Its studies run on their own networks and never change a transaction, gas figure, or outcome of F1–F8; its synthetic models are generated in code for size measurements only and are not supported models.
 - Only the `paper-example` path is supported; `pizza-delivery`, `parallel-gateway-example` and the legacy scripts in `docs/commands-and-scripts.md` are development references.
 
 ## Conventions
@@ -86,7 +88,7 @@ CI (`.github/workflows/test.yml`) runs `compile`, `check:size`, `check:invariant
 
 ## Hooks, skills, and agents
 
-Hooks (`.claude/settings.json`, `.claude/hooks/`) block edits to generated files, SVGs, `evaluation/evidence/`, and the generated blocks of `docs/experiment.md`, ask the user before an edit to `docs/requirements.md`, `docs/decisions.md`, `references/`, or `scripts/data/`, rerun `docs:uml` after a `.puml` edit and `compile` + `check:size` + `check:invariants` after a `.sol` edit, and check UML, use cases, the protocol, invariants, compile, and size before `git commit`, plus `check:evidence` (which reruns `test:policies`) when anything the experiment runs or reads changed and `check:gas` when contracts, scripts, the evidence, or the docs quoting gas changed. Run, read, and update the experiment through the `experiment` skill. Project skills are in `.claude/skills/`; `grill-me` comes from skills.sh (see `README.md`).
+Hooks (`.claude/settings.json`, `.claude/hooks/`) block edits to generated files, SVGs, `evaluation/evidence/`, and the generated blocks of `docs/experiment.md` and `docs/extended-evaluation.md`, ask the user before an edit to `docs/requirements.md`, `docs/decisions.md`, `references/`, or `scripts/data/`, rerun `docs:uml` after a `.puml` edit and `compile` + `check:size` + `check:invariants` after a `.sol` edit, and check UML, use cases, the protocol, invariants, compile, and size before `git commit`, plus `check:evidence` (which reruns `test:policies`) when anything the experiment runs or reads changed and `check:gas` when contracts, scripts, the evidence, or the docs quoting gas changed. Run, read, and update the experiment through the `experiment` skill. Project skills are in `.claude/skills/`; `grill-me` comes from skills.sh (see `README.md`).
 
 Subagents are in `.claude/agents/`:
 

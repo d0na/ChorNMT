@@ -1,6 +1,6 @@
 # Evaluation toolkit
 
-The evaluation of ChorNMT is one experiment: eight phases (F1–F8) run on ephemeral Hardhat networks from the specification [`scripts/experiment/phases.js`](../scripts/experiment/phases.js), with their evidence versioned in [`evidence/`](evidence/) and read in [the experiment protocol](../docs/experiment.md). Every number, outcome, table, chart, BPMN drawing, and sequence diagram there comes from the run; the decisions behind it are D16–D22 in [`docs/decisions.md`](../docs/decisions.md#experiment-and-evidence). This page holds the instructions.
+The evaluation of ChorNMT is one experiment and an extended evaluation around it. The experiment is eight phases (F1–F8) run on ephemeral Hardhat networks from the specification [`scripts/experiment/phases.js`](../scripts/experiment/phases.js), with their evidence versioned in [`evidence/`](evidence/) and read in [the experiment protocol](../docs/experiment.md). Every number, outcome, table, chart, BPMN drawing, and sequence diagram there comes from the run; the decisions behind it are D16–D22 in [`docs/decisions.md`](../docs/decisions.md#experiment-and-evidence). This page holds the instructions.
 
 ## Setup (once)
 
@@ -36,17 +36,31 @@ It runs, in order:
 1. runs the experiment once as warm-up and `EXPERIMENT_REPETITIONS` more times (default 10), each on a fresh network, and fails if a transaction differs from the specification (order, sender, function, outcome, revert reason) or if two runs produce different evidence;
 2. runs `test:policies` for the allow/deny matrix (`evidence/tests.json`);
 3. generates the sequence diagram of each phase from the call traces, the four gnuplot charts, and the chor-js drawings of the two models, checking each one against its source;
-4. rewrites the generated blocks of [`docs/experiment.md`](../docs/experiment.md).
+4. runs the [extended evaluation](#extended-evaluation) and draws its three charts;
+5. rewrites the generated blocks of [`docs/experiment.md`](../docs/experiment.md) and of [`docs/extended-evaluation.md`](../docs/extended-evaluation.md).
 
-Commit `evaluation/evidence/` and `docs/experiment.md` with the change that moved them. Then check that the versioned evidence is the evidence of the code:
+Commit `evaluation/evidence/`, `docs/experiment.md`, and `docs/extended-evaluation.md` with the change that moved them. Then check that the versioned evidence is the evidence of the code:
 
 ```bash
 npm run check:evidence   # reruns into a temporary directory and compares
-npm run check:protocol   # docs/experiment.md against the evidence
+npm run check:protocol   # docs/experiment.md and docs/extended-evaluation.md against the evidence
 npm run check:gas        # the gas figures quoted in the docs against the evidence
 ```
 
 CI and the pre-commit hook run all three. Files in `evidence/` and the generated blocks of the protocol are never edited by hand; the `experiment` skill in `.claude/skills/` explains how to read a difference.
+
+## Extended evaluation
+
+The experiment follows one scenario with one update; its repetitions show that it is reproducible, not that it covers different cases. The extended evaluation (decision D28) adds four studies, specified in [`scripts/experiment/extended-spec.js`](../scripts/experiment/extended-spec.js), run by [`scripts/experiment/extended.js`](../scripts/experiment/extended.js) on a network of their own each, and read in [`docs/extended-evaluation.md`](../docs/extended-evaluation.md):
+
+| Study | What varies | What it measures |
+| --- | --- | --- |
+| Variety of updates | the kind of update on the paper example | gas and outcome of each kind, the model read back and rendered after each |
+| Scalability | the size of a synthetic model, under the default and a constrained Creator policy | gas of deploy, mint, updates, and of the `tokenURI` read; local times of the read and the render |
+| Conflicts | which organization acts against which | who prevails and by which rule |
+| Concurrency | the transactions that share a block | independence of the assets, policies under a race, lost updates |
+
+It does not change the experiment: no transaction, gas figure, or outcome of F1–F8 depends on it. Its evidence is `evidence/extended/` (`extended.json`, compared by `check:evidence`; `timings.json`, not compared; `charts/`), written by `evidence:update` after the experiment, with `EXTENDED_REPETITIONS` (default 3) measured runs after a warm-up, all required to give the same evidence. The synthetic models are generated in code and serve only this measurement; the paper example stays the only supported model.
 
 ## USD price for gas scenarios
 
@@ -74,9 +88,12 @@ npm run test:policies
 
 # The protocol from the versioned evidence, without rerunning
 node scripts/experiment/protocol.js
+
+# The extended evaluation alone, elsewhere (EVIDENCE_OUT is the evidence directory; it writes <dir>/extended/)
+EVIDENCE_OUT=/tmp/chornmt-run npx hardhat run scripts/experiment/extended.js
 ```
 
-The experiment does not use `start:operations`. The operational flow on a local node (`deploy:asset`, `modify:asset`, `render:asset`) prints receipt-derived gas and ETH cost and writes a JSON report under `metrics/` (`*.generated.json`, git-ignored) with duration and model size; it is the `local-flow` skill, not part of the evidence.
+The experiment does not use `start:operations`. The operational flow on a local node (`deploy:asset`, `modify:asset`, `render:asset`) prints receipt-derived gas and POL cost and writes a JSON report under `metrics/` (`*.generated.json`, git-ignored) with duration and model size; it is the `local-flow` skill, not part of the evidence.
 
 ## Cleanup
 
